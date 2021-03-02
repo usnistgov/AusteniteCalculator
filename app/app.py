@@ -13,6 +13,8 @@ import plotly.graph_objects as go
 import pandas as pd
 import base64
 import io
+import os
+import re
 
 import sys
 #import matplotlib.pyplot as plt
@@ -106,8 +108,11 @@ def update_output(n_clicks,
                 content_type, content_string = contents.split(',')
 
                 decoded = base64.b64decode(content_string)
-                f = open(datadir + '/' + fname)
-                f.write(decoded.decode('utf-8'))
+                f = open(datadir + '/' + fname,'w')
+                to_write = decoded.decode('utf-8')
+                if re.search('instprm$',fname) is not None:
+                        to_write = re.sub('\\r','',to_write)
+                f.write(to_write)
                 f.close()
         
 
