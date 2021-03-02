@@ -3,14 +3,20 @@
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
 
+# dash imports
 import dash
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+import dash_table
+
+# plotly, pandas
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+
+# utils
 import base64
 import io
 import os
@@ -62,23 +68,28 @@ app.layout = dbc.Container([
             html.Div("""Once your files have been uploaded, click the button below
                      to begin the analysis."""),
             html.Br(),
-            dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis')
+            dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'),
+            html.Div(id='submit-confirmation')
             ],
-            label="Data Upload", 
-            tab_id="data_upload"),
+            label="Data Upload"),
             
-            ### --- end tab 1 --- ###
+        ### --- end tab 1 --- ###
         
+        # Tab 2
         dbc.Tab([dcc.Graph(id='intensity-plot')],
-                label="Peak Intensity Plot", 
-                tab_id="peak_intensity_plot")
-        ],
-        id="tabs",
-        active_tab="data_upload"
-    ),
+                label="Peak Intensity Plot"),
+
+        # Tab 3
+        dbc.Tab([html.Div(id='intensity-table')],
+                label='Intensity Table')
+
+    ], # end dbc.Tabs()
+    id="tabs",
+    active_tab="data_upload"),
     
 ])
 
+### --- file upload messages --- ###
 @app.callback(
     Output('f1-name','children'),
     Input('upload-data-xrdml','filename')
@@ -95,16 +106,33 @@ def show_f_name(filename):
     Output('f2-name','children'),
     Input('upload-data-instprm','filename')
 )
-def show_f_name(filename):
+def show_f_name1(filename):
     
     if filename is None:
         return ""
         
     else:
         return "Uploaded File: " + filename
-    
+
 @app.callback(
-    Output('intensity-plot', 'figure'),
+    Output('submit-confirmation','children'),
+    Input('submit-button-state','n_clicks')
+)
+def show_f_name2(n_clicks):
+    
+    if n_clicks == 0:
+        return ""
+        
+    else:
+        return "Submission complete. Navigate the above tabs to view results."
+
+### --- end file upload messages --- ###
+
+
+### --- all other outputs --- ###
+@app.callback(
+    Output('intensity-plot','figure'),
+    Output('intensity-table','children'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
