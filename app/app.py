@@ -116,7 +116,7 @@ def update_output(n_clicks,
         SaveWrap = lambda fil: workdir + '/' + fil
         gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx')) # start new project
         hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-                                        DataPathWrap(isntprm_fname),
+                                        DataPathWrap(instprm_fname),
                                         fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
         
         df = pd.DataFrame({
