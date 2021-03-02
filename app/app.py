@@ -5,64 +5,128 @@
 
 import dash
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
+from dash.dependencies import Input, Output, State
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
+import base64
+import io
 
-import os,sys
-import matplotlib.pyplot as plt
-import numpy as np
+import sys
+#import matplotlib.pyplot as plt
+#import numpy as np
 sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # needed to "find" GSAS-II modules
 import GSASIIscriptable as G2sc
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-# point towards directory and upload data using GSASII
-ScriptDirectory=os.getcwd()
-GitLabDirectory=os.path.dirname(os.getcwd())
-ExampleDataDirectory=os.path.join(GitLabDirectory,"ExampleData")
-SaveDataDirectory=os.path.join(GitLabDirectory,"SaveData")
+app.layout = dbc.Container([
+        
+    html.Br(),
+    html.H2('Austenite Calculator'),
+    html.Div('Calculating austenite since 2021.'),
+    html.Br(),
+    
+    dbc.Tabs([
+            
+        dbc.Tab([
+            html.Br(),
+            
+            # file upload
+            html.Div('Use the buttons below to upload your .xrdml and .instprm files. '),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-data-xrdml',
+                    children=html.Div([
+                            dbc.Button('Upload .xrdml File')
+                            ])),
+            
+            html.Br(),
+            dcc.Upload(
+                    id='upload-data-instprm',
+                    children=html.Div([
+                            dbc.Button('Upload .instprm File')
+                            ])),
 
-datadir = os.path.expanduser(ExampleDataDirectory)
-SaveDir= os.path.expanduser(SaveDataDirectory)
-DataPathWrap = lambda fil: os.path.join(datadir,fil)
-SaveWrap = lambda fil: os.path.join(SaveDir,fil)
-gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx'))
-hist = gpx.add_powder_histogram(DataPathWrap('Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml'),
-                                DataPathWrap('TestCalibration.instprm'), # need to get a 
-                                fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
-
-# assume you have a "long-form" data frame
-# see https://plotly.com/python/px-arguments/ for more options
-#df = pd.DataFrame({
-#    "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-#    "Amount": [4, 1, 2, 2, 4, 5],
-#    "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"]
-#})
-
-#fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
-
-df = pd.DataFrame({
-        "two_theta":hist.data['data'][1][0],
-        "intensity":hist.data['data'][1][1]
-})
-
-fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-
-app.layout = html.Div(children=[
-    html.H2(children='Austenite Calculator'),
-
-    html.Div(children='''
-        Austenite Calculator: A calculator for austenite.
-    '''),
-
-    dcc.Graph(
-        id='example-graph',
-        figure=fig
-    )
+            # submit button
+            html.Br(),
+            html.Hr(),
+            html.Br(),
+            html.Div("""Once your files have been uploaded, click the button below
+                     to begin the analysis."""),
+            html.Br(),
+            dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis')
+            ],
+            label="Data Upload", 
+            tab_id="data_upload"),
+            
+            ### --- end tab 1 --- ###
+        
+        dbc.Tab([dcc.Graph(id='intensity-plot')],
+                label="Peak Intensity Plot", 
+                tab_id="peak_intensity_plot")
+        ],
+        id="tabs",
+        active_tab="data_upload"
+    ),
+    
 ])
+    
+@app.callback(
+        Output('intensity-plot', 'figure'),
+        Input('submit-button-state', 'n_clicks'),
+        State('upload-data-xrdml','contents'),
+        State('upload-data-xrdml','filename'),
+        State('upload-data-instprm','contents'),
+        State('upload-data-instprm','filename'))
+def update_output(n_clicks,
+                  xrdml_contents,xrdml_fname,
+                  instprm_contents,instprm_fname):
+    
+    # return nothing when app opens
+    if n_clicks == 0:
+        return go.Figure()
+    
+    else:
+        # point towards directory and upload data using GSASII
+        
+        datadir = '../server_datadir'
+        workdir = '../server_workdir'
+
+        all_contents = [[xrdml_contents,xrdml_fname],
+                        [instprm_contents,instprm_fname]]
+
+        for i in range(len(all_contents)):
+                contents = all_contents[i][0]
+                fname = all_contents[i][1]
+        
+                content_type, content_string = contents.split(',')
+
+                decoded = base64.b64decode(content_string)
+                f = open(datadir + '/' + fname)
+                f.write(decoded.decode('utf-8'))
+                f.close()
+        
+
+        
+        DataPathWrap = lambda fil: datadir + '/' + fil
+        SaveWrap = lambda fil: workdir + '/' + fil
+        gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx')) # start new project
+        hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
+                                        DataPathWrap(isntprm_fname),
+                                        fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
+        
+        df = pd.DataFrame({
+                "two_theta":hist.data['data'][1][0],
+                "intensity":hist.data['data'][1][1]
+        })
+
+        the_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+        
+        return the_fig
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
