@@ -28,8 +28,8 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 app.layout = dbc.Container([
         
     html.Br(),
-    html.H2('Austenite Calculator'),
-    html.Div('Calculating austenite since 2021.'),
+    html.H1('Austenite Calculator'),
+    html.Div('Calculating austenite since 2021.',style={'font-style':'italic'}),
     html.Br(),
     
     dbc.Tabs([
@@ -45,6 +45,7 @@ app.layout = dbc.Container([
                     children=html.Div([
                             dbc.Button('Upload .xrdml File')
                             ])),
+            html.Div(id='f1-name'),
             
             html.Br(),
             dcc.Upload(
@@ -52,6 +53,7 @@ app.layout = dbc.Container([
                     children=html.Div([
                             dbc.Button('Upload .instprm File')
                             ])),
+            html.Div(id='f2-name'),
 
             # submit button
             html.Br(),
@@ -76,22 +78,46 @@ app.layout = dbc.Container([
     ),
     
 ])
+
+@app.callback(
+    Output('f1-name','children'),
+    Input('upload-data-xrdml','filename')
+)
+def show_f_name(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        return "Uploaded File: " + filename
+
+@app.callback(
+    Output('f2-name','children'),
+    Input('upload-data-instprm','filename')
+)
+def show_f_name(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        return "Uploaded File: " + filename
     
 @app.callback(
-        Output('intensity-plot', 'figure'),
-        Input('submit-button-state', 'n_clicks'),
-        State('upload-data-xrdml','contents'),
-        State('upload-data-xrdml','filename'),
-        State('upload-data-instprm','contents'),
-        State('upload-data-instprm','filename'))
+    Output('intensity-plot', 'figure'),
+    Input('submit-button-state', 'n_clicks'),
+    State('upload-data-xrdml','contents'),
+    State('upload-data-xrdml','filename'),
+    State('upload-data-instprm','contents'),
+    State('upload-data-instprm','filename'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname):
     
-    # return nothing when app opens
+# return nothing when app opens
     if n_clicks == 0:
         return go.Figure()
-    
+
     else:
         # point towards directory and upload data using GSASII
         
@@ -101,37 +127,37 @@ def update_output(n_clicks,
         all_contents = [[xrdml_contents,xrdml_fname],
                         [instprm_contents,instprm_fname]]
 
-        for i in range(len(all_contents)):
-                contents = all_contents[i][0]
-                fname = all_contents[i][1]
-        
-                content_type, content_string = contents.split(',')
+    for i in range(len(all_contents)):
+        contents = all_contents[i][0]
+        fname = all_contents[i][1]
 
-                decoded = base64.b64decode(content_string)
-                f = open(datadir + '/' + fname,'w')
-                to_write = decoded.decode('utf-8')
-                if re.search('instprm$',fname) is not None:
-                        to_write = re.sub('\\r','',to_write)
-                f.write(to_write)
-                f.close()
-        
+        content_type, content_string = contents.split(',')
 
-        
-        DataPathWrap = lambda fil: datadir + '/' + fil
-        SaveWrap = lambda fil: workdir + '/' + fil
-        gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx')) # start new project
-        hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-                                        DataPathWrap(instprm_fname),
-                                        fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
-        
-        df = pd.DataFrame({
-                "two_theta":hist.data['data'][1][0],
-                "intensity":hist.data['data'][1][1]
-        })
+        decoded = base64.b64decode(content_string)
+        f = open(datadir + '/' + fname,'w')
+        to_write = decoded.decode('utf-8')
+        if re.search('instprm$',fname) is not None:
+                to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+    
 
-        the_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-        
-        return the_fig
+    
+    DataPathWrap = lambda fil: datadir + '/' + fil
+    SaveWrap = lambda fil: workdir + '/' + fil
+    gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx')) # start new project
+    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
+                                    DataPathWrap(instprm_fname),
+                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
+    
+    df = pd.DataFrame({
+        "two_theta":hist.data['data'][1][0],
+        "intensity":hist.data['data'][1][1]
+    })
+
+    the_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+    
+    return the_fig
 
 if __name__ == '__main__':
     app.run_server(debug=True)
