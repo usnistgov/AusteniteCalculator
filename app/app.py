@@ -132,7 +132,7 @@ def show_f_name2(n_clicks):
 ### --- all other outputs --- ###
 @app.callback(
     Output('intensity-plot','figure'),
-    Output('intensity-table','children'),
+    #Output('intensity-table','children'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
