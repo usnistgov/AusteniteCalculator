@@ -49,7 +49,7 @@ app.layout = dbc.Container([
             dcc.Upload(
                     id='upload-data-xrdml',
                     children=html.Div([
-                            dbc.Button('Upload .xrdml File')
+                            dbc.Button('X-Ray Diffraction File (.xrdml)')
                             ])),
             html.Div(id='f1-name'),
             
@@ -57,9 +57,25 @@ app.layout = dbc.Container([
             dcc.Upload(
                     id='upload-data-instprm',
                     children=html.Div([
-                            dbc.Button('Upload .instprm File')
+                            dbc.Button('Instrument Parameter File (.instprm)')
                             ])),
             html.Div(id='f2-name'),
+
+            html.Br(),
+            dcc.Upload(
+                    id='upload-aust',
+                    children=html.Div([
+                            dbc.Button('Austenite File (.cif)')
+                            ])),
+            html.Div(id='f3-name'),
+
+            html.Br(),
+            dcc.Upload(
+                    id='upload-ferr',
+                    children=html.Div([
+                            dbc.Button('Ferrite File (.cif)')
+                            ])),
+            html.Div(id='f4-name'),
 
             # submit button
             html.Br(),
@@ -105,6 +121,30 @@ def show_f_name(filename):
 @app.callback(
     Output('f2-name','children'),
     Input('upload-data-instprm','filename')
+)
+def show_f_name1(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        return "Uploaded File: " + filename
+
+@app.callback(
+    Output('f3-name','children'),
+    Input('upload-aust','filename')
+)
+def show_f_name1(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        return "Uploaded File: " + filename
+
+@app.callback(
+    Output('f4-name','children'),
+    Input('upload-ferr','filename')
 )
 def show_f_name1(filename):
     
