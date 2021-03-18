@@ -11,7 +11,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_table
 
-# plotly, pandas
+# plotting
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -21,10 +21,12 @@ import base64
 import io
 import os
 import re
-
 import sys
-#import matplotlib.pyplot as plt
-#import numpy as np
+
+# user created
+import compute_results
+
+# Gsas
 sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # needed to "find" GSAS-II modules
 import GSASIIscriptable as G2sc
 
@@ -134,7 +136,7 @@ def show_f_name1(filename):
     Output('f3-name','children'),
     Input('upload-aust','filename')
 )
-def show_f_name1(filename):
+def show_f_name2(filename):
     
     if filename is None:
         return ""
@@ -146,7 +148,7 @@ def show_f_name1(filename):
     Output('f4-name','children'),
     Input('upload-ferr','filename')
 )
-def show_f_name1(filename):
+def show_f_name3(filename):
     
     if filename is None:
         return ""
@@ -158,7 +160,7 @@ def show_f_name1(filename):
     Output('submit-confirmation','children'),
     Input('submit-button-state','n_clicks')
 )
-def show_f_name2(n_clicks):
+def show_f_name4(n_clicks):
     
     if n_clicks == 0:
         return ""
@@ -177,24 +179,32 @@ def show_f_name2(n_clicks):
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
     State('upload-data-instprm','contents'),
-    State('upload-data-instprm','filename'))
+    State('upload-data-instprm','filename'),
+    State('upload-aust','contents'),
+    State('upload-aust','filename'),
+    State('upload-ferr','contents'),
+    State('upload-ferr','filename'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
-                  instprm_contents,instprm_fname):
+                  instprm_contents,instprm_fname,
+                  aust_contents,aust_fname,
+                  ferr_contents,ferr_fname):
     
-# return nothing when app opens
+    # return nothing when app opens
     if n_clicks == 0:
         return go.Figure()
 
-    else:
-        # point towards directory and upload data using GSASII
-        
-        datadir = '../server_datadir'
-        workdir = '../server_workdir'
+    # point towards directory and upload data using GSASII
+    datadir = '../server_datadir'
+    workdir = '../server_workdir'
 
-        all_contents = [[xrdml_contents,xrdml_fname],
-                        [instprm_contents,instprm_fname]]
+    all_contents = [[xrdml_contents,xrdml_fname],
+                    [instprm_contents,instprm_fname],
+                    [aust_contents,aust_fname],
+                    [ferr_contents,ferr_fname]]
 
+    # For each uploaded file, save (on the server)
+    # ensuring that the format matches what GSAS expects.
     for i in range(len(all_contents)):
         contents = all_contents[i][0]
         fname = all_contents[i][1]
@@ -204,26 +214,13 @@ def update_output(n_clicks,
         decoded = base64.b64decode(content_string)
         f = open(datadir + '/' + fname,'w')
         to_write = decoded.decode('utf-8')
-        if re.search('instprm$',fname) is not None:
-                to_write = re.sub('\\r','',to_write)
+        if re.search('(instprm$)|(cif)',fname) is not None:
+            to_write = re.sub('\\r','',to_write)
         f.write(to_write)
         f.close()
     
-
-    
-    DataPathWrap = lambda fil: datadir + '/' + fil
-    SaveWrap = lambda fil: workdir + '/' + fil
-    gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx')) # start new project
-    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-                                    DataPathWrap(instprm_fname),
-                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
-    
-    df = pd.DataFrame({
-        "two_theta":hist.data['data'][1][0],
-        "intensity":hist.data['data'][1][1]
-    })
-
-    the_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+    # Now, we just run the desired computations
+    the_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
     return the_fig
 
