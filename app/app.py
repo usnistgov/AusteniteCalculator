@@ -94,12 +94,18 @@ app.layout = dbc.Container([
         ### --- end tab 1 --- ###
         
         # Tab 2
-        dbc.Tab([dcc.Graph(id='intensity-plot')],
-                label="Peak Intensity Plot"),
+        dbc.Tab([
+            dcc.Graph(id='intensity-plot'),
+            html.Br(),
+            dcc.Graph(id='fitted-intensity-plot')
+            ],
+            label="Intensity Plots"),
 
         # Tab 3
-        dbc.Tab([html.Div(id='intensity-table')],
-                label='Intensity Table')
+        dbc.Tab([
+            html.Br(),
+            dash_table.DataTable(id='intensity-table')],
+            label='Intensity Table')
 
     ], # end dbc.Tabs()
     id="tabs",
@@ -174,7 +180,9 @@ def show_f_name4(n_clicks):
 ### --- all other outputs --- ###
 @app.callback(
     Output('intensity-plot','figure'),
-    #Output('intensity-table','children'),
+    Output('fitted-intensity-plot','figure'),
+    Output('intensity-table','data'),
+    Output('intensity-table','columns'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -192,7 +200,7 @@ def update_output(n_clicks,
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure()
+        return go.Figure(), go.Figure(), [], []
 
     # point towards directory and upload data using GSASII
     datadir = '../server_datadir'
@@ -220,9 +228,9 @@ def update_output(n_clicks,
         f.close()
     
     # Now, we just run the desired computations
-    the_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, intensity_tbl, tbl_columns = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
-    return the_fig
+    return fig1, fig2, intensity_tbl, tbl_columns
 
 if __name__ == '__main__':
     app.run_server(debug=True)
