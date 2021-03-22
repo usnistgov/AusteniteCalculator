@@ -1,11 +1,10 @@
-def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+import math
 
-    # plotly, pandas
-    import plotly.express as px
-    import plotly.graph_objects as go
-    import pandas as pd
-    import numpy as np
-    import math
+def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     DataPathWrap = lambda fil: datadir + '/' + fil
     SaveWrap = lambda fil: workdir + '/' + fil
