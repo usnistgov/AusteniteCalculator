@@ -14,4 +14,4 @@ WORKDIR /AustCalc/app/
 
 EXPOSE 8050
 
-CMD ["/g2full/bin/python","./app.py"]
+CMD ["/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"]
