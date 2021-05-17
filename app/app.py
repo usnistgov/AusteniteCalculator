@@ -19,6 +19,7 @@ import io
 import os
 import re
 import sys
+import flask
 
 # user created
 import compute_results
@@ -28,9 +29,11 @@ import compute_results
 sys.path.insert(0,'/g2full/GSASII/')
 import GSASIIscriptable as G2sc
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
+
+
 
 app.layout = dbc.Container([
         
@@ -232,4 +235,5 @@ def update_output(n_clicks,
     return fig1, fig2, intensity_tbl, tbl_columns
 
 if __name__ == '__main__':
+    #app.run_server(port=8050)
     app.run_server(host='0.0.0.0',debug=True,port=8050)

@@ -4,8 +4,9 @@ dash-core-components
 dash-html-components
 dash-renderer
 dash-table
-Flask
+flask
 Flask-Compress
+gunicorn
 future
 matplotlib
 numpy
@@ -14,7 +15,3 @@ pandas
 pandocfilters
 plotly
 scipy
-
-
-
-
