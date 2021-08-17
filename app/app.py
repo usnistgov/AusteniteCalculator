@@ -25,15 +25,13 @@ import flask
 import compute_results
 
 # Gsas
-# sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # needed to "find" GSAS-II modules
-sys.path.insert(0,'/g2full/GSASII/')
+sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # <- for local dev
+#sys.path.insert(0,'/g2full/GSASII/') # <- from docker
 import GSASIIscriptable as G2sc
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
-
-
 
 app.layout = dbc.Container([
         
@@ -235,5 +233,5 @@ def update_output(n_clicks,
     return fig1, fig2, intensity_tbl, tbl_columns
 
 if __name__ == '__main__':
-    #app.run_server(port=8050)
-    app.run_server(host='0.0.0.0',debug=True,port=8050)
+    app.run_server(debug=True,port=8050) # local
+    #app.run_server(host='0.0.0.0',debug=True,port=8050) # docker
