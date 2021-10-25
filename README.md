@@ -34,9 +34,9 @@ Support for Adam Creuziger was provided by the National Institute of Standards a
 
 ## How to run the application
 
-We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/) (installation instructions can be found [here](https://docs.docker.com/get-docker/)). Once Docker is installed, download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP'). After decompressing the file, navigate your terminal to the main directory of the project (the same level as Dockerfile). Then, run the following command to build the image:
+We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/) (installation instructions can be found [here](https://docs.docker.com/get-docker/)). Once Docker is installed, download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). After decompressing the file, navigate your terminal to the main directory of the project (the same level as Dockerfile). Then, run the following command to build the image:
 ```
-docker build -t austenite_calculator.
+docker build -t austenite_calculator .
 ```
 This installs all necessary software (GSAS-II, python libraries, etc.) into a Unix environment.  
 
