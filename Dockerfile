@@ -1,5 +1,5 @@
 #FROM gsas:latest
-FROM ubuntu:20.04
+FROM --platform=linux/amd64 ubuntu:20.04
 
 # Install Apt packages for Python
 RUN apt-get update
