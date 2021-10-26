@@ -85,18 +85,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     h_background = hist.data['data'][1][4]
     h_fit = hist.data['data'][1][3]
 
-    fig2 = go.Figure()
-
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
-
-    fig2.update_layout(
-        title="",
-        xaxis_title="2theta",
-        yaxis_title="Intensity"
-    )
-
     for peak in PeaksList:
         hist.add_peak(1, ttheta=peak)
 
@@ -108,6 +96,18 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     hist.refine_peaks()
     hist.set_peakFlags(pos=True,area=True,sig=True)
     hist.refine_peaks()
+
+    fig2 = go.Figure()
+
+    fig2.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
+    fig2.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
+    fig2.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
+
+    fig2.update_layout(
+        title="",
+        xaxis_title="2theta",
+        yaxis_title="Intensity"
+    )
 
     mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
     mydf = mydf.iloc[:,[0,2,4,6]]
