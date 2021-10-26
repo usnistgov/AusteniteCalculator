@@ -25,8 +25,8 @@ import flask
 import compute_results
 
 # Gsas
-#sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # <- for local dev
-sys.path.insert(0,'/root/g2full/GSASII/') # <- from docker
+sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # <- for local dev
+#sys.path.insert(0,'/root/g2full/GSASII/') # <- from docker
 import GSASIIscriptable as G2sc
 
 
@@ -46,7 +46,8 @@ app.layout = dbc.Container([
             html.Br(),
             
             # file upload
-            html.Div('Use the buttons below to upload your .xrdml and .instprm files. '),
+            html.Div('Use the buttons below to upload your .xrdml and .instprm files. ' + 
+                     'Alternatively, click the "Use Default Files" button below to use a sample set of files.'),
             html.Br(),
             dcc.Upload(
                     id='upload-data-xrdml',
@@ -79,6 +80,15 @@ app.layout = dbc.Container([
                             ])),
             html.Div(id='f4-name'),
 
+            html.Hr(),
+            html.Br(),
+            dbc.Checklist(
+                options=[
+                    {"label": "Use Default Files", "value": 1},
+                ],
+                id="default-files-check",
+            ),
+
             # submit button
             html.Br(),
             html.Hr(),
@@ -109,7 +119,7 @@ app.layout = dbc.Container([
 
     ], # end dbc.Tabs()
     id="tabs",
-    active_tab="data_upload"),
+    active_tab="Data Upload"),
     
 ])
 
@@ -174,6 +184,7 @@ def show_f_name4(n_clicks):
     else:
         return "Submission complete. Navigate the above tabs to view results."
 
+
 ### --- end file upload messages --- ###
 
 
@@ -191,42 +202,51 @@ def show_f_name4(n_clicks):
     State('upload-aust','contents'),
     State('upload-aust','filename'),
     State('upload-ferr','contents'),
-    State('upload-ferr','filename'))
+    State('upload-ferr','filename'),
+    State('default-files-check','value'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
                   aust_contents,aust_fname,
-                  ferr_contents,ferr_fname):
+                  ferr_contents,ferr_fname,
+                  use_default_files):
     
     # return nothing when app opens
     if n_clicks == 0:
         return go.Figure(), go.Figure(), [], []
 
     # point towards directory and upload data using GSASII
-    datadir = '../server_datadir'
-    workdir = '../server_workdir'
+    if use_default_files[0] == 1:
+        datadir = '../server_default_datadir'
+        workdir = '../server_workdir'
+        xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
+        instprm_fname = 'TestCalibration.instprm'
 
-    all_contents = [[xrdml_contents,xrdml_fname],
-                    [instprm_contents,instprm_fname],
-                    [aust_contents,aust_fname],
-                    [ferr_contents,ferr_fname]]
+    else:
+        datadir = '../server_datadir'
+        workdir = '../server_workdir'
 
-    # For each uploaded file, save (on the server)
-    # ensuring that the format matches what GSAS expects.
-    for i in range(len(all_contents)):
-        contents = all_contents[i][0]
-        fname = all_contents[i][1]
+        all_contents = [[xrdml_contents,xrdml_fname],
+                        [instprm_contents,instprm_fname],
+                        [aust_contents,aust_fname],
+                        [ferr_contents,ferr_fname]]
 
-        content_type, content_string = contents.split(',')
+        # For each uploaded file, save (on the server)
+        # ensuring that the format matches what GSAS expects.
+        for i in range(len(all_contents)):
+            contents = all_contents[i][0]
+            fname = all_contents[i][1]
 
-        decoded = base64.b64decode(content_string)
-        f = open(datadir + '/' + fname,'w')
-        to_write = decoded.decode('utf-8')
-        if re.search('(instprm$)|(cif)',fname) is not None:
-            to_write = re.sub('\\r','',to_write)
-        f.write(to_write)
-        f.close()
-    
+            content_type, content_string = contents.split(',')
+
+            decoded = base64.b64decode(content_string)
+            f = open(datadir + '/' + fname,'w')
+            to_write = decoded.decode('utf-8')
+            if re.search('(instprm$)|(cif)',fname) is not None:
+                to_write = re.sub('\\r','',to_write)
+            f.write(to_write)
+            f.close()
+        
     # Now, we just run the desired computations
     fig1, fig2, intensity_tbl, tbl_columns = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
