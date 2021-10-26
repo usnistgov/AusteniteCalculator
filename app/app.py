@@ -17,6 +17,7 @@ import pandas as pd
 import base64
 import io
 import os
+import platform
 import re
 import sys
 import flask
@@ -25,8 +26,13 @@ import flask
 import compute_results
 
 # Gsas
-#sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # <- for local dev
-sys.path.insert(0,'/root/g2full/GSASII/') # <- from docker
+if platform.system() == 'Linux':
+    sys.path.insert(0,'/root/g2full/GSASII/') # <- for Docker (assuming none of us use a Linux OS)
+
+# David's local development (add your own line to work on the project locally)
+elif re.search('dtn1',os.getcwd()):
+    sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') 
+
 import GSASIIscriptable as G2sc
 
 
