@@ -25,8 +25,8 @@ import flask
 import compute_results
 
 # Gsas
-sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # <- for local dev
-#sys.path.insert(0,'/root/g2full/GSASII/') # <- from docker
+#sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') # <- for local dev
+sys.path.insert(0,'/root/g2full/GSASII/') # <- from docker
 import GSASIIscriptable as G2sc
 
 
