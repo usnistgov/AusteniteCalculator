@@ -20,4 +20,4 @@ WORKDIR /root/AustCalc/app/
 
 EXPOSE 8050
 
-# CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"]
+CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"]
