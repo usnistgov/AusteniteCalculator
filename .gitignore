@@ -1,3 +1,6 @@
 SaveData/*
 ExampleScripts/.ipynb_*
-
+MiscScripts/
+server_datadir/*
+*.pyc
+server_workdir/pkfit.gpx
