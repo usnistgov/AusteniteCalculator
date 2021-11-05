@@ -38,7 +38,7 @@ We plan to eventually deploy the Austenite Calculator as a web application. For 
 ```
 docker build -t austenite_calculator .
 ```
-This installs all necessary software (GSAS-II, python libraries, etc.) into a Unix environment.  
+This installs all necessary software (GSAS-II, python libraries, etc.) into a Unix environment. 
 
 To run the container, run the following command:
 ```
@@ -50,6 +50,7 @@ To stop and remove the running container, run the following:
 ```
 docker rm -f my_container
 ```
+If you wish to run the container again, note that you do not need to run `docker build` again (unless you change the Dockerfile). You can simply run the `docker run` command.
 
 Alternatively, you can run, stop, and remove the container using the Docker Desktop application. For more instructions on using Docker, see the official guide [here](https://docs.docker.com/get-started/).
 
