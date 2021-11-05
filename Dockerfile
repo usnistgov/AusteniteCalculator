@@ -13,8 +13,8 @@ RUN bash /tmp/gsas2full-Latest-Linux-x86_64.sh -b -p ~/g2full
 
 # project folder
 RUN mkdir /root/AustCalc
-COPY ./ /root/AustCalc/
 RUN /root/g2full/bin/pip install -r /root/AustCalc/requirements.txt
+COPY ./ /root/AustCalc/
 
 WORKDIR /root/AustCalc/app/
 
