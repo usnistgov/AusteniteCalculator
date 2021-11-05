@@ -53,6 +53,7 @@ docker rm -f my_container
 
 Alternatively, you can run, stop, and remove the container using the Docker Desktop application. For more instructions on using Docker, see the official guide [here](https://docs.docker.com/get-started/).
 
+-> Is there a way to save the container rather than rebuilding each time?
 
 ## Licence
 See [license.md](license.md).
