@@ -80,6 +80,8 @@ Kind of mandatory until we sort out a better solution:
 
 ## Example data
 
+Many of these entries use data IDs developed in the NIST Center for Automotive Lightweighting (NCAL).  They are retained to provide additional data provenance information.
+
 ### Diffraction data files
 
 | Filename | Data ID | Acquired by | Format | Description |
