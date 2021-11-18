@@ -16,16 +16,16 @@ This project is still in development.  When completed, we hope to have a robust 
 # GENERAL INFORMATION
 
 ## Version History
-- 1.0.0 Initial Release
+- 0.0.0 Development
 
 ## Author Information
 
-Name: Adam Creuziger 
-Institution: National Institute of Standards and Technology 
-Address: 100 Bureau Drive, Gaithersburg, MD 20899 
+Name: Adam Creuziger
+Institution: National Institute of Standards and Technology
+Address: 100 Bureau Drive, Gaithersburg, MD 20899
 Email: adam.creuziger@nist.gov
 
-## Funding sources that supported the collection and analysis of the data: 
+## Funding sources that supported the collection and analysis of the data:
 
 Support for Adam Creuziger was provided by the National Institute of Standards and Technology (NIST), an agency of the Federal Government.
 
@@ -38,7 +38,7 @@ We plan to eventually deploy the Austenite Calculator as a web application. For 
 ```
 docker build -t austenite_calculator .
 ```
-This installs all necessary software (GSAS-II, python libraries, etc.) into a Unix environment. 
+This installs all necessary software (GSAS-II, python libraries, etc.) into a Unix environment.
 
 To run the container, run the following command:
 ```
@@ -62,7 +62,7 @@ See [license.md](license.md).
 ## Disclaimers
 The data/work is provided by NIST as a public service and is expressly provided “AS IS.” NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST does not warrant or make any representations regarding the use of the data or the results thereof, including but not limited to the correctness, accuracy, reliability or usefulness of the data. NIST SHALL NOT BE LIABLE AND YOU HEREBY RELEASE NIST FROM LIABILITY FOR ANY INDIRECT, CONSEQUENTIAL, SPECIAL, OR INCIDENTAL DAMAGES (INCLUDING DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, AND THE LIKE), WHETHER ARISING IN TORT, CONTRACT, OR OTHERWISE, ARISING FROM OR RELATING TO THE DATA (OR THE USE OF OR INABILITY TO USE THIS DATA), EVEN IF NIST HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
-## Are there any restrictions or guidelines on how to use the data? 
+## Are there any restrictions or guidelines on how to use the data?
 None currently set.
 
 ## Citation Guidance
@@ -80,20 +80,44 @@ Kind of mandatory until we sort out a better solution:
 
 ## Example data
 
-Data from L210209-MRC-001
-- Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml
+### Diffraction data files
 
-Used inital data to create calibration file 'TestCalibration.instprm'
-- Not a recommended method, place holder for now
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ---- |
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml | L210209-MRC-001 | Michael Cox | XRDML| Normal direction (phi=0, chi=0) data of a Duplex steel (B160506-AAC-001) |
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I8_Angles_30_54.xrdml | L210209-MRC-001 | Michael Cox | XRDML| phi=30, chi=54 data of a Duplex steel (B160506-AAC-001)|
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I6_Angles_60_30.xrdml | L210209-MRC-001 | Michael Cox | XRDML| phi=60, chi=30 data of a Duplex steel (B160506-AAC-001)|
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I4_Angles_0_30.xrdml | L210209-MRC-001 | Michael Cox |  XRDML|phi=0, chi=30 data of a Duplex steel (B160506-AAC-001)|
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I2_Angles_90_54_1.xrdml | L210209-MRC-001 | Michael Cox |  XRDML|phi=90, chi=54 data of a Duplex steel (B160506-AAC-001)|
+| E211110-AAC-001_005-000_exported.csv | E211110-AAC-001 | Adam Creuziger | csv | LaB6 calibration sample |
+| E211110-AAC-001_008-000_exported.csv | E211110-AAC-001 | Adam Creuziger | csv | Fe LSS0411-23, 99.5% purity Fe powder in epoxy matrix. Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder. |
+| E211110-AAC-001_012-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | 316L LSS0312-01, 316L powder in epoxy matrix. Composition given as Fe:Cr:Ni:Mo 67.5:17:13:2.5 (units unclear). Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder.|
+| E211110-AAC-001_013-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | RA 0311-14, retained austenite reference material with pure Fe and 316L powder in epoxy matrix. Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder. Nominal phase fraction of 11.94% ± 2% |
+| E211110-AAC-001_014-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | Normal direction (phi=0, chi=0) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_015-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=0, chi=30) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_016-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=60, chi=30) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_017-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=30, chi=54) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_018-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=90, chi=54) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_019-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | SRM 487-157, NIST retained austenite SRM 487 (withdrawn). Expected to contain 30% austenite.  More information is available at https://doi.org/10.6028/NBS.SP.260-78 |
+
 
 ### CIF files
-These are files that describe the lattice information and composition information
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
 
-Two files are included for each phase, austenite and ferrite.
-Duplex steel (B160506-AAC-001), composition from E160629-AAC-004.
-Bulk composition used for each, no alloying segregation by phase calculated.
-- austenite-Duplex.cif
-- ferrite-Duplex.cif
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+| austenite-Duplex.cif | Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+| ferrite-Duplex.cif| Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+| ferrite-PureFe.cif | Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Uses lattice parameters and Uiso from ferrite-Duplex.cif|
+
+
+### Instrument calibration files
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
+| TestCalibration.instprm | Mines Empyrean | Adam Creuziger | Used Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml data to create calibration file. Not a recommended method, place holder for now.  |
+|BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
+
 
 # METHODOLOGICAL INFORMATION
 
