@@ -115,4 +115,22 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
+    ### calculate theoretical intensities (Austenite) ###
+    gpx = G2sc.G2Project(newgpx=SaveWrap('Austenite-sim.gpx')) # create a project    
+
+    PhaseAustenite = gpx.add_phase(DataPathWrap("austenite-Duplex.cif"), phasename="Austenite",fmthint='CIF')
+
+    histogram_scale=100.
+
+    # add a simulated histogram and link it to the previous phase(s)
+    hist1 = gpx.add_simulated_powder_histogram("Austenite simulation",
+            DataPathWrap('../server_datadir/TestCalibration.instprm'),5.,120.,Npoints=5000,
+            phases=gpx.phases(),scale=histogram_scale)
+
+    gpx.do_refinements()   # calculate pattern
+    gpx.save()
+
+    theoretical_intensities = hist1.data['Reflection Lists']['Austenite']['RefList'][:,11]
+    ### end calculation of theoretical intensities ###
+
     return fig1, fig2, intensity_table, tbl_columns

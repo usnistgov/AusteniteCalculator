@@ -2,11 +2,11 @@
 
 # dash imports
 import dash
-import dash_core_components as dcc
-import dash_bootstrap_components as dbc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output, State
-import dash_table
+from dash import dash_table
+import dash_bootstrap_components as dbc
 
 # plotting
 import plotly.express as px
@@ -31,7 +31,7 @@ if platform.system() == 'Linux':
 
 # David's local development (add your own line to work on the project locally)
 elif re.search('dtn1',os.getcwd()):
-    sys.path.insert(0,'/Users/dtn1/gsas2full/GSASII/') 
+    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/G2_2/GSASII/') 
 
 import GSASIIscriptable as G2sc
 
