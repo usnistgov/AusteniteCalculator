@@ -86,11 +86,6 @@ Many of these entries use data IDs developed in the NIST Center for Automotive L
 
 | Filename | Data ID | Acquired by | Format | Description |
 | -------- | ------ | ---- |---- | ---- |
-| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml | L210209-MRC-001 | Michael Cox | XRDML| Normal direction (phi=0, chi=0) data of a Duplex steel (B160506-AAC-001) |
-| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I8_Angles_30_54.xrdml | L210209-MRC-001 | Michael Cox | XRDML| phi=30, chi=54 data of a Duplex steel (B160506-AAC-001)|
-| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I6_Angles_60_30.xrdml | L210209-MRC-001 | Michael Cox | XRDML| phi=60, chi=30 data of a Duplex steel (B160506-AAC-001)|
-| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I4_Angles_0_30.xrdml | L210209-MRC-001 | Michael Cox |  XRDML|phi=0, chi=30 data of a Duplex steel (B160506-AAC-001)|
-| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I2_Angles_90_54_1.xrdml | L210209-MRC-001 | Michael Cox |  XRDML|phi=90, chi=54 data of a Duplex steel (B160506-AAC-001)|
 | E211110-AAC-001_005-000_exported.csv | E211110-AAC-001 | Adam Creuziger | csv | LaB6 calibration sample |
 | E211110-AAC-001_008-000_exported.csv | E211110-AAC-001 | Adam Creuziger | csv | Fe LSS0411-23, 99.5% purity Fe powder in epoxy matrix. Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder. |
 | E211110-AAC-001_012-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | 316L LSS0312-01, 316L powder in epoxy matrix. Composition given as Fe:Cr:Ni:Mo 67.5:17:13:2.5 (units unclear). Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder.|
@@ -100,7 +95,7 @@ Many of these entries use data IDs developed in the NIST Center for Automotive L
 | E211110-AAC-001_016-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=60, chi=30) data of a Duplex steel sample S170606-RAU-007 |
 | E211110-AAC-001_017-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=30, chi=54) data of a Duplex steel sample S170606-RAU-007 |
 | E211110-AAC-001_018-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=90, chi=54) data of a Duplex steel sample S170606-RAU-007 |
-| E211110-AAC-001_019-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | SRM 487-157, NIST retained austenite SRM 487 (withdrawn). Expected to contain 30% austenite.  More information is available at https://doi.org/10.6028/NBS.SP.260-78 |
+
 
 
 ### CIF files
@@ -118,6 +113,129 @@ These are files that describe the lattice information and composition informatio
 | Filename |Instrument| Created by | Description |
 | -------- | ------ | ---- | ---- |
 | TestCalibration.instprm | Mines Empyrean | Adam Creuziger | Used Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml data to create calibration file. Not a recommended method, place holder for now.  |
+|BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
+
+## Example Data Folders
+In the ExampleData folder, several subfolders have been made with collected example files.
+## Example01
+
+Example data from a duplex steel ND direction, courtesy of Michael Cox.
+
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ---- |
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml | L210209-MRC-001 | Michael Cox | XRDML| Normal direction (phi=0, chi=0) data of a Duplex steel (B160506-AAC-001) |
+
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
+| TestCalibration.instprm | Mines Empyrean | Adam Creuziger | Used Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml data to create calibration file. Not a recommended method, place holder for now.  |
+
+### CIF files
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
+
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+| austenite-Duplex.cif | Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+| ferrite-Duplex.cif| Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+
+
+## Example02
+
+Example data from a duplex steel, courtesy of Michael Cox.
+
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ---- |
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml | L210209-MRC-001 | Michael Cox | XRDML| Normal direction (phi=0, chi=0) data of a Duplex steel (B160506-AAC-001) |
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I8_Angles_30_54.xrdml | L210209-MRC-001 | Michael Cox | XRDML| phi=30, chi=54 data of a Duplex steel (B160506-AAC-001)|
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I6_Angles_60_30.xrdml | L210209-MRC-001 | Michael Cox | XRDML| phi=60, chi=30 data of a Duplex steel (B160506-AAC-001)|
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I4_Angles_0_30.xrdml | L210209-MRC-001 | Michael Cox |  XRDML|phi=0, chi=30 data of a Duplex steel (B160506-AAC-001)|
+| Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Duplex_10b_I2_Angles_90_54_1.xrdml | L210209-MRC-001 | Michael Cox |  XRDML|phi=90, chi=54 data of a Duplex steel (B160506-AAC-001)|
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
+| TestCalibration.instprm | Mines Empyrean | Adam Creuziger | Used Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper power.xrdml data to create calibration file. Not a recommended method, place holder for now.  |
+
+### CIF files
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
+
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+| austenite-Duplex.cif | Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+| ferrite-Duplex.cif| Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+
+## Example03
+
+Example data from a duplex steel, courtesy of Adam Creuziger.
+
+#### Data files
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ----
+| E211110-AAC-001_014-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | Normal direction (phi=0, chi=0) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_015-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=0, chi=30) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_016-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=60, chi=30) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_017-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=30, chi=54) data of a Duplex steel sample S170606-RAU-007 |
+| E211110-AAC-001_018-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | (phi=90, chi=54) data of a Duplex steel sample S170606-RAU-007 |
+
+#### Instrument calibration files
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
+|BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
+
+#### CIF files
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
+
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+| austenite-Duplex.cif | Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+| ferrite-Duplex.cif| Adam Creuziger | Duplex steel (B160506-AAC-001), composition from E160629-AAC-004. Bulk composition used for each phase, no alloying segregation by phase calculated. Source for lattice parameters? Source for Uiso?|
+
+## Example04
+Retained austenite reference material produced by an external vendor by combining a ferritic and austenitic powder.  Data set includes measurements of each powder as well.
+
+#### Data files
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ---- |
+| E211110-AAC-001_005-000_exported.csv | E211110-AAC-001 | Adam Creuziger | csv | LaB6 calibration sample |
+| E211110-AAC-001_008-000_exported.csv | E211110-AAC-001 | Adam Creuziger | csv | Fe LSS0411-23, 99.5% purity Fe powder in epoxy matrix. Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder. |
+| E211110-AAC-001_012-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | 316L LSS0312-01, 316L powder in epoxy matrix. Composition given as Fe:Cr:Ni:Mo 67.5:17:13:2.5 (units unclear). Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder.|
+| E211110-AAC-001_013-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | RA 0311-14, retained austenite reference material with pure Fe and 316L powder in epoxy matrix. Powder was mesh size 325 (44 um), epoxy matrix density approximately 15% lower than loose powder. Nominal phase fraction of 11.94% ± 2% |
+
+#### CIF files
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
+
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+
+TO DO
+
+#### Instrument calibration files
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
+|BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
+
+
+## Example05
+NIST Standard Reference Material 487 (withdrawn)
+
+#### Data files
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ---- |
+| E211110-AAC-001_019-000_exported.csv| E211110-AAC-001 | Adam Creuziger | csv | SRM 487-157, NIST retained austenite SRM 487 (withdrawn). Expected to contain 30% austenite.  More information is available at https://doi.org/10.6028/NBS.SP.260-78 |
+
+#### CIF files
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
+
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+
+TO DO
+
+#### Instrument calibration files
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
 |BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
 
 

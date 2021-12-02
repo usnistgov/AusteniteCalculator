@@ -223,7 +223,8 @@ def update_output(n_clicks,
 
     # point towards directory and upload data using GSASII
     if use_default_files is not None and use_default_files[0] == 1:
-        datadir = '../server_default_datadir'
+        #datadir = '../server_default_datadir' # commented out for testing
+        datadir = '../ExampleData/Example01'
         workdir = '../server_workdir'
         xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
         instprm_fname = 'TestCalibration.instprm'
