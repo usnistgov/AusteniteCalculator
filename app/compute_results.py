@@ -135,11 +135,18 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     mydf = mydf.iloc[:,[0,2,4,6]]
     mydf.columns = ['pos','int','sig','gam']
     mydf = pd.concat((mydf,tis),axis=1)
-    mydf['pf'] = mydf['int']/mydf['R']
+    mydf['n_int'] = mydf['int']/mydf['R']
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
-    return fig1, fig2, intensity_table, tbl_columns
+    ni_fig = px.scatter(mydf, x="pos", y="n_int", color="phase",
+                        labels = {
+                            'pos':'2-theta',
+                            'n_int':'Normalized Intensity'
+                            }
+                        )
+
+    return fig1, fig2, intensity_table, tbl_columns, ni_fig
 
 
 

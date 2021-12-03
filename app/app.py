@@ -120,7 +120,10 @@ app.layout = dbc.Container([
         # Tab 3
         dbc.Tab([
             html.Br(),
-            dash_table.DataTable(id='intensity-table')],
+            dash_table.DataTable(id='intensity-table'),
+            html.Br(),
+            dcc.Graph(id='normalized-intensity-plot')
+            ],
             label='Intensity Table')
 
     ], # end dbc.Tabs()
@@ -200,6 +203,7 @@ def show_f_name4(n_clicks):
     Output('fitted-intensity-plot','figure'),
     Output('intensity-table','data'),
     Output('intensity-table','columns'),
+    Output('normalized-intensity-plot','figure'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -219,7 +223,7 @@ def update_output(n_clicks,
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], []
+        return go.Figure(), go.Figure(), [], [], go.Figure()
 
     # point towards directory and upload data using GSASII
     if use_default_files is not None and use_default_files[0] == 1:
@@ -255,9 +259,9 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, intensity_tbl, tbl_columns = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, intensity_tbl, tbl_columns, ni_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
-    return fig1, fig2, intensity_tbl, tbl_columns
+    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig
 
 if __name__ == '__main__':
     #app.run_server(debug=True,port=8050) # local
