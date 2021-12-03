@@ -114,23 +114,39 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     mydf.columns = ['pos','int','sig','gam']
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
+    
+    austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
+                                                material='Austenite',
+                                                cif_file='austenite-Duplex.cif',
+                                                test_calibration_file='TestCalibration.instprm',
+                                                G2sc=G2sc,
+                                                DataPathWrap=DataPathWrap,
+                                                SaveWrap=SaveWrap)
+    
+    ### end calculation of theoretical intensities ###
 
-    ### calculate theoretical intensities (Austenite) ###
-    gpx = G2sc.G2Project(newgpx=SaveWrap('Austenite-sim.gpx')) # create a project    
+    return fig1, fig2, intensity_table, tbl_columns
 
-    PhaseAustenite = gpx.add_phase(DataPathWrap("austenite-Duplex.cif"), phasename="Austenite",fmthint='CIF')
+
+
+
+def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration_file,G2sc,DataPathWrap,SaveWrap): 
+
+    # material: e.g., 'Austenite', 'Ferrite'
+
+    gpx = G2sc.G2Project(newgpx=SaveWrap(gpx_file_name)) # create a project    
+
+    PhaseAustenite = gpx.add_phase(DataPathWrap(cif_file), phasename=material,fmthint='CIF')
 
     histogram_scale=100.
 
     # add a simulated histogram and link it to the previous phase(s)
-    hist1 = gpx.add_simulated_powder_histogram("Austenite simulation",
-            DataPathWrap('../server_datadir/TestCalibration.instprm'),5.,120.,Npoints=5000,
-            phases=gpx.phases(),scale=histogram_scale)
-
+    hist1 = gpx.add_simulated_powder_histogram(material + " simulation",
+                DataPathWrap(test_calibration_file),5.,120.,Npoints=5000,
+                phases=gpx.phases(),scale=histogram_scale)
     gpx.do_refinements()   # calculate pattern
     gpx.save()
 
-    theoretical_intensities = hist1.data['Reflection Lists']['Austenite']['RefList'][:,11]
-    ### end calculation of theoretical intensities ###
+    tis = hist1.data['Reflection Lists'][material]['RefList'][:,11]
 
-    return fig1, fig2, intensity_table, tbl_columns
+    return tis
