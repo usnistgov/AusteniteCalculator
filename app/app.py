@@ -87,7 +87,6 @@ app.layout = dbc.Container([
             html.Div(id='f4-name'),
 
             html.Hr(),
-            html.Br(),
             dbc.Checklist(
                 options=[
                     {"label": "Use Default Files", "value": 1},
@@ -96,9 +95,7 @@ app.layout = dbc.Container([
             ),
 
             # submit button
-            html.Br(),
             html.Hr(),
-            html.Br(),
             html.Div("""Once your files have been uploaded, click the button below
                      to begin the analysis."""),
             html.Br(),

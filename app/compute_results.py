@@ -108,12 +108,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         xaxis_title="2theta",
         yaxis_title="Intensity"
     )
-
-    mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
-    mydf = mydf.iloc[:,[0,2,4,6]]
-    mydf.columns = ['pos','int','sig','gam']
-    intensity_table = mydf.to_dict('records')
-    tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
     
     austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
                                                 material='Austenite',
@@ -122,8 +116,28 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                                 G2sc=G2sc,
                                                 DataPathWrap=DataPathWrap,
                                                 SaveWrap=SaveWrap)
+
+    ferrite_tis = get_theoretical_intensities(gpx_file_name='Ferrite-sim.gpx',
+                                              material='Ferrite',
+                                              cif_file='ferrite-Duplex.cif',
+                                              test_calibration_file='TestCalibration.instprm',
+                                              G2sc=G2sc,
+                                              DataPathWrap=DataPathWrap,
+                                              SaveWrap=SaveWrap)
+
+    tis = np.concatenate((austenite_tis,ferrite_tis))
+    tis = pd.DataFrame({
+        'R':tis,
+        'phase':np.concatenate( (['Austenite']*len(austenite_tis),['Ferrite']*len(ferrite_tis)) )
+    })
     
-    ### end calculation of theoretical intensities ###
+    mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
+    mydf = mydf.iloc[:,[0,2,4,6]]
+    mydf.columns = ['pos','int','sig','gam']
+    mydf = pd.concat((mydf,tis),axis=1)
+    mydf['pf'] = mydf['int']/mydf['R']
+    intensity_table = mydf.to_dict('records')
+    tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
     return fig1, fig2, intensity_table, tbl_columns
 
@@ -136,7 +150,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration
 
     gpx = G2sc.G2Project(newgpx=SaveWrap(gpx_file_name)) # create a project    
 
-    PhaseAustenite = gpx.add_phase(DataPathWrap(cif_file), phasename=material,fmthint='CIF')
+    Phase = gpx.add_phase(DataPathWrap(cif_file), phasename=material,fmthint='CIF')
 
     histogram_scale=100.
 
