@@ -13,17 +13,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                     DataPathWrap(instprm_fname),
                                     fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
 
+    fig1 = get_figures()
 
-    
-    df = pd.DataFrame({
-        "two_theta":hist.data['data'][1][0],
-        "intensity":hist.data['data'][1][1]
-    })
-
-    fig1 = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-
-    PhaseAustenite = gpx.add_phase(DataPathWrap("austenite-Duplex.cif"),phasename="Austenite",fmthint='CIF')
-    PhaseFerrite = gpx.add_phase(DataPathWrap("ferrite-Duplex.cif"),phasename="Ferrite",fmthint='CIF')
+    PhaseAustenite = get_phase(DataPathWrap("austenite-Duplex.cif"), "Austenite", gpx)
+    PhaseFerrite = get_phase(DataPathWrap("ferrite-Duplex.cif"), "Ferrite", gpx)
 
     # Read the lattice parameter 
     a0_Austenite=PhaseAustenite.data['General']['Cell'][1]
@@ -36,34 +29,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     HKL_BCC=[[1,1,0],[2,0,0],[2,1,1],[2,2,0],[3,1,0],[2,2,2],[3,2,1],[4,1,1]]
     HKL_FCC=[[1,1,1],[2,0,0],[2,2,0],[3,1,1],[2,2,2],[4,0,0],[3,3,1],[4,2,0],[4,2,2]]
     
-    d_BCC=[a0_Ferrite/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in HKL_BCC]
-    SinTheta_BCC=[1*Ka1_wavelength/(2*d) for d in d_BCC]
-
-    d_FCC=[a0_Austenite/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in HKL_FCC]
-    SinTheta_FCC=[1*Ka1_wavelength/(2*d) for d in d_FCC]
+    SinTheta_BCC = find_sin_thetas(a0_Ferrite, HKL_BCC, Ka1_wavelength)
+    SinTheta_FCC = find_sin_thetas(a0_Austenite, HKL_FCC, Ka1_wavelength)
 
     # Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan
-    TwoTheta_BCC=[np.nan]*len(SinTheta_BCC)
-    for i,value in enumerate(SinTheta_BCC):
-        #print(value)
-        try:
-            TwoTheta_BCC[i]=(2*math.degrees(math.asin(value)))
-        except:
-            TwoTheta_BCC[i]=(np.nan)    
-            
-    TwoTheta_FCC=[np.nan]*len(SinTheta_FCC)
-    for i,value in enumerate(SinTheta_FCC):
-        #print(value)
-        try:
-            TwoTheta_FCC[i]=(2*math.degrees(math.asin(value)))
-        except:
-            TwoTheta_FCC[i]=(np.nan)
-
-    TwoThetaInRange_BCC=[np.nan if i > max(hist.data['data'][1][0]) else i for i in TwoTheta_BCC]
-    TwoThetaInRange_BCC=[np.nan if i < min(hist.data['data'][1][0]) else i for i in TwoThetaInRange_BCC]
-
-    TwoThetaInRange_FCC=[np.nan if i > max(hist.data['data'][1][0]) else i for i in TwoTheta_FCC]
-    TwoThetaInRange_FCC=[np.nan if i < min(hist.data['data'][1][0]) else i for i in TwoThetaInRange_FCC]
+    TwoTheta_BCC=find_two_theta_in_range(SinTheta_BCC)         
+    TwoTheta_FCC=find_two_theta_in_range(SinTheta_FCC)
 
     PeaksList=[]
     PeaksList = np.array(TwoThetaInRange_BCC)[~np.isnan(np.array(TwoThetaInRange_BCC))]
@@ -148,8 +119,35 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     return fig1, fig2, intensity_table, tbl_columns, ni_fig
 
+def get_figures()
+    df = pd.DataFrame({
+        "two_theta":hist.data['data'][1][0],
+        "intensity":hist.data['data'][1][1]
+    })
 
+    fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+    return fig
 
+def get_phase(cif_wrap, phasename, project)
+    return project.add_phase(cif_wrap, phasename, fmthint = 'CIF')
+
+def find_sin_thetas(phase, hkl_list, wavelength)
+    D=[phase/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
+    SinTheta=[1*wavelength/(2*d) for d in D]
+    return SinTheta
+
+def find_two_theta_in_range(SinTheta, hist)
+    TwoTheta=[np.nan]*len(SinTheta)
+    for i,value in enumerate(SinTheta):
+        #print(value)
+        try:
+            TwoTheta[i]=(2*math.degrees(math.asin(value)))
+        except:
+            TwoTheta[i]=(np.nan)
+
+    TwoThetaInRange=[np.nan if i > max(hist.data['data'][1][0]) else i for i in TwoTheta]
+    TwoThetaInRange=[np.nan if i < min(hist.data['data'][1][0]) else i for i in TwoThetaInRange]
+    return TwoTheta
 
 def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration_file,G2sc,DataPathWrap,SaveWrap): 
 
