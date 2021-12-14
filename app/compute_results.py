@@ -108,8 +108,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     mydf.columns = ['pos','int','sig','gam']
     mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
 
-    breakpoint()
-
     mydf = pd.concat((mydf,tis),axis=1)
     mydf['n_int'] = mydf['int']/mydf['R']
     intensity_table = mydf.to_dict('records')
@@ -170,8 +168,6 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration
                 phases=gpx.phases(),scale=histogram_scale)
     gpx.do_refinements()   # calculate pattern
     gpx.save()
-
-    breakpoint()
 
     tis = hist1.data['Reflection Lists'][material]['RefList'][:,11]
 
