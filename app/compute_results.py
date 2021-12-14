@@ -60,11 +60,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         hist.add_peak(1, ttheta=peak)
 
     # Need to use this order, otherwise fitting gets unstable
+
     hist.set_peakFlags(area=True)
     hist.refine_peaks()
             
     hist.set_peakFlags(pos=True,area=True)
     hist.refine_peaks()
+
     hist.set_peakFlags(pos=True,area=True,sig=True)
     hist.refine_peaks()
 
@@ -96,29 +98,43 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                               DataPathWrap=DataPathWrap,
                                               SaveWrap=SaveWrap)
 
-    tis = np.concatenate((austenite_tis,ferrite_tis))
-    tis = pd.DataFrame({
-        'R':tis,
-        'phase':np.concatenate( (['Austenite']*len(austenite_tis),['Ferrite']*len(ferrite_tis)) )
-    })
 
+
+    #breakpoint()
+
+    tis = pd.concat((austenite_tis,ferrite_tis),axis=0,ignore_index=True)
+    tis = tis.sort_values(by='two_theta')
+    tis = tis.reset_index(drop=True)
+
+  
     
     mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
     mydf = mydf.iloc[:,[0,2,4,6]]
     mydf.columns = ['pos','int','sig','gam']
-    mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
+    mydf = mydf.sort_values('pos')
+    mydf = mydf.reset_index(drop=True)
+    #mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
+    breakpoint()
 
     mydf = pd.concat((mydf,tis),axis=1)
     mydf['n_int'] = mydf['int']/mydf['R']
+
+    if mydf.shape[0] == tis.shape[0]:
+
+        ni_fig = px.scatter(mydf, x="pos", y="n_int", color="Phase",
+                            labels = {
+                                'pos':'2-theta',
+                                'n_int':'Normalized Intensity'
+                                }
+                            )
+    
+    else:
+        print("Warning: I and R values different lengths. Returning empty figure.")
+        print(mydf)
+        ni_fig = go.Figure()
+    
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
-
-    ni_fig = px.scatter(mydf, x="pos", y="n_int", color="phase",
-                        labels = {
-                            'pos':'2-theta',
-                            'n_int':'Normalized Intensity'
-                            }
-                        )
 
     return fig1, fig2, intensity_table, tbl_columns, ni_fig
 
@@ -150,7 +166,7 @@ def find_two_theta_in_range(SinTheta, hist):
 
     TwoThetaInRange=[np.nan if i > max(hist.data['data'][1][0]) else i for i in TwoTheta]
     TwoThetaInRange=[np.nan if i < min(hist.data['data'][1][0]) else i for i in TwoThetaInRange]
-    return TwoTheta
+    return TwoThetaInRange
 
 def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration_file,G2sc,DataPathWrap,SaveWrap): 
 
@@ -169,6 +185,8 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration
     gpx.do_refinements()   # calculate pattern
     gpx.save()
 
-    tis = hist1.data['Reflection Lists'][material]['RefList'][:,11]
+    ti_table = pd.DataFrame(hist1.data['Reflection Lists'][material]['RefList'][:,(0,1,2,5,11)],columns=['h','k','l','two_theta','R'])
 
-    return tis
+    ti_table[['Phase']] = material
+
+    return ti_table
