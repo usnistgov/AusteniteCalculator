@@ -13,7 +13,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                     DataPathWrap(instprm_fname),
                                     fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
 
-    fig1 = get_figures()
+    fig1 = get_figures(hist)
 
     PhaseAustenite = get_phase(DataPathWrap("austenite-Duplex.cif"), "Austenite", gpx)
     PhaseFerrite = get_phase(DataPathWrap("ferrite-Duplex.cif"), "Ferrite", gpx)
@@ -33,8 +33,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     SinTheta_FCC = find_sin_thetas(a0_Austenite, HKL_FCC, Ka1_wavelength)
 
     # Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan
-    TwoTheta_BCC=find_two_theta_in_range(SinTheta_BCC)         
-    TwoTheta_FCC=find_two_theta_in_range(SinTheta_FCC)
+    TwoThetaInRange_BCC=find_two_theta_in_range(SinTheta_BCC,hist)         
+    TwoThetaInRange_FCC=find_two_theta_in_range(SinTheta_FCC,hist)
 
     PeaksList=[]
     PeaksList = np.array(TwoThetaInRange_BCC)[~np.isnan(np.array(TwoThetaInRange_BCC))]
@@ -101,10 +101,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         'R':tis,
         'phase':np.concatenate( (['Austenite']*len(austenite_tis),['Ferrite']*len(ferrite_tis)) )
     })
+
     
     mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
     mydf = mydf.iloc[:,[0,2,4,6]]
     mydf.columns = ['pos','int','sig','gam']
+    mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
+
+    breakpoint()
+
     mydf = pd.concat((mydf,tis),axis=1)
     mydf['n_int'] = mydf['int']/mydf['R']
     intensity_table = mydf.to_dict('records')
@@ -119,7 +124,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     return fig1, fig2, intensity_table, tbl_columns, ni_fig
 
-def get_figures()
+def get_figures(hist):
     df = pd.DataFrame({
         "two_theta":hist.data['data'][1][0],
         "intensity":hist.data['data'][1][1]
@@ -128,15 +133,15 @@ def get_figures()
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
 
-def get_phase(cif_wrap, phasename, project)
+def get_phase(cif_wrap, phasename, project):
     return project.add_phase(cif_wrap, phasename, fmthint = 'CIF')
 
-def find_sin_thetas(phase, hkl_list, wavelength)
+def find_sin_thetas(phase, hkl_list, wavelength):
     D=[phase/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
     SinTheta=[1*wavelength/(2*d) for d in D]
     return SinTheta
 
-def find_two_theta_in_range(SinTheta, hist)
+def find_two_theta_in_range(SinTheta, hist):
     TwoTheta=[np.nan]*len(SinTheta)
     for i,value in enumerate(SinTheta):
         #print(value)
@@ -165,6 +170,8 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration
                 phases=gpx.phases(),scale=histogram_scale)
     gpx.do_refinements()   # calculate pattern
     gpx.save()
+
+    breakpoint()
 
     tis = hist1.data['Reflection Lists'][material]['RefList'][:,11]
 
