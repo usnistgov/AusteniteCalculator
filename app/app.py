@@ -7,6 +7,7 @@ from dash import html
 from dash.dependencies import Input, Output, State
 from dash import dash_table
 import dash_bootstrap_components as dbc
+#from dash.dash_table.Format import Format, Scheme, Trim # Tried to set format, failed...
 
 # plotting
 import plotly.express as px
@@ -120,6 +121,7 @@ app.layout = dbc.Container([
         # Tab 3
         dbc.Tab([
             html.Br(),
+            #dash_table.DataTable(id='intensity-table',format=Format(precision=2, scheme=Scheme.fixed)), #tried to set format, failed unexpeced keyword arguement 'format'
             dash_table.DataTable(id='intensity-table'),
             html.Br(),
             dcc.Graph(id='normalized-intensity-plot')
