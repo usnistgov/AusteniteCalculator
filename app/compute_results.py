@@ -9,9 +9,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     DataPathWrap = lambda fil: datadir + '/' + fil
     SaveWrap = lambda fil: workdir + '/' + fil
     gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx')) # start new project
+#    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
+#                                    DataPathWrap(instprm_fname),
+#                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
+
     hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
                                     DataPathWrap(instprm_fname),
-                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
+                                    databank=1, instbank=1)
+
 
     fig1 = get_figures(hist)
 
@@ -22,8 +27,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     a0_Austenite=PhaseAustenite.data['General']['Cell'][1]
     a0_Ferrite=PhaseFerrite.data['General']['Cell'][1]
 
-    # Find the ka1 wavelength
-    Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
+    # Find the ka1 wavelength in the file
+    # works for some data files that have information encode, otherwise may need to prompt
+    try:
+        Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
+    except:
+        Ka1_wavelength=1.5405 # hardcoded in for now with Cu source.  Read from instrument parameter file?
 
     #hardcoding HKL lists for now, likely better ways to do this later...
     HKL_BCC=[[1,1,0],[2,0,0],[2,1,1],[2,2,0],[3,1,0],[2,2,2],[3,2,1],[4,1,1]]
@@ -105,7 +114,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     tis = pd.concat((austenite_tis,ferrite_tis),axis=0,ignore_index=True)
     tis = tis.sort_values(by='two_theta')
     tis = tis.reset_index(drop=True)
-
+    print(tis)
   
     
     mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
@@ -114,10 +123,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     mydf = mydf.sort_values('pos')
     mydf = mydf.reset_index(drop=True)
     #mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
-    breakpoint()
+    print(mydf)
+    #breakpoint()
 
+    print("Concatenating Datafiles")
     mydf = pd.concat((mydf,tis),axis=1)
-    mydf['n_int'] = mydf['int']/mydf['R']
+    mydf['n_int'] = mydf['int']/mydf['R_calc']
 
     if mydf.shape[0] == tis.shape[0]:
 
@@ -169,8 +180,23 @@ def find_two_theta_in_range(SinTheta, hist):
     return TwoThetaInRange
 
 def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration_file,G2sc,DataPathWrap,SaveWrap): 
-
-    # material: e.g., 'Austenite', 'Ferrite'
+    """
+    #Description
+    Function to calculate the theoretical intensities based on data in the .cif file and instrument parameter file
+    
+    #Input
+    gpx_file_name
+    material: e.g., 'Austenite', 'Ferrite'
+    cif_file
+    test_calibration_file
+    G2sc
+    DataPathWrap
+    SaveWrap
+    
+    #Output
+    ti_table: table of theoretical intensities
+    """
+    
 
     gpx = G2sc.G2Project(newgpx=SaveWrap(gpx_file_name)) # create a project    
 
@@ -184,9 +210,12 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,test_calibration
                 phases=gpx.phases(),scale=histogram_scale)
     gpx.do_refinements()   # calculate pattern
     gpx.save()
-
-    ti_table = pd.DataFrame(hist1.data['Reflection Lists'][material]['RefList'][:,(0,1,2,5,11)],columns=['h','k','l','two_theta','R'])
-
+    
+    # Column description of the reflection list
+    #https://gsas-ii.readthedocs.io/en/latest/GSASIIobj.html#powderrefl-table
+    ti_table = pd.DataFrame(hist1.data['Reflection Lists'][material]['RefList'][:,(0,1,2,5,9,11)],columns=['h','k','l','two_theta','F_calc_sq','I_corr'])
+    
+    ti_table['R_calc']=ti_table['I_corr']*ti_table['F_calc_sq']
     ti_table[['Phase']] = material
-
+    print(ti_table)
     return ti_table
