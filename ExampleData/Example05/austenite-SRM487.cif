@@ -1,17 +1,17 @@
  
 ######################################################################
-data_austenite-Duplex
+data_austenite-SRM487
 
-# phase info for austenite-Duplex follows
-_pd_phase_name  austenite-Duplex
-_cell_length_a  3.62393
-_cell_length_b  3.62393
-_cell_length_c  3.62393
+# phase info for austenite-SRM487 follows
+_pd_phase_name  austenite-SRM487
+_cell_length_a  3.59300(10)
+_cell_length_b  3.59300(10)
+_cell_length_c  3.59300(10)
 _cell_angle_alpha  90
 _cell_angle_beta   90
 _cell_angle_gamma  90
-_cell_volume  46.812
-_exptl_crystal_density_diffrn  7.783
+_cell_volume  46.384(4)
+_exptl_crystal_density_diffrn  7.8572
 _symmetry_cell_setting  cubic
 _symmetry_space_group_name_H-M  "F m -3 m"
 loop_
@@ -220,11 +220,10 @@ loop_
    _atom_site_occupancy
    _atom_site_adp_type
    _atom_site_U_iso_or_equiv
-   _atom_site_symmetry_multiplicity
-Fe1    Fe   0.00000     0.00000     0.00000     0.703      Uiso 0.007      4   
-Cr2    Cr   0.00000     0.00000     0.00000     0.207      Uiso 0.007      4   
-Mn3    Mn   0.00000     0.00000     0.00000     0.050      Uiso 0.007      4   
-Ni4    Ni   0.00000     0.00000     0.00000     0.027      Uiso 0.007      4   
-Si5    Si   0.00000     0.00000     0.00000     0.008      Uiso 0.007      4   
-Cu6    Cu   0.00000     0.00000     0.00000     0.003      Uiso 0.007      4   
-C7     C    0.00000     0.00000     0.00000     0.001      Uiso 0.007      4   
+   _atom_site_site_symmetry_multiplicity
+Fe1    Fe   0.00000     0.00000     0.00000     0.526      Uiso 0.007      4   
+Cr2    Cr   0.00000     0.00000     0.00000     0.264      Uiso 0.007      4   
+Ni3    Ni   0.00000     0.00000     0.00000     0.191      Uiso 0.007      4   
+Si4    Si   0.00000     0.00000     0.00000     0.015      Uiso 0.007      4   
+C5     C    0.00000     0.00000     0.00000     0.002      Uiso 0.007      4   
+Mn6    Mn   0.00000     0.00000     0.00000     0.002      Uiso 0.007      4   

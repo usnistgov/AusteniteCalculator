@@ -217,7 +217,7 @@ TO DO
 
 
 ## Example05
-NIST Standard Reference Material 487 (withdrawn)
+NIST Standard Reference Material 487 (withdrawn).
 
 #### Data files
 | Filename | Data ID | Acquired by | Format | Description |
@@ -229,8 +229,9 @@ These are files that describe the lattice information and composition informatio
 
 | Filename | Created by | Description |
 | -------- |  ---- | ---- |
+| austenite-SRM487.cif | Adam Creuziger | 310 Stainless Steel, composition from NBS SP 260-78. Lattice parameters fit from datafile. Source for Uiso?|
+| ferrite-SRM487.cif| Adam Creuziger | 430 Stainless Steel, composition from NBS SP 260-78. Lattice parameters fit from datafile. Source for Uiso?|
 
-TO DO
 
 #### Instrument calibration files
 
