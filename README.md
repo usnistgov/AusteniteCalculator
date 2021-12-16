@@ -34,7 +34,28 @@ Support for Adam Creuziger was provided by the National Institute of Standards a
 
 ## How to run the application
 
-We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/) (installation instructions can be found [here](https://docs.docker.com/get-docker/)). Once Docker is installed, download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). After decompressing the file, navigate your terminal to the main directory of the project (the same level as Dockerfile). Then, run the following command to build the image:
+We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/), or alternatively one can create a conda enviroment using the [yml file](conda_gsas_env.yml). Specific instructions for both options are below.
+
+### Locally
+
+To run the file locally, first download the AusteniteCalculator repository(click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). Then, build a GSAS conda environment using the following command (from within a terminal in the main directory of the AusteniteCalculator project).
+```
+conda env create -f conda_gsas_env.yml
+```
+Then, activate the environment with 
+```
+conda activate gsas
+```
+Finally, navigate your terminal to the AusteniteCalculator/app/ folder, and then run
+```
+python app.py
+```
+The application should now be visible on localhost:8050. 
+
+
+### From a Docker Container
+
+To run the application using Docker you will first need to install Docker (installation instructions can be found [here](https://docs.docker.com/get-docker/)). Once Docker is installed, download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). After decompressing the file, navigate your terminal to the main directory of the project (the same level as Dockerfile). Then, run the following command to build the image:
 ```
 docker build -t austenite_calculator .
 ```
