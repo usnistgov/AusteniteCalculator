@@ -1,0 +1,16 @@
+name: G2_2
+channels:
+  - defaults
+  - briantoby
+dependencies:
+  - gsas2pkg=2.2.0
+  - python
+  - plotly
+  - pandas
+  - numpy
+  - matplotlib
+  - dash
+  - flask
+  - pip
+  - pip:
+    - dash-bootstrap-components
