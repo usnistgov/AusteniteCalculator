@@ -249,6 +249,8 @@ These are files that describe the lattice information and composition informatio
 | Filename | Created by | Description |
 | -------- |  ---- | ---- |
 | austenite-SRM487.cif | Adam Creuziger | 310 Stainless Steel, composition from NBS SP 260-78. Lattice parameters fit from datafile. Source for Uiso?|
+| austenite-SRM487_high.cif | Caleb Schenck | 310 Stainless Steel, composition from https://www.theworldmaterial.com/aisi-310-stainless-steel/. Lattice parameters fit from datafile. Source for Uiso?|
+| austenite-SRM487_low.cif | Caleb Schenck | 310 Stainless Steel, composition from https://www.theworldmaterial.com/aisi-310-stainless-steel/. Lattice parameters fit from datafile. Source for Uiso?|
 | ferrite-SRM487.cif| Adam Creuziger | 430 Stainless Steel, composition from NBS SP 260-78. Lattice parameters fit from datafile. Source for Uiso?|
 
 
