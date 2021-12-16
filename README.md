@@ -34,7 +34,7 @@ Support for Adam Creuziger was provided by the National Institute of Standards a
 
 ## How to run the application
 
-We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/), or alternatively one can create a conda enviroment using the [yml file](conda_gsas_env.yml). Specific instructions for both options are below.
+We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/), or alternatively one can run the application locally from a custom conda enviroment using the provided [yml file](conda_gsas_env.yml). Specific instructions for both options are below.
 
 ### Locally
 
