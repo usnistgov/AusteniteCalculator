@@ -38,7 +38,7 @@ We plan to eventually deploy the Austenite Calculator as a web application. For 
 
 ### Locally
 
-To run the file locally, first download the AusteniteCalculator repository(click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). Then, build a GSAS conda environment using the following command (from within a terminal in the main directory of the AusteniteCalculator project).
+To run the file locally, first download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). Then, build a GSAS conda environment using the following command (using a terminal with the working directory set to the main directory of the AusteniteCalculator project). This may take several minutes.
 ```
 conda env create -f conda_gsas_env.yml
 ```
@@ -50,7 +50,7 @@ Finally, navigate your terminal to the AusteniteCalculator/app/ folder, and then
 ```
 python app.py
 ```
-The application should now be visible on localhost:8050. 
+to start the flask server. The application should then be visible at localhost:8050. 
 
 
 ### From a Docker Container
@@ -65,7 +65,7 @@ To run the container, run the following command:
 ```
 docker run -d -p 8080:8050 --name my_container austenite_calculator
 ```
-(-d for 'detached', -p specifies the port mapping, '--name' gives a name to the running container, and 'austenite_calculator' tells docker which image to build the container from.) Then the app should be visible at localhost:8080 (accessed via your web browser).  
+(-d for 'detached', -p specifies the port mapping, '--name' gives a name to the running container, and 'austenite_calculator' tells Docker which image to build the container from.) Then the app should be visible at localhost:8080 (accessed via your web browser).  
 
 To stop and remove the running container, run the following:
 ```
@@ -74,8 +74,6 @@ docker rm -f my_container
 If you wish to run the container again, note that you do not need to run `docker build` again (unless you change the Dockerfile). You can simply run the `docker run` command.
 
 Alternatively, you can run, stop, and remove the container using the Docker Desktop application. For more instructions on using Docker, see the official guide [here](https://docs.docker.com/get-started/).
-
--> Is there a way to save the container rather than rebuilding each time?
 
 ## Licence
 See [license.md](license.md).
