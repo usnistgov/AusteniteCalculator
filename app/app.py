@@ -263,6 +263,9 @@ def update_output(n_clicks,
     # Now, we just run the desired computations
     fig1, fig2, intensity_tbl, tbl_columns, ni_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
+    with open('export_file.txt', 'w') as writer:
+        writer.write('Phase Fraction Goes here')
+
     return fig1, fig2, intensity_tbl, tbl_columns, ni_fig
 
 if __name__ == '__main__':
