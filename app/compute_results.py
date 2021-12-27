@@ -18,19 +18,19 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     """
     
     #Helper functions to create full path descriptions
-    DataPathWrap = lambda fil: datadir + '/' + fil
-    SaveWrap = lambda fil: workdir + '/' + fil
+    data_path_wrap = lambda fil: datadir + '/' + fil
+    save_wrap = lambda fil: workdir + '/' + fil
     
     # start new GSAS-II project
-    gpx = G2sc.G2Project(newgpx=SaveWrap('pkfit.gpx'))
+    gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
     #Commented out format hint so that other examples work
 #    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
 #                                    DataPathWrap(instprm_fname),
 #                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
 
-    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-                                    DataPathWrap(instprm_fname),
+    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
+                                    data_path_wrap(instprm_fname),
                                     databank=1, instbank=1)
 
 
@@ -38,12 +38,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     
     # Change these to be passed as part of the function?
-    PhaseAustenite = get_phase(DataPathWrap("austenite-Duplex.cif"), "Austenite", gpx)
-    PhaseFerrite = get_phase(DataPathWrap("ferrite-Duplex.cif"), "Ferrite", gpx)
+    phase_austenite = get_phase(data_path_wrap("austenite-Duplex.cif"), "Austenite", gpx)
+    phase_ferrite = get_phase(data_path_wrap("ferrite-Duplex.cif"), "Ferrite", gpx)
 
     # Read the lattice parameter 
-    a0_Austenite=PhaseAustenite.data['General']['Cell'][1]
-    a0_Ferrite=PhaseFerrite.data['General']['Cell'][1]
+    a0_Austenite=phase_austenite.data['General']['Cell'][1]
+    a0_Ferrite=phase_ferrite.data['General']['Cell'][1]
 
     # Find the ka1 wavelength in the file
     # works for some data files that have information encode, otherwise may need to prompt
@@ -56,21 +56,21 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     HKL_BCC=[[1,1,0],[2,0,0],[2,1,1],[2,2,0],[3,1,0],[2,2,2],[3,2,1],[4,1,1]]
     HKL_FCC=[[1,1,1],[2,0,0],[2,2,0],[3,1,1],[2,2,2],[4,0,0],[3,3,1],[4,2,0],[4,2,2]]
     
-    SinTheta_BCC = find_sin_thetas(a0_Ferrite, HKL_BCC, Ka1_wavelength)
-    SinTheta_FCC = find_sin_thetas(a0_Austenite, HKL_FCC, Ka1_wavelength)
+    sin_theta_BCC = find_sin_thetas(a0_Ferrite, HKL_BCC, Ka1_wavelength)
+    sin_theta_FCC = find_sin_thetas(a0_Austenite, HKL_FCC, Ka1_wavelength)
 
     # Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan
-    TwoThetaInRange_BCC=find_two_theta_in_range(SinTheta_BCC,hist)         
-    TwoThetaInRange_FCC=find_two_theta_in_range(SinTheta_FCC,hist)
+    two_theta_in_range_BCC=find_two_theta_in_range(sin_theta_BCC,hist)         
+    two_theta_in_range_FCC=find_two_theta_in_range(sin_theta_FCC,hist)
 
-    PeaksList=[]
-    PeaksList = np.array(TwoThetaInRange_BCC)[~np.isnan(np.array(TwoThetaInRange_BCC))]
-    PeaksList = np.concatenate((PeaksList,
-                            np.array(TwoThetaInRange_FCC)[~np.isnan(np.array(TwoThetaInRange_FCC))]),
+    peaks_list=[]
+    peaks_list = np.array(two_theta_in_range_BCC)[~np.isnan(np.array(two_theta_in_range_BCC))]
+    peaks_list = np.concatenate((peaks_list,
+                            np.array(two_theta_in_range_FCC)[~np.isnan(np.array(two_theta_in_range_FCC))]),
                             axis=0)
-    PeaksList=list(PeaksList)
+    peaks_list=list(peaks_list)
 
-    PeaksList=[x+0.5 for x in PeaksList]
+    peaks_list=[x+0.5 for x in peaks_list]
 
     # reset the peak list in case of errors...
     hist.Peaks['peaks']=[]
@@ -83,7 +83,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     h_background = hist.data['data'][1][4]
     h_fit = hist.data['data'][1][3]
 
-    for peak in PeaksList:
+    for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
 
     # Need to use this order, otherwise fitting gets unstable
@@ -115,16 +115,16 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                                 cif_file='austenite-Duplex.cif',
                                                 test_calibration_file='TestCalibration.instprm',
                                                 G2sc=G2sc,
-                                                DataPathWrap=DataPathWrap,
-                                                SaveWrap=SaveWrap)
+                                                DataPathWrap=data_path_wrap,
+                                                SaveWrap=save_wrap)
 
     ferrite_tis = get_theoretical_intensities(gpx_file_name='Ferrite-sim.gpx',
                                               material='Ferrite',
                                               cif_file='ferrite-Duplex.cif',
                                               test_calibration_file='TestCalibration.instprm',
                                               G2sc=G2sc,
-                                              DataPathWrap=DataPathWrap,
-                                              SaveWrap=SaveWrap)
+                                              DataPathWrap=data_path_wrap,
+                                              SaveWrap=save_wrap)
 
 
 
@@ -185,7 +185,7 @@ def find_sin_thetas(phase, hkl_list, wavelength):
     SinTheta=[1*wavelength/(2*d) for d in D]
     return SinTheta
 
-def find_two_theta_in_range(SinTheta, hist):
+def find_two_theta_in_range(sin_theta, hist):
     """
     #Description
     Truncate the calculated 2Theta range?
@@ -197,17 +197,17 @@ def find_two_theta_in_range(SinTheta, hist):
     #Output
     TwoThetaInRange:
     """
-    TwoTheta=[np.nan]*len(SinTheta)
-    for i,value in enumerate(SinTheta):
+    two_theta=[np.nan]*len(sin_theta)
+    for i,value in enumerate(sin_theta):
         #print(value)
         try:
-            TwoTheta[i]=(2*math.degrees(math.asin(value)))
+            two_theta[i]=(2*math.degrees(math.asin(value)))
         except:
-            TwoTheta[i]=(np.nan)
+            two_theta[i]=(np.nan)
 
-    TwoThetaInRange=[np.nan if i > max(hist.data['data'][1][0]) else i for i in TwoTheta]
-    TwoThetaInRange=[np.nan if i < min(hist.data['data'][1][0]) else i for i in TwoThetaInRange]
-    return TwoThetaInRange
+    two_theta_in_range=[np.nan if i > max(hist.data['data'][1][0]) else i for i in two_theta]
+    two_theta_in_range=[np.nan if i < min(hist.data['data'][1][0]) else i for i in two_theta_in_range]
+    return two_theta_in_range
 
 def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,G2sc,DataPathWrap,SaveWrap):
     """
