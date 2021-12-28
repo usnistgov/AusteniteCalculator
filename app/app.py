@@ -102,6 +102,15 @@ app.layout = dbc.Container([
                 id="default-files-check",
             ),
 
+            ## Checkbox to use Example 05 files instead
+            html.Hr(),
+            dbc.Checklist(
+                options=[
+                    {"label": "Use Example 05", "value": 1},
+                ],
+                id="example05-files-check",
+            ),
+
             # submit button
             html.Hr(),
             html.Div("""Once your files have been uploaded, click the button below
@@ -130,9 +139,27 @@ app.layout = dbc.Container([
         ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
-            #dash_table.DataTable(id='intensity-table',format=Format(precision=2, scheme=Scheme.fixed)), #tried to set format, failed unexpeced keyword arguement 'format'
-            dash_table.DataTable(id='intensity-table'),
+            dash_table.DataTable(id='phase-frac-table'),
             
+            #? Format data output
+            # Tried example from https://community.plotly.com/t/dash-table-formatting-decimal-place/34975/8, https://formattable.pythonanywhere.com/
+            # But keep running into issues
+            #dash_table.DataTable(id='intensity-table',format=Format(precision=2, scheme=Scheme.fixed)), #tried to set format, failed unexpeced keyword arguement 'format'
+#            dash_table.DataTable(id='intensity-table',
+#            columns=[
+#                {
+#                    "name": i,
+#                    "id": i,
+#                    "type": "numeric",  # Required!
+#                    "format": formatted
+#                }
+#                for i in df.columns
+#            ],
+#            data=df.to_dict("records"),
+#            editable=True,
+#            ),
+            html.Br(),
+            dash_table.DataTable(id='intensity-table'),
             #
             html.Br(),
             dcc.Graph(id='normalized-intensity-plot'),
@@ -228,6 +255,8 @@ def show_f_name4(n_clicks):
     Output('intensity-table','columns'),
     Output('normalized-intensity-plot','figure'),
     Output('two_theta-plot','figure'),
+    Output('phase-frac-table','data'),
+    Output('phase-frac-table','columns'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -237,13 +266,14 @@ def show_f_name4(n_clicks):
     State('upload-aust','filename'),
     State('upload-ferr','contents'),
     State('upload-ferr','filename'),
-    State('default-files-check','value'))
+    State('default-files-check','value'),
+    State('example05-files-check','value'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
                   aust_contents,aust_fname,
                   ferr_contents,ferr_fname,
-                  use_default_files):
+                  use_default_files, use_example05_files):
     
     # return nothing when app opens
     if n_clicks == 0:
@@ -257,6 +287,17 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
         instprm_fname = 'TestCalibration.instprm'
+        
+    # Use Example05 data
+    #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
+    #? Maybe pass like the xrdml_fnames?
+    elif use_example05_files is not None and use_example05_files[0] == 1:
+        datadir = '../ExampleData/Example05'
+        #datadir = '../ExampleData/Example01'
+        workdir = '../server_workdir'
+        xrdml_fname = 'E211110-AAC-001_019-000_exported.csv'
+        instprm_fname = 'BrukerD8_E211110.instprm'
+
     #Stores user files in a directory
     else:
         datadir = '../server_datadir'
@@ -284,12 +325,12 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
 
-    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig
+    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col
 
 if __name__ == '__main__':
     #app.run_server(debug=True,port=8050) # local

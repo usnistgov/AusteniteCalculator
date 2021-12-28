@@ -86,9 +86,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                             axis=0)
     peaks_list=list(peaks_list)
 
-    #? The '0.5' addition is just a hack to get the fits to behave.
+    #? The '0.5' addition is just a hack to get the fits to behave for the default files.
     #? We should find a better way to do this
-    peaks_list=[x+0.5 for x in peaks_list]
+    # Commented out to check Example05
+    #peaks_list=[x+0.5 for x in peaks_list]
 
     # reset the peak list in case of errors...
     #? Do we need this?  Legacy from jupyter notebook when one could run things
@@ -149,7 +150,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
                                                 material='Austenite',
                                                 cif_file='austenite-Duplex.cif',
-                                                instrument_calibration_file='TestCalibration.instprm',
+                                                instrument_calibration_file=instprm_fname,
                                                 G2sc=G2sc,
                                                 DataPathWrap=data_path_wrap,
                                                 SaveWrap=save_wrap)
@@ -157,7 +158,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     ferrite_tis = get_theoretical_intensities(gpx_file_name='Ferrite-sim.gpx',
                                               material='Ferrite',
                                               cif_file='ferrite-Duplex.cif',
-                                              instrument_calibration_file='TestCalibration.instprm',
+                                              instrument_calibration_file=instprm_fname,
                                               G2sc=G2sc,
                                               DataPathWrap=data_path_wrap,
                                               SaveWrap=save_wrap)
@@ -209,15 +210,18 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
+    # Calculate the phase fraction
+    (Phase_Fraction_dict, Phase_Fraction_columns) =Phase_Fraction(mydf)
+    
     # create a plot for the two theta
     
     two_theta_fig = two_theta_compare_figure(mydf)
 
-    return fig1, fig2, intensity_table, tbl_columns, ni_fig, two_theta_fig
+    return fig1, fig2, intensity_table, tbl_columns, ni_fig, two_theta_fig, Phase_Fraction_dict, Phase_Fraction_columns
 
 #####################################
 ######### Plotting Fuctions #########
-
+#####################################
 
 def get_figures(hist):
     """
@@ -266,6 +270,9 @@ def two_theta_compare_figure(Merged_DataFrame):
     
     return fig
 
+#####################################
+########## Helper Fuctions ##########
+#####################################
 
 def get_phase(cif_wrap, phase_name, project):
     """
@@ -327,6 +334,10 @@ def find_two_theta_in_range(sin_theta, hist):
     two_theta_in_range=[np.nan if i < min(hist.data['data'][1][0]) else i for i in two_theta_in_range]
     return two_theta_in_range
 
+#####################################
+######### Analysis Fuctions #########
+#####################################
+
 def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,G2sc,DataPathWrap,SaveWrap):
     """
     #Description
@@ -373,3 +384,51 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     ti_table[['Phase']] = material
     print(ti_table)
     return ti_table
+
+def Phase_Fraction(Merged_DataFrame):
+    """
+    #Description
+    Calculate Phase Fraction
+    
+    #Input
+    Merged_DataFrame: combined
+    
+    #Returns
+    phase_dict: dictionary with phase values
+    
+    """
+    
+    # Extract all phases listed
+    phase_list=Merged_DataFrame['Phase'].unique()
+    
+    
+    phase_dict = {"Phase":[],"Mean_value":[],"StDev_value":[],"hkls":[],"Number_hkls":[]};
+    
+    
+    for phase in phase_list:
+        phase_dict["Phase"].append(phase)
+        
+        Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
+        phase_dict["Mean_value"].append(Phase_DF['n_int'].mean())
+        phase_dict["StDev_value"].append(Phase_DF['n_int'].std())
+        
+        #Phase_DF['hkl']=Phase_DF.agg('{0['h']}{0['k']}{0['l']}'.format, axis=1)
+        #phase_dict["hkls"].append(list(Phase_DF['hkl']))
+        
+        #phase_dict["Number_hkls"].append(len(list(Phase_DF['hkl'])))
+        
+        # For now, pandas won't create a database if terms are of different lenght
+        phase_dict["hkls"].append(np.nan)
+        phase_dict["Number_hkls"].append(np.nan)
+    
+    
+    
+    phase_fraction_DF=pd.DataFrame(data=phase_dict)
+    
+    phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
+    
+    # Dash only accepts dictionaries, not dataframes
+    
+    return (phase_fraction_DF.to_dict('records'), [{"name": i, "id": i} for i in phase_fraction_DF.columns])
+        #['h','k','l','n_int']
+    #df.loc[df['column_name'] == some_value]
