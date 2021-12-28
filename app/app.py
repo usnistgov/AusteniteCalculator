@@ -48,7 +48,7 @@ app.layout = dbc.Container([
     html.Br(),
     
     dbc.Tabs([
-            
+        ### --- start tab 1 --- ###
         dbc.Tab([
             html.Br(),
             
@@ -56,22 +56,26 @@ app.layout = dbc.Container([
             html.Div('Use the buttons below to upload your .xrdml and .instprm files. ' + 
                      'Alternatively, click the "Use Default Files" button below to use a sample set of files.'),
             html.Br(),
+            
+            ## Button for uploading Diffraction File
             dcc.Upload(
                     id='upload-data-xrdml',
                     children=html.Div([
                             dbc.Button('X-Ray Diffraction File (.xrdml)')
                             ])),
             html.Div(id='f1-name'),
-            
             html.Br(),
+            
+            ## Button for uploading Instrument Parameter File
             dcc.Upload(
                     id='upload-data-instprm',
                     children=html.Div([
                             dbc.Button('Instrument Parameter File (.instprm)')
                             ])),
             html.Div(id='f2-name'),
-
             html.Br(),
+            
+            ## Button for uploading Austenite phase file
             dcc.Upload(
                     id='upload-aust',
                     children=html.Div([
@@ -80,6 +84,8 @@ app.layout = dbc.Container([
             html.Div(id='f3-name'),
 
             html.Br(),
+            
+            ## Button for uploading Ferrite
             dcc.Upload(
                     id='upload-ferr',
                     children=html.Div([
@@ -87,6 +93,7 @@ app.layout = dbc.Container([
                             ])),
             html.Div(id='f4-name'),
 
+            ## Checkbox to use the default files instead
             html.Hr(),
             dbc.Checklist(
                 options=[
@@ -110,23 +117,37 @@ app.layout = dbc.Container([
             
         ### --- end tab 1 --- ###
         
-        # Tab 2
+        ### --- start tab 2 --- ###
         dbc.Tab([
             dcc.Graph(id='intensity-plot'),
             html.Br(),
             dcc.Graph(id='fitted-intensity-plot')
             ],
             label="Intensity Plots"),
-
-        # Tab 3
+        
+        ### --- end tab 2 --- ###
+        
+        ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
             #dash_table.DataTable(id='intensity-table',format=Format(precision=2, scheme=Scheme.fixed)), #tried to set format, failed unexpeced keyword arguement 'format'
             dash_table.DataTable(id='intensity-table'),
+            
+            #
             html.Br(),
-            dcc.Graph(id='normalized-intensity-plot')
+            dcc.Graph(id='normalized-intensity-plot'),
+            
+            # Graph of the two_theta values
+            html.Br(),
+            dcc.Graph(id='two_theta-plot')
+            
+            #Tab label
             ],
-            label='Intensity Table')
+            label="Normalized intensities"),
+            
+            
+            
+        ### --- end tab 3 --- ###
 
     ], # end dbc.Tabs()
     id="tabs",
@@ -206,6 +227,7 @@ def show_f_name4(n_clicks):
     Output('intensity-table','data'),
     Output('intensity-table','columns'),
     Output('normalized-intensity-plot','figure'),
+    Output('two_theta-plot','figure'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -228,13 +250,14 @@ def update_output(n_clicks,
         return go.Figure(), go.Figure(), [], [], go.Figure()
 
     # point towards directory and upload data using GSASII
+    # Default data location
     if use_default_files is not None and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
         #datadir = '../ExampleData/Example01'
         workdir = '../server_workdir'
         xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
         instprm_fname = 'TestCalibration.instprm'
-
+    #Stores user files in a directory
     else:
         datadir = '../server_datadir'
         workdir = '../server_workdir'
@@ -261,12 +284,12 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, intensity_tbl, tbl_columns, ni_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
 
-    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig
+    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig
 
 if __name__ == '__main__':
     #app.run_server(debug=True,port=8050) # local

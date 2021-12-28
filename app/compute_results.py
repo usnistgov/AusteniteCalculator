@@ -149,7 +149,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
                                                 material='Austenite',
                                                 cif_file='austenite-Duplex.cif',
-                                                test_calibration_file='TestCalibration.instprm',
+                                                instrument_calibration_file='TestCalibration.instprm',
                                                 G2sc=G2sc,
                                                 DataPathWrap=data_path_wrap,
                                                 SaveWrap=save_wrap)
@@ -157,7 +157,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     ferrite_tis = get_theoretical_intensities(gpx_file_name='Ferrite-sim.gpx',
                                               material='Ferrite',
                                               cif_file='ferrite-Duplex.cif',
-                                              test_calibration_file='TestCalibration.instprm',
+                                              instrument_calibration_file='TestCalibration.instprm',
                                               G2sc=G2sc,
                                               DataPathWrap=data_path_wrap,
                                               SaveWrap=save_wrap)
@@ -209,7 +209,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
-    return fig1, fig2, intensity_table, tbl_columns, ni_fig
+    # create a plot for the two theta
+    
+    two_theta_fig = two_theta_compare_figure(mydf)
+
+    return fig1, fig2, intensity_table, tbl_columns, ni_fig, two_theta_fig
+
+#####################################
+######### Plotting Fuctions #########
+
 
 def get_figures(hist):
     """
@@ -230,6 +238,30 @@ def get_figures(hist):
 
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
+
+def two_theta_compare_figure(Merged_DataFrame):
+    """
+    #Description
+    plot the fitted vs. theoretical two_theta data
+    Should be along the diagonal
+    
+    #Input
+    Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
+    
+    #Returns
+    fig: Figure
+    #? what format?
+    """
+    
+    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos", color="Phase",
+                    labels = {
+                        'pos':'Fitted 2-theta',
+                        'two_theta':'Normalized Intensity'
+                        }
+                    )
+    
+    return fig
+
 
 def get_phase(cif_wrap, phase_name, project):
     """
