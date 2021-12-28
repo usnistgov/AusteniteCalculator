@@ -259,6 +259,10 @@ def two_theta_compare_figure(Merged_DataFrame):
                         'two_theta':'Normalized Intensity'
                         }
                     )
+                    
+     ## Add a diagonal line in the background, https://github.com/plotly/plotly_express/issues/143
+#    fig = px.line(x=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]],
+#                  y=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]])
     
     return fig
 
