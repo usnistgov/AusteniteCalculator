@@ -7,14 +7,21 @@ import math
 def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     """
     #Description
-    Truncate the calculated 2Theta range?
+    Main computation program for phase calculations
     
     #Input
-    SinTheta:
-    hist:
+    datadir: Location data is stored
+    workdir: Working directory for data
+    xrdml_fname: Diffraction data (xrdml title legacy)
+    instprm_fname: Instrument Parameter File
+    G2sc: GSAS-II Scripting Toolkit location
     
-    #Output
-    TwoThetaInRange:
+    #Returns
+    fig1: Intensity vs. two_theta plot of raw data
+    fig2: Intensity vs. two_theta plot with fit data
+    intensity_table: Collected normalized and theoretical intensities
+    tbl_columns: Column names from the intensity table
+    ni_fig: Figure of normalized intensities
     """
     
     #Helper functions to create full path descriptions
@@ -29,15 +36,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 #                                    DataPathWrap(instprm_fname),
 #                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
 
+    # read in diffraction data as a powder histogram
     hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
                                     data_path_wrap(instprm_fname),
                                     databank=1, instbank=1)
 
-
+    # display the raw intensity vs. two_theta data
     fig1 = get_figures(hist)
 
-    
-    # Change these to be passed as part of the function?
+    # Read in phase data
+    #? Change these to be passed as part of the function?
+    #? How to handle more than two phases?
     phase_austenite = get_phase(data_path_wrap("austenite-Duplex.cif"), "Austenite", gpx)
     phase_ferrite = get_phase(data_path_wrap("ferrite-Duplex.cif"), "Ferrite", gpx)
 
@@ -50,19 +59,26 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     try:
         Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
     except:
-        Ka1_wavelength=1.5405 # hardcoded in for now with Cu source.  Read from instrument parameter file?
+        # hardcoded in for now with Cu source.
+        #? Read from instrument parameter file? Prompt user?
+        Ka1_wavelength=1.5405
 
-    #hardcoding HKL lists for now, likely better ways to do this later...
+    
+    #hardcoding HKL lists
+    #? for now, likely better ways to do this later...
     HKL_BCC=[[1,1,0],[2,0,0],[2,1,1],[2,2,0],[3,1,0],[2,2,2],[3,2,1],[4,1,1]]
     HKL_FCC=[[1,1,1],[2,0,0],[2,2,0],[3,1,1],[2,2,2],[4,0,0],[3,3,1],[4,2,0],[4,2,2]]
     
+    # Convert the hkl planes to a sin
     sin_theta_BCC = find_sin_thetas(a0_Ferrite, HKL_BCC, Ka1_wavelength)
     sin_theta_FCC = find_sin_thetas(a0_Austenite, HKL_FCC, Ka1_wavelength)
 
-    # Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan
+    # identify make sure all peaks are in range
     two_theta_in_range_BCC=find_two_theta_in_range(sin_theta_BCC,hist)         
     two_theta_in_range_FCC=find_two_theta_in_range(sin_theta_FCC,hist)
 
+    # Create and mark a series of two_theta values to fit diffraction data
+    #? Maybe marking the data belongs in a function?
     peaks_list=[]
     peaks_list = np.array(two_theta_in_range_BCC)[~np.isnan(np.array(two_theta_in_range_BCC))]
     peaks_list = np.concatenate((peaks_list,
@@ -70,11 +86,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                             axis=0)
     peaks_list=list(peaks_list)
 
+    #? The '0.5' addition is just a hack to get the fits to behave.
+    #? We should find a better way to do this
     peaks_list=[x+0.5 for x in peaks_list]
 
     # reset the peak list in case of errors...
+    #? Do we need this?  Legacy from jupyter notebook when one could run things
     hist.Peaks['peaks']=[]
 
+    # Set up background refinement
+    #? Also maybe belongs in a function
+    #? How to adjust the number of background parameters (currently 5)
     hist.set_refinements({'Background': {"no. coeffs": 5,'type': 'chebyschev-1', 'refine': True}})
     hist.refine_peaks()
 
@@ -83,20 +105,33 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     h_background = hist.data['data'][1][4]
     h_fit = hist.data['data'][1][3]
 
+    # Fit all of the peaks in the peak list
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
 
-    # Need to use this order, otherwise fitting gets unstable
-
+    # Use this order (based on Vulcan process)
+    #? otherwise fitting gets unstable
+    #? How to make the fitting more stable?
+    #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
+    #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
+    
+    # First fit only the area
     hist.set_peakFlags(area=True)
     hist.refine_peaks()
             
+    # Second, fit the area and position
     hist.set_peakFlags(pos=True,area=True)
     hist.refine_peaks()
 
+    # Third, fit the area, position, and gaussian componenet of the width
     hist.set_peakFlags(pos=True,area=True,sig=True)
     hist.refine_peaks()
 
+    #? Also fit the lortenzian (gam) component?
+    #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
+
+    # Create a figure with the fit data
+    #? Does this belong in a function?
     fig2 = go.Figure()
 
     fig2.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
@@ -109,7 +144,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         yaxis_title="Intensity"
     )
 
-    # Likely move to function?  That way we also can allow more than 2 phases?
+    # Caculate the theoretical intensities
+    #? Move to function?  That way we also can allow more than 2 phases?
     austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
                                                 material='Austenite',
                                                 cif_file='austenite-Duplex.cif',
@@ -130,12 +166,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     #breakpoint()
 
+    # Merge and sort the theoretical intensities
+    #? Sort seems a kind of fragile way to align the data
     tis = pd.concat((austenite_tis,ferrite_tis),axis=0,ignore_index=True)
     tis = tis.sort_values(by='two_theta')
     tis = tis.reset_index(drop=True)
     print(tis)
   
-    
+    # Extract information from the peak fits.
+    #? Similarly, sort here seems like a fragile way to align the data.
     mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
     mydf = mydf.iloc[:,[0,2,4,6]]
     mydf.columns = ['pos','int','sig','gam']
@@ -145,6 +184,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     print(mydf)
     #breakpoint()
 
+    # Merge the theoretical and experimental peak values
+    # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
+    #? Should the if/else be a try/except block?
     print("Concatenating Datafiles")
     mydf = pd.concat((mydf,tis),axis=1)
     mydf['n_int'] = mydf['int']/mydf['R_calc']
@@ -163,12 +205,24 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         print(mydf)
         ni_fig = go.Figure()
     
+    # Create a dictionary table for results
     intensity_table = mydf.to_dict('records')
     tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
     return fig1, fig2, intensity_table, tbl_columns, ni_fig
 
 def get_figures(hist):
+    """
+    #Description
+    plot the intensity vs. two_theta data of a diffraction profile
+    
+    #Input
+    hist: powder histogram
+    
+    #Returns
+    fig: Figure
+    #? what format?
+    """
     df = pd.DataFrame({
         "two_theta":hist.data['data'][1][0],
         "intensity":hist.data['data'][1][1]
@@ -177,24 +231,52 @@ def get_figures(hist):
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
 
-def get_phase(cif_wrap, phasename, project):
-    return project.add_phase(cif_wrap, phasename, fmthint = 'CIF')
+def get_phase(cif_wrap, phase_name, project):
+    """
+    #Description
+    Retreieve the phase information from file.  Assumes phase information is stored in a .cif file with format hint (fmthint)
+    
+    #Input
+    cif_wrap: path to file
+    phase_name: Name for the phase
+    project: GSAS-II project file to add phase to
+    
+    #Returns
+    GSAS-II project file with phase data wrapped in
+    """
+    return project.add_phase(cif_wrap, phase_name, fmthint = 'CIF')
 
-def find_sin_thetas(phase, hkl_list, wavelength):
-    D=[phase/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
+def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
+    """
+    #Description
+    Calculate the position in two theta for a list of hkls.  Used to mark locations for fitting
+    !!! Have only tested cubic crystal symmetry
+    
+    #Input
+    phase_lattice_parameter: lattice parameter
+    hkl_list: list of lattice planes (hkl)
+    wavelength: dominant wavelength in the diffraction data
+    
+    #Returns
+    List of floating point values with the position of each hkl in 2-theta
+    #? Is this in radians or degrees?
+    #? Returning theta or two_theta?
+    """
+    D=[phase_lattice_parameter/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
     SinTheta=[1*wavelength/(2*d) for d in D]
     return SinTheta
 
 def find_two_theta_in_range(sin_theta, hist):
     """
     #Description
-    Truncate the calculated 2Theta range?
+    #? Truncate the calculated 2Theta range?
+    Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan
     
     #Input
     SinTheta:
     hist:
     
-    #Output
+    #Returns
     TwoThetaInRange:
     """
     two_theta=[np.nan]*len(sin_theta)
@@ -223,7 +305,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     DataPathWrap: Path prefix to the location of the datafiles to read
     SaveWrap: Path prefix to the location where new data should be saved
     
-    #Output
+    #Returns
     ti_table: Pandas dataframe with theoretical intensities
     """
     
