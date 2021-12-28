@@ -4,3 +4,4 @@ MiscScripts/
 server_datadir/*
 *.pyc
 
+sphinx_docs/.DS_Store
