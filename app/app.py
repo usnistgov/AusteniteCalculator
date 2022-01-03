@@ -281,7 +281,9 @@ def update_output(n_clicks,
 
     # point towards directory and upload data using GSASII
     # Default data location
-    if use_default_files is not None and use_default_files[0] == 1:
+    print(use_default_files)
+
+    if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
         #datadir = '../ExampleData/Example01'
         workdir = '../server_workdir'
@@ -291,7 +293,7 @@ def update_output(n_clicks,
     # Use Example05 data
     #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
     #? Maybe pass like the xrdml_fnames?
-    elif use_example05_files is not None and use_example05_files[0] == 1:
+    elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
         datadir = '../ExampleData/Example05'
         #datadir = '../ExampleData/Example01'
         workdir = '../server_workdir'
@@ -331,10 +333,10 @@ def update_output(n_clicks,
         writer.write('Phase Fraction Goes here')
 
     # table for plotting intensity results
-    intensity_tbl, tbl_columns = compute_results.df_to_dict(results_df.copy().round(3))
+    intensity_tbl, tbl_columns = compute_results.df_to_dict(results_df.round(3))
 
     # table for plotting phase fraction results
-    phase_frac_dict, phase_frac_col = compute_results.df_to_dict(phase_frac_DF.copy().round(3))
+    phase_frac_dict, phase_frac_col = compute_results.df_to_dict(phase_frac_DF.round(3))
 
     return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col
 

@@ -395,7 +395,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     
     ti_table['R_calc']=ti_table['I_corr']*ti_table['F_calc_sq']
     ti_table[['Phase']] = material
-    print(ti_table)
+    #print(ti_table)
     return ti_table
 
 def Phase_Fraction(Merged_DataFrame):
