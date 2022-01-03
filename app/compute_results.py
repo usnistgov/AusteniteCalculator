@@ -181,16 +181,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     mydf.columns = ['pos','int','sig','gam']
     mydf = mydf.sort_values('pos')
     mydf = mydf.reset_index(drop=True)
+
     #mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
-    print(mydf)
-    #breakpoint()
+    #print(mydf)
 
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
     print("Concatenating Datafiles")
     mydf = pd.concat((mydf,tis),axis=1)
-    mydf['n_int'] = mydf['int']/mydf['R_calc']
+    mydf = mydf
+    mydf['n_int'] = (mydf['int']/mydf['R_calc'])
 
     if mydf.shape[0] == tis.shape[0]:
 
@@ -205,23 +206,35 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         print("Warning: I and R values different lengths. Returning empty figure.")
         print(mydf)
         ni_fig = go.Figure()
-    
-    # Create a dictionary table for results
-    intensity_table = mydf.to_dict('records')
-    tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
     # Calculate the phase fraction
-    (Phase_Fraction_dict, Phase_Fraction_columns) =Phase_Fraction(mydf)
+    phase_fraction_DF = Phase_Fraction(mydf)
     
     # create a plot for the two theta
     
     two_theta_fig = two_theta_compare_figure(mydf)
 
-    return fig1, fig2, intensity_table, tbl_columns, ni_fig, two_theta_fig, Phase_Fraction_dict, Phase_Fraction_columns
+    return fig1, fig2, mydf, ni_fig, two_theta_fig, phase_fraction_DF
 
 #####################################
 ######### Plotting Fuctions #########
 #####################################
+
+def df_to_dict(df):
+    """
+    #Description
+    function for converting pandas dataframe to dictionary for dash data_table
+
+    #Input
+    df: pandas Dataframe
+
+    #Returns
+
+    """
+    out_dict = df.to_dict('records')
+    out_columns = [{"name": i, "id": i} for i in df.columns]
+
+    return out_dict, out_columns
 
 def get_figures(hist):
     """
@@ -421,14 +434,12 @@ def Phase_Fraction(Merged_DataFrame):
         phase_dict["hkls"].append(np.nan)
         phase_dict["Number_hkls"].append(np.nan)
     
-    
-    
     phase_fraction_DF=pd.DataFrame(data=phase_dict)
     
     phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
+
+    phase_fraction_DF = phase_fraction_DF.round(4)
     
-    # Dash only accepts dictionaries, not dataframes
-    
-    return (phase_fraction_DF.to_dict('records'), [{"name": i, "id": i} for i in phase_fraction_DF.columns])
+    return phase_fraction_DF
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]

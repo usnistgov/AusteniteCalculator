@@ -325,13 +325,18 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
 
+    # table for plotting intensity results
+    intensity_tbl, tbl_columns = compute_results.df_to_dict(results_df.copy().round(3))
+
+    # table for plotting phase fraction results
+    phase_frac_dict, phase_frac_col = compute_results.df_to_dict(phase_frac_DF.copy().round(3))
+
     return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col
 
 if __name__ == '__main__':
-    #app.run_server(debug=True,port=8050) # local
-    app.run_server(host='0.0.0.0',debug=True,port=8050) # docker
+    app.run_server(host='0.0.0.0',debug=True,port=8050) 
