@@ -277,7 +277,7 @@ def update_output(n_clicks,
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], [], go.Figure()
+        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], []
 
     # point towards directory and upload data using GSASII
     # Default data location
