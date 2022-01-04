@@ -15,6 +15,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="computation" href="compute_results.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -33,7 +34,36 @@
             
   <section id="welcome-to-austenitecalculator-s-documentation">
 <h1>Welcome to AusteniteCalculator’s documentation!<a class="headerlink" href="#welcome-to-austenitecalculator-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Hi everybody</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">find_sin_thetas</span><span class="p">(</span><span class="n">phase_lattice_parameter</span><span class="p">,</span> <span class="n">hkl_list</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">):</span>
+ <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd"> #Description</span>
+<span class="sd"> Calculate the position in two theta for a list of hkls.  Used to mark locations for fitting</span>
+<span class="sd"> !!! Have only tested cubic crystal symmetry</span>
+
+<span class="sd"> #Input</span>
+<span class="sd"> phase_lattice_parameter: lattice parameter</span>
+<span class="sd"> hkl_list: list of lattice planes (hkl)</span>
+<span class="sd"> wavelength: dominant wavelength in the diffraction data</span>
+
+<span class="sd"> #Returns</span>
+<span class="sd"> List of floating point values with the position of each hkl in 2-theta</span>
+<span class="sd"> #? Is this in radians or degrees?</span>
+<span class="sd"> #? Returning theta or two_theta?</span>
+<span class="sd"> &quot;&quot;&quot;</span>
+ <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="n">phase_lattice_parameter</span><span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hkl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">hkl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">hkl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">hkl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">hkl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">hkl</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">for</span> <span class="n">hkl</span> <span class="ow">in</span> <span class="n">hkl_list</span><span class="p">]</span>
+ <span class="n">SinTheta</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="o">*</span><span class="n">wavelength</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">D</span><span class="p">]</span>
+ <span class="k">return</span> <span class="n">SinTheta</span>
+</pre></div>
+</div>
 <div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="compute_results.html">computation</a></li>
+</ul>
 </div>
 </section>
 <section id="indices-and-tables">
@@ -62,11 +92,16 @@
 
 
 <h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="compute_results.html">computation</a></li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="compute_results.html" title="next chapter">computation</a></li>
   </ul></li>
 </ul>
 </div>
