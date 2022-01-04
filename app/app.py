@@ -51,7 +51,7 @@ app.layout = dbc.Container([
     html.Br(),
     
     dbc.Tabs([
-            
+        ### --- start tab 1 --- ###
         dbc.Tab([
             html.Br(),
             
@@ -59,22 +59,26 @@ app.layout = dbc.Container([
             html.Div('Use the buttons below to upload your .xrdml and .instprm files. ' + 
                      'Alternatively, click the "Use Default Files" button below to use a sample set of files.'),
             html.Br(),
+            
+            ## Button for uploading Diffraction File
             dcc.Upload(
                     id='upload-data-xrdml',
                     children=html.Div([
                             dbc.Button('X-Ray Diffraction File (.xrdml)')
                             ])),
             html.Div(id='f1-name'),
-            
             html.Br(),
+            
+            ## Button for uploading Instrument Parameter File
             dcc.Upload(
                     id='upload-data-instprm',
                     children=html.Div([
                             dbc.Button('Instrument Parameter File (.instprm)')
                             ])),
             html.Div(id='f2-name'),
-
             html.Br(),
+            
+            ## Button for uploading Austenite phase file
             dcc.Upload(
                     id='upload-aust',
                     children=html.Div([
@@ -83,6 +87,8 @@ app.layout = dbc.Container([
             html.Div(id='f3-name'),
 
             html.Br(),
+            
+            ## Button for uploading Ferrite
             dcc.Upload(
                     id='upload-ferr',
                     children=html.Div([
@@ -90,12 +96,22 @@ app.layout = dbc.Container([
                             ])),
             html.Div(id='f4-name'),
 
+            ## Checkbox to use the default files instead
             html.Hr(),
             dbc.Checklist(
                 options=[
                     {"label": "Use Default Files", "value": 1},
                 ],
                 id="default-files-check",
+            ),
+
+            ## Checkbox to use Example 05 files instead
+            html.Hr(),
+            dbc.Checklist(
+                options=[
+                    {"label": "Use Example 05", "value": 1},
+                ],
+                id="example05-files-check",
             ),
 
             # submit button
@@ -113,23 +129,55 @@ app.layout = dbc.Container([
             
         ### --- end tab 1 --- ###
         
-        # Tab 2
+        ### --- start tab 2 --- ###
         dbc.Tab([
             dcc.Graph(id='intensity-plot'),
             html.Br(),
             dcc.Graph(id='fitted-intensity-plot')
             ],
             label="Intensity Plots"),
-
-        # Tab 3
+        
+        ### --- end tab 2 --- ###
+        
+        ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
+            dash_table.DataTable(id='phase-frac-table'),
+            
+            #? Format data output
+            # Tried example from https://community.plotly.com/t/dash-table-formatting-decimal-place/34975/8, https://formattable.pythonanywhere.com/
+            # But keep running into issues
             #dash_table.DataTable(id='intensity-table',format=Format(precision=2, scheme=Scheme.fixed)), #tried to set format, failed unexpeced keyword arguement 'format'
-            dash_table.DataTable(id='intensity-table'),
+#            dash_table.DataTable(id='intensity-table',
+#            columns=[
+#                {
+#                    "name": i,
+#                    "id": i,
+#                    "type": "numeric",  # Required!
+#                    "format": formatted
+#                }
+#                for i in df.columns
+#            ],
+#            data=df.to_dict("records"),
+#            editable=True,
+#            ),
             html.Br(),
-            dcc.Graph(id='normalized-intensity-plot')
+            dash_table.DataTable(id='intensity-table'),
+            #
+            html.Br(),
+            dcc.Graph(id='normalized-intensity-plot'),
+            
+            # Graph of the two_theta values
+            html.Br(),
+            dcc.Graph(id='two_theta-plot')
+            
+            #Tab label
             ],
-            label='Intensity Table')
+            label="Normalized intensities"),
+            
+            
+            
+        ### --- end tab 3 --- ###
 
     ], # end dbc.Tabs()
     id="tabs",
@@ -209,6 +257,9 @@ def show_f_name4(n_clicks):
     Output('intensity-table','data'),
     Output('intensity-table','columns'),
     Output('normalized-intensity-plot','figure'),
+    Output('two_theta-plot','figure'),
+    Output('phase-frac-table','data'),
+    Output('phase-frac-table','columns'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -218,26 +269,41 @@ def show_f_name4(n_clicks):
     State('upload-aust','filename'),
     State('upload-ferr','contents'),
     State('upload-ferr','filename'),
-    State('default-files-check','value'))
+    State('default-files-check','value'),
+    State('example05-files-check','value'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
                   aust_contents,aust_fname,
                   ferr_contents,ferr_fname,
-                  use_default_files):
+                  use_default_files, use_example05_files):
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], [], go.Figure()
+        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], []
 
     # point towards directory and upload data using GSASII
-    if use_default_files is not None and use_default_files[0] == 1:
+    # Default data location
+    print(use_default_files)
+
+    if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
         #datadir = '../ExampleData/Example01'
         workdir = '../server_workdir'
         xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
         instprm_fname = 'TestCalibration.instprm'
+        
+    # Use Example05 data
+    #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
+    #? Maybe pass like the xrdml_fnames?
+    elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
+        datadir = '../ExampleData/Example05'
+        #datadir = '../ExampleData/Example01'
+        workdir = '../server_workdir'
+        xrdml_fname = 'E211110-AAC-001_019-000_exported.csv'
+        instprm_fname = 'BrukerD8_E211110.instprm'
 
+    #Stores user files in a directory
     else:
         datadir = '../server_datadir'
         workdir = '../server_workdir'
@@ -264,13 +330,18 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, intensity_tbl, tbl_columns, ni_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
 
-    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig
+    # table for plotting intensity results
+    intensity_tbl, tbl_columns = compute_results.df_to_dict(results_df.round(3))
+
+    # table for plotting phase fraction results
+    phase_frac_dict, phase_frac_col = compute_results.df_to_dict(phase_frac_DF.round(3))
+
+    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col
 
 if __name__ == '__main__':
-    #app.run_server(debug=True,port=8050) # local
-    app.run_server(host='0.0.0.0',debug=True,port=8050) # docker
+    app.run_server(host='0.0.0.0',debug=True,port=8050) 

@@ -86,9 +86,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                             axis=0)
     peaks_list=list(peaks_list)
 
-    #? The '0.5' addition is just a hack to get the fits to behave.
+    #? The '0.5' addition is just a hack to get the fits to behave for the default files.
     #? We should find a better way to do this
-    peaks_list=[x+0.5 for x in peaks_list]
+    # Commented out to check Example05
+    #peaks_list=[x+0.5 for x in peaks_list]
 
     # reset the peak list in case of errors...
     #? Do we need this?  Legacy from jupyter notebook when one could run things
@@ -149,7 +150,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
                                                 material='Austenite',
                                                 cif_file='austenite-Duplex.cif',
-                                                test_calibration_file='TestCalibration.instprm',
+                                                instrument_calibration_file=instprm_fname,
                                                 G2sc=G2sc,
                                                 DataPathWrap=data_path_wrap,
                                                 SaveWrap=save_wrap)
@@ -157,7 +158,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     ferrite_tis = get_theoretical_intensities(gpx_file_name='Ferrite-sim.gpx',
                                               material='Ferrite',
                                               cif_file='ferrite-Duplex.cif',
-                                              test_calibration_file='TestCalibration.instprm',
+                                              instrument_calibration_file=instprm_fname,
                                               G2sc=G2sc,
                                               DataPathWrap=data_path_wrap,
                                               SaveWrap=save_wrap)
@@ -180,16 +181,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     mydf.columns = ['pos','int','sig','gam']
     mydf = mydf.sort_values('pos')
     mydf = mydf.reset_index(drop=True)
+
     #mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
-    print(mydf)
-    #breakpoint()
+    #print(mydf)
 
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
     print("Concatenating Datafiles")
     mydf = pd.concat((mydf,tis),axis=1)
-    mydf['n_int'] = mydf['int']/mydf['R_calc']
+    mydf = mydf
+    mydf['n_int'] = (mydf['int']/mydf['R_calc'])
 
     if mydf.shape[0] == tis.shape[0]:
 
@@ -204,12 +206,35 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         print("Warning: I and R values different lengths. Returning empty figure.")
         print(mydf)
         ni_fig = go.Figure()
-    
-    # Create a dictionary table for results
-    intensity_table = mydf.to_dict('records')
-    tbl_columns = [{"name": i, "id": i} for i in mydf.columns]
 
-    return fig1, fig2, intensity_table, tbl_columns, ni_fig
+    # Calculate the phase fraction
+    phase_fraction_DF = Phase_Fraction(mydf)
+    
+    # create a plot for the two theta
+    
+    two_theta_fig = two_theta_compare_figure(mydf)
+
+    return fig1, fig2, mydf, ni_fig, two_theta_fig, phase_fraction_DF
+
+#####################################
+######### Plotting Fuctions #########
+#####################################
+
+def df_to_dict(df):
+    """
+    #Description
+    function for converting pandas dataframe to dictionary for dash data_table
+
+    #Input
+    df: pandas Dataframe
+
+    #Returns
+
+    """
+    out_dict = df.to_dict('records')
+    out_columns = [{"name": i, "id": i} for i in df.columns]
+
+    return out_dict, out_columns
 
 def get_figures(hist):
     """
@@ -230,6 +255,37 @@ def get_figures(hist):
 
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
+
+def two_theta_compare_figure(Merged_DataFrame):
+    """
+    #Description
+    plot the fitted vs. theoretical two_theta data
+    Should be along the diagonal
+    
+    #Input
+    Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
+    
+    #Returns
+    fig: Figure
+    #? what format?
+    """
+    
+    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos", color="Phase",
+                    labels = {
+                        'pos':'Fitted 2-theta',
+                        'two_theta':'Normalized Intensity'
+                        }
+                    )
+                    
+     ## Add a diagonal line in the background, https://github.com/plotly/plotly_express/issues/143
+#    fig = px.line(x=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]],
+#                  y=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]])
+    
+    return fig
+
+#####################################
+########## Helper Fuctions ##########
+#####################################
 
 def get_phase(cif_wrap, phase_name, project):
     """
@@ -292,6 +348,10 @@ def find_two_theta_in_range(sin_theta, hist):
     two_theta_in_range=[np.nan if i < min(hist.data['data'][1][0]) else i for i in two_theta_in_range]
     return two_theta_in_range
 
+#####################################
+######### Analysis Fuctions #########
+#####################################
+
 def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,G2sc,DataPathWrap,SaveWrap):
     """
     #Description
@@ -336,5 +396,51 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     
     ti_table['R_calc']=ti_table['I_corr']*ti_table['F_calc_sq']
     ti_table[['Phase']] = material
-    print(ti_table)
+    #print(ti_table)
     return ti_table
+
+def Phase_Fraction(Merged_DataFrame):
+    """
+    #Description
+    Calculate Phase Fraction
+    
+    #Input
+    Merged_DataFrame: combined
+    
+    #Returns
+    phase_dict: dictionary with phase values
+    
+    """
+    
+    # Extract all phases listed
+    phase_list=Merged_DataFrame['Phase'].unique()
+    
+    
+    phase_dict = {"Phase":[],"Mean_value":[],"StDev_value":[],"hkls":[],"Number_hkls":[]};
+    
+    
+    for phase in phase_list:
+        phase_dict["Phase"].append(phase)
+        
+        Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
+        phase_dict["Mean_value"].append(Phase_DF['n_int'].mean())
+        phase_dict["StDev_value"].append(Phase_DF['n_int'].std())
+        
+        #Phase_DF['hkl']=Phase_DF.agg('{0['h']}{0['k']}{0['l']}'.format, axis=1)
+        #phase_dict["hkls"].append(list(Phase_DF['hkl']))
+        
+        #phase_dict["Number_hkls"].append(len(list(Phase_DF['hkl'])))
+        
+        # For now, pandas won't create a database if terms are of different lenght
+        phase_dict["hkls"].append(np.nan)
+        phase_dict["Number_hkls"].append(np.nan)
+    
+    phase_fraction_DF=pd.DataFrame(data=phase_dict)
+    
+    phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
+
+    phase_fraction_DF = phase_fraction_DF.round(4)
+    
+    return phase_fraction_DF
+        #['h','k','l','n_int']
+    #df.loc[df['column_name'] == some_value]
