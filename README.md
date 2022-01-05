@@ -65,7 +65,7 @@ To run the container, run the following command:
 ```
 docker run -d -p 8080:8050 --name my_container austenite_calculator
 ```
-(-d for 'detached', -p specifies the port mapping, '--name' gives a name to the running container, and 'austenite_calculator' tells Docker which image to build the container from.) Then the app should be visible at localhost:8080 (accessed via your web browser).  
+(-d for 'detached', -p specifies the port mapping, '--name' gives a name to the running container, and 'austenite_calculator' tells Docker which image to build the container from.) Then the app should be visible at `localhost:8080` (accessed via your web browser).  
 
 To stop and remove the running container, run the following:
 ```
