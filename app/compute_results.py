@@ -446,3 +446,68 @@ def Phase_Fraction(Merged_DataFrame):
     return phase_fraction_DF
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
+
+
+
+def Uncertainty_Notes(value, source, flag, suggestion, DF_to_append=None):
+    """Adds notes and flags to uncertainty calculation.
+
+    [additional text]
+
+    Args:
+        value: uncertainty value (float)
+        source: source of uncertainty (string)
+        flag: alert to user (string)
+        suggestion: suggestions on source or mitigation methods to decrease error (string)
+        DF_to_append: pandas DataFrame with notes from other sources
+
+    Returns:
+        uncertainty_DF: pandas DataFrame with notes about the uncertainties calculated
+        
+        variable: description
+        
+        examples
+        
+        caveats
+
+    Raises:
+        error: error text
+    """
+    
+
+    uncertainty_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
+
+    uncertainty_dict["Value"].append(value)
+    uncertainty_dict["Source"].append(source)
+    uncertainty_dict["Flags"].append(flag)
+    uncertainty_dict["Suggestions"].append(suggestion)
+    
+    uncertainty_DF=pd.DataFrame(data=uncertainty_dict)
+
+    # append if other dataframe is included
+    if DF_to_append != None:
+        uncertainty_DF.append(DF_to_append, ignore_index=True)
+    
+    uncertainty_DF.sort_values(by=["Value"],inplace=True)
+
+    return uncertainty_DF
+
+## Docstring example
+#    """Adds notes and flags to uncertainty calculation.
+#
+#    [additional text]
+#
+#    Args:
+#        variable: description
+#
+#
+#    Returns:
+#        variable: description
+#
+#        examples
+#
+#        caveats
+#
+#    Raises:
+#        error: error text
+#    """
