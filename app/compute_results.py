@@ -17,11 +17,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     G2sc: GSAS-II Scripting Toolkit location
     
     #Returns
-    fig1: Intensity vs. two_theta plot of raw data
-    fig2: Intensity vs. two_theta plot with fit data
-    intensity_table: Collected normalized and theoretical intensities
-    tbl_columns: Column names from the intensity table
-    ni_fig: Figure of normalized intensities
+    fig_raw_hist: Intensity vs. two_theta plot of raw data
+    fig_fit_hist: Intensity vs. two_theta plot with fit data
+    DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
+    fig_norm_itensity: Figure of normalized intensities
+    fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
+    DF_phase_fraction: pandas DataFrame with phase fraction
     """
     
     #Helper functions to create full path descriptions
@@ -42,7 +43,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                     databank=1, instbank=1)
 
     # display the raw intensity vs. two_theta data
-    fig1 = get_figures(hist)
+    fig_raw_hist = get_figures(hist)
 
     # Read in phase data
     #? Change these to be passed as part of the function?
@@ -133,13 +134,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     # Create a figure with the fit data
     #? Does this belong in a function?
-    fig2 = go.Figure()
+    fig_fit_hist = go.Figure()
 
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
 
-    fig2.update_layout(
+    fig_fit_hist.update_layout(
         title="",
         xaxis_title="2theta",
         yaxis_title="Intensity"
@@ -176,26 +177,26 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
   
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
-    mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
-    mydf = mydf.iloc[:,[0,2,4,6]]
-    mydf.columns = ['pos','int','sig','gam']
-    mydf = mydf.sort_values('pos')
-    mydf = mydf.reset_index(drop=True)
+    DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
+    DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
+    DF_merged_fit_theo.columns = ['pos','int','sig','gam']
+    DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos')
+    DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
-    #mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
-    #print(mydf)
+    #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
+    #print(DF_merged_fit_theo)
 
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
     print("Concatenating Datafiles")
-    mydf = pd.concat((mydf,tis),axis=1)
-    mydf = mydf
-    mydf['n_int'] = (mydf['int']/mydf['R_calc'])
+    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
+    DF_merged_fit_theo = DF_merged_fit_theo
+    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
 
-    if mydf.shape[0] == tis.shape[0]:
+    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
-        ni_fig = px.scatter(mydf, x="pos", y="n_int", color="Phase",
+        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos", y="n_int", color="Phase",
                             labels = {
                                 'pos':'2-theta',
                                 'n_int':'Normalized Intensity'
@@ -204,17 +205,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     
     else:
         print("Warning: I and R values different lengths. Returning empty figure.")
-        print(mydf)
-        ni_fig = go.Figure()
+        print(DF_merged_fit_theo)
+        fig_norm_itensity = go.Figure()
 
     # Calculate the phase fraction
-    phase_fraction_DF = Phase_Fraction(mydf)
+    DF_phase_fraction = Phase_Fraction(DF_merged_fit_theo)
     
     # create a plot for the two theta
     
-    two_theta_fig = two_theta_compare_figure(mydf)
+    fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
-    return fig1, fig2, mydf, ni_fig, two_theta_fig, phase_fraction_DF
+    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction
 
 #####################################
 ######### Plotting Fuctions #########
@@ -439,6 +440,7 @@ def Phase_Fraction(Merged_DataFrame):
     
     phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
 
+    #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
     return phase_fraction_DF
