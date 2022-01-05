@@ -209,13 +209,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         fig_norm_itensity = go.Figure()
 
     # Calculate the phase fraction
-    DF_phase_fraction = Phase_Fraction(DF_merged_fit_theo)
+    DF_phase_fraction, DF_Uncertainty = Phase_Fraction(DF_merged_fit_theo)
     
     # create a plot for the two theta
     
     fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
-    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction
+    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_Uncertainty
 
 #####################################
 ######### Plotting Fuctions #########
@@ -434,16 +434,23 @@ def Phase_Fraction(Merged_DataFrame):
         
         # For now, pandas won't create a database if terms are of different lenght
         phase_dict["hkls"].append(np.nan)
-        phase_dict["Number_hkls"].append(np.nan)
+        phase_dict["Number_hkls"].append(len(Phase_DF['n_int']))
     
     phase_fraction_DF=pd.DataFrame(data=phase_dict)
     
     phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
+    phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev_value"]/(phase_fraction_DF["Mean_value"].sum())
+
+    # Extracting only the 'Austenite' values
+    #? Maybe pass based upon which phase is of interest
+    #? or create one for each phase?
+    Uncertainty_DF=Uncertainty_Notes(phase_fraction_DF.loc[phase_fraction_DF['Phase'] == 'Austenite']["Fraction_StDev"],
+                                     "Normalized Intensity Variation", np.nan, np.nan)
 
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
-    return phase_fraction_DF
+    return phase_fraction_DF, Uncertainty_DF
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
