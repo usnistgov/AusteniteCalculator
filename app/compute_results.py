@@ -209,7 +209,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
         fig_norm_itensity = go.Figure()
 
     # Calculate the phase fraction
-    DF_phase_fraction, DF_Uncertainty = Phase_Fraction(DF_merged_fit_theo)
+    DF_phase_fraction, DF_Uncertainty = calculate_phase_fraction(DF_merged_fit_theo)
     
     # create a plot for the two theta
     
@@ -400,7 +400,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
-def Phase_Fraction(Merged_DataFrame):
+def calculate_phase_fraction(Merged_DataFrame):
     """
     #Description
     Calculate Phase Fraction
@@ -444,7 +444,7 @@ def Phase_Fraction(Merged_DataFrame):
     # Extracting only the 'Austenite' values
     #? Maybe pass based upon which phase is of interest
     #? or create one for each phase?
-    Uncertainty_DF=Uncertainty_Notes(phase_fraction_DF.loc[phase_fraction_DF['Phase'] == 'Austenite']["Fraction_StDev"],
+    Uncertainty_DF=flag_uncertainties(phase_fraction_DF.loc[phase_fraction_DF['Phase'] == 'Austenite']["Fraction_StDev"],
                                      "Normalized Intensity Variation", np.nan, np.nan)
 
     #? Maybe move rounding to display only?
@@ -456,7 +456,7 @@ def Phase_Fraction(Merged_DataFrame):
 
 
 
-def Uncertainty_Notes(value, source, flag, suggestion, DF_to_append=None):
+def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
     """Adds notes and flags to uncertainty calculation.
 
     [additional text]
