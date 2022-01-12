@@ -32,9 +32,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
     #Commented out format hint so that other examples work
-#    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-#                                    DataPathWrap(instprm_fname),
-#                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
+    #    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
+    #                                    DataPathWrap(instprm_fname),
+    #                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
 
     # read in diffraction data as a powder histogram
     hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
