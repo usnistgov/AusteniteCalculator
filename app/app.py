@@ -80,21 +80,12 @@ app.layout = dbc.Container([
             
             ## Button for uploading Austenite phase file
             dcc.Upload(
-                    id='upload-aust',
+                    id='upload-cif',
                     children=html.Div([
-                            dbc.Button('Austenite File (.cif)')
-                            ])),
+                            dbc.Button('Crystallographic Information Files (.cif)')
+                            ]),
+                    multiple=True),
             html.Div(id='f3-name'),
-
-            html.Br(),
-            
-            ## Button for uploading Ferrite
-            dcc.Upload(
-                    id='upload-ferr',
-                    children=html.Div([
-                            dbc.Button('Ferrite File (.cif)')
-                            ])),
-            html.Div(id='f4-name'),
 
             ## Checkbox to use the default files instead
             html.Hr(),
@@ -222,7 +213,7 @@ def show_f_name1(filename):
 
 @app.callback(
     Output('f3-name','children'),
-    Input('upload-aust','filename')
+    Input('upload-cif','filename')
 )
 def show_f_name2(filename):
     
@@ -230,25 +221,15 @@ def show_f_name2(filename):
         return ""
         
     else:
-        return "Uploaded File: " + filename
+        print(filename)
+        return "Uploaded Files: " + ', '.join(filename)
 
-@app.callback(
-    Output('f4-name','children'),
-    Input('upload-ferr','filename')
-)
-def show_f_name3(filename):
-    
-    if filename is None:
-        return ""
-        
-    else:
-        return "Uploaded File: " + filename
 
 @app.callback(
     Output('submit-confirmation','children'),
     Input('submit-button-state','n_clicks')
 )
-def show_f_name4(n_clicks):
+def show_f_name3(n_clicks):
     
     if n_clicks == 0:
         return ""
@@ -277,17 +258,14 @@ def show_f_name4(n_clicks):
     State('upload-data-xrdml','filename'),
     State('upload-data-instprm','contents'),
     State('upload-data-instprm','filename'),
-    State('upload-aust','contents'),
-    State('upload-aust','filename'),
-    State('upload-ferr','contents'),
-    State('upload-ferr','filename'),
+    State('upload-cif','contents'),
+    State('upload-cif','filename'),
     State('default-files-check','value'),
     State('example05-files-check','value'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
-                  aust_contents,aust_fname,
-                  ferr_contents,ferr_fname,
+                  cif_contents,cif_fnames,
                   use_default_files, use_example05_files):
     
     # return nothing when app opens
@@ -301,6 +279,7 @@ def update_output(n_clicks,
     if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
         #datadir = '../ExampleData/Example01'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
         xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
         instprm_fname = 'TestCalibration.instprm'
@@ -311,6 +290,7 @@ def update_output(n_clicks,
     elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
         datadir = '../ExampleData/Example05'
         #datadir = '../ExampleData/Example01'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
         xrdml_fname = 'E211110-AAC-001_019-000_exported.csv'
         instprm_fname = 'BrukerD8_E211110.instprm'
@@ -320,29 +300,43 @@ def update_output(n_clicks,
         datadir = '../server_datadir'
         workdir = '../server_workdir'
 
-        all_contents = [[xrdml_contents,xrdml_fname],
-                        [instprm_contents,instprm_fname],
-                        [aust_contents,aust_fname],
-                        [ferr_contents,ferr_fname]]
+        non_cif_contents = [[xrdml_contents,xrdml_fname],
+                        [instprm_contents,instprm_fname]]
 
         # For each uploaded file, save (on the server)
         # ensuring that the format matches what GSAS expects.
-        for i in range(len(all_contents)):
-            contents = all_contents[i][0]
-            fname = all_contents[i][1]
+
+        # first, read non-cif files
+        for i in range(len(non_cif_contents)):
+            contents = non_cif_contents[i][0]
+            fname = non_cif_contents[i][1]
 
             content_type, content_string = contents.split(',')
 
             decoded = base64.b64decode(content_string)
             f = open(datadir + '/' + fname,'w')
             to_write = decoded.decode('utf-8')
-            if re.search('(instprm$)|(cif)',fname) is not None:
+            if re.search('(instprm$)',fname) is not None:
                 to_write = re.sub('\\r','',to_write)
+            f.write(to_write)
+            f.close()
+
+        # next, read the cif files
+        for i in range(len(cif_contents)):
+            contents = cif_contents[i]
+            fname = cif_fnames[i]
+
+            content_type, content_string = contents.split(',')
+
+            decoded = base64.b64decode(content_string)
+            f = open(datadir + '/' + fname,'w')
+            to_write = decoded.decode('utf-8')
+            to_write = re.sub('\\r','',to_write)
             f.write(to_write)
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')

@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import math
 
-def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
+def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
     #Description
     Main computation program for phase calculations
@@ -14,6 +14,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     workdir: Working directory for data
     xrdml_fname: Diffraction data (xrdml title legacy)
     instprm_fname: Instrument Parameter File
+    cif_fnames: Crystollographic Info File
     G2sc: GSAS-II Scripting Toolkit location
     
     #Returns
@@ -46,14 +47,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     fig_raw_hist = get_figures(hist)
 
     # Read in phase data
-    #? Change these to be passed as part of the function?
-    #? How to handle more than two phases?
-    phase_austenite = get_phase(data_path_wrap("austenite-Duplex.cif"), "Austenite", gpx)
-    phase_ferrite = get_phase(data_path_wrap("ferrite-Duplex.cif"), "Ferrite", gpx)
-
-    # Read the lattice parameter 
-    a0_Austenite=phase_austenite.data['General']['Cell'][1]
-    a0_Ferrite=phase_ferrite.data['General']['Cell'][1]
+    phases = {}
+    a0 = {}
+    for i in range(len(cif_fnames)):
+        phases[cif_fnames[i]] = get_phase(data_path_wrap(cif_fnames[i]), cif_fnames[i], gpx) # phase data
+        a0[cif_fnames[i]] = phases[cif_fnames[i]].data['General']['Cell'][1] # lattice parameter
 
     # Find the ka1 wavelength in the file
     # works for some data files that have information encode, otherwise may need to prompt
@@ -71,8 +69,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     HKL_FCC=[[1,1,1],[2,0,0],[2,2,0],[3,1,1],[2,2,2],[4,0,0],[3,3,1],[4,2,0],[4,2,2]]
     
     # Convert the hkl planes to a sin
-    sin_theta_BCC = find_sin_thetas(a0_Ferrite, HKL_BCC, Ka1_wavelength)
-    sin_theta_FCC = find_sin_thetas(a0_Austenite, HKL_FCC, Ka1_wavelength)
+    sin_theta_FCC = find_sin_thetas(a0[cif_fnames[0]], HKL_FCC, Ka1_wavelength)
+    sin_theta_BCC = find_sin_thetas(a0[cif_fnames[1]], HKL_BCC, Ka1_wavelength)
 
     # identify make sure all peaks are in range
     two_theta_in_range_BCC=find_two_theta_in_range(sin_theta_BCC,hist)         
@@ -148,29 +146,22 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     # Caculate the theoretical intensities
     #? Move to function?  That way we also can allow more than 2 phases?
-    austenite_tis = get_theoretical_intensities(gpx_file_name='Austenite-sim.gpx',
-                                                material='Austenite',
-                                                cif_file='austenite-Duplex.cif',
-                                                instrument_calibration_file=instprm_fname,
-                                                G2sc=G2sc,
-                                                DataPathWrap=data_path_wrap,
-                                                SaveWrap=save_wrap)
 
-    ferrite_tis = get_theoretical_intensities(gpx_file_name='Ferrite-sim.gpx',
-                                              material='Ferrite',
-                                              cif_file='ferrite-Duplex.cif',
-                                              instrument_calibration_file=instprm_fname,
-                                              G2sc=G2sc,
-                                              DataPathWrap=data_path_wrap,
-                                              SaveWrap=save_wrap)
+    tis = {}
 
+    for i in range(len(cif_fnames)):
+        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
+                                                         material=cif_fnames[i],
+                                                         cif_file=cif_fnames[i],
+                                                         instrument_calibration_file=instprm_fname,
+                                                         G2sc=G2sc,
+                                                         DataPathWrap=data_path_wrap,
+                                                         SaveWrap=save_wrap)
 
-
-    #breakpoint()
 
     # Merge and sort the theoretical intensities
     #? Sort seems a kind of fragile way to align the data
-    tis = pd.concat((austenite_tis,ferrite_tis),axis=0,ignore_index=True)
+    tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
     tis = tis.sort_values(by='two_theta')
     tis = tis.reset_index(drop=True)
     print(tis)
