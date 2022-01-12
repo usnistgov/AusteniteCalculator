@@ -17,11 +17,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     G2sc: GSAS-II Scripting Toolkit location
     
     #Returns
-    fig1: Intensity vs. two_theta plot of raw data
-    fig2: Intensity vs. two_theta plot with fit data
-    intensity_table: Collected normalized and theoretical intensities
-    tbl_columns: Column names from the intensity table
-    ni_fig: Figure of normalized intensities
+    fig_raw_hist: Intensity vs. two_theta plot of raw data
+    fig_fit_hist: Intensity vs. two_theta plot with fit data
+    DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
+    fig_norm_itensity: Figure of normalized intensities
+    fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
+    DF_phase_fraction: pandas DataFrame with phase fraction
     """
     
     #Helper functions to create full path descriptions
@@ -42,7 +43,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
                                     databank=1, instbank=1)
 
     # display the raw intensity vs. two_theta data
-    fig1 = get_figures(hist)
+    fig_raw_hist = get_figures(hist)
 
     # Read in phase data
     #? Change these to be passed as part of the function?
@@ -133,13 +134,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
 
     # Create a figure with the fit data
     #? Does this belong in a function?
-    fig2 = go.Figure()
+    fig_fit_hist = go.Figure()
 
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
-    fig2.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
 
-    fig2.update_layout(
+    fig_fit_hist.update_layout(
         title="",
         xaxis_title="2theta",
         yaxis_title="Intensity"
@@ -176,26 +177,26 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
   
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
-    mydf = pd.DataFrame(hist.data['Peak List']['peaks'])
-    mydf = mydf.iloc[:,[0,2,4,6]]
-    mydf.columns = ['pos','int','sig','gam']
-    mydf = mydf.sort_values('pos')
-    mydf = mydf.reset_index(drop=True)
+    DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
+    DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
+    DF_merged_fit_theo.columns = ['pos','int','sig','gam']
+    DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos')
+    DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
-    #mydf = mydf.loc[(0 < mydf.sig) & (mydf.sig < 90),:]
-    #print(mydf)
+    #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
+    #print(DF_merged_fit_theo)
 
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
     print("Concatenating Datafiles")
-    mydf = pd.concat((mydf,tis),axis=1)
-    mydf = mydf
-    mydf['n_int'] = (mydf['int']/mydf['R_calc'])
+    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
+    DF_merged_fit_theo = DF_merged_fit_theo
+    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
 
-    if mydf.shape[0] == tis.shape[0]:
+    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
-        ni_fig = px.scatter(mydf, x="pos", y="n_int", color="Phase",
+        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos", y="n_int", color="Phase",
                             labels = {
                                 'pos':'2-theta',
                                 'n_int':'Normalized Intensity'
@@ -204,17 +205,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc):
     
     else:
         print("Warning: I and R values different lengths. Returning empty figure.")
-        print(mydf)
-        ni_fig = go.Figure()
+        print(DF_merged_fit_theo)
+        fig_norm_itensity = go.Figure()
 
     # Calculate the phase fraction
-    phase_fraction_DF = Phase_Fraction(mydf)
+    DF_phase_fraction, DF_Uncertainty = calculate_phase_fraction(DF_merged_fit_theo)
     
     # create a plot for the two theta
     
-    two_theta_fig = two_theta_compare_figure(mydf)
+    fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
-    return fig1, fig2, mydf, ni_fig, two_theta_fig, phase_fraction_DF
+    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_Uncertainty
 
 #####################################
 ######### Plotting Fuctions #########
@@ -304,19 +305,20 @@ def get_phase(cif_wrap, phase_name, project):
 
 def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
     """
-    #Description
+
     Calculate the position in two theta for a list of hkls.  Used to mark locations for fitting
     !!! Have only tested cubic crystal symmetry
     
-    #Input
-    phase_lattice_parameter: lattice parameter
-    hkl_list: list of lattice planes (hkl)
-    wavelength: dominant wavelength in the diffraction data
+    Args:
+        phase_lattice_parameter: lattice parameter
+        hkl_list: list of lattice planes (hkl)
+        wavelength: dominant wavelength in the diffraction data
     
-    #Returns
-    List of floating point values with the position of each hkl in 2-theta
-    #? Is this in radians or degrees?
-    #? Returning theta or two_theta?
+    Returns:
+        List of floating point values with the position of each hkl in 2-theta
+        #? Is this in radians or degrees?
+        #? Returning theta or two_theta?
+        
     """
     D=[phase_lattice_parameter/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
     SinTheta=[1*wavelength/(2*d) for d in D]
@@ -398,7 +400,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
-def Phase_Fraction(Merged_DataFrame):
+def calculate_phase_fraction(Merged_DataFrame):
     """
     #Description
     Calculate Phase Fraction
@@ -432,14 +434,87 @@ def Phase_Fraction(Merged_DataFrame):
         
         # For now, pandas won't create a database if terms are of different lenght
         phase_dict["hkls"].append(np.nan)
-        phase_dict["Number_hkls"].append(np.nan)
+        phase_dict["Number_hkls"].append(len(Phase_DF['n_int']))
     
     phase_fraction_DF=pd.DataFrame(data=phase_dict)
     
     phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
+    phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev_value"]/(phase_fraction_DF["Mean_value"].sum())
 
+    # Extracting only the 'Austenite' values
+    #? Maybe pass based upon which phase is of interest
+    #? or create one for each phase?
+    Uncertainty_DF=flag_uncertainties(phase_fraction_DF.loc[phase_fraction_DF['Phase'] == 'Austenite']["Fraction_StDev"],
+                                     "Normalized Intensity Variation", np.nan, np.nan)
+
+    #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
-    return phase_fraction_DF
+    return phase_fraction_DF, Uncertainty_DF
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
+
+
+
+def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
+    """Adds notes and flags to uncertainty calculation.
+
+    [additional text]
+
+    Args:
+        value: uncertainty value (float)
+        source: source of uncertainty (string)
+        flag: alert to user (string)
+        suggestion: suggestions on source or mitigation methods to decrease error (string)
+        DF_to_append: pandas DataFrame with notes from other sources
+
+    Returns:
+        uncertainty_DF: pandas DataFrame with notes about the uncertainties calculated
+        
+        variable: description
+        
+        examples
+        
+        caveats
+
+    Raises:
+        error: error text
+    """
+    
+
+    uncertainty_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
+
+    uncertainty_dict["Value"].append(value)
+    uncertainty_dict["Source"].append(source)
+    uncertainty_dict["Flags"].append(flag)
+    uncertainty_dict["Suggestions"].append(suggestion)
+    
+    uncertainty_DF=pd.DataFrame(data=uncertainty_dict)
+
+    # append if other dataframe is included
+    if DF_to_append != None:
+        uncertainty_DF.append(DF_to_append, ignore_index=True)
+    
+    uncertainty_DF.sort_values(by=["Value"],inplace=True)
+
+    return uncertainty_DF
+
+## Docstring example
+#    """Adds notes and flags to uncertainty calculation.
+#
+#    [additional text]
+#
+#    Args:
+#        variable: description
+#
+#
+#    Returns:
+#        variable: description
+#
+#        examples
+#
+#        caveats
+#
+#    Raises:
+#        error: error text
+#    """

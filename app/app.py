@@ -32,7 +32,10 @@ if platform.system() == 'Linux':
 
 # David's local development (add your own line to work on the project locally)
 elif re.search('dtn1',os.getcwd()):
-    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/G2_2/GSASII/') 
+    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/G2_2/GSASII/')
+
+elif re.search('maxgarman',os.getcwd()):
+    sys.path.insert(0, 'Users/maxgarman/opt/anaconda3/GSASII/') 
 
 import GSASIIscriptable as G2sc
 
@@ -128,8 +131,10 @@ app.layout = dbc.Container([
         
         ### --- start tab 2 --- ###
         dbc.Tab([
+            html.Div("""Plot of the raw data."""),
             dcc.Graph(id='intensity-plot'),
             html.Br(),
+            html.Div("""Plot of the raw data and fit.  The fit value should overlap the raw data"""),
             dcc.Graph(id='fitted-intensity-plot')
             ],
             label="Intensity Plots"),
@@ -139,6 +144,7 @@ app.layout = dbc.Container([
         ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
+            html.Div("""Table of Phase Fractions"""),
             dash_table.DataTable(id='phase-frac-table'),
             
             #? Format data output
@@ -159,13 +165,20 @@ app.layout = dbc.Container([
 #            editable=True,
 #            ),
             html.Br(),
+            html.Div("""Table of Sources of Uncertainty"""),
+            dash_table.DataTable(id='uncert-table'),
+
+            html.Br(),
+            html.Div("""Table of Fit and Theoretical Intensities"""),
             dash_table.DataTable(id='intensity-table'),
             #
             html.Br(),
+            html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant"""),
             dcc.Graph(id='normalized-intensity-plot'),
             
             # Graph of the two_theta values
             html.Br(),
+            html.Div("""Plot of the two theta values.  The values should lie along a diagonal"""),
             dcc.Graph(id='two_theta-plot')
             
             #Tab label
@@ -257,6 +270,8 @@ def show_f_name4(n_clicks):
     Output('two_theta-plot','figure'),
     Output('phase-frac-table','data'),
     Output('phase-frac-table','columns'),
+    Output('uncert-table','data'),
+    Output('uncert-table','columns'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -277,7 +292,7 @@ def update_output(n_clicks,
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], []
+        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], [], [], []
 
     # point towards directory and upload data using GSASII
     # Default data location
@@ -327,7 +342,7 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,G2sc)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
@@ -338,7 +353,10 @@ def update_output(n_clicks,
     # table for plotting phase fraction results
     phase_frac_dict, phase_frac_col = compute_results.df_to_dict(phase_frac_DF.round(3))
 
-    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col
+    # table for plotting uncertainty table
+    uncert_dict, uncert_col = compute_results.df_to_dict(uncert_DF.round(3))
+
+    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col,  uncert_dict, uncert_col
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 

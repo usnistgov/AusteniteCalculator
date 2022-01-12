@@ -34,7 +34,7 @@ Support for Adam Creuziger was provided by the National Institute of Standards a
 
 ## How to run the application
 
-We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/), or alternatively one can run the application locally from a custom conda enviroment using the provided [yml file](conda_gsas_env.yml). Specific instructions for both options are below.
+We plan to eventually deploy the Austenite Calculator as a web application. For now, one may run the application using [Docker](https://www.docker.com/), or alternatively one can run the application locally from a custom conda enviroment using the provided [yml file](conda_gsas_env.yml). Specific instructions for both options are below. To deploy a volume in docker, which enables interaction with the files created by the application, first create a volume (docker volume create [name of volume]) and then run the container mounted in said volume (docker run -d \ --name [name] \ --mount source=[volume name],target=[target directory]).
 
 ### Locally
 
@@ -65,7 +65,7 @@ To run the container, run the following command:
 ```
 docker run -d -p 8080:8050 --name my_container austenite_calculator
 ```
-(-d for 'detached', -p specifies the port mapping, '--name' gives a name to the running container, and 'austenite_calculator' tells Docker which image to build the container from.) Then the app should be visible at localhost:8080 (accessed via your web browser).  
+(-d for 'detached', -p specifies the port mapping, '--name' gives a name to the running container, and 'austenite_calculator' tells Docker which image to build the container from.) Then the app should be visible at `localhost:8080` (accessed via your web browser).  
 
 To stop and remove the running container, run the following:
 ```
