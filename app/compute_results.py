@@ -33,20 +33,67 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # start new GSAS-II project
     gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
+    #initialize Uncertainty DataFrame
+    DF_Uncertainty=flag_uncertainties(0.0, " ", "Initialize", " ")
+
+    #############################
+    # Read in diffraction data
+    #############################
+    print("\n\n Read in diffraction data\n")
+    
+    # read in diffraction data as a powder histogram
+    # Do this first to get the two_theta range
+    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
+                                    data_path_wrap(instprm_fname),
+                                    databank=1, instbank=1)
+
+    # Get the two_theta range of the histogram
+    two_theta_range=hist.getdata('X')
+    min_two_theta=min(two_theta_range)
+    max_two_theta=max(two_theta_range)
+    #print(min_two_theta,max_two_theta)
+
+    # display the raw intensity vs. two_theta data
+    fig_raw_hist = get_figures(hist)
+
+
+    ########################################
+    # Caculate the theoretical intensities
+    ########################################
+    #? Move to function?  That way we also can allow more than 2 phases?
+    print("\n\n Calculate Theoretical Intensities\n")
+    tis = {}
+
+    for i in range(len(cif_fnames)):
+        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
+                                                         material=cif_fnames[i],
+                                                         cif_file=cif_fnames[i],
+                                                         instrument_calibration_file=instprm_fname,
+                                                         G2sc=G2sc,
+                                                         x_range=[min_two_theta,max_two_theta],
+                                                         DataPathWrap=data_path_wrap,
+                                                         SaveWrap=save_wrap)
+
+
+    # Merge and sort the theoretical intensities
+    #? Sort seems a kind of fragile way to align the data
+    tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
+    tis = tis.sort_values(by='two_theta')
+    tis = tis.reset_index(drop=True)
+    print("\nTheoretical Intensity Dataframe")
+    print(tis)
+  
+
+
     #Commented out format hint so that other examples work
     #    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
     #                                    DataPathWrap(instprm_fname),
     #                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
 
-    # read in diffraction data as a powder histogram
-    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
-                                    data_path_wrap(instprm_fname),
-                                    databank=1, instbank=1)
 
-    # display the raw intensity vs. two_theta data
-    fig_raw_hist = get_figures(hist)
-
+    ########################################
     # Read in phase data
+    ########################################
     phases = {}
     a0 = {}
     for i in range(len(cif_fnames)):
@@ -56,43 +103,34 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Find the ka1 wavelength in the file
     # works for some data files that have information encode, otherwise may need to prompt
     try:
-        Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
+        #Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
+        # pull from instrument parameters not comments
+        Ka1_wavelength=hist.data['Instrument Parameters'][0]['Lam1'][0]
     except:
         # hardcoded in for now with Cu source.
         #? Read from instrument parameter file? Prompt user?
         Ka1_wavelength=1.5405
+        DF_Uncertainty=flag_uncertainties(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_Uncertainty)
 
-    
-    #hardcoding HKL lists
-    #? for now, likely better ways to do this later...
-    HKL_BCC=[[1,1,0],[2,0,0],[2,1,1],[2,2,0],[3,1,0],[2,2,2],[3,2,1],[4,1,1]]
-    HKL_FCC=[[1,1,1],[2,0,0],[2,2,0],[3,1,1],[2,2,2],[4,0,0],[3,3,1],[4,2,0],[4,2,2]]
-    
-    # Convert the hkl planes to a sin
-    sin_theta_FCC = find_sin_thetas(a0[cif_fnames[0]], HKL_FCC, Ka1_wavelength)
-    sin_theta_BCC = find_sin_thetas(a0[cif_fnames[1]], HKL_BCC, Ka1_wavelength)
+    ########################################
+    # use the theoretical intensities for peak fit location
+    ########################################
 
-    # identify make sure all peaks are in range
-    two_theta_in_range_BCC=find_two_theta_in_range(sin_theta_BCC,hist)         
-    two_theta_in_range_FCC=find_two_theta_in_range(sin_theta_FCC,hist)
+    # Move two_theta to check robustness
+    # 0.2 on example 5 is enough to throw off the last two peaks
+    # 0.5 on example 5 will result in negative intensities being fit
+    # tis['two_theta']+= 0.5
 
-    # Create and mark a series of two_theta values to fit diffraction data
-    #? Maybe marking the data belongs in a function?
-    peaks_list=[]
-    peaks_list = np.array(two_theta_in_range_BCC)[~np.isnan(np.array(two_theta_in_range_BCC))]
-    peaks_list = np.concatenate((peaks_list,
-                            np.array(two_theta_in_range_FCC)[~np.isnan(np.array(two_theta_in_range_FCC))]),
-                            axis=0)
-    peaks_list=list(peaks_list)
-
-    #? The '0.5' addition is just a hack to get the fits to behave for the default files.
-    #? We should find a better way to do this
-    # Commented out to check Example05
-    #peaks_list=[x+0.5 for x in peaks_list]
+    # use the theoretical intensities for peak fit location
+    peaks_list=tis['two_theta']
 
     # reset the peak list in case of errors...
     #? Do we need this?  Legacy from jupyter notebook when one could run things
-    hist.Peaks['peaks']=[]
+    #hist.Peaks['peaks']=[]
+
+    ########################################
+    # Fit Peaks (likely belongs in a function)
+    ########################################
 
     # Set up background refinement
     #? Also maybe belongs in a function
@@ -144,28 +182,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         yaxis_title="Intensity"
     )
 
-    # Caculate the theoretical intensities
-    #? Move to function?  That way we also can allow more than 2 phases?
 
-    tis = {}
-
-    for i in range(len(cif_fnames)):
-        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
-                                                         material=cif_fnames[i],
-                                                         cif_file=cif_fnames[i],
-                                                         instrument_calibration_file=instprm_fname,
-                                                         G2sc=G2sc,
-                                                         DataPathWrap=data_path_wrap,
-                                                         SaveWrap=save_wrap)
-
-
-    # Merge and sort the theoretical intensities
-    #? Sort seems a kind of fragile way to align the data
-    tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
-    tis = tis.sort_values(by='two_theta')
-    tis = tis.reset_index(drop=True)
-    print(tis)
-  
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
     DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
@@ -180,7 +197,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
-    print("Concatenating Datafiles")
+    print("\n\n Concatenating Datafiles\n")
     DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
     DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
@@ -198,9 +215,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         print("Warning: I and R values different lengths. Returning empty figure.")
         print(DF_merged_fit_theo)
         fig_norm_itensity = go.Figure()
-
+        
+    ########################################
     # Calculate the phase fraction
-    DF_phase_fraction, DF_Uncertainty = calculate_phase_fraction(DF_merged_fit_theo)
+    ########################################
+    print("\n\n Calculating Phase Fraction\n")
+    DF_phase_fraction, DF_Uncertainty = calculate_phase_fraction(DF_merged_fit_theo, DF_Uncertainty)
     
     # create a plot for the two theta
     
@@ -344,22 +364,26 @@ def find_two_theta_in_range(sin_theta, hist):
 ######### Analysis Fuctions #########
 #####################################
 
-def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,G2sc,DataPathWrap,SaveWrap):
-    """
-    #Description
-    Function to calculate the theoretical intensities. Simulated diffraction profile calculated based on the .cif file and instrument parameter file
+def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,x_range,G2sc,DataPathWrap,SaveWrap):
+    """Function to calculate the theoretical intensities.
     
-    #Input
-    gpx_file_name: GSAS-II datafile (ends in .gpx)
-    material: Short name for the material (phase) for the dataframe e.g., 'Austenite', 'Ferrite'
-    cif_file: Crystallographic Information Format file for the phase to be simulated
-    instrument_calibration_file:
-    G2sc: GSAS-II scriptable module.  Passed to resolve the pathway
-    DataPathWrap: Path prefix to the location of the datafiles to read
-    SaveWrap: Path prefix to the location where new data should be saved
+    Simulated diffraction profile calculated based on the .cif file and instrument parameter file
     
-    #Returns
-    ti_table: Pandas dataframe with theoretical intensities
+    Args:
+        gpx_file_name: GSAS-II datafile (ends in .gpx)
+        material: Short name for the material (phase) for the dataframe e.g., 'Austenite', 'Ferrite'
+        cif_file: Crystallographic Information Format file for the phase to be simulated
+        instrument_calibration_file: instrument parameter file
+        x_range: two_theta range to calculate over (x-axis). List of length 2
+        G2sc: GSAS-II scriptable module.  Passed to resolve the pathway
+        DataPathWrap: Path prefix to the location of the datafiles to read
+        SaveWrap: Path prefix to the location where new data should be saved
+    
+    Returns:
+        ti_table: Pandas dataframe with theoretical intensities
+        
+    Raises:
+    
     """
     
     # Create a GSAS-II project to save data to
@@ -374,7 +398,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     # add a simulated histogram and link it to the previous phase(s)
     # May need to make the two theta range and number of points variables
     hist1 = gpx.add_simulated_powder_histogram(material + " simulation",
-                DataPathWrap(instrument_calibration_file),5.,120.,Npoints=5000,
+                DataPathWrap(instrument_calibration_file),x_range[0],x_range[1],Npoints=5000,
                 phases=gpx.phases(),scale=histogram_scale)
     
     # calculate simulated pattern and save file
@@ -391,27 +415,29 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
-def calculate_phase_fraction(Merged_DataFrame):
-    """
-    #Description
-    Calculate Phase Fraction
+def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
+    """Calculate Phase Fraction
     
-    #Input
-    Merged_DataFrame: combined
+    Args:
+        Merged_DataFrame: combined theoretical and fit DataFrame
+        Uncertainty_DF: prior uncertainty DataFrame
     
-    #Returns
-    phase_dict: dictionary with phase values
+    Returns:
+        phase_dict: dictionary with phase values
     
+    Raises:
     """
     
     # Extract all phases listed
     phase_list=Merged_DataFrame['Phase'].unique()
     
+    fraction_dict={}
     
     phase_dict = {"Phase":[],"Mean_value":[],"StDev_value":[],"hkls":[],"Number_hkls":[]};
     
-    
+    print(phase_list)
     for phase in phase_list:
+        print(phase)
         phase_dict["Phase"].append(phase)
         
         Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
@@ -424,20 +450,32 @@ def calculate_phase_fraction(Merged_DataFrame):
         #phase_dict["Number_hkls"].append(len(list(Phase_DF['hkl'])))
         
         # For now, pandas won't create a database if terms are of different lenght
+        #print("Append HKLs")
         phase_dict["hkls"].append(np.nan)
         phase_dict["Number_hkls"].append(len(Phase_DF['n_int']))
-    
-    phase_fraction_DF=pd.DataFrame(data=phase_dict)
-    
-    phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
-    phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev_value"]/(phase_fraction_DF["Mean_value"].sum())
 
+        phase_fraction_DF=pd.DataFrame(data=phase_dict)
+        
+        phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
+        phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev_value"]/(phase_fraction_DF["Mean_value"].sum())
+
+        #print("Add to fraction_dict")
+        fraction_dict[phase]=phase_fraction_DF
+        
+        norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
+        #print("After phase_fraction_DF.loc")
+        #print(norm_intensity_var.values[0])
+        #print(norm_intensity_var.astype(float))
+        #norm_intensity_var.astype(float)
+        Uncertainty_DF=flag_uncertainties(norm_intensity_var.values[0],
+                                         "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
+        #print("End of phase_list loop")
+
+    print("Fraction Dictionary")
+    print(fraction_dict)
     # Extracting only the 'Austenite' values
     #? Maybe pass based upon which phase is of interest
     #? or create one for each phase?
-    Uncertainty_DF=flag_uncertainties(phase_fraction_DF.loc[phase_fraction_DF['Phase'] == 'Austenite']["Fraction_StDev"],
-                                     "Normalized Intensity Variation", np.nan, np.nan)
-
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
@@ -472,7 +510,7 @@ def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
         error: error text
     """
     
-
+    print("Start Flag Uncertainties")
     uncertainty_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
 
     uncertainty_dict["Value"].append(value)
@@ -481,13 +519,15 @@ def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
     uncertainty_dict["Suggestions"].append(suggestion)
     
     uncertainty_DF=pd.DataFrame(data=uncertainty_dict)
-
+    print("Before appending")
     # append if other dataframe is included
-    if DF_to_append != None:
-        uncertainty_DF.append(DF_to_append, ignore_index=True)
+    if DF_to_append is not None:
+        uncertainty_DF=uncertainty_DF.append(DF_to_append, ignore_index=True)
     
-    uncertainty_DF.sort_values(by=["Value"],inplace=True)
-
+    #uncertainty_DF.sort_values(by=["Value"],inplace=True)
+    
+    #print(DF_to_append)
+    print(uncertainty_DF)
     return uncertainty_DF
 
 ## Docstring example
