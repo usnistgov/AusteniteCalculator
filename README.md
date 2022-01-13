@@ -44,7 +44,7 @@ conda env create -f conda_gsas_env.yml
 ```
 Then, activate the environment with 
 ```
-conda activate gsas
+conda activate gsas-AustCalc
 ```
 Finally, navigate your terminal to the AusteniteCalculator/app/ folder, and then run
 ```
