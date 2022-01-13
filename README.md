@@ -52,6 +52,7 @@ python app.py
 ```
 to start the flask server. The application should then be visible at localhost:8050. 
 
+You may need to edit the app.py file before the `import GSASIIscriptable as G2sc` line so that the application can find your local installation of GSAS-II to use the scripting toolkit
 
 ### From a Docker Container
 
@@ -74,6 +75,8 @@ docker rm -f my_container
 If you wish to run the container again, note that you do not need to run `docker build` again (unless you change the Dockerfile). You can simply run the `docker run` command.
 
 Alternatively, you can run, stop, and remove the container using the Docker Desktop application. For more instructions on using Docker, see the official guide [here](https://docs.docker.com/get-started/).
+
+Note that the port number is different between the local installation and the docker container
 
 ## Licence
 See [license.md](license.md).

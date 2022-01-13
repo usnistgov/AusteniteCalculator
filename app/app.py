@@ -37,6 +37,10 @@ elif re.search('dtn1',os.getcwd()):
 elif re.search('maxgarman',os.getcwd()):
     sys.path.insert(0, 'Users/maxgarman/opt/anaconda3/GSASII/') 
 
+elif re.search('creuzige',os.getcwd()):
+    sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
+
+
 import GSASIIscriptable as G2sc
 
 
