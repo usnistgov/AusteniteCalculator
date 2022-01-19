@@ -1,5 +1,7 @@
 compute_results
 ===============
+.. automodule:: compute_results
+    :members:
 
 .. note::
     This is the main file for the backend of the app
@@ -7,4 +9,3 @@ compute_results
 .. note::
     REFORMAT DOCSTRINGS TO GOOGLE STYLE
 
-.. automodule:: compute_results

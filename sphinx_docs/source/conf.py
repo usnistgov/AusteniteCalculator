@@ -15,7 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../app/'))
+sys.path.insert(0, os.path.abspath('../../app'))
 
 
 # -- Project information -----------------------------------------------------
@@ -33,8 +33,7 @@ release = '0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.napoleon',
-'sphinx.ext.autodoc']
+extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc']
 
 autodoc_default_flags = ['members']
 
@@ -47,7 +46,7 @@ templates_path = ['_templates']
 
 exclude_patterns = []
 
-autodoc_mock_imports = ["GSASIIscriptable"]
+autodoc_mock_imports = ["GSASIIscriptable", "plotly", "dash", "pandas", "dash_bootstrap_components", "numpy", "flask"]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -60,8 +59,3 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-#import mock
-#MOCK_MODULES = ['GSASIIscriptable']
-#for mod_name in MOCK_MODULES:
- #   sys.modules[mod_name] = mock.Mock()
