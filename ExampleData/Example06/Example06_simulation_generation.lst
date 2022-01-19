@@ -1,0 +1,319 @@
+********************************************************************************
+   General Structure Analysis System-II Crystal Structure Refinement
+              by Robert B. Von Dreele & Brian H. Toby
+                Argonne National Laboratory(C), 2010
+ This product includes software developed by the UChicago Argonne, LLC,
+            as Operator of Argonne National Laboratory.
+                          Please cite:
+   B.H. Toby & R.B. Von Dreele, J. Appl. Cryst. 46, 544-549 (2013)
+********************************************************************************
+ Least squares controls:
+ Refinement type: analytic Hessian
+ Maximum number of cycles: 0
+ Regularize hydrogens (if any): False
+ Initial shift factor: 1.000
+
+ Phases:
+
+ Phase name: alpha-prime-martensite-SRI
+=======================================================================================================================================
+
+ X-ray scattering factors:
+   Symbol     fa                                      fb                                      fc
+---------------------------------------------------------------------------------------------------
+ Fe        11.76950   7.35730   3.52220   2.30450   4.76110   0.30720  15.35350  76.88050   1.03690
+
+ Neutron scattering factors:
+   Symbol   isotope       mass       b       resonant terms
+---------------------------------------------------------------------------------------------------
+ Fe      Nat. Abund.     55.847    0.945
+
+ Space Group: I 4/m m m
+ The lattice is centrosymmetric I-centered tetragonal
+ The Laue symmetry is 4/mmm
+ The lattice point group is 4/mmm
+ Multiplicity of a general site is 32
+ The inversion center is located at 0,0,0
+ 
+ The equivalent positions are:
+
+ (0,0,0; 1/2,1/2,1/2)+
+
+ ( 1)     X,     Y,     Z 
+ ( 2)    -Y,     X,     Z 
+ ( 3)    -X,    -Y,     Z 
+ ( 4)     Y,    -X,     Z 
+ ( 5)    -X,     Y,     Z 
+ ( 6)    -Y,    -X,     Z 
+ ( 7)     X,    -Y,     Z 
+ ( 8)     Y,     X,     Z 
+
+ Atoms:
+   name    type  refine?   x         y         z      frac site sym  mult I/A   Uiso     U11     U22     U33     U12     U13     U23
+---------------------------------------------------------------------------------------------------------------------------------------
+    Fe1     Fe          0.00000   0.00000   0.00000   1.0004/mmm(z)    2    I 0.00400                                                
+
+ Unit cell: a = 2.88711 b = 2.88711 c = 2.87940 alpha = 90.000 beta = 90.000 gamma = 90.000 volume = 24.001 Refine? False
+
+ Spherical harmonics texture: Order:0
+
+ Phase name: austenite-SRI
+=======================================================================================================================================
+
+ X-ray scattering factors:
+   Symbol     fa                                      fb                                      fc
+---------------------------------------------------------------------------------------------------
+ Fe        11.76950   7.35730   3.52220   2.30450   4.76110   0.30720  15.35350  76.88050   1.03690
+
+ Neutron scattering factors:
+   Symbol   isotope       mass       b       resonant terms
+---------------------------------------------------------------------------------------------------
+ Fe      Nat. Abund.     55.847    0.945
+
+ Space Group: F m -3 m
+ The lattice is centrosymmetric F-centered cubic
+ The Laue symmetry is m3m
+ The lattice point group is m3m
+ Multiplicity of a general site is 192
+ The inversion center is located at 0,0,0
+ 
+ The equivalent positions are:
+
+ (0,0,0; 0,1/2,1/2; 1/2,0,1/2; 1/2,1/2,0)+
+
+ ( 1)     X,     Y,     Z 
+ ( 2)     Z,     X,     Y 
+ ( 3)     Y,     Z,     X 
+ ( 4)     X,     Y,    -Z 
+ ( 5)    -Z,     X,     Y 
+ ( 6)     Y,    -Z,     X 
+ ( 7)    -Z,     X,    -Y 
+ ( 8)    -Y,    -Z,     X 
+ ( 9)     Y,    -Z,    -X 
+ (10)    -X,     Y,    -Z 
+ (11)    -Z,    -X,     Y 
+ (12)     X,    -Y,    -Z 
+ (13)     Y,     X,     Z 
+ (14)     Z,     Y,     X 
+ (15)     X,     Z,     Y 
+ (16)     Y,     X,    -Z 
+ (17)    -Z,     Y,     X 
+ (18)     X,    -Z,     Y 
+ (19)    -Z,     Y,    -X 
+ (20)    -X,    -Z,     Y 
+ (21)     X,    -Z,    -Y 
+ (22)    -Y,     X,    -Z 
+ (23)    -Z,    -Y,     X 
+ (24)     Y,    -X,    -Z 
+
+ Atoms:
+   name    type  refine?   x         y         z      frac site sym  mult I/A   Uiso     U11     U22     U33     U12     U13     U23
+---------------------------------------------------------------------------------------------------------------------------------------
+    Fe1     Fe          0.00000   0.00000   0.00000   1.000    m3m    4    I 0.00700                                                
+
+ Unit cell: a = 3.59270 b = 3.59270 c = 3.59270 alpha = 90.000 beta = 90.000 gamma = 90.000 volume = 46.373 Refine? False
+
+ Spherical harmonics texture: Order:0
+
+ Phase name: epsilon-martensite-SRI
+=======================================================================================================================================
+
+ X-ray scattering factors:
+   Symbol     fa                                      fb                                      fc
+---------------------------------------------------------------------------------------------------
+ Fe        11.76950   7.35730   3.52220   2.30450   4.76110   0.30720  15.35350  76.88050   1.03690
+
+ Neutron scattering factors:
+   Symbol   isotope       mass       b       resonant terms
+---------------------------------------------------------------------------------------------------
+ Fe      Nat. Abund.     55.847    0.945
+
+ Space Group: P 63/m m c
+ The lattice is centrosymmetric primitive hexagonal
+ The Laue symmetry is 6/mmm
+ The lattice point group is 6/mmm
+ Multiplicity of a general site is 24
+ The inversion center is located at 0,0,0
+ 
+ The equivalent positions are:
+
+ ( 1)     X,     Y,     Z 
+ ( 2)   X-Y,     X, 1/2+Z 
+ ( 3)    -Y,   X-Y,     Z 
+ ( 4)    -X,    -Y, 1/2+Z 
+ ( 5)   Y-X,    -X,     Z 
+ ( 6)     Y,   Y-X, 1/2+Z 
+ ( 7)   Y-X,     Y,     Z 
+ ( 8)    -X,   Y-X, 1/2+Z 
+ ( 9)    -Y,    -X,     Z 
+ (10)   X-Y,    -Y, 1/2+Z 
+ (11)     X,   X-Y,     Z 
+ (12)     Y,     X, 1/2+Z 
+
+ Atoms:
+   name    type  refine?   x         y         z      frac site sym  mult I/A   Uiso     U11     U22     U33     U12     U13     U23
+---------------------------------------------------------------------------------------------------------------------------------------
+    Fe1     Fe          0.00000   0.00000   0.00000   1.000-3m(100)    2    I 0.00400                                                
+
+ Unit cell: a = 2.52860 b = 2.52860 c = 4.14830 alpha = 90.000 beta = 90.000 gamma = 120.000 volume = 22.970 Refine? False
+
+ Spherical harmonics texture: Order:0
+
+ Phase: alpha-prime-martensite-SRI in histogram: PWDR CW x-ray simulation
+=======================================================================================================================================
+ Phase fraction  :     0.3000 Refine? False
+ Extinction coeff:     0.0000 Refine? False
+ March-Dollase PO:     1.0000 Refine? False Axis: 0 0 1
+
+ Size model    : isotropic equatorial:       1.000 Refine? False
+	 LG mixing coeff.:       1.0000 Refine? False
+
+ Mustrain model: isotropic equatorial:      1000.0 Refine? False
+	 LG mixing coeff.:      1.0000 Refine? False
+
+ Hydrostatic/elastic strain:
+ names :         D11         D33
+ values:           0           0
+ refine:       False       False
+ Layer Displacement:      0.000 Refine? False
+
+ Phase: austenite-SRI in histogram: PWDR CW x-ray simulation
+=======================================================================================================================================
+ Phase fraction  :     0.6000 Refine? False
+ Extinction coeff:     0.0000 Refine? False
+ March-Dollase PO:     1.0000 Refine? False Axis: 0 0 1
+
+ Size model    : isotropic equatorial:       1.000 Refine? False
+	 LG mixing coeff.:       1.0000 Refine? False
+
+ Mustrain model: isotropic equatorial:      1000.0 Refine? False
+	 LG mixing coeff.:      1.0000 Refine? False
+
+ Hydrostatic/elastic strain:
+ names :         D11          eA
+ values:           0           0
+ refine:       False       False
+ Layer Displacement:      0.000 Refine? False
+
+ Phase: epsilon-martensite-SRI in histogram: PWDR CW x-ray simulation
+=======================================================================================================================================
+ Phase fraction  :     0.1000 Refine? False
+ Extinction coeff:     0.0000 Refine? False
+ March-Dollase PO:     1.0000 Refine? False Axis: 0 0 1
+
+ Size model    : isotropic equatorial:       1.000 Refine? False
+	 LG mixing coeff.:       1.0000 Refine? False
+
+ Mustrain model: isotropic equatorial:      1000.0 Refine? False
+	 LG mixing coeff.:      1.0000 Refine? False
+
+ Hydrostatic/elastic strain:
+ names :         D11         D33
+ values:           0           0
+ refine:       False       False
+ Layer Displacement:      0.000 Refine? False
+
+ Histogram: PWDR CW x-ray simulation histogram Id: 0
+=======================================================================================================================================
+ Instrument type: Bragg-Brentano
+ Histogram limits:    20.00 deg to   150.00 deg
+
+ Sample Parameters:
+ Goniometer omega = 0.00, chi = 0.00, phi = 0.00
+ name  :         Scale         Shift  Transparency    SurfRoughA    SurfRoughB
+ value :      100.0000        0.0000        0.0000        0.0000        0.0000
+ refine:          True         False         False         False         False
+
+ Instrument Parameters:
+ name  :     Azimuth        Bank I(L2)/I(L1)        Lam1        Lam2    Polariz.        SH/L
+ value :    0.000000    1.000000    0.500000    1.540500    1.544300    0.700000    0.002000
+ refine:                   False       False                               False       False
+
+ name  :           U           V           W           X           Y           Z        Zero
+ value :    9.415874  -12.574785   22.757877    0.662597    2.501063    0.000000    0.000000
+ refine:       False       False       False       False       False       False       False
+
+ Background function: chebyschev-1 Refine? True
+ Coefficients:      1.000     0.000     0.000
+ Fixed background file: ; mult: 1.000  Refine? False
+
+ Refinement results:
+---------------------------------------------------------------------------------------------------------------------------------------
+ Number of function calls: 1 No. of observations: 13001 No. of parameters: 4 User rejected: 0 Sp. gp. extinct: 0
+ Refinement time =    0.824s,    0.824s/cycle, for 1 cycles
+ wR =   19.76%, chi**2 =        35132, GOF =   1.64
+
+ Phases:
+ Result for phase: alpha-prime-martensite-SRI
+=======================================================================================================================================
+
+ Atoms:
+   name      x         y         z      frac   Uiso     U11     U22     U33     U12     U13     U23
+---------------------------------------------------------------------------------------------------------------------------------------
+    Fe1     Fe:
+ values:   0.00000   0.00000   0.00000   1.000 0.00400
+ sig   :                                              
+
+ Density: 7.7277 g/cm**3
+ Result for phase: austenite-SRI
+=======================================================================================================================================
+
+ Atoms:
+   name      x         y         z      frac   Uiso     U11     U22     U33     U12     U13     U23
+---------------------------------------------------------------------------------------------------------------------------------------
+    Fe1     Fe:
+ values:   0.00000   0.00000   0.00000   1.000 0.00700
+ sig   :                                              
+
+ Density: 7.9992 g/cm**3
+ Result for phase: epsilon-martensite-SRI
+=======================================================================================================================================
+
+ Atoms:
+   name      x         y         z      frac   Uiso     U11     U22     U33     U12     U13     U23
+---------------------------------------------------------------------------------------------------------------------------------------
+    Fe1     Fe:
+ values:   0.00000   0.00000   0.00000   1.000 0.00400
+ sig   :                                              
+
+ Density: 8.0745 g/cm**3
+
+ Phase: alpha-prime-martensite-SRI in histogram: PWDR CW x-ray simulation
+=======================================================================================================================================
+ Final refinement RF, RF^2 = 0.40%, 0.73% on 12 reflections
+ Durbin-Watson statistic = 2.545
+ Bragg intensity sum = 1.58e+05
+
+ Phase: austenite-SRI in histogram: PWDR CW x-ray simulation
+=======================================================================================================================================
+ Final refinement RF, RF^2 = 0.23%, 0.38% on 8 reflections
+ Durbin-Watson statistic = 2.545
+ Bragg intensity sum = 6.71e+05
+
+ Phase: epsilon-martensite-SRI in histogram: PWDR CW x-ray simulation
+=======================================================================================================================================
+ Final refinement RF, RF^2 = 0.53%, 1.17% on 16 reflections
+ Durbin-Watson statistic = 2.545
+ Bragg intensity sum = 5.62e+04
+
+ Histogram: PWDR CW x-ray simulation histogram Id: 0
+=======================================================================================================================================
+ PWDR histogram weight factor = 1.000
+ Final refinement wR = 19.76% on 13001 observations in this histogram
+ Other residuals: R = 4.74%, R-bkg = 3.84%, wR-bkg = 19.76% wRmin = 12.02%
+ Instrument type: Bragg-Brentano
+
+ Resonant form factors:(ref: D.T. Cromer & D.A. Liberman (1981), Acta Cryst. A37, 267-268.)
+ Element:       Fe
+ f'     :   -1.134
+ f"     :    3.197
+
+ Sample Parameters:
+ names :         Scale         Shift  Transparency    SurfRoughA    SurfRoughB
+ values:      100.0000        0.0000        0.0000        0.0000        0.0000
+ sig   :        0.1768                                                        
+
+ Background function: chebyschev-1
+ value :          1         0         0
+ sig   :    0.02358   0.03499   0.03346
+ Background sums: empirical 1.3e+04, Debye 0, peaks 0, Total 1.3e+04

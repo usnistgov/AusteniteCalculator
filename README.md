@@ -265,6 +265,43 @@ These are files that describe the lattice information and composition informatio
 |BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
 
 
+## Example06
+Simulated 3 phase data
+
+In development.  Using SRI supplement, Vulcan data for lattice parameters
+Just using pure Iron for simplicity
+Space Group 139 for alpha prime tetragonal
+
+Space Group 194 for epsilon martensite based on:
+https://materialsproject.org/materials/mp-136/
+
+But it's not really clear if this assumption is correct...
+Bhadeshia lists space groups (182, 194) for an epsilon carbide, but I don't think that's the same structure since it assumes a lot more carbon
+file:///Users/creuzige/Downloads/epsilon_Jang_MST_2020.pdf
+
+Phase fraction mix (readout wt. fraction):
+0.6 austenite (.750)
+0.3 alpha prime (.188)
+0.1 epsilon (0.063)
+
+
+#### Data files
+| Filename | Data ID | Acquired by | Format | Description |
+| -------- | ------ | ---- |---- | ---- |
+
+#### CIF files
+These are files that describe the lattice information and composition information. Two files are likely needed for each phase, an austenite and ferrite phase.
+
+| Filename | Created by | Description |
+| -------- |  ---- | ---- |
+
+#### Instrument calibration files
+
+| Filename |Instrument| Created by | Description |
+| -------- | ------ | ---- | ---- |
+|BrukerD8_E211110.instprm| NIST MML Bruker D8 | Adam Creuziger | Used process from part 1 of https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm and E211110-AAC-001_005-000_exported.csv as the data set. |
+
+
 # METHODOLOGICAL INFORMATION
 
 None at this time

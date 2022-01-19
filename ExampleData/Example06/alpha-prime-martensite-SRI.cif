@@ -1,0 +1,72 @@
+ 
+######################################################################
+data_alpha-prime-martensite-SRI
+
+# phase info for alpha-prime-martensite-SRI follows
+_pd_phase_name  alpha-prime-martensite-SRI
+_cell_length_a  2.88711
+_cell_length_b  2.88711
+_cell_length_c  2.8794
+_cell_angle_alpha  90
+_cell_angle_beta   90
+_cell_angle_gamma  90
+_cell_volume  24.001
+_exptl_crystal_density_diffrn  7.7277
+_symmetry_cell_setting  tetragonal
+_symmetry_space_group_name_H-M  "I 4/m m m"
+loop_
+    _space_group_symop_id
+    _space_group_symop_operation_xyz
+     1  x,y,z
+     2  -y,x,z
+     3  -x,-y,z
+     4  y,-x,z
+     5  -x,y,z
+     6  -y,-x,z
+     7  x,-y,z
+     8  y,x,z
+     9  -x,-y,-z
+    10  y,-x,-z
+    11  x,y,-z
+    12  -y,x,-z
+    13  x,-y,-z
+    14  y,x,-z
+    15  -x,y,-z
+    16  -y,-x,-z
+    17  1/2+x,1/2+y,1/2+z
+    18  1/2-y,1/2+x,1/2+z
+    19  1/2-x,1/2-y,1/2+z
+    20  1/2+y,1/2-x,1/2+z
+    21  1/2-x,1/2+y,1/2+z
+    22  1/2-y,1/2-x,1/2+z
+    23  1/2+x,1/2-y,1/2+z
+    24  1/2+y,1/2+x,1/2+z
+    25  1/2-x,1/2-y,1/2-z
+    26  1/2+y,1/2-x,1/2-z
+    27  1/2+x,1/2+y,1/2-z
+    28  1/2-y,1/2+x,1/2-z
+    29  1/2+x,1/2-y,1/2-z
+    30  1/2+y,1/2+x,1/2-z
+    31  1/2-x,1/2+y,1/2-z
+    32  1/2-y,1/2-x,1/2-z
+
+# ATOMIC COORDINATES AND DISPLACEMENT PARAMETERS
+loop_ 
+   _atom_site_label
+   _atom_site_type_symbol
+   _atom_site_fract_x
+   _atom_site_fract_y
+   _atom_site_fract_z
+   _atom_site_occupancy
+   _atom_site_adp_type
+   _atom_site_U_iso_or_equiv
+   _atom_site_site_symmetry_multiplicity
+Fe1    Fe   0.00000     0.00000     0.00000     1.000      Uiso 0.004      2   
+
+loop_  _atom_type_symbol _atom_type_number_in_cell
+  Fe   2
+
+# Note that Z affects _cell_formula_sum and _weight
+_cell_formula_units_Z  2
+_chemical_formula_sum  Fe
+_chemical_formula_weight  55.85
