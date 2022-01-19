@@ -12,5 +12,6 @@ dependencies:
   - dash
   - flask
   - pip
+  - sphinx
   - pip:
     - dash-bootstrap-components
