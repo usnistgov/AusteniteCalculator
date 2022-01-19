@@ -90,6 +90,12 @@ None currently set.
 ## Citation Guidance
 None currently set.
 
+# Sphnix Documentaiton
+
+Every change, will need to make the html files, use:
+`make html` 
+in the sphinx_docs file
+
 # DATA & FILE OVERVIEW
 ## Files needed
 
