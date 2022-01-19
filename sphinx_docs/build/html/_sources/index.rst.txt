@@ -38,6 +38,7 @@ Welcome to AusteniteCalculator's documentation!
 
    compute_results
    app
+   user_guide
 
 
 Indices and tables

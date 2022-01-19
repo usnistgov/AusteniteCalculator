@@ -6,24 +6,24 @@ import math
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
-    #Description
+
     Main computation program for phase calculations
     
-    #Input
-    datadir: Location data is stored
-    workdir: Working directory for data
-    xrdml_fname: Diffraction data (xrdml title legacy)
-    instprm_fname: Instrument Parameter File
-    cif_fnames: Crystollographic Info File
-    G2sc: GSAS-II Scripting Toolkit location
+    Args:
+        datadir: Location data is stored
+        workdir: Working directory for data
+        xrdml_fname: Diffraction data (xrdml title legacy)
+        instprm_fname: Instrument Parameter File
+        cif_fnames: Crystollographic Info File
+        G2sc: GSAS-II Scripting Toolkit location
     
-    #Returns
-    fig_raw_hist: Intensity vs. two_theta plot of raw data
-    fig_fit_hist: Intensity vs. two_theta plot with fit data
-    DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
-    fig_norm_itensity: Figure of normalized intensities
-    fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
-    DF_phase_fraction: pandas DataFrame with phase fraction
+    Returns:
+        fig_raw_hist: Intensity vs. two_theta plot of raw data
+        fig_fit_hist: Intensity vs. two_theta plot with fit data
+        DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
+        fig_norm_itensity: Figure of normalized intensities
+        fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
+        DF_phase_fraction: pandas DataFrame with phase fraction
     """
     
     #Helper functions to create full path descriptions
@@ -234,13 +234,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
 def df_to_dict(df):
     """
-    #Description
+    
     function for converting pandas dataframe to dictionary for dash data_table
 
-    #Input
-    df: pandas Dataframe
+    Args:
+        df: pandas Dataframe
 
-    #Returns
+    Returns:
 
     """
     out_dict = df.to_dict('records')
@@ -250,15 +250,14 @@ def df_to_dict(df):
 
 def get_figures(hist):
     """
-    #Description
     plot the intensity vs. two_theta data of a diffraction profile
     
-    #Input
-    hist: powder histogram
+    Args:
+        hist: powder histogram
     
-    #Returns
-    fig: Figure
-    #? what format?
+    Returns:
+        fig: Figure
+        #? what format?
     """
     df = pd.DataFrame({
         "two_theta":hist.data['data'][1][0],
@@ -270,16 +269,16 @@ def get_figures(hist):
 
 def two_theta_compare_figure(Merged_DataFrame):
     """
-    #Description
+    
     plot the fitted vs. theoretical two_theta data
     Should be along the diagonal
     
-    #Input
-    Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
+    Args:
+        Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
     
-    #Returns
-    fig: Figure
-    #? what format?
+    Returns:
+        fig: Figure
+        #? what format?
     """
     
     fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos", color="Phase",
@@ -301,16 +300,15 @@ def two_theta_compare_figure(Merged_DataFrame):
 
 def get_phase(cif_wrap, phase_name, project):
     """
-    #Description
     Retreieve the phase information from file.  Assumes phase information is stored in a .cif file with format hint (fmthint)
     
-    #Input
-    cif_wrap: path to file
-    phase_name: Name for the phase
-    project: GSAS-II project file to add phase to
+    Args:
+        cif_wrap: path to file
+        phase_name: Name for the phase
+        project: GSAS-II project file to add phase to
     
-    #Returns
-    GSAS-II project file with phase data wrapped in
+    Returns:
+        GSAS-II project file with phase data wrapped in
     """
     return project.add_phase(cif_wrap, phase_name, fmthint = 'CIF')
 
@@ -488,7 +486,7 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
 def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
     """Adds notes and flags to uncertainty calculation.
 
-    [additional text]
+    calculation to flag uncertainties
 
     Args:
         value: uncertainty value (float)
