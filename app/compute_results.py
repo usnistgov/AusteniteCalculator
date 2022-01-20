@@ -60,9 +60,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Caculate the theoretical intensities
     ########################################
-    #? Move to function?  That way we also can allow more than 2 phases?
     print("\n\n Calculate Theoretical Intensities\n")
-    tis = {}
+
+    tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
 
     for i in range(len(cif_fnames)):
         tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
@@ -74,22 +74,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                                                          DataPathWrap=data_path_wrap,
                                                          SaveWrap=save_wrap)
 
-
     # Merge and sort the theoretical intensities
-    #? Sort seems a kind of fragile way to align the data
+    #? Sort seems a kind of fragile way to align the data 
     tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
     tis = tis.sort_values(by='two_theta')
     tis = tis.reset_index(drop=True)
     print("\nTheoretical Intensity Dataframe")
     print(tis)
-  
-
-
-    #Commented out format hint so that other examples work
-    #    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-    #                                    DataPathWrap(instprm_fname),
-    #                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
-
 
     ########################################
     # Read in phase data
@@ -123,10 +114,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     # use the theoretical intensities for peak fit location
     peaks_list=tis['two_theta']
-
-    # reset the peak list in case of errors...
-    #? Do we need this?  Legacy from jupyter notebook when one could run things
-    #hist.Peaks['peaks']=[]
 
     ########################################
     # Fit Peaks (likely belongs in a function)
@@ -431,7 +418,7 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     
     fraction_dict={}
     
-    phase_dict = {"Phase":[],"Mean_value":[],"StDev_value":[],"hkls":[],"Number_hkls":[]};
+    phase_dict = {"Phase":[],"Mean_value":[],"StDev_value":[],"hkls":[],"Number_hkls":[]}
     
     print(phase_list)
     for phase in phase_list:
