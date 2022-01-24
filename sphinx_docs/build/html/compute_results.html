@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>compute_results &#8212; AusteniteCalculator 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="build app" href="app.html" />
+    <link rel="prev" title="Welcome to AusteniteCalculator’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-compute_results">
+<span id="compute-results"></span><h1>compute_results<a class="headerlink" href="#module-compute_results" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.calculate_phase_fraction">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">calculate_phase_fraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Merged_DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Uncertainty_DF</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.calculate_phase_fraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Phase Fraction</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Merged_DataFrame</strong> – combined theoretical and fit DataFrame</p></li>
+<li><p><strong>Uncertainty_DF</strong> – prior uncertainty DataFrame</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dictionary with phase values</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>phase_dict</p>
+</dd>
+</dl>
+<p>Raises:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.compute">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datadir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xrdml_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instprm_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cif_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G2sc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main computation program for phase calculations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datadir</strong> – Location data is stored</p></li>
+<li><p><strong>workdir</strong> – Working directory for data</p></li>
+<li><p><strong>xrdml_fname</strong> – Diffraction data (xrdml title legacy)</p></li>
+<li><p><strong>instprm_fname</strong> – Instrument Parameter File</p></li>
+<li><p><strong>cif_fnames</strong> – Crystollographic Info File</p></li>
+<li><p><strong>G2sc</strong> – GSAS-II Scripting Toolkit location</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Intensity vs. two_theta plot of raw data
+fig_fit_hist: Intensity vs. two_theta plot with fit data
+DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
+fig_norm_itensity: Figure of normalized intensities
+fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
+DF_phase_fraction: pandas DataFrame with phase fraction</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>fig_raw_hist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.df_to_dict">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">df_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.df_to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>function for converting pandas dataframe to dictionary for dash data_table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>df</strong> – pandas Dataframe</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.find_sin_thetas">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">find_sin_thetas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phase_lattice_parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hkl_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.find_sin_thetas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the position in two theta for a list of hkls.  Used to mark locations for fitting
+!!! Have only tested cubic crystal symmetry</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>phase_lattice_parameter</strong> – lattice parameter</p></li>
+<li><p><strong>hkl_list</strong> – list of lattice planes (hkl)</p></li>
+<li><p><strong>wavelength</strong> – dominant wavelength in the diffraction data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of floating point values with the position of each hkl in 2-theta
+#? Is this in radians or degrees?
+#? Returning theta or two_theta?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.find_two_theta_in_range">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">find_two_theta_in_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sin_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.find_two_theta_in_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>#Description
+#? Truncate the calculated 2Theta range?
+Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan</p>
+<p>#Input
+SinTheta:
+hist:</p>
+<p>#Returns
+TwoThetaInRange:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.flag_uncertainties">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">flag_uncertainties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DF_to_append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.flag_uncertainties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds notes and flags to uncertainty calculation.</p>
+<p>calculation to flag uncertainties</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – uncertainty value (float)</p></li>
+<li><p><strong>source</strong> – source of uncertainty (string)</p></li>
+<li><p><strong>flag</strong> – alert to user (string)</p></li>
+<li><p><strong>suggestion</strong> – suggestions on source or mitigation methods to decrease error (string)</p></li>
+<li><p><strong>DF_to_append</strong> – pandas DataFrame with notes from other sources</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>pandas DataFrame with notes about the uncertainties calculated</p>
+<p>variable: description</p>
+<p>examples</p>
+<p>caveats</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>uncertainty_DF</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>error</strong> – error text</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.get_figures">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">get_figures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.get_figures" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot the intensity vs. two_theta data of a diffraction profile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>hist</strong> – powder histogram</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Figure
+#? what format?</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>fig</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.get_phase">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">get_phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cif_wrap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.get_phase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retreieve the phase information from file.  Assumes phase information is stored in a .cif file with format hint (fmthint)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cif_wrap</strong> – path to file</p></li>
+<li><p><strong>phase_name</strong> – Name for the phase</p></li>
+<li><p><strong>project</strong> – GSAS-II project file to add phase to</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>GSAS-II project file with phase data wrapped in</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.get_theoretical_intensities">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">get_theoretical_intensities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gpx_file_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cif_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instrument_calibration_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G2sc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DataPathWrap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SaveWrap</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.get_theoretical_intensities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to calculate the theoretical intensities.</p>
+<p>Simulated diffraction profile calculated based on the .cif file and instrument parameter file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gpx_file_name</strong> – GSAS-II datafile (ends in .gpx)</p></li>
+<li><p><strong>material</strong> – Short name for the material (phase) for the dataframe e.g., ‘Austenite’, ‘Ferrite’</p></li>
+<li><p><strong>cif_file</strong> – Crystallographic Information Format file for the phase to be simulated</p></li>
+<li><p><strong>instrument_calibration_file</strong> – instrument parameter file</p></li>
+<li><p><strong>x_range</strong> – two_theta range to calculate over (x-axis). List of length 2</p></li>
+<li><p><strong>G2sc</strong> – GSAS-II scriptable module.  Passed to resolve the pathway</p></li>
+<li><p><strong>DataPathWrap</strong> – Path prefix to the location of the datafiles to read</p></li>
+<li><p><strong>SaveWrap</strong> – Path prefix to the location where new data should be saved</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pandas dataframe with theoretical intensities</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ti_table</p>
+</dd>
+</dl>
+<p>Raises:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compute_results.two_theta_compare_figure">
+<span class="sig-prename descclassname"><span class="pre">compute_results.</span></span><span class="sig-name descname"><span class="pre">two_theta_compare_figure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Merged_DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#compute_results.two_theta_compare_figure" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot the fitted vs. theoretical two_theta data
+Should be along the diagonal</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Merged_DataFrame</strong> – Dataframe after merging with fitted and theoretical intensities</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Figure
+#? what format?</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>fig</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is the main file for the backend of the app</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>REFORMAT DOCSTRINGS TO GOOGLE STYLE</p>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">AusteniteCalculator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">compute_results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="app.html">build app</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to AusteniteCalculator’s documentation!</a></li>
+      <li>Next: <a href="app.html" title="next chapter">build app</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Adam Creuziger, David Newton, Max Garman, Caleb Schenck.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/compute_results.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
