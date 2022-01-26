@@ -110,6 +110,10 @@ Kind of mandatory until we sort out a better solution:
 
 Many of these entries use data IDs developed in the NIST Center for Automotive Lightweighting (NCAL).  They are retained to provide additional data provenance information.
 
+#### Austenite Stability file
+| Filename | Description 1 | Description 2 |
+| AusteniteStabilityCalcs | M_s equation found in Steels by George Krauss, chapter 5, page 73 | M_D30 equation from the thesis of Darren Lewis "Influence of Compositional Variation on Deformation Induced Martensite Formation in Type 304 Stainless Steel"
+
 ### Diffraction data files
 
 | Filename | Data ID | Acquired by | Format | Description |
