@@ -7,3 +7,6 @@ server_workdir/*
 
 sphinx_docs/.DS_Store
 sphinx_docs/build/.DS_Store
+
+*/.DS_Store
+sphinx_docs/build/.DS_Store

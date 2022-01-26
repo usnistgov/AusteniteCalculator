@@ -60,9 +60,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Caculate the theoretical intensities
     ########################################
-    #? Move to function?  That way we also can allow more than 2 phases?
     print("\n\n Calculate Theoretical Intensities\n")
-    tis = {}
+
+    tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
 
     for i in range(len(cif_fnames)):
         tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
@@ -74,22 +74,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                                                          DataPathWrap=data_path_wrap,
                                                          SaveWrap=save_wrap)
 
-
     # Merge and sort the theoretical intensities
-    #? Sort seems a kind of fragile way to align the data
+    #? Sort seems a kind of fragile way to align the data 
     tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
     tis = tis.sort_values(by='two_theta')
     tis = tis.reset_index(drop=True)
     print("\nTheoretical Intensity Dataframe")
     print(tis)
-  
-
-
-    #Commented out format hint so that other examples work
-    #    hist = gpx.add_powder_histogram(DataPathWrap(xrdml_fname),
-    #                                    DataPathWrap(instprm_fname),
-    #                                    fmthint='Panalytical xrdml (xml)', databank=1, instbank=1)
-
 
     ########################################
     # Read in phase data
@@ -123,10 +114,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     # use the theoretical intensities for peak fit location
     peaks_list=tis['two_theta']
-
-    # reset the peak list in case of errors...
-    #? Do we need this?  Legacy from jupyter notebook when one could run things
-    #hist.Peaks['peaks']=[]
 
     ########################################
     # Fit Peaks (likely belongs in a function)
@@ -428,49 +415,53 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     
     # Extract all phases listed
     phase_list=Merged_DataFrame['Phase'].unique()
+    n_phases = len(phase_list)
     
-    fraction_dict={}
-    
-    phase_dict = {"Phase":[],"Mean_value":[],"StDev_value":[],"hkls":[],"Number_hkls":[]};
+    phase_fraction_DF = pd.DataFrame({
+        "Phase":phase_list,
+        "Mean":[0]*n_phases,
+        "StDev":[0]*n_phases,
+        "hkls":[np.nan]*n_phases,
+        "Number_hkls":[0]*n_phases,
+        "Fraction":[0]*n_phases,
+        "Fraction_StDev":[0]*n_phases
+    })
+
+    fraction_dict = {} # DN: not sure why we need this?
     
     print(phase_list)
-    for phase in phase_list:
+
+    # first, fill in table
+    for ii, phase in enumerate(phase_list):
         print(phase)
-        phase_dict["Phase"].append(phase)
         
         Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
-        phase_dict["Mean_value"].append(Phase_DF['n_int'].mean())
-        phase_dict["StDev_value"].append(Phase_DF['n_int'].std())
+
+        phase_fraction_DF["Mean"].iloc[ii] = Phase_DF['n_int'].mean()
+        phase_fraction_DF["StDev"].iloc[ii] = Phase_DF['n_int'].std()
         
         #Phase_DF['hkl']=Phase_DF.agg('{0['h']}{0['k']}{0['l']}'.format, axis=1)
         #phase_dict["hkls"].append(list(Phase_DF['hkl']))
         
         #phase_dict["Number_hkls"].append(len(list(Phase_DF['hkl'])))
         
-        # For now, pandas won't create a database if terms are of different lenght
-        #print("Append HKLs")
-        phase_dict["hkls"].append(np.nan)
-        phase_dict["Number_hkls"].append(len(Phase_DF['n_int']))
-
-        phase_fraction_DF=pd.DataFrame(data=phase_dict)
-        
-        phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean_value"]/(phase_fraction_DF["Mean_value"].sum())
-        phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev_value"]/(phase_fraction_DF["Mean_value"].sum())
+        phase_fraction_DF["Number_hkls"].iloc[ii] = len(Phase_DF['n_int'])
 
         #print("Add to fraction_dict")
         fraction_dict[phase]=phase_fraction_DF
-        
-        norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
-        #print("After phase_fraction_DF.loc")
-        #print(norm_intensity_var.values[0])
-        #print(norm_intensity_var.astype(float))
-        #norm_intensity_var.astype(float)
-        Uncertainty_DF=flag_uncertainties(norm_intensity_var.values[0],
-                                         "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
-        #print("End of phase_list loop")
 
     print("Fraction Dictionary")
     print(fraction_dict)
+
+    # now, compute phase fraction
+    phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean"]/(phase_fraction_DF["Mean"].sum())
+    phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev"]/(phase_fraction_DF["Mean"].sum())
+    norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
+
+    Uncertainty_DF=flag_uncertainties(norm_intensity_var.values[0],
+                                      "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
+
+
     # Extracting only the 'Austenite' values
     #? Maybe pass based upon which phase is of interest
     #? or create one for each phase?
