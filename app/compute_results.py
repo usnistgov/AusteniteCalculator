@@ -114,43 +114,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     # use the theoretical intensities for peak fit location
     peaks_list=tis['two_theta']
+    breakpoint()
 
-    ########################################
-    # Fit Peaks (likely belongs in a function)
-    ########################################
-
-    # Set up background refinement
-    #? Also maybe belongs in a function
-    #? How to adjust the number of background parameters (currently 5)
-    hist.set_refinements({'Background': {"no. coeffs": 5,'type': 'chebyschev-1', 'refine': True}})
-    hist.refine_peaks()
-
-    two_theta = hist.data['data'][1][0]
-    h_data = hist.data['data'][1][1]
-    h_background = hist.data['data'][1][4]
-    h_fit = hist.data['data'][1][3]
-
-    # Fit all of the peaks in the peak list
-    for peak in peaks_list:
-        hist.add_peak(1, ttheta=peak)
-
-    # Use this order (based on Vulcan process)
-    #? otherwise fitting gets unstable
-    #? How to make the fitting more stable?
-    #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
-    #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-    
-    # First fit only the area
-    hist.set_peakFlags(area=True)
-    hist.refine_peaks()
-            
-    # Second, fit the area and position
-    hist.set_peakFlags(pos=True,area=True)
-    hist.refine_peaks()
-
-    # Third, fit the area, position, and gaussian componenet of the width
-    hist.set_peakFlags(pos=True,area=True,sig=True)
-    hist.refine_peaks()
+    fit_peaks(hist, peaks_list)
 
     #? Also fit the lortenzian (gam) component?
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
@@ -518,6 +484,44 @@ def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
     #print(DF_to_append)
     print(uncertainty_DF)
     return uncertainty_DF
+
+def fit_peaks(hist, peaks_list):
+     ########################################
+    # Fit Peaks (likely belongs in a function)
+    ########################################
+
+    # Set up background refinement
+    #? Also maybe belongs in a function
+    #? How to adjust the number of background parameters (currently 5)
+    hist.set_refinements({'Background': {"no. coeffs": 5,'type': 'chebyschev-1', 'refine': True}})
+    hist.refine_peaks()
+
+    two_theta = hist.data['data'][1][0]
+    h_data = hist.data['data'][1][1]
+    h_background = hist.data['data'][1][4]
+    h_fit = hist.data['data'][1][3]
+
+    # Fit all of the peaks in the peak list
+    for peak in peaks_list:
+        hist.add_peak(1, ttheta=peak)
+
+    # Use this order (based on Vulcan process)
+    #? otherwise fitting gets unstable
+    #? How to make the fitting more stable?
+    #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
+    #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
+    
+    # First fit only the area
+    hist.set_peakFlags(area=True)
+    hist.refine_peaks()
+            
+    # Second, fit the area and position
+    hist.set_peakFlags(pos=True,area=True)
+    hist.refine_peaks()
+
+    # Third, fit the area, position, and gaussian componenet of the width
+    hist.set_peakFlags(pos=True,area=True,sig=True)
+    hist.refine_peaks()
 
 ## Docstring example
 #    """Adds notes and flags to uncertainty calculation.
