@@ -114,9 +114,29 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     # use the theoretical intensities for peak fit location
     peaks_list=tis['two_theta']
-    breakpoint()
+    #breakpoint()
 
-    fit_peaks(hist, peaks_list)
+    peaks_not_ok = True
+    fit_attempts = 0
+
+    while(peaks_not_ok and fit_attempts < 4):
+        fit_attempts += 1
+        fit_peaks(hist, peaks_list)
+
+        t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
+        t_sigma = t_peaks.iloc[:,4]
+        t_int = t_peaks.iloc[:,2]
+
+        if(np.all(t_sigma > 0) and np.all(t_int > 0)):
+            peaks_not_ok = True
+        
+        else:
+            peaks_not_ok = False
+    
+    two_theta = hist.data['data'][1][0]
+    h_data = hist.data['data'][1][1]
+    h_background = hist.data['data'][1][4]
+    h_fit = hist.data['data'][1][3]
 
     #? Also fit the lortenzian (gam) component?
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
@@ -495,11 +515,6 @@ def fit_peaks(hist, peaks_list):
     #? How to adjust the number of background parameters (currently 5)
     hist.set_refinements({'Background': {"no. coeffs": 5,'type': 'chebyschev-1', 'refine': True}})
     hist.refine_peaks()
-
-    two_theta = hist.data['data'][1][0]
-    h_data = hist.data['data'][1][1]
-    h_background = hist.data['data'][1][4]
-    h_fit = hist.data['data'][1][3]
 
     # Fit all of the peaks in the peak list
     for peak in peaks_list:
