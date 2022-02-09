@@ -34,7 +34,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
     #initialize Uncertainty DataFrame
-    DF_Uncertainty=flag_uncertainties(0.0, " ", "Initialize", " ")
+    DF_flags_for_user=flag_phase_fraction(0.0, " ", "Initialize", " ")
 
     #############################
     # Read in diffraction data
@@ -103,7 +103,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         # hardcoded in for now with Cu source.
         #? Read from instrument parameter file? Prompt user?
         Ka1_wavelength=1.5405
-        DF_Uncertainty=flag_uncertainties(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_Uncertainty)
+        DF_flags_for_user=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_flags_for_user)
 
     ########################################
     # use the theoretical intensities for peak fit location
@@ -117,12 +117,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # 0.2 on example 5 is enough to throw off the last two peaks
     # 0.5 on example 5 will result in negative intensities being fit
     # tis['two_theta']+= 0.5
-    # peaks_list=tis['two_theta']+5
+    peaks_list=tis['two_theta']+0.5
     
     #breakpoint()
 
     peaks_ok = False
     fit_attempts = 0
+    fit_attempt_limit=1
 
     while not (peaks_ok):
         fit_attempts += 1
@@ -137,7 +138,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
             print("\n\n Intensities and Positions are positive \n")
             peaks_ok = True
         
-        elif(fit_attempts > 4):
+        elif(fit_attempts >= fit_attempt_limit):
             print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
             peaks_ok = True
             # Add another flag?
@@ -184,9 +185,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     print("\n\n Create dataframe from fit data \n")
 
-    print(hist.data['Peak List']['peaks'])
-    print(hist.data['Peak List']['sigDict'])
-#hist.Peaks['sigDict'][name]
+    #print(hist.data['Peak List']['peaks'])
+    #print(hist.data['Peak List']['sigDict'])
+    #hist.Peaks['sigDict'][name]
 
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
@@ -217,7 +218,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos')
     DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
-    print(DF_merged_fit_theo)
+    #print(DF_merged_fit_theo)
 
     #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
     #print(DF_merged_fit_theo)
@@ -229,6 +230,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
     DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
+
+    DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos']-DF_merged_fit_theo['two_theta']
 
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
@@ -248,13 +251,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, DF_Uncertainty = calculate_phase_fraction(DF_merged_fit_theo, DF_Uncertainty)
+    DF_phase_fraction, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_flags_for_user)
     
     # create a plot for the two theta
     
     fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
-    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_Uncertainty
+    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user
 
 #####################################
 ######### Plotting Fuctions #########
@@ -499,7 +502,7 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev"]/(phase_fraction_DF["Mean"].sum())
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
 
-    Uncertainty_DF=flag_uncertainties(norm_intensity_var.values[0],
+    Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
                                       "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
 
 
@@ -515,10 +518,10 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
 
 
 
-def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
-    """Adds notes and flags to uncertainty calculation.
+def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
+    """Adds notes and flags to phase fraction.
 
-    calculation to flag uncertainties
+    calculation to flag phase_fraction
 
     Args:
         value: uncertainty value (float)
@@ -528,7 +531,7 @@ def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
         DF_to_append: pandas DataFrame with notes from other sources
 
     Returns:
-        uncertainty_DF: pandas DataFrame with notes about the uncertainties calculated
+        uncertainty_DF: pandas DataFrame with notes about the phase_fraction calculated
         
         variable: description
         
@@ -541,24 +544,24 @@ def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
     """
     
     print("Start Flag Uncertainties")
-    uncertainty_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
+    flags_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
 
-    uncertainty_dict["Value"].append(value)
-    uncertainty_dict["Source"].append(source)
-    uncertainty_dict["Flags"].append(flag)
-    uncertainty_dict["Suggestions"].append(suggestion)
+    flags_dict["Value"].append(value)
+    flags_dict["Source"].append(source)
+    flags_dict["Flags"].append(flag)
+    flags_dict["Suggestions"].append(suggestion)
     
-    uncertainty_DF=pd.DataFrame(data=uncertainty_dict)
+    flags_DF=pd.DataFrame(data=flags_dict)
     print("Before appending")
     # append if other dataframe is included
     if DF_to_append is not None:
-        uncertainty_DF=uncertainty_DF.append(DF_to_append, ignore_index=True)
+        flags_DF=flags_DF.append(DF_to_append, ignore_index=True)
     
-    #uncertainty_DF.sort_values(by=["Value"],inplace=True)
+    #flags_DF.sort_values(by=["Value"],inplace=True)
     
     #print(DF_to_append)
-    print(uncertainty_DF)
-    return uncertainty_DF
+    print(flags_DF)
+    return flags_DF
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
      ########################################
