@@ -34,7 +34,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
     #initialize Uncertainty DataFrame
-    DF_flags_for_user=flag_phase_fraction(0.0, " ", "Initialize", " ")
+    DF_flags_for_user=flag_phase_fraction(np.nan, " ", "Initialize", " ")
 
     #############################
     # Read in diffraction data
@@ -117,13 +117,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # 0.2 on example 5 is enough to throw off the last two peaks
     # 0.5 on example 5 will result in negative intensities being fit
     # tis['two_theta']+= 0.5
-    peaks_list=tis['two_theta']+0.5
+    #peaks_list=tis['two_theta']+0.5
     
     #breakpoint()
 
     peaks_ok = False
     fit_attempts = 0
-    fit_attempt_limit=1
+    fit_attempt_limit=4
 
     while not (peaks_ok):
         fit_attempts += 1
@@ -141,7 +141,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         elif(fit_attempts >= fit_attempt_limit):
             print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
             peaks_ok = True
-            # Add another flag?
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
             
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
@@ -502,8 +502,8 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev"]/(phase_fraction_DF["Mean"].sum())
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
 
-    Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
-                                      "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
+    #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
+    #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
 
 
     # Extracting only the 'Austenite' values
@@ -543,7 +543,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
         error: error text
     """
     
-    print("Start Flag Uncertainties")
+    print("Issue Flagged")
     flags_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
 
     flags_dict["Value"].append(value)
@@ -552,7 +552,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     flags_dict["Suggestions"].append(suggestion)
     
     flags_DF=pd.DataFrame(data=flags_dict)
-    print("Before appending")
+    #print("Before appending")
     # append if other dataframe is included
     if DF_to_append is not None:
         flags_DF=flags_DF.append(DF_to_append, ignore_index=True)
@@ -560,7 +560,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #flags_DF.sort_values(by=["Value"],inplace=True)
     
     #print(DF_to_append)
-    print(flags_DF)
+    #print(flags_DF)
     return flags_DF
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
