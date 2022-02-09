@@ -1,104 +1,40 @@
+from math import trunc
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-def meas_eq(FF,p,LP,M,A,TT,E,v,phase_factor):
-    
-    R = ((phase_factor*FF)**2*p*LP*np.exp(-2*M)*A*TT*E)/(v**2)
-
-    return R
+from scipy.stats import truncnorm
 
 
-def compute_uncertainties(uncertainties,meas_eq,n):
+def compute_uncertainties(I,R,I_unc,R_unc,nsim):
 
-    # uncertainties is a pd.DataFrame with columns 'param','mean','sd'
+    dim = len(I)
+    samps = np.zeros( (nsim,dim) )
 
-    ncol = uncertainties.shape[0] # parameters
-    nrow = n # num sims
+    for ii in range(nsim):
 
-    sim_mat = np.random.normal(loc=uncertainties.iloc[:,1].to_numpy().flatten(), 
-                               scale=uncertainties.iloc[:,2].to_numpy().flatten(),
-                               size=(nrow,ncol))
-    
+        for jj in range(dim):
 
-    meas_res = np.zeros(n)
-    
-    for ii in range(n):
-        meas_res[ii] = meas_eq(*sim_mat[ii,:])
+            rand_I = truncnorm.rvs(a=0,b=np.Inf,loc=I[jj],scale=I_unc[jj])
+            rand_R = truncnorm.rvs(a=0,b=np.Inf,loc=R[jj],scale=R_unc[jj])
+            samps[ii,jj] = rand_I/rand_R
 
-    return meas_res
+    mn_ratio = np.apply_along_axis(np.mean,0,samps)
+    sd_ratio = np.apply_along_axis(np.std,0,samps)
 
+    out_df = pd.DataFrame({
+        'mean':mn_ratio,
+        'std_dev':sd_ratio
+    })
 
-uncertainties_example = pd.DataFrame({
-        'param':['FF','p','LP','M','A','T','E','v','pf'],
-        'mean':[14.8,6,8.42,0.02,1,1,1,45.26,4],
-        'sd':[.8,0,.5,.002,.05,.05,.05,.002,0]}
-    )
+    return out_df
 
 
-# example for single value    
+if __name__ == '__main__':
 
-meas_eq(*uncertainties_example.iloc[:,1])
+    res = compute_uncertainties(I=[2,3,4],
+                                R=[1,2,3],
+                                I_unc=[.5,.5,.5],
+                                R_unc=[.5,.5,.5],
+                                nsim=1000)
 
-I = 24514.8
-unc_res = I/compute_uncertainties(uncertainties_example,meas_eq,1000)
-
-plt.hist(unc_res,bins=20)
-plt.axvline(np.quantile(unc_res,[.025]),color='red',linestyle='--')
-plt.axvline(np.quantile(unc_res,[.975]),color='red',linestyle='--')
-plt.show()
-
-# full example 
-data = pd.read_csv('~/Documents/AusteniteCalc/austenitecalculator/ExampleData/DataForNormalizedIntensityCalc.csv')
-
-na_inds = data.loc[:,'Uncer Val'].isna()
-data.loc[na_inds,'Uncer Val'] = 0
-
-phases = np.unique(data.loc[:,'Phase'].to_numpy())
-
-nsim = 1000
-
-results = {}
-
-for ii, ph in enumerate(phases):
-    
-    t_data = data.loc[data.loc[:,'Phase'] == ph,:]
-    planes = np.unique(t_data.loc[:,'Plane'].to_numpy())
-    
-    results[ph] = np.zeros((nsim,len(planes)))
-
-    for jj, pln in enumerate(planes):
-        
-        t_inds = np.logical_and(data.loc[:,'Phase'] == ph,
-                                data.loc[:,'Plane'] == pln)
-        
-        
-        unc_data = data.loc[t_inds,:]
-        
-        I = unc_data.loc[unc_data.loc[:,'Param'] == 'I','Est Val'].to_numpy()
-        
-        
-        unc_data = unc_data.iloc[1:9,0:3]
-        
-        if ph == 'Austenite':
-            t_pf = 4
-            
-        elif ph == 'Ferrite':
-            t_pf = 2
-        
-        new_row = pd.DataFrame({'Param':['pf'],'Est Val':[t_pf],'Uncer Val':[0]})
-        
-        unc_data = pd.concat((unc_data,new_row))
-
-        results[ph][:,jj] = I/compute_uncertainties(unc_data,meas_eq,nsim)
-
-    results[ph] = np.apply_along_axis(np.mean,1,results[ph]).reshape(nsim,1)
-    
-results = np.concatenate((results['Austenite'],results['Ferrite']),axis=1)
-pf_results = np.apply_along_axis(lambda x: x[0]/(x[0] + x[1]),1,results)
-
-plt.hist(pf_results,bins=20)
-plt.axvline(np.quantile(pf_results,[.025]),color='red',linestyle='--')
-plt.axvline(np.quantile(pf_results,[.975]),color='red',linestyle='--')
-plt.show()
-
+    print(res)
