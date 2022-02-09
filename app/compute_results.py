@@ -110,16 +110,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     print("\n\n Peak Fit (LeBail) of Experimental Data \n")
 
-    # Move two_theta to check robustness
+    # use the theoretical intensities for peak fit location
+    peaks_list=tis['two_theta']
+    
+    # Add to the two_theta values to move the peak location for debugging
     # 0.2 on example 5 is enough to throw off the last two peaks
     # 0.5 on example 5 will result in negative intensities being fit
     # tis['two_theta']+= 0.5
-
-    # use the theoretical intensities for peak fit location
-    #peaks_list=tis['two_theta']+5
-    
-    # Add to the two_theta values to move the peak location for debugging
-    peaks_list=tis['two_theta']+5
+    # peaks_list=tis['two_theta']+5
     
     #breakpoint()
 
@@ -184,15 +182,42 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Merge experimental and theoretical data
     ########################################
-    print("\n\n Create theoretical data dataframe \n")
+    print("\n\n Create dataframe from fit data \n")
+
+    print(hist.data['Peak List']['peaks'])
+    print(hist.data['Peak List']['sigDict'])
+#hist.Peaks['sigDict'][name]
 
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
     DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
     DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
     DF_merged_fit_theo.columns = ['pos','int','sig','gam']
+    
+    #print(DF_merged_fit_theo)
+    
+    #print(list(range(len(DF_merged_fit_theo.index))))
+    #print(hist.data['Peak List']['sigDict']['int0'])
+    
+    u_pos_fit_list=[]
+    u_int_fit_list=[]
+    for i in list(range(len(DF_merged_fit_theo.index))):
+        #print(i)
+        u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
+        u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
+        #print(hist.data['Peak List']['sigDict']['int'+str(i)])
+        #print(hist.data['Peak List']['sigDict']['pos'+str(i)])
+
+    DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
+    DF_merged_fit_theo['u_int_fit']=u_int_fit_list
+    #calculate uncertainty based on counting statistics (square root)
+    DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int']**0.5
+
+
     DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos')
     DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
+
+    print(DF_merged_fit_theo)
 
     #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
     #print(DF_merged_fit_theo)
