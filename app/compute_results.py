@@ -119,10 +119,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     peaks_list=tis['two_theta']
     #breakpoint()
 
-    peaks_not_ok = True
+    peaks_ok = False
     fit_attempts = 0
 
-    while(peaks_not_ok and fit_attempts < 4):
+    while not (peaks_ok):
         fit_attempts += 1
         print("\n\n Fit attempt number ", fit_attempts," \n")
         fit_peaks(hist, peaks_list)
@@ -133,12 +133,17 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
         if(np.all(t_sigma > 0) and np.all(t_int > 0)):
             print("\n\n Intensities and Positions are positive \n")
-            peaks_not_ok = True
+            peaks_ok = True
         
+        elif(fit_attempts < 4):
+            print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
+            peaks_ok = True
+            # Add another flag?
+            
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
             hist.data['Peak List']=[] # reset the peak list to avoid appending
-            peaks_not_ok = False
+            peaks_ok = False
     
     two_theta = hist.data['data'][1][0]
     h_data = hist.data['data'][1][1]
