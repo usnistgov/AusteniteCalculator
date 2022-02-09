@@ -79,12 +79,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
     tis = tis.sort_values(by='two_theta')
     tis = tis.reset_index(drop=True)
-    print("\nTheoretical Intensity Dataframe")
+    print("\n\n Theoretical Intensity Dataframe")
     print(tis)
 
     ########################################
     # Read in phase data
     ########################################
+    print("\n\n Read in Phase Data\n")
+
     phases = {}
     a0 = {}
     for i in range(len(cif_fnames)):
@@ -106,6 +108,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # use the theoretical intensities for peak fit location
     ########################################
+    print("\n\n Peak Fit (LeBail) of Experimental Data \n")
 
     # Move two_theta to check robustness
     # 0.2 on example 5 is enough to throw off the last two peaks
@@ -121,6 +124,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     while(peaks_not_ok and fit_attempts < 4):
         fit_attempts += 1
+        print("\n\n Fit attempt number ", fit_attempts," \n")
         fit_peaks(hist, peaks_list)
 
         t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
@@ -141,6 +145,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #? Also fit the lortenzian (gam) component?
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
 
+    ########################################
+    # Create Fit Figure
+    ########################################
+    print("\n\n Create Fit Figure \n")
+
     # Create a figure with the fit data
     #? Does this belong in a function?
     fig_fit_hist = go.Figure()
@@ -156,6 +165,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     )
 
 
+    ########################################
+    # Merge experimental and theoretical data
+    ########################################
+    print("\n\n Create theoretical data dataframe \n")
+
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
     DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
@@ -170,7 +184,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
-    print("\n\n Concatenating Datafiles\n")
+    print("\n\n Concatenating Dataframes\n")
     DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
     DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
