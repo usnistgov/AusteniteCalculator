@@ -116,7 +116,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # tis['two_theta']+= 0.5
 
     # use the theoretical intensities for peak fit location
-    peaks_list=tis['two_theta']
+    #peaks_list=tis['two_theta']+5
+    
+    # Add to the two_theta values to move the peak location for debugging
+    peaks_list=tis['two_theta']+5
+    
     #breakpoint()
 
     peaks_ok = False
@@ -135,15 +139,19 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
             print("\n\n Intensities and Positions are positive \n")
             peaks_ok = True
         
-        elif(fit_attempts < 4):
+        elif(fit_attempts > 4):
             print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
             peaks_ok = True
             # Add another flag?
             
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
-            hist.data['Peak List']=[] # reset the peak list to avoid appending
             peaks_ok = False
+            # reset the peak list in the histogram to avoid appending during successive attempts
+            hist.data['Peak List']['peaks']=[]
+            # reset and repopulate the peak list
+            peaks_list=tis['two_theta']
+
     
     two_theta = hist.data['data'][1][0]
     h_data = hist.data['data'][1][1]
@@ -527,21 +535,34 @@ def flag_uncertainties(value, source, flag, suggestion, DF_to_append=None):
     print(uncertainty_DF)
     return uncertainty_DF
 
-def fit_peaks(hist, peaks_list):
+def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
      ########################################
     # Fit Peaks (likely belongs in a function)
     ########################################
+    """Subroutine to fit data using LeBail fitting
 
+    Args:
+        hist: GSAS-II powder diffraciton histogram
+        peaks_list: list of 2theta locations to(numpy array)
+        Chebyschev_coeffiecients: Number of background parameters (integer)
+        
+    Returns:
+
+    Raises:
+
+    """
+    print("Fitting peaks\n")
     # Set up background refinement
     #? Also maybe belongs in a function
     #? How to adjust the number of background parameters (currently 5)
-    hist.set_refinements({'Background': {"no. coeffs": 5,'type': 'chebyschev-1', 'refine': True}})
+    hist.set_refinements({'Background': {"no. coeffs": Chebyschev_coeffiecients,'type': 'chebyschev-1', 'refine': True}})
     hist.refine_peaks()
 
+    #print("Assign from peaks_list\n")
     # Fit all of the peaks in the peak list
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
-
+        #print("peak location ", peak)
     # Use this order (based on Vulcan process)
     #? otherwise fitting gets unstable
     #? How to make the fitting more stable?
