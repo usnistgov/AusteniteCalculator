@@ -132,9 +132,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         t_int = t_peaks.iloc[:,2]
 
         if(np.all(t_sigma > 0) and np.all(t_int > 0)):
+            print("\n\n Intensities and Positions are positive \n")
             peaks_not_ok = True
         
         else:
+            print("\n\n Intensities and Positions are NOT all positive, retrying \n")
+            hist.data['Peak List']=[] # reset the peak list to avoid appending
             peaks_not_ok = False
     
     two_theta = hist.data['data'][1][0]
