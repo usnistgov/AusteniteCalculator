@@ -35,7 +35,7 @@ elif re.search('dtn1',os.getcwd()):
     sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/G2_2/GSASII/')
 
 elif re.search('maxgarman',os.getcwd()):
-    sys.path.insert(0, 'Users/maxgarman/opt/anaconda3/GSASII/') 
+    sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/GSASII/') 
 
 elif re.search('creuzige',os.getcwd()):
     sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
