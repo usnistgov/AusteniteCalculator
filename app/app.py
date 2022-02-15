@@ -160,7 +160,7 @@ app.layout = dbc.Container([
 #            editable=True,
 #            ),
             html.Br(),
-            html.Div("""Table of Sources of Uncertainty"""),
+            html.Div("""Flagged Notes to Users"""),
             dash_table.DataTable(id='uncert-table'),
 
             html.Br(),
