@@ -135,6 +135,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
         elif(fit_attempts == 2):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
+        elif(fit_attempts == 3):
+            fit.fit_peaks_holdsig(hist, peaks_list, 5, peak_verify)
         else:
             fit.fit_peaks(hist, peaks_list)
 
