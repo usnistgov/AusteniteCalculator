@@ -131,6 +131,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
             fit.fit_peaks(hist, peaks_list)
+        # Currently the fit processes are a little different...
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
             DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
@@ -174,6 +175,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
             peaks_ok = False
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=DF_flags_for_user)
             # reset the peak list in the histogram to avoid appending during successive attempts
             hist.data['Peak List']['peaks']=[]
             # reset and repopulate the peak list
@@ -244,8 +246,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #calculate uncertainty based on counting statistics (square root)
     DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
     
-    DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
-
+    # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
+    DF_merged_fit_theo['u_int_count']=(DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])**0.5
+    
+    #DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
 
 
     DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos_fit')
