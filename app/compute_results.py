@@ -230,7 +230,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #print(list(range(len(DF_merged_fit_theo.index))))
     #print(hist.data['Peak List']['sigDict']['int0'])
     
-    # Extract uncertainties from the fitting process
+    ##### Extract uncertainties from the fitting process
     u_pos_fit_list=[]
     u_int_fit_list=[]
     for i in list(range(len(DF_merged_fit_theo.index))):
@@ -243,7 +243,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
     DF_merged_fit_theo['u_int_fit']=u_int_fit_list
 
-    #calculate uncertainty based on counting statistics (square root)
+    ##### calculate uncertainty based on counting statistics (square root of counts for Poisson process)
     DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
     
     # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
@@ -255,6 +255,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos_fit')
     DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
+    ##### add relative uncertainties.  Maybe cut later, but diagnostic for now
+    DF_merged_fit_theo['rel_int_fit']=DF_merged_fit_theo['u_int_fit']/DF_merged_fit_theo['int_fit']
+    DF_merged_fit_theo['rel_int_count']=DF_merged_fit_theo['u_int_count']/DF_merged_fit_theo['int_fit']
     #print(DF_merged_fit_theo)
 
     #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
