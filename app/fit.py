@@ -221,3 +221,55 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     # Third, fit the area, position, and gaussian componenet of the width
     hist.set_peakFlags(pos=True,area=True,sig=True,gam=True)
     hist.refine_peaks()
+
+
+def fit_background(DF, hist, peaks_list, sig_width=3):
+    """Subroutine to fit background data
+
+    Args:
+        DF: Merged datafile to append to
+        hist: GSAS-II powder diffraciton histogram
+        peaks_list: list of 2theta locations to(numpy array)
+        sig_width: number of standard deviations (width) of gaussian fit to use to extract background values. Default is 3 (99.73%)
+    Returns:
+
+    Raises:
+
+    """
+    back_counts_list=[]
+    fit_counts_list=[]
+    data_counts_list=[]
+    
+    for peak in hist.data['Peak List']['peaks']:
+        # index [0] is the two theta value. index [4] is the sig value. Sigma and gamma are given in centi-degrees
+        #print(peak)
+        #print(peak[0], sig_width*peak[4]/100)
+        x_min=peak[0]-sig_width*peak[4]/100
+        x_max=peak[0]+sig_width*peak[4]/100
+        
+        indexes = [index for index, value in enumerate(hist.data['data'][1][0]) if value > x_min and value < x_max ]
+
+        back_counts=0
+        data_counts=0
+        fit_counts=0
+        
+        for index in indexes:
+        
+            back_counts=back_counts+hist.data['data'][1][4][index]
+            fit_counts=fit_counts+hist.data['data'][1][3][index]
+            data_counts=data_counts+hist.data['data'][1][1][index]
+            # print(index, hist.data['data'][1][0][index],hist.data['data'][1][4][index])
+        #print(peak[2],back_counts,peak[2]/back_counts,"\n")
+        #print(peak[2]/math.sqrt(back_counts+peak[2]))
+        #print(peak[2],back_counts,back_counts+peak[2], math.sqrt(back_counts+peak[2]))
+        #print("\n")
+        back_counts_list.append(back_counts)
+        fit_counts_list.append(fit_counts)
+        data_counts_list.append(data_counts)
+    
+    DF['back_int_bound']=back_counts_list
+
+    # used as a diagnostic/sanity check, but using the sigma value as boundaries can result in adjacent peaks adding counts
+    DF['int_back_bound']=fit_counts_list
+    DF['total_back_bound']=data_counts_list
+    return DF

@@ -133,8 +133,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
             fit.fit_peaks(hist, peaks_list)
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
         elif(fit_attempts == 2):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
         elif(fit_attempts == 3):
             fit.fit_peaks_holdsig(hist, peaks_list, 5, peak_verify)
         else:
@@ -219,13 +221,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #? Similarly, sort here seems like a fragile way to align the data.
     DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
     DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
-    DF_merged_fit_theo.columns = ['pos','int','sig','gam']
+    DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
     
     #print(DF_merged_fit_theo)
     
     #print(list(range(len(DF_merged_fit_theo.index))))
     #print(hist.data['Peak List']['sigDict']['int0'])
     
+    # Extract uncertainties from the fitting process
     u_pos_fit_list=[]
     u_int_fit_list=[]
     for i in list(range(len(DF_merged_fit_theo.index))):
@@ -237,11 +240,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
     DF_merged_fit_theo['u_int_fit']=u_int_fit_list
+
     #calculate uncertainty based on counting statistics (square root)
-    DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int']**0.5
+    DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
+    
+    DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
 
 
-    DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos')
+
+    DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos_fit')
     DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
     #print(DF_merged_fit_theo)
@@ -255,15 +262,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     print("\n\n Concatenating Dataframes\n")
     DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
-    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
+    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int_fit']/DF_merged_fit_theo['R_calc'])
 
-    DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos']-DF_merged_fit_theo['two_theta']
+    DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['two_theta']
 
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
-        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos", y="n_int", color="Phase",
+        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
                             labels = {
-                                'pos':'2-theta',
+                                'pos_fit':'2-theta',
                                 'n_int':'Normalized Intensity'
                                 }
                             )
@@ -338,9 +345,9 @@ def two_theta_compare_figure(Merged_DataFrame):
         #? what format?
     """
     
-    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos", color="Phase",
+    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos_fit", color="Phase",
                     labels = {
-                        'pos':'Fitted 2-theta',
+                        'pos_fit':'Fitted 2-theta',
                         'two_theta':'Normalized Intensity'
                         }
                     )
