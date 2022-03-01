@@ -48,6 +48,18 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     hist.refine_peaks()
 
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
+    """Subroutine to fit data using LeBail fitting, shifting peaks to the left (lower 2-theta)
+
+    Args:
+        hist: GSAS-II powder diffraciton histogram
+        peaks_list: list of 2theta locations to(numpy array)
+        Chebyschev_coeffiecients: Number of background parameters (integer)
+        
+    Returns:
+
+    Raises:
+
+    """
     for i in range(len(peak_verify)):
         if peak_verify[i] == False:
             peaks_list[i] -= 0.25
@@ -81,6 +93,18 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     hist.refine_peaks()
 
 def fit_moved_right_peaks(hist, peaks_list, peak_verify):
+    """Subroutine to fit data using LeBail fitting, shifting peaks to the right (higher 2-theta)
+
+    Args:
+        hist: GSAS-II powder diffraciton histogram
+        peaks_list: list of 2theta locations to(numpy array)
+        Chebyschev_coeffiecients: Number of background parameters (integer)
+        
+    Returns:
+
+    Raises:
+
+    """
     for i in range(len(peak_verify)):
         if peak_verify[i] == False:
             peaks_list[i] += 0.25
@@ -113,7 +137,7 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     hist.refine_peaks()
 
 def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
-    """Subroutine to fit data using LeBail fitting
+    """Subroutine to fit data using LeBail fitting, but hold the sigma value
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -156,7 +180,7 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     hist.refine_peaks()
 
 def fit_peaks_holdgam(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using LeBail fitting
+    """Subroutine to fit data using LeBail fitting, holding gamma value
 
     Args:
         hist: GSAS-II powder diffraciton histogram
