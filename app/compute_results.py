@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import math
 import fit
+import compute_uncertainties
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
@@ -291,7 +292,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_flags_for_user)
+    DF_phase_fraction = calculate_phase_fraction(DF_merged_fit_theo)
+
+    breakpoint()
     
     # create a plot for the two theta
     
@@ -484,7 +487,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
-def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
+def calculate_phase_fraction(Merged_DataFrame):
     """Calculate Phase Fraction
     
     Args:
@@ -552,7 +555,7 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
-    return phase_fraction_DF, Uncertainty_DF
+    return phase_fraction_DF
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
