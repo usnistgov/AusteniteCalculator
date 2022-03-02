@@ -292,7 +292,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
+    DF_phase_fraction, pf_uncertainties = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
     
     # create a plot for the two theta
     
@@ -544,16 +544,15 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
 
     # compute phase fraction uncertainties
-    #uncerts = compute_uncertainties.compute_uncertainties(
-    #    I=np.array(DF_merged_fit_theo['int_fit']),
-    #    R=np.array(DF_merged_fit_theo['R_calc']),
-    #    I_unc=np.array(DF_merged_fit_theo['u_int_fit']),
-    #    R_unc=np.zeros(DF_merged_fit_theo.shape[0]),
-    #    nsim=1000,
-    #    phases=DF_merged_fit_theo['Phase']
-    #)
+    pf_uncertainties = compute_uncertainties.compute_uncertainties(
+        I=np.array(DF_merged_fit_theo['int_fit']),
+        R=np.array(DF_merged_fit_theo['R_calc']),
+        I_unc=np.array(DF_merged_fit_theo['u_int_fit']),
+        R_unc=np.zeros(DF_merged_fit_theo.shape[0]),
+        nsim=1000,
+        phases=DF_merged_fit_theo['Phase']
+    )
 
-    breakpoint()
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
     #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
 
@@ -564,7 +563,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
-    return phase_fraction_DF
+    return phase_fraction_DF, pf_uncertainties
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
