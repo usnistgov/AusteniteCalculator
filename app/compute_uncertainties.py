@@ -5,10 +5,12 @@ import matplotlib.pyplot as plt
 from scipy.stats import truncnorm
 
 
-def compute_uncertainties(I,R,I_unc,R_unc,nsim):
+def compute_uncertainties(I,R,I_unc,R_unc,nsim,phases):
 
     dim = len(I)
     samps = np.zeros( (nsim,dim) )
+    pf = np.zeros(nsim)
+    unique_phases = np.unique(phases)
 
     for ii in range(nsim):
 
@@ -18,12 +20,17 @@ def compute_uncertainties(I,R,I_unc,R_unc,nsim):
             rand_R = truncnorm.rvs(a=0,b=np.Inf,loc=R[jj],scale=R_unc[jj])
             samps[ii,jj] = rand_I/rand_R
 
+
+        #pf[ii] = 
+
     mn_ratio = np.apply_along_axis(np.mean,0,samps)
     sd_ratio = np.apply_along_axis(np.std,0,samps)
 
+
     out_df = pd.DataFrame({
         'mean':mn_ratio,
-        'std_dev':sd_ratio
+        'std_dev':sd_ratio,
+        'phase':phases
     })
 
     return out_df

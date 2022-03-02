@@ -292,9 +292,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction = calculate_phase_fraction(DF_merged_fit_theo)
-
-    breakpoint()
+    DF_phase_fraction = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
     
     # create a plot for the two theta
     
@@ -487,7 +485,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
-def calculate_phase_fraction(Merged_DataFrame):
+def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     """Calculate Phase Fraction
     
     Args:
@@ -545,6 +543,17 @@ def calculate_phase_fraction(Merged_DataFrame):
     phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev"]/(phase_fraction_DF["Mean"].sum())
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
 
+    # compute phase fraction uncertainties
+    #uncerts = compute_uncertainties.compute_uncertainties(
+    #    I=np.array(DF_merged_fit_theo['int_fit']),
+    #    R=np.array(DF_merged_fit_theo['R_calc']),
+    #    I_unc=np.array(DF_merged_fit_theo['u_int_fit']),
+    #    R_unc=np.zeros(DF_merged_fit_theo.shape[0]),
+    #    nsim=1000,
+    #    phases=DF_merged_fit_theo['Phase']
+    #)
+
+    breakpoint()
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
     #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
 
