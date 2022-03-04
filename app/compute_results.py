@@ -1,3 +1,4 @@
+from tkinter import TRUE
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -142,7 +143,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
         t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
         t_sigma = t_peaks.iloc[:,4]
+        t_gamma = t_peaks.iloc[:,6]
         t_int = t_peaks.iloc[:,2]
+        t_pos = t_peaks.iloc[:,0]
+
+        peak_verify = create_verify_list(t_pos, t_int, t_sigma, t_gamma)
         
         if(len(peak_verify) == 0):
             for pos in t_int:
@@ -588,22 +593,27 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(DF_to_append)
     #print(flags_DF)
     return flags_DF
-## Docstring example
-#    """Adds notes and flags to uncertainty calculation.
-#
-#    [additional text]
-#
-#    Args:
-#        variable: description
-#
-#
-#    Returns:
-#        variable: description
-#
-#        examples
-#
-#        caveats
-#
-#    Raises:
-#        error: error text
-#    """
+
+def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
+    verify_list = np.empty(t_pos.shape[0])
+
+    for x in range(t_pos.shape[0]):
+        if(x < 0):
+            verify_list[x] = False
+        else:
+            verify_list[x] = True
+
+    m, b = np.polyfit(t_pos, t_sigma, 1)
+
+    for x in range(t_pos.shape[0]):
+        if(t_sigma[x] > (m * t_pos[x] + b) + 5 or t_sigma[x] < (m * t_pos[x] + b) - 5):
+            verify_list[x] = False
+
+    m, b = np.polyfit(t_pos, t_gamma, 1)
+
+    for x in range(t_pos.shape[0]):
+        if(t_gamma[x] > (m * t_pos[x] + b) + 5 or t_gamma[x] < (m * t_pos[x] + b) - 5):
+            verify_list[x] = False
+    
+    print(verify_list)
+    return verify_list
