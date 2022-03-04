@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import math
 import fit
+import compute_uncertainties
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
@@ -132,10 +133,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
             fit.fit_peaks(hist, peaks_list)
+        # Currently the fit processes are a little different...
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
         elif(fit_attempts == 2):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
         elif(fit_attempts == 3):
             fit.fit_peaks_holdsig(hist, peaks_list, 5, peak_verify)
         else:
@@ -177,6 +181,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
             peaks_ok = False
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=DF_flags_for_user)
             # reset the peak list in the histogram to avoid appending during successive attempts
             hist.data['Peak List']['peaks']=[]
             # reset and repopulate the peak list
@@ -224,13 +229,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #? Similarly, sort here seems like a fragile way to align the data.
     DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
     DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
-    DF_merged_fit_theo.columns = ['pos','int','sig','gam']
+    DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
     
     #print(DF_merged_fit_theo)
     
     #print(list(range(len(DF_merged_fit_theo.index))))
     #print(hist.data['Peak List']['sigDict']['int0'])
     
+    ##### Extract uncertainties from the fitting process
     u_pos_fit_list=[]
     u_int_fit_list=[]
     for i in list(range(len(DF_merged_fit_theo.index))):
@@ -242,13 +248,22 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
     DF_merged_fit_theo['u_int_fit']=u_int_fit_list
-    #calculate uncertainty based on counting statistics (square root)
-    DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int']**0.5
+
+    ##### calculate uncertainty based on counting statistics (square root of counts for Poisson process)
+    DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
+    
+    # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
+    DF_merged_fit_theo['u_int_count']=(DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])**0.5
+    
+    #DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
 
 
-    DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos')
+    DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos_fit')
     DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
+    ##### add relative uncertainties.  Maybe cut later, but diagnostic for now
+    DF_merged_fit_theo['rel_int_fit']=DF_merged_fit_theo['u_int_fit']/DF_merged_fit_theo['int_fit']
+    DF_merged_fit_theo['rel_int_count']=DF_merged_fit_theo['u_int_count']/DF_merged_fit_theo['int_fit']
     #print(DF_merged_fit_theo)
 
     #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
@@ -260,15 +275,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     print("\n\n Concatenating Dataframes\n")
     DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
-    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int']/DF_merged_fit_theo['R_calc'])
+    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int_fit']/DF_merged_fit_theo['R_calc'])
 
-    DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos']-DF_merged_fit_theo['two_theta']
+    DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['two_theta']
 
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
-        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos", y="n_int", color="Phase",
+        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
                             labels = {
-                                'pos':'2-theta',
+                                'pos_fit':'2-theta',
                                 'n_int':'Normalized Intensity'
                                 }
                             )
@@ -282,7 +297,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_flags_for_user)
+    DF_phase_fraction, pf_uncertainties = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
     
     # create a plot for the two theta
     
@@ -343,9 +358,9 @@ def two_theta_compare_figure(Merged_DataFrame):
         #? what format?
     """
     
-    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos", color="Phase",
+    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos_fit", color="Phase",
                     labels = {
-                        'pos':'Fitted 2-theta',
+                        'pos_fit':'Fitted 2-theta',
                         'two_theta':'Normalized Intensity'
                         }
                     )
@@ -475,7 +490,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
-def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
+def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     """Calculate Phase Fraction
     
     Args:
@@ -533,6 +548,16 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev"]/(phase_fraction_DF["Mean"].sum())
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
 
+    # compute phase fraction uncertainties
+    pf_uncertainties = compute_uncertainties.compute_uncertainties(
+        I=np.array(DF_merged_fit_theo['int_fit']),
+        R=np.array(DF_merged_fit_theo['R_calc']),
+        I_unc=np.array(DF_merged_fit_theo['u_int_fit']),
+        R_unc=np.zeros(DF_merged_fit_theo.shape[0]),
+        nsim=1000,
+        phases=DF_merged_fit_theo['Phase']
+    )
+
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
     #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
 
@@ -543,7 +568,7 @@ def calculate_phase_fraction(Merged_DataFrame, Uncertainty_DF):
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
     
-    return phase_fraction_DF, Uncertainty_DF
+    return phase_fraction_DF, pf_uncertainties
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
