@@ -208,6 +208,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
     DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
     
+    DF_merged_fit_theo["Peak_Fit_Success"]=peak_verify
+    DF_merged_fit_theo["Peak_Fit_Success"] = DF_merged_fit_theo["Peak_Fit_Success"].astype('bool')
+    
     #print(DF_merged_fit_theo)
     
     #print(list(range(len(DF_merged_fit_theo.index))))
@@ -278,12 +281,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Create Figure of raw data
     ########################################
     # display the raw intensity vs. two_theta data
+    print("Create Raw Data Figure \n")
     fig_raw_hist = get_figures(hist)
 
     ########################################
     # Create Fit Figure
     ########################################
-    print("\n\n Create Fit Figure \n")
+    print("Create Fit Figure \n")
 
     # Create a figure with the fit data
     #? Does this belong in a function?
@@ -302,7 +306,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Create Plot the Normalized Intensities
     ########################################
-    print("\n\n Create Fit Figure \n")
+    print("Create Normalized Intensities Figure \n")
 
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
@@ -313,7 +317,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                                 }
                             )
         # I'd like to have the color be the same, but haven't figured out how.
-        for i,value in enumerate(DF_phase_fraction["Mean"]):
+        for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
             fig_norm_itensity.add_trace(
                         go.Scatter(
                             x=two_theta,
@@ -331,10 +335,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Create Plot comparing the two theta positions
     ########################################
-    print("\n\n Create Fit Figure \n")
+    print("Create Two Theta Comparison Figure \n")
     
     fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
+    ########################################
+    # Resort dataframes for output
+    ########################################
+    #DF_phase_fraction = DF_phase_fraction.reindex(columns=["Phase","Phase_Fraction","Phase_Fraction_StDev",
+    #        "Number_hkls","hkls","Mean_nint","StDev_nint"])
 
     return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user
 
@@ -548,26 +557,26 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     
     phase_fraction_DF = pd.DataFrame({
         "Phase":phase_list,
-        "Mean":[0]*n_phases,
-        "StDev":[0]*n_phases,
-        "hkls":[np.nan]*n_phases,
+        "Phase_Fraction":[0]*n_phases,
+        "Phase_Fraction_StDev":[0]*n_phases,
         "Number_hkls":[0]*n_phases,
-        "Fraction":[0]*n_phases,
-        "Fraction_StDev":[0]*n_phases
+        "hkls":[np.nan]*n_phases,
+        "Mean_nint":[0]*n_phases,
+        "StDev_nint":[0]*n_phases
     })
 
     fraction_dict = {} # DN: not sure why we need this?
     
-    print(phase_list)
+    #print(phase_list)
 
     # first, fill in table
     for ii, phase in enumerate(phase_list):
-        print(phase)
+        #print(phase)
         
         Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
 
-        phase_fraction_DF["Mean"].iloc[ii] = Phase_DF['n_int'].mean()
-        phase_fraction_DF["StDev"].iloc[ii] = Phase_DF['n_int'].std()
+        phase_fraction_DF["Mean_nint"].iloc[ii] = Phase_DF['n_int'].mean()
+        phase_fraction_DF["StDev_nint"].iloc[ii] = Phase_DF['n_int'].std()
         
         #Phase_DF['hkl']=Phase_DF.agg('{0['h']}{0['k']}{0['l']}'.format, axis=1)
         #phase_dict["hkls"].append(list(Phase_DF['hkl']))
@@ -579,13 +588,10 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
         #print("Add to fraction_dict")
         fraction_dict[phase]=phase_fraction_DF
 
-    print("Fraction Dictionary")
-    print(fraction_dict)
-
     # now, compute phase fraction
-    phase_fraction_DF["Fraction"]=phase_fraction_DF["Mean"]/(phase_fraction_DF["Mean"].sum())
-    phase_fraction_DF["Fraction_StDev"]=phase_fraction_DF["StDev"]/(phase_fraction_DF["Mean"].sum())
-    norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Fraction_StDev"]
+    phase_fraction_DF["Phase_Fraction"]=phase_fraction_DF["Mean_nint"]/(phase_fraction_DF["Mean_nint"].sum())
+    phase_fraction_DF["Phase_Fraction_StDev"]=phase_fraction_DF["StDev_nint"]/(phase_fraction_DF["Mean_nint"].sum())
+    norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
     # compute phase fraction uncertainties
     pf_uncertainties = compute_uncertainties.compute_uncertainties(
@@ -606,6 +612,10 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     #? or create one for each phase?
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(4)
+
+    print("Fraction Dictionary")
+    #print(fraction_dict)
+    print(phase_fraction_DF)
     
     return phase_fraction_DF, pf_uncertainties
         #['h','k','l','n_int']
@@ -650,7 +660,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print("Before appending")
     # append if other dataframe is included
     if DF_to_append is not None:
-        flags_DF=flags_DF.append(DF_to_append, ignore_index=True)
+        flags_DF=DF_to_append.append(flags_DF, ignore_index=True)
     
     #flags_DF.sort_values(by=["Value"],inplace=True)
     
@@ -680,5 +690,5 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
         if(t_gamma[x] > (m * t_pos[x] + b) + 5 or t_gamma[x] < (m * t_pos[x] + b) - 5):
             verify_list[x] = False
     
-    print(verify_list)
+    print("Peak Verificaiton List \n", verify_list)
     return verify_list
