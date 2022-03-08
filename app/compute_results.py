@@ -579,15 +579,16 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
         
         Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
 
-        phase_fraction_DF["Mean_nint"].iloc[ii] = Phase_DF['n_int'].mean()
-        phase_fraction_DF["StDev_nint"].iloc[ii] = Phase_DF['n_int'].std()
-        
-        #Phase_DF['hkl']=Phase_DF.agg('{0['h']}{0['k']}{0['l']}'.format, axis=1)
-        #phase_dict["hkls"].append(list(Phase_DF['hkl']))
-        
-        #phase_dict["Number_hkls"].append(len(list(Phase_DF['hkl'])))
-        
-        phase_fraction_DF["Number_hkls"].iloc[ii] = len(Phase_DF['n_int'])
+#        phase_fraction_DF["Mean_nint"].iloc[ii] = Phase_DF['n_int'].mean()
+#        phase_fraction_DF["StDev_nint"].iloc[ii] = Phase_DF['n_int'].std()
+#        phase_fraction_DF["Number_hkls"].iloc[ii] = len(Phase_DF['n_int'])
+
+        # Changed to avoid returning a copy error
+        # https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+        phase_fraction_DF.loc[ii,"Mean_nint"] = Phase_DF['n_int'].mean()
+        phase_fraction_DF.loc[ii,"StDev_nint"] = Phase_DF['n_int'].std()
+        phase_fraction_DF.loc[ii,"Number_hkls"] = len(Phase_DF['n_int'])
+
 
         #print("Add to fraction_dict")
         fraction_dict[phase]=phase_fraction_DF
