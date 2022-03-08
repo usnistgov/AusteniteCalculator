@@ -342,6 +342,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 ######### Plotting Fuctions #########
 #####################################
 
+#####################################
 def df_to_dict(df):
     """
     
@@ -358,6 +359,7 @@ def df_to_dict(df):
 
     return out_dict, out_columns
 
+#####################################
 def get_figures(hist):
     """
     plot the intensity vs. two_theta data of a diffraction profile
@@ -377,24 +379,23 @@ def get_figures(hist):
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
 
+#####################################
 def two_theta_compare_figure(Merged_DataFrame):
     """
-    
-    plot the fitted vs. theoretical two_theta data
-    Should be along the diagonal
+    plot the difference between fitted vs. theoretical two_theta data
+    Should be near zero
     
     Args:
         Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
     
     Returns:
-        fig: Figure
-        #? what format?
+        fig: Plotly Express Figure
     """
     
-    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos_fit", color="Phase",
+    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos_diff", color="Phase",
                     labels = {
-                        'pos_fit':'Fitted 2-theta',
-                        'two_theta':'Normalized Intensity'
+                        'pos_fit':'Diffference between fit and theoretical 2-theta',
+                        'two_theta':'two theta value'
                         }
                     )
                     
