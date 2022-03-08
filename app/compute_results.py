@@ -385,6 +385,10 @@ def get_figures(hist):
         "intensity":hist.data['data'][1][1]
     })
 
+    # I'd like the lines to be in black, with markers, but I keep failing at that.
+    #fig = px.line(x=df['two_theta'],y=df['intensity'],color='#000000')#,markers=True)
+    #fig.set_color('black')
+
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
 
