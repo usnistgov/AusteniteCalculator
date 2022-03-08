@@ -56,13 +56,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     max_two_theta=max(two_theta_range)
     #print(min_two_theta,max_two_theta)
 
-    # display the raw intensity vs. two_theta data
-    fig_raw_hist = get_figures(hist)
-
-
     ########################################
-    # Caculate the theoretical intensities
+    # Caculate the theoretical intensities from cif files
     ########################################
+    #? Could this be merged with Read in Phase data?
     print("\n\n Calculate Theoretical Intensities\n")
 
     tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
@@ -197,26 +194,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
 
     ########################################
-    # Create Fit Figure
-    ########################################
-    print("\n\n Create Fit Figure \n")
-
-    # Create a figure with the fit data
-    #? Does this belong in a function?
-    fig_fit_hist = go.Figure()
-
-    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
-    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
-    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
-
-    fig_fit_hist.update_layout(
-        title="",
-        xaxis_title="2theta",
-        yaxis_title="Intensity"
-    )
-
-
-    ########################################
     # Merge experimental and theoretical data
     ########################################
     print("\n\n Create dataframe from fit data \n")
@@ -279,6 +256,54 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['two_theta']
 
+
+        
+    ########################################
+    # Calculate the phase fraction
+    ########################################
+    print("\n\n Calculating Phase Fraction\n")
+    DF_phase_fraction, pf_uncertainties = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
+    
+
+
+    ########################################
+    ########################################
+    # Create Plots
+    ########################################
+    ########################################
+    # Moved all plotting functions to the end, allows use of all data in plot
+
+
+    ########################################
+    # Create Figure of raw data
+    ########################################
+    # display the raw intensity vs. two_theta data
+    fig_raw_hist = get_figures(hist)
+
+    ########################################
+    # Create Fit Figure
+    ########################################
+    print("\n\n Create Fit Figure \n")
+
+    # Create a figure with the fit data
+    #? Does this belong in a function?
+    fig_fit_hist = go.Figure()
+
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
+    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
+
+    fig_fit_hist.update_layout(
+        title="",
+        xaxis_title="2theta",
+        yaxis_title="Intensity"
+    )
+
+    ########################################
+    # Create Plot the Normalized Intensities
+    ########################################
+    print("\n\n Create Fit Figure \n")
+
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
         fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
@@ -287,21 +312,29 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                                 'n_int':'Normalized Intensity'
                                 }
                             )
+        # Add the mean value, but the mean hasn't been calculated yet...
+#        fig_norm_itensity.add_trace(
+#                    go.Scatter(
+#                        x=two_theta,
+#                        y=,
+#                        mode="lines",
+#                        line=go.scatter.Line(color="gray"),
+#                        showlegend=False)
+#)
     
     else:
         print("Warning: I and R values different lengths. Returning empty figure.")
         print(DF_merged_fit_theo)
         fig_norm_itensity = go.Figure()
-        
+
+
     ########################################
-    # Calculate the phase fraction
+    # Create Plot comparing the two theta positions
     ########################################
-    print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, pf_uncertainties = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
-    
-    # create a plot for the two theta
+    print("\n\n Create Fit Figure \n")
     
     fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
+
 
     return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user
 
