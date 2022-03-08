@@ -312,16 +312,16 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                                 'n_int':'Normalized Intensity'
                                 }
                             )
-        # Add the mean value, but the mean hasn't been calculated yet...
-#        fig_norm_itensity.add_trace(
-#                    go.Scatter(
-#                        x=two_theta,
-#                        y=,
-#                        mode="lines",
-#                        line=go.scatter.Line(color="gray"),
-#                        showlegend=False)
-#)
-    
+        # I'd like to have the color be the same, but haven't figured out how.
+        for i,value in enumerate(DF_phase_fraction["Mean"]):
+            fig_norm_itensity.add_trace(
+                        go.Scatter(
+                            x=two_theta,
+                            y=[value]*len(two_theta),
+                            mode='lines',
+                            name="Mean "+DF_phase_fraction["Phase"][i] )
+                        )
+        
     else:
         print("Warning: I and R values different lengths. Returning empty figure.")
         print(DF_merged_fit_theo)
@@ -409,6 +409,7 @@ def two_theta_compare_figure(Merged_DataFrame):
 ########## Helper Fuctions ##########
 #####################################
 
+#####################################
 def get_phase(cif_wrap, phase_name, project):
     """
     Retreieve the phase information from file.  Assumes phase information is stored in a .cif file with format hint (fmthint)
@@ -423,6 +424,7 @@ def get_phase(cif_wrap, phase_name, project):
     """
     return project.add_phase(cif_wrap, phase_name, fmthint = 'CIF')
 
+#####################################
 def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
     """
 
@@ -444,6 +446,7 @@ def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
     SinTheta=[1*wavelength/(2*d) for d in D]
     return SinTheta
 
+#####################################
 def find_two_theta_in_range(sin_theta, hist):
     """
     #Description
@@ -473,6 +476,7 @@ def find_two_theta_in_range(sin_theta, hist):
 ######### Analysis Fuctions #########
 #####################################
 
+#####################################
 def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,x_range,G2sc,DataPathWrap,SaveWrap):
     """Function to calculate the theoretical intensities.
     
@@ -524,6 +528,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     #print(ti_table)
     return ti_table
 
+#####################################
 def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     """Calculate Phase Fraction
     
@@ -607,7 +612,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     #df.loc[df['column_name'] == some_value]
 
 
-
+#####################################
 def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     """Adds notes and flags to phase fraction.
 
@@ -653,6 +658,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(flags_DF)
     return flags_DF
 
+#####################################
 def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     verify_list = np.empty(t_pos.shape[0])
 

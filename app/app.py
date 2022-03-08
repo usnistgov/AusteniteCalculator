@@ -173,17 +173,19 @@ app.layout = dbc.Container([
             dash_table.DataTable(id='intensity-table'),
             #
             html.Br(),
-            html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant"""),
+            html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant.
+                        Deviation from a constant value indicates unaccounted for factors in normalization,
+                        such as texture, instrument calibration, and/or microstructure effects"""),
             dcc.Graph(id='normalized-intensity-plot'),
             
             # Graph of the two_theta values
             html.Br(),
             # Doesn't look like newlines work, but I'd like to separate this a bit more.
             html.Div("""Plot of the difference between the fit and theoretical two theta values. \n
-                      Nominally all values should be near zero. \n
-                      Large deviations for single peaks indicate the fit may not be correct. \n
-                      Systematic deviation indicates the theoretical intensities may not be correct, or \n
-                      errors in x-ray geometry."""),
+                        Nominally all values should be near zero. \n
+                        Large deviations for single peaks indicate the fit may not be correct. \n
+                        Systematic deviation indicates the theoretical intensities may not be correct, or \n
+                        errors in x-ray geometry."""),
             dcc.Graph(id='two_theta-plot')
             
             #Tab label
