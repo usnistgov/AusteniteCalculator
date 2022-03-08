@@ -267,8 +267,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     print("\n\n Calculating Phase Fraction\n")
     DF_phase_fraction, pf_uncertainties, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user)
     
-
-
     ########################################
     ########################################
     # Create Plots
@@ -551,6 +549,11 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     
     ti_table['R_calc']=ti_table['I_corr']*ti_table['F_calc_sq']
     ti_table[['Phase']] = material
+    
+    # Remove any peaks that have zero theoretical intensity
+    # Ran into this for Example 06
+    ti_table= ti_table.loc[(ti_table["R_calc"]>0)]
+    
     #print(ti_table)
     return ti_table
 

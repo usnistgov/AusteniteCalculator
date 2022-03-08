@@ -268,7 +268,12 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
         back_counts_list.append(back_counts)
         fit_counts_list.append(fit_counts)
         data_counts_list.append(data_counts)
-        signal_to_noise_list.append(peak[2]/math.sqrt(back_counts+peak[2]))
+        try:
+            signal_to_noise_list.append(peak[2]/math.sqrt(back_counts+peak[2]))
+        except ValueError:
+            signal_to_noise_list.append(np.nan)
+            print("Value error in signal to noise")
+        
     DF['back_int_bound']=back_counts_list
     DF['signal_to_noise']=signal_to_noise_list
     # used as a diagnostic/sanity check, but using the sigma value as boundaries can result in adjacent peaks adding counts

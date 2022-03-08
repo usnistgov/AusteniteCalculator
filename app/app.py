@@ -100,7 +100,7 @@ app.layout = dbc.Container([
             html.Hr(),
             dbc.Checklist(
                 options=[
-                    {"label": "Use Default Files", "value": 1},
+                    {"label": "Textured Duplex Steel Example (Default, Example 01 Files)", "value": 1},
                 ],
                 id="default-files-check",
             ),
@@ -109,11 +109,19 @@ app.layout = dbc.Container([
             html.Hr(),
             dbc.Checklist(
                 options=[
-                    {"label": "Use Example 05", "value": 1},
+                    {"label": "Withdrawn SRM 487 Example (Example 05 Files)", "value": 1},
                 ],
                 id="example05-files-check",
             ),
-
+            
+            ## Checkbox to use Example 06 files instead
+            html.Hr(),
+            dbc.Checklist(
+                options=[
+                    {"label": "Simulated 3 Phase Example (Example 06 Files)", "value": 1},
+                ],
+                id="example06-files-check",
+            ),
             # submit button
             html.Hr(),
             html.Div("""Once your files have been uploaded, click the button below
@@ -277,12 +285,13 @@ def show_f_name3(n_clicks):
     State('upload-cif','contents'),
     State('upload-cif','filename'),
     State('default-files-check','value'),
-    State('example05-files-check','value'))
+    State('example05-files-check','value'),
+    State('example06-files-check','value'))
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
-                  use_default_files, use_example05_files):
+                  use_default_files, use_example05_files, use_example06_files):
     
     # return nothing when app opens
     if n_clicks == 0:
@@ -309,6 +318,14 @@ def update_output(n_clicks,
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
         xrdml_fname = 'E211110-AAC-001_019-000_exported.csv'
+        instprm_fname = 'BrukerD8_E211110.instprm'
+
+    elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
+        datadir = '../ExampleData/Example06'
+        #datadir = '../ExampleData/Example01'
+        cif_fnames = ['alpha-prime-martensite-SRI.cif','epsilon-martensite-SRI.cif','austenite-SRI.cif']
+        workdir = '../server_workdir'
+        xrdml_fname = 'Example06_simulation_generation_data.csv'
         instprm_fname = 'BrukerD8_E211110.instprm'
 
     #Stores user files in a directory
