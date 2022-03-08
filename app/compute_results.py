@@ -265,7 +265,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, pf_uncertainties = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo)
+    DF_phase_fraction, pf_uncertainties, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user)
     
 
 
@@ -325,6 +325,19 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                             mode='lines',
                             name="Mean "+DF_phase_fraction["Phase"][i] )
                         )
+        
+        ## Add crosses to indicate values that didn't work
+        fig_norm_itensity.add_trace(
+                        go.Scatter(
+                            x=DF_merged_fit_theo["pos_fit"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
+                            y=DF_merged_fit_theo["n_int"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
+                            mode="markers",
+                            name="Excluded from Analysis"
+                            #symbol='cross'
+                            #fillcolor='#000000',
+                            )
+                        )
+        
         
     else:
         print("Warning: I and R values different lengths. Returning empty figure.")
@@ -542,7 +555,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     return ti_table
 
 #####################################
-def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
+def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     """Calculate Phase Fraction
     
     Args:
@@ -577,7 +590,9 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     for ii, phase in enumerate(phase_list):
         #print(phase)
         
-        Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int']]
+        Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int','Peak_Fit_Success']]
+        print(Phase_DF)
+        #print(Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean())
 
 #        phase_fraction_DF["Mean_nint"].iloc[ii] = Phase_DF['n_int'].mean()
 #        phase_fraction_DF["StDev_nint"].iloc[ii] = Phase_DF['n_int'].std()
@@ -585,13 +600,20 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
 
         # Changed to avoid returning a copy error
         # https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-        phase_fraction_DF.loc[ii,"Mean_nint"] = Phase_DF['n_int'].mean()
-        phase_fraction_DF.loc[ii,"StDev_nint"] = Phase_DF['n_int'].std()
-        phase_fraction_DF.loc[ii,"Number_hkls"] = len(Phase_DF['n_int'])
+#        phase_fraction_DF.loc[ii,"Mean_nint"] = Phase_DF['n_int'].mean()
+#        phase_fraction_DF.loc[ii,"StDev_nint"] = Phase_DF['n_int'].std()
+#        phase_fraction_DF.loc[ii,"Number_hkls"] = len(Phase_DF['n_int'])
 
+        phase_fraction_DF.loc[ii,"Mean_nint"] =Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
+        phase_fraction_DF.loc[ii,"StDev_nint"] =Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].std()
+        phase_fraction_DF.loc[ii,"Number_hkls"] =len(Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)])
 
         #print("Add to fraction_dict")
         fraction_dict[phase]=phase_fraction_DF
+
+        if (phase_fraction_DF.loc[ii,"Number_hkls"] != len(Phase_DF['n_int'])):
+            DF_flags=flag_phase_fraction(np.nan,"Phase Fraction", ("Peaks that failed to fit in phase "+phase+" were removed"),
+             "Improve signal to noise, request assistance on fitting" , DF_to_append=DF_flags)
 
     # now, compute phase fraction
     phase_fraction_DF["Phase_Fraction"]=phase_fraction_DF["Mean_nint"]/(phase_fraction_DF["Mean_nint"].sum())
@@ -622,7 +644,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo):
     #print(fraction_dict)
     print(phase_fraction_DF)
     
-    return phase_fraction_DF, pf_uncertainties
+    return phase_fraction_DF, pf_uncertainties,DF_flags
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
