@@ -123,8 +123,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     peaks_ok = False
     fit_attempts = 0
-    fit_attempt_limit = 4
+    fit_attempt_limit = 3
     peak_verify = []
+    t_peaks = 0
+    t_sigma = 0
+    t_gamma = 0
+    t_int = 0
+    t_pos = 0
 
     while not (peaks_ok):
         print("\n\n Fit attempt number ", fit_attempts," \n")
@@ -138,9 +143,24 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
             DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
         elif(fit_attempts == 3):
-            fit.fit_peaks_holdsig(hist, peaks_list, 5, peak_verify)
-        else:
-            fit.fit_peaks(hist, peaks_list)
+            holding_sig = False
+            holding_gam = True
+            for x in range(6):
+                if not(np.all(peak_verify == True)):
+                    if holding_gam:
+                        fit.fit_peaks_holdgam(hist, peaks_list, Chebyschev_coeffiecients, peak_verify)
+                        holding_gam = False
+                        holding_sig = True
+                    elif holding_sig:
+                        fit.fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify)
+                        holding_sig = False
+                        holding_gam = True
+            t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
+            t_sigma = t_peaks.iloc[:,4]
+            t_gamma = t_peaks.iloc[:,6]
+            t_int = t_peaks.iloc[:,2]
+            t_pos = t_peaks.iloc[:,0]
+            peak_verify = fit.create_verify_list(t_pos, t_int, t_sigma, t_gamma)
 
         t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
         t_sigma = t_peaks.iloc[:,4]
@@ -148,26 +168,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         t_int = t_peaks.iloc[:,2]
         t_pos = t_peaks.iloc[:,0]
 
-        peak_verify = create_verify_list(t_pos, t_int, t_sigma, t_gamma)
-        
-        if(len(peak_verify) == 0):
-            for pos in t_int:
-                if(pos < 0):
-                    peak_verify.append(False)
-                else:
-                    peak_verify.append(True)
-        else:
-            list_iter = 0
-            for pos in t_int:
-                if(pos < 0):
-                    peak_verify[list_iter] = False
-                else:
-                    peak_verify[list_iter] = True
-                list_iter += 1
+        peak_verify = fit.create_verify_list(t_pos, t_int, t_sigma, t_gamma)
+
         fit_attempts += 1
 
-        if(np.all(t_sigma > 0) and np.all(t_int > 0)):
-            print("\n\n Intensities and Positions are positive \n")
+        if(np.all(peak_verify == True)):
+            print("\n\n All values are within a likeable range \n")
             peaks_ok = True
         
         elif(fit_attempts >= fit_attempt_limit):
@@ -208,7 +214,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
     DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
     
-    DF_merged_fit_theo["Peak_Fit_Success"]=peak_verify
+    DF_merged_fit_theo["Peak_Fit_Success"]= peak_verify
     DF_merged_fit_theo["Peak_Fit_Success"] = DF_merged_fit_theo["Peak_Fit_Success"].astype('bool')
     
     #print(DF_merged_fit_theo)
@@ -722,3 +728,4 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     
     print("Peak Verificaiton List \n", verify_list)
     return verify_list
+    return flags_DF

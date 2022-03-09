@@ -134,7 +134,7 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
 
     # Third, fit the area, position, and gaussian componenet of the width
     hist.set_peakFlags(pos=True,area=True,sig=True)
-    hist.refine_peaks()
+    hist.refine_peaks()   
 
 def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     """Subroutine to fit data using LeBail fitting, but hold the sigma value
@@ -166,7 +166,10 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     #? How to make the fitting more stable?
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-    
+    temp_list = []
+    for x in range(peak_verify):
+        if(peak_verify[x]):
+            temp_list.append(peaks_list[x])
     # First fit only the area
     hist.set_peakFlags(area=True)
     hist.refine_peaks()
@@ -176,8 +179,8 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     hist.refine_peaks()
 
     # Third, fit the area, position, and gaussian componenet of the width
-    hist.set_peakFlags(pos=True,area=True,gam=True)
-    hist.refine_peaks()
+    hist.set_peakFlags(peaklist = temp_list, pos=True,area=True,gam=True)
+    hist.refine_peaks(mode = 'hold')
 
 def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     """Subroutine to fit data using LeBail fitting, holding gamma value
@@ -209,7 +212,11 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     #? How to make the fitting more stable?
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-    
+    temp_list = []
+    for x in range(peak_verify):
+        if(peak_verify[x]):
+            temp_list.append(peaks_list[x])
+
     # First fit only the area
     hist.set_peakFlags(area=True)
     hist.refine_peaks()
@@ -219,8 +226,8 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     hist.refine_peaks()
 
     # Third, fit the area, position, and gaussian componenet of the width
-    hist.set_peakFlags(pos=True,area=True,sig=True,gam=True)
-    hist.refine_peaks()
+    hist.set_peakFlags(peaklist = temp_list, pos=True,area=True,sig=True)
+    hist.refine_peaks(mode = 'hold')
 
 
 def fit_background(DF, hist, peaks_list, sig_width=3):
@@ -280,3 +287,27 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
     #DF['int_back_bound']=fit_counts_list
     #DF['total_back_bound']=data_counts_list
     return DF
+
+def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
+    verify_list = np.empty(t_pos.shape[0])
+
+    for x in range(t_pos.shape[0]):
+        if(x < 0):
+            verify_list[x] = False
+        else:
+            verify_list[x] = True
+
+    m, b = np.polyfit(t_pos, t_sigma, 1)
+
+    for x in range(t_pos.shape[0]):
+        if(t_sigma[x] > (m * t_pos[x] + b) + 5 or t_sigma[x] < (m * t_pos[x] + b) - 5):
+            verify_list[x] = False
+
+    m, b = np.polyfit(t_pos, t_gamma, 1)
+
+    for x in range(t_pos.shape[0]):
+        if(t_gamma[x] > (m * t_pos[x] + b) + 5 or t_gamma[x] < (m * t_pos[x] + b) - 5):
+            verify_list[x] = False
+    
+    print(verify_list)
+    return verify_list
