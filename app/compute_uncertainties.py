@@ -44,10 +44,10 @@ def compute_uncertainties(I,R,I_unc,R_unc,nsim,phases):
 
 if __name__ == '__main__':
 
-    res = compute_uncertainties(I=np.array([2,3,4,5]),
-                                R=np.array([1,2,3,5]),
-                                I_unc=np.array([.5,.5,.5,.5]),
-                                R_unc=np.array([0,0,0,0]),
+    res = compute_uncertainties(I=np.array([2,3,4,5,6,7]),
+                                R=np.array([1,2,3,4,5,6]),
+                                I_unc=np.array([.05,.05,.05,.05,.05,.05]),
+                                R_unc=np.array([.05,.05,.05,.05,.05,.05]),
                                 nsim=1000,
                                 phases=np.array(['a','c','c','a']))
 
