@@ -51,8 +51,15 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     hist.set_peakFlags(pos=True,area=True,sig=False,gam=True)
     hist.refine_peaks(mode = 'hold')
 
-    # Fifth, fit the area, position, gaussian (sig) and lortenzian (gam) component
-    # Still tends to be unstable...
+    # Fifth, fit the area, position, and gaussian (sig) component of the width, while holding the prior gam value
+    # otherwise large peaks are missing intensity...
+    hist.set_peakFlags(pos=True,area=True,sig=True,gam=False)
+    hist.refine_peaks(mode = 'hold')
+
+    # Additional cycles seem to just bounce between values. Ending with a sig fit seems to help get the larger peaks.
+
+    # Fit the area, position, gaussian (sig) and lortenzian (gam) component simultaneously
+    # Still tends to be unstable since sig and gam are highly correlate...
     #hist.set_peakFlags(pos=True,area=True,sig=True, gam=True)
     #hist.refine_peaks()
 
@@ -301,26 +308,30 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
 def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     verify_list = np.empty(t_pos.shape[0])
 
+    # Check if intensities are positive
     for x in range(t_int.shape[0]):
         if(t_int[x] < 0):
             verify_list[x] = False
         else:
             verify_list[x] = True
+            print("All Intensities Positive")
 
-    m, b = np.polyfit(t_pos, t_sigma, 1)
-
-    for x in range(t_pos.shape[0]):
-        print("\n \n Line of best fit value \n \n")
-        print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
-        print("\n\n")
-        if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[1]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[1]/2):
-            verify_list[x] = False
-
-    m, b = np.polyfit(t_pos, t_gamma, 1)
-
-    for x in range(t_pos.shape[0]):
-        if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
-            verify_list[x] = False
+    # Check if sig, gam values are reasonable
+    # Leading to a number of rejected peaks currently
+#    m, b = np.polyfit(t_pos, t_sigma, 1)
+#
+#    for x in range(t_pos.shape[0]):
+#        print("\n \n Line of best fit value")
+#        print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
+#        #print("\n\n")
+#        if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[1]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[1]/2):
+#            verify_list[x] = False
+#
+#    m, b = np.polyfit(t_pos, t_gamma, 1)
+#
+#    for x in range(t_pos.shape[0]):
+#        if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
+#            verify_list[x] = False
 
 
     print("Peak Verificaiton List \n", verify_list)
