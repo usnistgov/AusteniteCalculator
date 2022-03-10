@@ -315,7 +315,7 @@ def update_output(n_clicks,
     elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
         datadir = '../ExampleData/Example05'
         #datadir = '../ExampleData/Example01'
-        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+        cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
         workdir = '../server_workdir'
         xrdml_fname = 'E211110-AAC-001_019-000_exported.csv'
         instprm_fname = 'BrukerD8_E211110.instprm'

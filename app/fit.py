@@ -51,7 +51,7 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     hist.set_peakFlags(pos=True,area=True,sig=False,gam=True)
     hist.refine_peaks(mode = 'hold')
 
-    # Fifth, fit the area, position, and gaussian (sig) component of the width, while holding the prior gam value
+    # Fifth, fit the area, position, and gaussian (sig) component of the width again, while holding the prior gam value
     # otherwise large peaks are missing intensity...
     hist.set_peakFlags(pos=True,area=True,sig=True,gam=False)
     hist.refine_peaks(mode = 'hold')
