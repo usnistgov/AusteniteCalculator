@@ -297,19 +297,19 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
         else:
             verify_list[x] = True
 
-    m, b = np.polyfit(t_pos, t_sigma, 1)
+    #m, b = np.polyfit(t_pos, t_sigma, 1)
 
-    for x in range(t_pos.shape[0]):
-        print("\n \n Line of best fit value \n \n")
-        print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
-        print("\n\n")
-        if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[1]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[1]/2):
-            verify_list[x] = False
+    #for x in range(t_pos.shape[0]):
+     #   print("\n \n Line of best fit value \n \n")
+      #  print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
+       # print("\n\n")
+        #if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[1]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[1]/2):
+         #   verify_list[x] = False
 
-    m, b = np.polyfit(t_pos, t_gamma, 1)
+    #m, b = np.polyfit(t_pos, t_gamma, 1)
 
-    for x in range(t_pos.shape[0]):
-        if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
-            verify_list[x] = False
-    
+    #for x in range(t_pos.shape[0]):
+     #   if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
+      #      verify_list[x] = False
+      
     return verify_list
