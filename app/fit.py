@@ -43,9 +43,26 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     hist.set_peakFlags(pos=True,area=True)
     hist.refine_peaks()
 
-    # Third, fit the area, position, and gaussian componenet of the width
-    hist.set_peakFlags(pos=True,area=True,sig=True,gam=True)
+    # Third, fit the area, position, and gaussian (sig) component of the width
+    hist.set_peakFlags(pos=True,area=True,sig=True)
     hist.refine_peaks()
+
+    # Fourth, fit the area, position, and lortenzian (gam) component of the width, while holding the prior sigma value
+    hist.set_peakFlags(pos=True,area=True,sig=False,gam=True)
+    hist.refine_peaks(mode = 'hold')
+
+    # Fifth, fit the area, position, and gaussian (sig) component of the width again, while holding the prior gam value
+    # otherwise large peaks are missing intensity...
+    hist.set_peakFlags(pos=True,area=True,sig=True,gam=False)
+    hist.refine_peaks(mode = 'hold')
+
+    # Additional cycles seem to just bounce between values. Ending with a sig fit seems to help get the larger peaks.
+
+    # Fit the area, position, gaussian (sig) and lortenzian (gam) component simultaneously
+    # Still tends to be unstable since sig and gam are highly correlate...
+    #hist.set_peakFlags(pos=True,area=True,sig=True, gam=True)
+    #hist.refine_peaks()
+
 
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     """Subroutine to fit data using LeBail fitting, shifting peaks to the left (lower 2-theta)
@@ -291,11 +308,13 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
 def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     verify_list = np.empty(t_pos.shape[0])
 
+    # Check if intensities are positive
     for x in range(t_int.shape[0]):
         if(t_int[x] < 0):
             verify_list[x] = False
         else:
             verify_list[x] = True
+<<<<<<< HEAD
 
     #m, b = np.polyfit(t_pos, t_sigma, 1)
 
@@ -313,3 +332,29 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
       #      verify_list[x] = False
       
     return verify_list
+=======
+            print("All Intensities Positive")
+
+    # Check if sig, gam values are reasonable
+    # Leading to a number of rejected peaks currently
+#    m, b = np.polyfit(t_pos, t_sigma, 1)
+#
+#    for x in range(t_pos.shape[0]):
+#        print("\n \n Line of best fit value")
+#        print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
+#        #print("\n\n")
+#        if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[1]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[1]/2):
+#            verify_list[x] = False
+#
+#    m, b = np.polyfit(t_pos, t_gamma, 1)
+#
+#    for x in range(t_pos.shape[0]):
+#        if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
+#            verify_list[x] = False
+
+
+    print("Peak Verificaiton List \n", verify_list)
+
+    return verify_list
+    #return flags_DF
+>>>>>>> 6ff69f3a6c209093a21074b93e7e5fd28073f7ca
