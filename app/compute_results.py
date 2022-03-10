@@ -703,29 +703,3 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(DF_to_append)
     #print(flags_DF)
     return flags_DF
-
-#####################################
-def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
-    verify_list = np.empty(t_pos.shape[0])
-
-    for x in range(t_pos.shape[0]):
-        if(x < 0):
-            verify_list[x] = False
-        else:
-            verify_list[x] = True
-
-    m, b = np.polyfit(t_pos, t_sigma, 1)
-
-    for x in range(t_pos.shape[0]):
-        if(t_sigma[x] > (m * t_pos[x] + b) + 5 or t_sigma[x] < (m * t_pos[x] + b) - 5):
-            verify_list[x] = False
-
-    m, b = np.polyfit(t_pos, t_gamma, 1)
-
-    for x in range(t_pos.shape[0]):
-        if(t_gamma[x] > (m * t_pos[x] + b) + 5 or t_gamma[x] < (m * t_pos[x] + b) - 5):
-            verify_list[x] = False
-    
-    print("Peak Verificaiton List \n", verify_list)
-    return verify_list
-    return flags_DF

@@ -43,9 +43,19 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     hist.set_peakFlags(pos=True,area=True)
     hist.refine_peaks()
 
-    # Third, fit the area, position, and gaussian componenet of the width
-    hist.set_peakFlags(pos=True,area=True,sig=True,gam=True)
+    # Third, fit the area, position, and gaussian (sig) component of the width
+    hist.set_peakFlags(pos=True,area=True,sig=True)
     hist.refine_peaks()
+
+    # Fourth, fit the area, position, and lortenzian (gam) component of the width, while holding the prior sigma value
+    hist.set_peakFlags(pos=True,area=True,sig=False,gam=True)
+    hist.refine_peaks(mode = 'hold')
+
+    # Fifth, fit the area, position, gaussian (sig) and lortenzian (gam) component
+    # Still tends to be unstable...
+    #hist.set_peakFlags(pos=True,area=True,sig=True, gam=True)
+    #hist.refine_peaks()
+
 
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     """Subroutine to fit data using LeBail fitting, shifting peaks to the left (lower 2-theta)
@@ -311,5 +321,9 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     for x in range(t_pos.shape[0]):
         if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
             verify_list[x] = False
-    
+
+
+    print("Peak Verificaiton List \n", verify_list)
+
     return verify_list
+    #return flags_DF
