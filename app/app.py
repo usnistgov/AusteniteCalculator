@@ -139,6 +139,7 @@ app.layout = dbc.Container([
         
         ### --- start tab 2 --- ###
         dbc.Tab([
+            html.Br(),
             html.Div("""Plot of the raw data."""),
             dcc.Graph(id='intensity-plot'),
             html.Br(),
@@ -179,7 +180,11 @@ app.layout = dbc.Container([
             html.Br(),
             html.Div("""Table of Fit and Theoretical Intensities"""),
             dash_table.DataTable(id='intensity-table'),
+            html.Br(),
+            html.Button("Download as CSV", id="intensity-table-button"),
+            dcc.Download(id="intensity-table-download"),
             #
+            html.Br(),
             html.Br(),
             html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant.
                         Deviation from a constant value indicates unaccounted for factors in normalization,
@@ -263,6 +268,16 @@ def show_f_name3(n_clicks):
 
 
 ### --- end file upload messages --- ###
+
+### download csvs ###
+@app.callback(
+    Output("intensity-table-download", "data"),
+    Input("intensity-table-button", "n_clicks"),
+    State('intensity-table','data'),
+    prevent_initial_call=True,
+)
+def func(n_clicks,data):
+    return dcc.send_data_frame(pd.DataFrame(data).to_csv, "intensity_table.csv")
 
 
 ### --- all other outputs --- ###
