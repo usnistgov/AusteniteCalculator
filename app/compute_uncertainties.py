@@ -1,54 +1,66 @@
-from math import trunc
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import truncnorm
+#import arviz as az
+import pymc3 as pm
+from scipy.stats import median_abs_deviation as mad
 
-def compute_pf(samp,phases,unique_phases):
+def run_mcmc(I,R,sigma_I,phases,plot=False):
 
-    pf = np.zeros(len(unique_phases))
+    I = np.array(I)
+    R = np.array(R)
+    sigma_I = np.array(sigma_I)
+    phases = np.array(phases)
+    phase_names = phases.copy()
 
-    for ii in range(len(unique_phases)):
-        
-        pf[ii] = np.mean(samp[np.where(phases==unique_phases[ii]) ])
+    Z = I/R
+    unique_phase_names = np.unique(phase_names)
+
+    phases = np.zeros(len(phases),dtype=np.int8)
     
-    pf = pf/np.sum(pf)
+    for ii in range(len(unique_phase_names)):
 
-    return pf
-
-
-def compute_uncertainties(I,R,I_unc,R_unc,nsim,phases):
-
-    dim = len(I)
-    samps = np.zeros( (nsim,dim) )
+        phases[phase_names==unique_phase_names[ii]] = int(ii)
 
     unique_phases = np.unique(phases)
-    pf_samps = np.zeros( (nsim, len(unique_phases)))
-
-    for ii in range(nsim):
-
-        for jj in range(dim):
-
-            rand_I = truncnorm.rvs(a=0,b=np.Inf,loc=I[jj],scale=I_unc[jj])
-            rand_R = truncnorm.rvs(a=0,b=np.Inf,loc=R[jj],scale=R_unc[jj])
-            samps[ii,jj] = rand_I/rand_R
-
-        pf_samps[ii,:] = compute_pf(samps[ii,:],phases,unique_phases)
-
-    return pd.DataFrame({
-        'Phase':unique_phases,
-        'PF_mean':np.apply_along_axis(np.mean,0,pf_samps),
-        'PF_sd':np.apply_along_axis(np.std,0,pf_samps)
-    })
+    phase_stds = np.zeros(len(unique_phases))
 
 
-if __name__ == '__main__':
+    for ii in range(len(unique_phases)):
 
-    res = compute_uncertainties(I=np.array([2,3,4,5,6,7]),
-                                R=np.array([1,2,3,4,5,6]),
-                                I_unc=np.array([.05,.05,.05,.05,.05,.05]),
-                                R_unc=np.array([.05,.05,.05,.05,.05,.05]),
-                                nsim=1000,
-                                phases=np.array(['a','c','c','a']))
+        phase_stds[ii] = np.std(Z[phases==unique_phases[ii]])
 
-    print(res)
+    prior_scale=np.mean(phase_stds)
+    prior_mean_centers = np.ones(len(unique_phases))
+
+    print(prior_scale)
+    print(prior_mean_centers)   
+
+    if plot:
+        plt.plot(np.arange(6),Z[0:6],'bo')
+        plt.axhline(y=np.mean(Z[0:6]),color='blue')
+        plt.plot(np.arange(6),Z[6:12],'ro')
+        plt.axhline(y=np.mean(Z[6:12]),color='red')
+        plt.show()
+
+    basic_model = pm.Model() 
+
+    with basic_model:
+        
+        # Priors for unknown model parameters
+        sigma_exp = pm.HalfStudentT("sigma_exp", sd=prior_scale*3, nu=4,shape=1)
+        mu = pm.Normal("mu", 
+                       mu=prior_mean_centers, 
+                       sd=prior_scale*3,
+                       shape=len(unique_phases))
+        
+        full_sigma = pm.math.sqrt( (1/R**2)*(sigma_I**2 + pm.math.sqr(sigma_exp) ))
+
+        # Likelihood (sampling distribution) of observations
+        Y_obs = pm.Normal("Y_obs", mu=mu[phases], sd=full_sigma, observed=Z)
+
+        if plot:
+            pm.model_to_graphviz(basic_model)
+
+        trace = pm.sample(500, return_inferencedata=False,tune=1000)
+
+    return trace
