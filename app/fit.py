@@ -87,7 +87,7 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     hist.set_refinements({'Background': {"no. coeffs": 5,'type': 'chebyschev-1', 'refine': True}})
     hist.refine_peaks()
 
-    # Fit all of the peaks in the peak list
+    # Fit all of the peaks in the peak lists
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
 
@@ -96,17 +96,17 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     #? How to make the fitting more stable?
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-    temp_list = []
-    for x in range(peak_verify):
+    temp_list = {}
+    for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
             temp_list.append(peaks_list[x])
 
     # First fit only the area
-    hist.set_peakFlags(peaklist = temp_list, area=True)
+    hist.set_peakFlags(peaklist=temp_list, area=True)
     hist.refine_peaks(mode = 'hold')
             
     # Second, fit the area and position
-    hist.set_peakFlags(peaklist = temp_list, pos=True,area=True)
+    hist.set_peakFlags(peaklist=temp_list, pos=True,area=True)
     hist.refine_peaks(mode = 'hold')
 
     # Third, fit the area, position, and gaussian componenet of the width
@@ -145,7 +145,7 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
     temp_list = []
-    for x in range(peak_verify):
+    for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
             temp_list.append(peaks_list[x])
 
@@ -192,7 +192,7 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
     temp_list = []
-    for x in range(peak_verify):
+    for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
             temp_list.append(peaks_list[x])
     # First fit only the area
@@ -238,7 +238,7 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
     temp_list = []
-    for x in range(peak_verify):
+    for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
             temp_list.append(peaks_list[x])
 
