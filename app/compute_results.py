@@ -630,12 +630,10 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
     # compute phase fraction uncertainties
-    pf_uncertainties = compute_uncertainties.compute_uncertainties(
+    pf_uncertainties = compute_uncertainties.run_mcmc(
         I=np.array(DF_merged_fit_theo['int_fit']),
         R=np.array(DF_merged_fit_theo['R_calc']),
-        I_unc=np.array(DF_merged_fit_theo['u_int_fit']),
-        R_unc=np.zeros(DF_merged_fit_theo.shape[0]),
-        nsim=1000,
+        sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
         phases=DF_merged_fit_theo['Phase']
     )
 
