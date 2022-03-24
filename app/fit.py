@@ -314,25 +314,6 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
             verify_list[x] = False
         else:
             verify_list[x] = True
-<<<<<<< HEAD
-
-    #m, b = np.polyfit(t_pos, t_sigma, 1)
-
-    #for x in range(t_pos.shape[0]):
-     #   print("\n \n Line of best fit value \n \n")
-      #  print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
-       # print("\n\n")
-        #if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[1]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[1]/2):
-         #   verify_list[x] = False
-
-    #m, b = np.polyfit(t_pos, t_gamma, 1)
-
-    #for x in range(t_pos.shape[0]):
-     #   if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[1]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[1]/2):
-      #      verify_list[x] = False
-      
-    return verify_list
-=======
             print("All Intensities Positive")
 
     # Check if sig, gam values are reasonable
@@ -357,4 +338,3 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
 
     return verify_list
     #return flags_DF
->>>>>>> 6ff69f3a6c209093a21074b93e7e5fd28073f7ca
