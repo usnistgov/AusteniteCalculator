@@ -96,10 +96,10 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     #? How to make the fitting more stable?
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-    temp_list = {}
+    temp_list = list()
     for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
-            temp_list.append(peaks_list[x])
+            temp_list.append(x)
 
     # First fit only the area
     hist.set_peakFlags(peaklist=temp_list, area=True)
@@ -144,10 +144,10 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     #? How to make the fitting more stable?
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-    temp_list = []
+    temp_list = list()
     for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
-            temp_list.append(peaks_list[x])
+            temp_list.append(x)
 
     # First fit only the area
     hist.set_peakFlags(peaklist = temp_list, area=True)
@@ -194,7 +194,7 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     temp_list = []
     for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
-            temp_list.append(peaks_list[x])
+            temp_list.append(x)
     # First fit only the area
     hist.set_peakFlags(peaklist = temp_list, area=True)
     hist.refine_peaks(mode = 'hold')
@@ -240,7 +240,7 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     temp_list = []
     for x in range(len(peak_verify)):
         if(not(peak_verify[x])):
-            temp_list.append(peaks_list[x])
+            temp_list.append(x)
 
     # First fit only the area
     hist.set_peakFlags(peaklist = temp_list, area=True)
@@ -331,23 +331,22 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
 
     # Check if sig, gam values are reasonable
     # Leading to a number of rejected peaks currently
-    m, b = np.polyfit(t_pos, t_sigma, 1)
+    #m, b = np.polyfit(t_pos, t_sigma, 1)
 
-    for x in range(t_pos.shape[0]):
-        print("\n \n Line of best fit value")
-        print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
-        print("\n\n")
-        if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[max]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[max]/2):            
-            verify_list[x] = False
+    #for x in range(t_pos.shape[0]):
+     #   print("\n \n Line of best fit value")
+      #  print(t_sigma[x], " = ", m, " * ", t_pos[x], " + ", b)
+       # print("\n\n")
+        #if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[max]/2 or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[max]/2):            
+         #   verify_list[x] = False
 
-    m, b = np.polyfit(t_pos, t_gamma, 1)
+    #m, b = np.polyfit(t_pos, t_gamma, 1)
 
-    for x in range(t_pos.shape[0]):
-        if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[max]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[max]/2):
-            verify_list[x] = False
+    #for x in range(t_pos.shape[0]):
+     #   if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[max]/2 or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[max]/2):
+      #      verify_list[x] = False
 
 
     print("Peak Verificaiton List \n", verify_list)
 
     return verify_list
-    #return flags_DF
