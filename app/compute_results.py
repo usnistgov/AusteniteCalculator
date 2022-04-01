@@ -227,7 +227,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     u_int_fit_list=[]
     for i in list(range(len(DF_merged_fit_theo.index))):
         #print(i)
-        u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos0'+str(i)])
+        u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
         u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
         #print(hist.data['Peak List']['sigDict']['int'+str(i)])
         #print(hist.data['Peak List']['sigDict']['pos'+str(i)])
