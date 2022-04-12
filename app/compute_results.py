@@ -337,8 +337,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                             y=DF_merged_fit_theo["n_int"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
                             mode="markers",
                             name="Excluded from Analysis",
-                            marker_symbol='x'
-                            #fillcolor='#000000',
+                            marker_symbol='x',
+                            marker_color='red',
+                            marker_size = 8
                             )
                         )
         
