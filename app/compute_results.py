@@ -280,8 +280,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Moved all plotting functions to the end, allows use of all data in plot
 
-    pf_uncertainty_fig = px.histogram(pf_uncertainties['mu_df'],x='value',color='which_phase',opacity=.7,barmode='overlay',histnorm='probability density')
+    if pf_uncertainties is not None:
+        pf_uncertainty_fig = px.histogram(pf_uncertainties['mu_df'],x='value',color='which_phase',opacity=.7,barmode='overlay',histnorm='probability density')
 
+    else:
+        pf_uncertainty_fig = go.Figure()
     ########################################
     # Create Figure of raw data
     ########################################
@@ -662,7 +665,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     #print(fraction_dict)
     print(phase_fraction_DF)
     
-    return phase_fraction_DF, pf_uncertainties,DF_flags
+    return phase_fraction_DF, pf_uncertainties, DF_flags
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 

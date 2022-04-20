@@ -50,7 +50,13 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
     R = np.array(R)[pfs]
     sigma_I = np.array(sigma_I)[pfs]
     phases = np.array(phases)[pfs]
-    
+
+
+    phase_counts = np.unique(phases, return_counts=True)[1]
+
+    if np.min(phase_counts) <= 2:
+        return None
+
     phase_names = phases.copy()
 
     Z = I/R
