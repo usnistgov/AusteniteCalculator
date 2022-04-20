@@ -280,6 +280,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Moved all plotting functions to the end, allows use of all data in plot
 
+    pf_uncertainty_fig = px.histogram(pf_uncertainties['mu_df'],x='value',color='which_phase',opacity=.7,barmode='overlay',histnorm='probability density')
 
     ########################################
     # Create Figure of raw data
@@ -368,7 +369,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     #DF_phase_fraction = DF_phase_fraction.reindex(columns=["Phase","Phase_Fraction","Phase_Fraction_StDev",
     #        "Number_hkls","hkls","Mean_nint","StDev_nint"])
 
-    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user
+    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user, pf_uncertainty_fig
 
 #####################################
 ######### Plotting Fuctions #########
@@ -643,7 +644,8 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
         I=np.array(DF_merged_fit_theo['int_fit']),
         R=np.array(DF_merged_fit_theo['R_calc']),
         sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
-        phases=DF_merged_fit_theo['Phase']
+        phases=DF_merged_fit_theo['Phase'],
+        pfs = np.array(DF_merged_fit_theo['Peak_Fit_Success'])
     )
 
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],

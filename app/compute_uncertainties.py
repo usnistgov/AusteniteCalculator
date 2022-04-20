@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 #import arviz as az
 import pymc3 as pm
 from scipy.stats import median_abs_deviation as mad
@@ -43,12 +44,13 @@ def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
 
 
 
-def run_mcmc(I,R,sigma_I,phases,plot=False):
+def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
-    I = np.array(I)
-    R = np.array(R)
-    sigma_I = np.array(sigma_I)
-    phases = np.array(phases)
+    I = np.array(I)[pfs]
+    R = np.array(R)[pfs]
+    sigma_I = np.array(sigma_I)[pfs]
+    phases = np.array(phases)[pfs]
+    
     phase_names = phases.copy()
 
     Z = I/R
@@ -77,31 +79,38 @@ def run_mcmc(I,R,sigma_I,phases,plot=False):
     #print(prior_mean_centers)   
 
     if plot:
-        plt.plot(np.arange(6),Z[0:6],'bo')
-        plt.axhline(y=np.mean(Z[0:6]),color='blue')
-        plt.plot(np.arange(6),Z[6:12],'ro')
-        plt.axhline(y=np.mean(Z[6:12]),color='red')
-        plt.show()
+        plt.scatter(x=np.arange(len(Z)),y=Z,c=phases)
+        print("Z: {}".format(Z))
+        print("phases: {}".format(phases))
 
     basic_model = pm.Model() 
 
     with basic_model:
         
         # Priors for unknown model parameters
-        sigma_exp = pm.HalfStudentT("sigma_exp", sd=prior_scale*3, nu=4,shape=1)
-        mu = pm.Normal("mu", 
+        sigma_exp = pm.HalfStudentT("sigma_exp", sd=prior_scale*2, nu=4,shape=len(unique_phases))
+        mu = pm.TruncatedNormal("mu", 
                        mu=prior_mean_centers, 
-                       sd=prior_scale*3,
+                       sd=np.std(Z)*10,
+                       lower=0,
                        shape=len(unique_phases))
         
-        full_sigma = pm.math.sqrt( (1/R**2)*(sigma_I**2) + pm.math.sqr(sigma_exp) )
+        full_sigma = pm.math.sqrt( (1/R**2)*(sigma_I**2) + pm.math.sqr(sigma_exp[phases]) )
 
         # Likelihood (sampling distribution) of observations
         Y_obs = pm.Normal("Y_obs", mu=mu[phases], sd=full_sigma, observed=Z)
 
-        if plot:
-            pm.model_to_graphviz(basic_model)
+        #if plot:
+            #pm.model_to_graphviz(basic_model)
 
         trace = pm.sample(1000, return_inferencedata=False,tune=1000)
+        
+        mu_norm = np.apply_along_axis(lambda x: x/np.sum(x),1,trace['mu'])
+        
+        mu_df = pd.DataFrame(mu_norm,columns=unique_phase_names)
+        mu_df = pd.melt(mu_df,value_vars = unique_phase_names,var_name='which_phase',value_name='value')
+        
+        #sig_df = pd.DataFrame(trace['sigma_exp'],columns=unique_phase_names)
+        #sig_df = pd.melt(sig_df,value_vars = unique_phase_names,var_name='which_phase',value_name='value')
 
-    return {'mu':trace['mu'],'sigma_exp':trace['sigma_exp']}
+    return {'mu_df':mu_df,'trace':trace,'unique_phase_names':unique_phase_names}
