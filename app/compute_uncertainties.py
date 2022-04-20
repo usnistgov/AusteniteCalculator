@@ -9,6 +9,9 @@ def gen_mu_sigma(x,n_draws):
     
     # p(mu,simga) \prop_to 1/sigma OR uniform prior on mu, log(sigma)
     # BDA pg: 66
+
+    # input: x is a 1d array object
+    # returns: posterior samples of mu and sigma in a dictionary
     
     x_var = np.var(x)
     n_x = x.shape[0]
@@ -53,6 +56,7 @@ def run_mcmc(I,R,sigma_I,phases,plot=False):
 
     phases = np.zeros(len(phases),dtype=np.int8)
     
+    # create numeric index for each phase
     for ii in range(len(unique_phase_names)):
 
         phases[phase_names==unique_phase_names[ii]] = int(ii)
@@ -60,16 +64,17 @@ def run_mcmc(I,R,sigma_I,phases,plot=False):
     unique_phases = np.unique(phases)
     phase_stds = np.zeros(len(unique_phases))
 
-
+    # standard deviations for each phase
     for ii in range(len(unique_phases)):
 
         phase_stds[ii] = np.std(Z[phases==unique_phases[ii]])
 
+    # prior scale and means
     prior_scale=np.mean(phase_stds)
     prior_mean_centers = np.ones(len(unique_phases))
 
-    print(prior_scale)
-    print(prior_mean_centers)   
+    #print(prior_scale)
+    #print(prior_mean_centers)   
 
     if plot:
         plt.plot(np.arange(6),Z[0:6],'bo')
@@ -89,7 +94,7 @@ def run_mcmc(I,R,sigma_I,phases,plot=False):
                        sd=prior_scale*3,
                        shape=len(unique_phases))
         
-        full_sigma = pm.math.sqrt( (1/R**2)*(sigma_I**2 + pm.math.sqr(sigma_exp) ))
+        full_sigma = pm.math.sqrt( (1/R**2)*(sigma_I**2) + pm.math.sqr(sigma_exp) )
 
         # Likelihood (sampling distribution) of observations
         Y_obs = pm.Normal("Y_obs", mu=mu[phases], sd=full_sigma, observed=Z)
@@ -97,6 +102,6 @@ def run_mcmc(I,R,sigma_I,phases,plot=False):
         if plot:
             pm.model_to_graphviz(basic_model)
 
-        trace = pm.sample(500, return_inferencedata=False,tune=1000)
+        trace = pm.sample(1000, return_inferencedata=False,tune=1000)
 
-    return trace
+    return {'mu':trace['mu'],'sigma_exp':trace['sigma_exp']}

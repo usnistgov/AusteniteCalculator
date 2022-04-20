@@ -133,7 +133,8 @@ app.layout = dbc.Container([
             html.Br(),
             html.Br()
             ],
-            label="Data Upload"),
+            label="Data Upload",
+            id='Data Upload'),
             
         ### --- end tab 1 --- ###
         
@@ -210,8 +211,7 @@ app.layout = dbc.Container([
         ### --- end tab 3 --- ###
 
     ], # end dbc.Tabs()
-    id="tabs",
-    active_tab="Data Upload"),
+    id="tabs")
     
 ])
 
