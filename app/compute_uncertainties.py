@@ -3,6 +3,42 @@ import matplotlib.pyplot as plt
 #import arviz as az
 import pymc3 as pm
 from scipy.stats import median_abs_deviation as mad
+from scipy.stats import invgamma, t
+
+def gen_mu_sigma(x,n_draws):
+    
+    # p(mu,simga) \prop_to 1/sigma OR uniform prior on mu, log(sigma)
+    # BDA pg: 66
+    
+    x_var = np.var(x)
+    n_x = x.shape[0]
+    v = n_x-1
+    tau2 = x_var
+    
+    sigma2 = invgamma.rvs(a=v/2,scale=v*tau2/2,size=n_draws)
+    mu = t.rvs(df=n_x-1, loc=np.mean(x), scale=np.sqrt(x_var/n_x), size=n_draws)
+    
+    return {'mu':mu, 'sigma2':sigma2}
+    
+def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
+
+    I = np.array(I)
+    R = np.array(R)
+    sigma_I = np.array(sigma_I)
+    phases = np.array(phases)
+
+    Z = I/R
+    unique_phase_names = np.unique(phases)
+
+    res_dict = {}
+
+    for ii in range(len(unique_phase_names)):
+
+        res_dict[unique_phase_names[ii]] = gen_mu_sigma(Z[phases==unique_phase_names[ii]],n_draws)
+
+    return res_dict
+
+
 
 def run_mcmc(I,R,sigma_I,phases,plot=False):
 

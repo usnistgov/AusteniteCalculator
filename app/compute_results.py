@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import math
 import fit
-import compute_uncertainties
+from compute_uncertainties import run_mcmc
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
@@ -356,6 +356,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     
     fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
+    ##############################
+    # Create phase fraction plot #
+    ##############################
+
+
     ########################################
     # Resort dataframes for output
     ########################################
@@ -434,6 +439,8 @@ def two_theta_compare_figure(Merged_DataFrame):
 #                  y=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]])
     
     return fig
+
+
 
 #####################################
 ########## Helper Fuctions ##########
@@ -630,7 +637,8 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
     # compute phase fraction uncertainties
-    pf_uncertainties = compute_uncertainties.run_mcmc(
+
+    pf_uncertainties = run_mcmc(
         I=np.array(DF_merged_fit_theo['int_fit']),
         R=np.array(DF_merged_fit_theo['R_calc']),
         sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
