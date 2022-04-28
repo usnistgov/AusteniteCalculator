@@ -123,6 +123,17 @@ app.layout = dbc.Container([
                 ],
                 id="example06-files-check",
             ),
+            # inference method
+            html.Hr(),
+            dbc.RadioItems(
+                options=[
+                    {"label": "Hierarchical Bayesian (more accurate, but slower to run)", "value": 1},
+                    {"label": "Paul Mandel (less accurate, but faster to run)", "value": 2}
+                ],
+                value=2,
+                id="inference-method",
+            ),
+
             # submit button
             html.Hr(),
             html.Div("""Once your files have been uploaded, click the button below
@@ -298,13 +309,14 @@ def func(n_clicks,data):
     State('upload-cif','filename'),
     State('default-files-check','value'),
     State('example05-files-check','value'),
-    State('example06-files-check','value')
+    State('example06-files-check','value'),
+    State('inference-method','value')
 )
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
-                  use_default_files, use_example05_files, use_example06_files):
+                  use_default_files, use_example05_files, use_example06_files,inference_method_value):
     
     # return nothing when app opens
     if n_clicks == 0:
@@ -313,6 +325,11 @@ def update_output(n_clicks,
     # point towards directory and upload data using GSASII
     # Default data location
     print(use_default_files)
+
+    if inference_method_value == 1:
+        inference_method = 'bayes'
+    elif inference_method_value == 2:
+        inference_method = 'paul_mandel'
 
     if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
@@ -383,7 +400,7 @@ def update_output(n_clicks,
         
     # Now, we just run the desired computations
     
-    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc)
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')

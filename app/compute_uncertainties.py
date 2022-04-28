@@ -4,7 +4,8 @@ import pandas as pd
 #import arviz as az
 import pymc3 as pm
 from scipy.stats import median_abs_deviation as mad
-from scipy.stats import invgamma, t
+#from scipy.stats import invgamma, t
+from statsmodels.stats.meta_analysis import combine_effects
 
 def gen_mu_sigma(x,n_draws):
     
@@ -43,6 +44,43 @@ def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
     return res_dict
 
 
+def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
+
+    I = np.array(I)[pfs]
+    R = np.array(R)[pfs]
+    sigma_I = np.array(sigma_I)[pfs]
+    phases = np.array(phases)[pfs]
+
+
+    phase_counts = np.unique(phases, return_counts=True)[1]
+
+    if np.min(phase_counts) <= 2:
+        return None
+
+    phase_names = phases.copy()
+
+    Z = I/R
+    sigma_Z = sigma_I/R
+    unique_phase_names = np.unique(phase_names)
+
+    mu_dfs = [None]*len(unique_phase_names)
+    mu_samps_acc = np.zeros(n_draws)
+
+    for ii in range(len(unique_phase_names)):
+
+        inds = phases==unique_phase_names[ii]
+        res = combine_effects(Z[inds],sigma_Z[inds]**2,method_re='iterated').summary_frame()
+        mu_samps = np.random.normal(loc=res.loc['random effect','eff'],scale=res.loc['random effect','sd_eff'],size=n_draws)
+        mu_dfs[ii] = pd.DataFrame({
+            'which_phase':unique_phase_names[ii],
+            'value':mu_samps
+        })
+        mu_samps_acc = mu_samps_acc + mu_samps
+
+    for ii in range(len(unique_phase_names)):
+        mu_dfs[ii]['value'] = mu_dfs[ii]['value'] / mu_samps_acc
+
+    return {'mu_df':pd.concat(mu_dfs,axis=0),'unique_phase_names':unique_phase_names}
 
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
