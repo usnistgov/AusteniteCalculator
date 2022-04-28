@@ -125,6 +125,7 @@ app.layout = dbc.Container([
             ),
             # inference method
             html.Hr(),
+            html.Div("Statistical Inference Method:"),
             dbc.RadioItems(
                 options=[
                     {"label": "Hierarchical Bayesian (more accurate, but slower to run)", "value": 1},
@@ -140,11 +141,13 @@ app.layout = dbc.Container([
                      to begin the analysis."""),
             html.Br(),
             dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'),
+            html.Br(),
+            html.Br(),
             dcc.Loading(
                 id="loading",
                 type="default",
                 fullscreen=True,
-                children=html.Div(id="submit-confirmation")
+                children=html.Div(id="submit-confirmation",style={'color':'#1E8449'})
             ),
             html.Br(),
             html.Br(),
