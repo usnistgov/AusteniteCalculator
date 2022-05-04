@@ -65,9 +65,9 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
 
     summary_table = pd.DataFrame({
         'phase':unique_phase_names,
-        'PF_Est':None,
-        'PF_L95':None,
-        'PF_U95':None
+        'PF_Est':np.zeros(len(unique_phase_names)),
+        'PF_L95':np.zeros(len(unique_phase_names)),
+        'PF_U95':np.zeros(len(unique_phase_names))
     })
 
     mu_dfs = [None]*len(unique_phase_names) # list of dataframes 
@@ -172,9 +172,9 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
     summary_table = pd.DataFrame({
         'phase':unique_phase_names,
-        'PF_Est':None,
-        'PF_L95':None,
-        'PF_U95':None
+        'PF_Est':np.zeros(len(unique_phase_names)),
+        'PF_L95':np.zeros(len(unique_phase_names)),
+        'PF_U95':np.zeros(len(unique_phase_names))
     })
 
     for ii, pn in enumerate(unique_phase_names):
