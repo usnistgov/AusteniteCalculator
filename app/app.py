@@ -13,6 +13,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 
 # utils
 import base64
@@ -146,7 +147,7 @@ app.layout = dbc.Container([
             dcc.Loading(
                 id="loading",
                 type="default",
-                fullscreen=True,
+                fullscreen=False,
                 children=html.Div(id="submit-confirmation",style={'color':'#1E8449'})
             ),
             html.Br(),
@@ -221,7 +222,10 @@ app.layout = dbc.Container([
                         Systematic deviation indicates the theoretical intensities may not be correct, or \n
                         errors in x-ray geometry."""),
             dcc.Graph(id='two_theta-plot'),
-            dcc.Graph(id='pf-uncert-fig')
+            dcc.Graph(id='pf-uncert-fig'),
+            dash_table.DataTable(id='pf-uncert-table'),
+            html.Br(),
+            html.Br()
             
             #Tab label
             ],
@@ -302,6 +306,8 @@ def func(n_clicks,data):
     Output('uncert-table','data'),
     Output('uncert-table','columns'),
     Output('pf-uncert-fig','figure'),
+    Output('pf-uncert-table','data'),
+    Output('pf-uncert-table','columns'),
     Output('submit-confirmation','children'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
@@ -323,7 +329,7 @@ def update_output(n_clicks,
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], [], [], [], go.Figure(), ''
+        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], [], [], [], go.Figure(), [], [], ''
 
     # point towards directory and upload data using GSASII
     # Default data location
@@ -403,7 +409,7 @@ def update_output(n_clicks,
         
     # Now, we just run the desired computations
     
-    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
@@ -417,9 +423,26 @@ def update_output(n_clicks,
     # table for plotting uncertainty table
     uncert_dict, uncert_col = compute_results.df_to_dict(uncert_DF.round(3))
 
+    # table for plotting pf uncertainties
+    #breakpoint()
+    pfu_dict, pfu_col = compute_results.df_to_dict(pf_uncertainty_table.round(3))
+
     conf = "Submission complete. Navigate the above tabs to view results."
 
-    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col,  uncert_dict, uncert_col, pf_uncertainty_fig, conf
+    return (fig1, 
+            fig2, 
+            intensity_tbl, 
+            tbl_columns, 
+            ni_fig, 
+            two_theta_fig, 
+            phase_frac_dict, 
+            phase_frac_col,  
+            uncert_dict, 
+            uncert_col, 
+            pf_uncertainty_fig, 
+            pfu_dict,
+            pfu_col, 
+            conf)
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 

@@ -63,8 +63,15 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
     sigma_Z = sigma_I/R
     unique_phase_names = np.unique(phase_names)
 
-    mu_dfs = [None]*len(unique_phase_names)
-    mu_samps_acc = np.zeros(n_draws)
+    summary_table = pd.DataFrame({
+        'phase':unique_phase_names,
+        'PF_Est':None,
+        'PF_L95':None,
+        'PF_U95':None
+    })
+
+    mu_dfs = [None]*len(unique_phase_names) # list of dataframes 
+    mu_samps_acc = np.zeros(n_draws) # accumulating sum for later normalization
 
     for ii in range(len(unique_phase_names)):
 
@@ -79,8 +86,14 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
 
     for ii in range(len(unique_phase_names)):
         mu_dfs[ii]['value'] = mu_dfs[ii]['value'] / mu_samps_acc
+        quantiles = np.quantile(mu_dfs[ii]['value'],[.5,.025,.975])
+        summary_table.loc[summary_table['phase'] == unique_phase_names[ii],['PF_Est','PF_L95','PF_U95']] = quantiles
 
-    return {'mu_df':pd.concat(mu_dfs,axis=0),'unique_phase_names':unique_phase_names}
+    summary_table = pd.DataFrame(summary_table)
+
+    return {'mu_df':pd.concat(mu_dfs,axis=0),
+            'unique_phase_names':unique_phase_names,
+            'summary_table':summary_table}
 
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
@@ -157,4 +170,18 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
         #sig_df = pd.DataFrame(trace['sigma_exp'],columns=unique_phase_names)
         #sig_df = pd.melt(sig_df,value_vars = unique_phase_names,var_name='which_phase',value_name='value')
 
-    return {'mu_df':mu_df,'trace':trace,'unique_phase_names':unique_phase_names}
+    summary_table = pd.DataFrame({
+        'phase':unique_phase_names,
+        'PF_Est':None,
+        'PF_L95':None,
+        'PF_U95':None
+    })
+
+    for ii, pn in enumerate(unique_phase_names):
+
+        quantiles = np.quantile(mu_df['value'].loc[['which_phase']==pn],[.5,.025,.975])
+        summary_table.loc[summary_table['phase'] == pn, ['PF_Est','PF_L95','PF_U95']] = quantiles
+
+    return {'mu_df':mu_df,'trace':trace,
+            'unique_phase_names':unique_phase_names,
+            'summary_table':summary_table}

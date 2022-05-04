@@ -273,7 +273,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     ########################################
     print("\n\n Calculating Phase Fraction\n")
     DF_phase_fraction, pf_uncertainties, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)
-    
+    pf_uncertainty_table = pf_uncertainties['summary_table']
+
     ########################################
     ########################################
     # Create Plots
@@ -374,7 +375,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     #DF_phase_fraction = DF_phase_fraction.reindex(columns=["Phase","Phase_Fraction","Phase_Fraction_StDev",
     #        "Number_hkls","hkls","Mean_nint","StDev_nint"])
 
-    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user, pf_uncertainty_fig
+    return (fig_raw_hist, 
+            fig_fit_hist, 
+            DF_merged_fit_theo, 
+            fig_norm_itensity, 
+            fig_raw_fit_compare_two_theta, 
+            DF_phase_fraction, 
+            DF_flags_for_user, 
+            pf_uncertainty_fig,
+            pf_uncertainty_table)
 
 #####################################
 ######### Plotting Fuctions #########
