@@ -1,3 +1,4 @@
+from enum import unique
 from tkinter import TRUE
 import plotly.express as px
 import plotly.graph_objects as go
@@ -5,9 +6,9 @@ import pandas as pd
 import numpy as np
 import math
 import fit
-import compute_uncertainties
+from compute_uncertainties import run_mcmc, run_paul_mandel
 
-def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
+def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method):
     """
 
     Main computation program for phase calculations
@@ -227,7 +228,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     u_int_fit_list=[]
     for i in list(range(len(DF_merged_fit_theo.index))):
         #print(i)
-        u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos0'+str(i)])
+        u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
         u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
         #print(hist.data['Peak List']['sigDict']['int'+str(i)])
         #print(hist.data['Peak List']['sigDict']['pos'+str(i)])
@@ -271,8 +272,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, pf_uncertainties, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user)
-    
+    DF_phase_fraction, pf_uncertainties, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)
+    pf_uncertainty_table = pf_uncertainties['summary_table']
+
     ########################################
     ########################################
     # Create Plots
@@ -280,7 +282,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     ########################################
     # Moved all plotting functions to the end, allows use of all data in plot
 
+    if pf_uncertainties is not None:
+        pf_uncertainty_fig = get_pf_uncertainty_fig(pf_uncertainties)
 
+
+    else:
+        pf_uncertainty_fig = go.Figure()
     ########################################
     # Create Figure of raw data
     ########################################
@@ -337,8 +344,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
                             y=DF_merged_fit_theo["n_int"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
                             mode="markers",
                             name="Excluded from Analysis",
-                            marker_symbol='x'
-                            #fillcolor='#000000',
+                            marker_symbol='x',
+                            marker_color='red',
+                            marker_size = 8
                             )
                         )
         
@@ -356,13 +364,26 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     
     fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
+    ##############################
+    # Create phase fraction plot #
+    ##############################
+
+
     ########################################
     # Resort dataframes for output
     ########################################
     #DF_phase_fraction = DF_phase_fraction.reindex(columns=["Phase","Phase_Fraction","Phase_Fraction_StDev",
     #        "Number_hkls","hkls","Mean_nint","StDev_nint"])
 
-    return fig_raw_hist, fig_fit_hist, DF_merged_fit_theo, fig_norm_itensity, fig_raw_fit_compare_two_theta, DF_phase_fraction, DF_flags_for_user
+    return (fig_raw_hist, 
+            fig_fit_hist, 
+            DF_merged_fit_theo, 
+            fig_norm_itensity, 
+            fig_raw_fit_compare_two_theta, 
+            DF_phase_fraction, 
+            DF_flags_for_user, 
+            pf_uncertainty_fig,
+            pf_uncertainty_table)
 
 #####################################
 ######### Plotting Fuctions #########
@@ -409,6 +430,19 @@ def get_figures(hist):
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
 
+def get_pf_uncertainty_fig(pf_uncertainties): 
+
+    pf_uncertainty_fig = px.histogram(pf_uncertainties['mu_df'],x='value',color='which_phase',opacity=.7,barmode='overlay',histnorm='probability density')
+
+    unique_phases = pf_uncertainties['unique_phase_names']
+    for ii in range(len(unique_phases)):
+        t_vals = pf_uncertainties['mu_df'].loc[ pf_uncertainties['mu_df'].which_phase == unique_phases[ii]  ,'value']
+        pf_uncertainty_fig.add_vline(np.quantile(t_vals,.5))
+        pf_uncertainty_fig.add_vline(np.quantile(t_vals,.025),line_dash='dot')
+        pf_uncertainty_fig.add_vline(np.quantile(t_vals,.975),line_dash='dot')
+
+    return pf_uncertainty_fig
+
 #####################################
 def two_theta_compare_figure(Merged_DataFrame):
     """
@@ -434,6 +468,8 @@ def two_theta_compare_figure(Merged_DataFrame):
 #                  y=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]])
     
     return fig
+
+
 
 #####################################
 ########## Helper Fuctions ##########
@@ -564,7 +600,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     return ti_table
 
 #####################################
-def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
+def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inference_method):
     """Calculate Phase Fraction
     
     Args:
@@ -630,12 +666,26 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
     # compute phase fraction uncertainties
-    pf_uncertainties = compute_uncertainties.run_mcmc(
-        I=np.array(DF_merged_fit_theo['int_fit']),
-        R=np.array(DF_merged_fit_theo['R_calc']),
-        sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
-        phases=DF_merged_fit_theo['Phase']
-    )
+
+    if inference_method == 'bayes':
+
+        pf_uncertainties = run_mcmc(
+            I=np.array(DF_merged_fit_theo['int_fit']),
+            R=np.array(DF_merged_fit_theo['R_calc']),
+            sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
+            phases=DF_merged_fit_theo['Phase'],
+            pfs = np.array(DF_merged_fit_theo['Peak_Fit_Success'])
+        )
+    elif inference_method == 'paul_mandel':
+
+        pf_uncertainties = run_paul_mandel(
+            I=np.array(DF_merged_fit_theo['int_fit']),
+            R=np.array(DF_merged_fit_theo['R_calc']),
+            sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
+            phases=DF_merged_fit_theo['Phase'],
+            pfs = np.array(DF_merged_fit_theo['Peak_Fit_Success']),
+            n_draws = 5000
+        )
 
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
     #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
@@ -651,7 +701,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     #print(fraction_dict)
     print(phase_fraction_DF)
     
-    return phase_fraction_DF, pf_uncertainties,DF_flags
+    return phase_fraction_DF, pf_uncertainties, DF_flags
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
