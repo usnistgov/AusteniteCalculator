@@ -64,6 +64,8 @@ app.layout = dbc.Container([
         ### --- start tab 1 --- ###
 
         dbc.Tab([
+            html.Button("Download Manual", id="manual-button"),
+            dcc.Download(id="manual-download"),
             html.Br(),
             
             # file upload
@@ -292,6 +294,13 @@ def show_f_name2(filename):
 def func(n_clicks,data):
     return dcc.send_data_frame(pd.DataFrame(data).to_csv, "intensity_table.csv")
 
+@app.callback(
+    Output("manual-download", "data"),
+    Input("manual-button", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(n_clicks):
+    return '../austenitecalculator.pdf'
 
 ### --- all other outputs --- ###
 @app.callback(

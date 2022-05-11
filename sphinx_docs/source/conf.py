@@ -46,7 +46,7 @@ templates_path = ['_templates']
 
 exclude_patterns = []
 
-autodoc_mock_imports = ["GSASIIscriptable", "plotly", "dash", "pandas", "dash_bootstrap_components", "numpy", "flask"]
+autodoc_mock_imports = ["GSASIIscriptable", "plotly", "dash", "pandas", "dash_bootstrap_components", "numpy", "flask", "_tkinter"]
 
 # -- Options for HTML output -------------------------------------------------
 
