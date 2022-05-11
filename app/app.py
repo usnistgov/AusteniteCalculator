@@ -433,7 +433,7 @@ def update_output(n_clicks,
     uncert_dict, uncert_col = compute_results.df_to_dict(uncert_DF.round(3))
 
     # table for plotting pf uncertainties
-    pfu_dict, pfu_col = compute_results.df_to_dict(pf_uncertainty_table.round(3))
+    pfu_dict, pfu_col = compute_results.df_to_dict(pf_uncertainty_table.round(5))
 
     conf = "Submission complete. Navigate the above tabs to view results."
 
