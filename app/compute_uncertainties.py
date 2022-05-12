@@ -1,3 +1,4 @@
+from enum import unique
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -5,7 +6,7 @@ import pandas as pd
 import pymc3 as pm
 from scipy.stats import median_abs_deviation as mad
 #from scipy.stats import invgamma, t
-from statsmodels.stats.meta_analysis import combine_effects
+from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
 
 def gen_mu_sigma(x,n_draws):
     
@@ -60,15 +61,22 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
     phase_names = phases.copy()
 
     Z = I/R
-    sigma_Z = sigma_I/R
+    # unceratinty from fitting and from poisson noise
+    # the sqrt(x)**2 is redundant but shows thought process
+    sigma_Z = np.sqrt(sigma_I**2 + np.sqrt(I)**2)/R 
     unique_phase_names = np.unique(phase_names)
 
     summary_table = pd.DataFrame({
         'phase':unique_phase_names,
         'PF_Est':np.zeros(len(unique_phase_names)),
         'PF_L95':np.zeros(len(unique_phase_names)),
-        'PF_U95':np.zeros(len(unique_phase_names))
+        'PF_U95':np.zeros(len(unique_phase_names)),
+        'tau_est':np.zeros(len(unique_phase_names)),
+        'med_sigma_Z_fit':np.zeros(len(unique_phase_names)),
+        'med_sigma_Z_count':np.zeros(len(unique_phase_names))
     })
+
+    tau_ests = np.zeros(len(unique_phase_names))
 
     mu_dfs = [None]*len(unique_phase_names) # list of dataframes 
     mu_samps_acc = np.zeros(n_draws) # accumulating sum for later normalization
@@ -83,6 +91,11 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
             'value':mu_samps
         })
         mu_samps_acc = mu_samps_acc + mu_samps
+
+        tau_ests[ii], c = _fit_tau_iterative(Z[inds],sigma_Z[inds]**2)
+        summary_table.loc[summary_table.phase == unique_phase_names[ii],'tau_est'] = np.sqrt(tau_ests[ii])
+        summary_table.loc[summary_table.phase == unique_phase_names[ii],'med_sigma_Z_fit'] = np.median(sigma_I[inds]/R[inds])
+        summary_table.loc[summary_table.phase == unique_phase_names[ii],'med_sigma_Z_count'] = np.median(np.sqrt(I[inds])/R[inds])
 
     for ii in range(len(unique_phase_names)):
         mu_dfs[ii]['value'] = mu_dfs[ii]['value'] / mu_samps_acc
