@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
 # dash imports
+from fileinput import filename
 import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output, State
 from dash import dash_table
 import dash_bootstrap_components as dbc
+from dash_extensions import Download
+from dash_extensions.snippets import send_file
 #from dash.dash_table.Format import Format, Scheme, Trim # Tried to set format, failed...
 
 # plotting
@@ -52,6 +55,7 @@ import GSASIIscriptable as G2sc
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
+root_dir = os.getcwd()
 
 app.layout = dbc.Container([
         
@@ -64,8 +68,10 @@ app.layout = dbc.Container([
         ### --- start tab 1 --- ###
 
         dbc.Tab([
-            html.Button("Download Manual", id="manual-button"),
-            dcc.Download(id="manual-download"),
+            html.Br(),
+            html.H1("Manual"),
+            #html.A("Calculator Manual", id="manual-filename", download = "manual.pdf", href = "AusteniteCalculator/app/austenitecalculator.pdf"),
+            html.Div([html.Button("Download Manual", id = "download-button"), Download(id = "download-manual")]),
             html.Br(),
             
             # file upload
@@ -294,13 +300,13 @@ def show_f_name2(filename):
 def func(n_clicks,data):
     return dcc.send_data_frame(pd.DataFrame(data).to_csv, "intensity_table.csv")
 
-@app.callback(
-    Output("manual-download", "data"),
-    Input("manual-button", "n_clicks"),
-    prevent_initial_call=True,
+@app.callback( 
+    Output("download-manual", "data"), 
+    Input("download-button", "n_clicks"),
+    prevent_initial_call=True
 )
 def func(n_clicks):
-    return '../austenitecalculator.pdf'
+    return send_file("austenitecalculator.pdf")
 
 ### --- all other outputs --- ###
 @app.callback(
@@ -454,3 +460,7 @@ def update_output(n_clicks,
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 
+
+@server.route("/AusteniteCalculator/app/")
+def download():
+    return flask.send_from_directory(root_dir, "austenitecalculator.pdf")
