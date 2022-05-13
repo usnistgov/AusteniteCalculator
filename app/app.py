@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 
 # dash imports
+from fileinput import filename
 import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output, State
 from dash import dash_table
 import dash_bootstrap_components as dbc
+from dash_extensions import Download
+from dash_extensions.snippets import send_file
 #from dash.dash_table.Format import Format, Scheme, Trim # Tried to set format, failed...
 
 # plotting
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 
 # utils
 import base64
@@ -51,6 +55,7 @@ import GSASIIscriptable as G2sc
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
+root_dir = os.getcwd()
 
 app.layout = dbc.Container([
         
@@ -61,7 +66,12 @@ app.layout = dbc.Container([
     
     dbc.Tabs([
         ### --- start tab 1 --- ###
+
         dbc.Tab([
+            html.Br(),
+            html.H1("Manual"),
+            #html.A("Calculator Manual", id="manual-filename", download = "manual.pdf", href = "AusteniteCalculator/app/austenitecalculator.pdf"),
+            html.Div([html.Button("Download Manual", id = "download-button"), Download(id = "download-manual")]),
             html.Br(),
             
             # file upload
@@ -122,13 +132,32 @@ app.layout = dbc.Container([
                 ],
                 id="example06-files-check",
             ),
+            # inference method
+            html.Hr(),
+            html.Div("Statistical Inference Method:"),
+            dbc.RadioItems(
+                options=[
+                    {"label": "Hierarchical Bayesian (more accurate, but slower to run)", "value": 1},
+                    {"label": "Paul Mandel (less accurate, but faster to run)", "value": 2}
+                ],
+                value=2,
+                id="inference-method",
+            ),
+
             # submit button
             html.Hr(),
             html.Div("""Once your files have been uploaded, click the button below
                      to begin the analysis."""),
             html.Br(),
             dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'),
-            html.Div(id='submit-confirmation'),
+            html.Br(),
+            html.Br(),
+            dcc.Loading(
+                id="loading",
+                type="default",
+                fullscreen=False,
+                children=html.Div(id="submit-confirmation",style={'color':'#1E8449'})
+            ),
             html.Br(),
             html.Br(),
             html.Br()
@@ -200,7 +229,11 @@ app.layout = dbc.Container([
                         Large deviations for single peaks indicate the fit may not be correct. \n
                         Systematic deviation indicates the theoretical intensities may not be correct, or \n
                         errors in x-ray geometry."""),
-            dcc.Graph(id='two_theta-plot')
+            dcc.Graph(id='two_theta-plot'),
+            dcc.Graph(id='pf-uncert-fig'),
+            dash_table.DataTable(id='pf-uncert-table'),
+            html.Br(),
+            html.Br()
             
             #Tab label
             ],
@@ -254,18 +287,6 @@ def show_f_name2(filename):
         return "Uploaded Files: " + ', '.join(filename)
 
 
-@app.callback(
-    Output('submit-confirmation','children'),
-    Input('submit-button-state','n_clicks')
-)
-def show_f_name3(n_clicks):
-    
-    if n_clicks == 0:
-        return ""
-        
-    else:
-        return "Submission complete. Navigate the above tabs to view results."
-
 
 ### --- end file upload messages --- ###
 
@@ -279,6 +300,13 @@ def show_f_name3(n_clicks):
 def func(n_clicks,data):
     return dcc.send_data_frame(pd.DataFrame(data).to_csv, "intensity_table.csv")
 
+@app.callback( 
+    Output("download-manual", "data"), 
+    Input("download-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def func(n_clicks):
+    return send_file("austenitecalculator.pdf")
 
 ### --- all other outputs --- ###
 @app.callback(
@@ -292,6 +320,10 @@ def func(n_clicks,data):
     Output('phase-frac-table','columns'),
     Output('uncert-table','data'),
     Output('uncert-table','columns'),
+    Output('pf-uncert-fig','figure'),
+    Output('pf-uncert-table','data'),
+    Output('pf-uncert-table','columns'),
+    Output('submit-confirmation','children'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -301,20 +333,27 @@ def func(n_clicks,data):
     State('upload-cif','filename'),
     State('default-files-check','value'),
     State('example05-files-check','value'),
-    State('example06-files-check','value'))
+    State('example06-files-check','value'),
+    State('inference-method','value')
+)
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fname,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
-                  use_default_files, use_example05_files, use_example06_files):
+                  use_default_files, use_example05_files, use_example06_files,inference_method_value):
     
     # return nothing when app opens
     if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], [], [], []
+        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], [], [], [], go.Figure(), [], [], ''
 
     # point towards directory and upload data using GSASII
     # Default data location
     print(use_default_files)
+
+    if inference_method_value == 1:
+        inference_method = 'bayes'
+    elif inference_method_value == 2:
+        inference_method = 'paul_mandel'
 
     if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
@@ -384,7 +423,8 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc)
+    
+    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
@@ -398,7 +438,29 @@ def update_output(n_clicks,
     # table for plotting uncertainty table
     uncert_dict, uncert_col = compute_results.df_to_dict(uncert_DF.round(3))
 
-    return fig1, fig2, intensity_tbl, tbl_columns, ni_fig, two_theta_fig, phase_frac_dict, phase_frac_col,  uncert_dict, uncert_col
+    # table for plotting pf uncertainties
+    pfu_dict, pfu_col = compute_results.df_to_dict(pf_uncertainty_table.round(5))
+
+    conf = "Submission complete. Navigate the above tabs to view results."
+
+    return (fig1, 
+            fig2, 
+            intensity_tbl, 
+            tbl_columns, 
+            ni_fig, 
+            two_theta_fig, 
+            phase_frac_dict, 
+            phase_frac_col,  
+            uncert_dict, 
+            uncert_col, 
+            pf_uncertainty_fig, 
+            pfu_dict,
+            pfu_col, 
+            conf)
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 
+
+@server.route("/AusteniteCalculator/app/")
+def download():
+    return flask.send_from_directory(root_dir, "austenitecalculator.pdf")
