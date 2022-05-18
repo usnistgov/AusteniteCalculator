@@ -332,30 +332,30 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
             verify_list[x] = True
             print("All Intensities Positive")
 
-    temp_sig = []
-    temp_gam = []
-    temp_pos_sig = []
-    temp_pos_gam = []
-    for x in range(t_pos.shape[0]):
-        if(t_sigma[x] > 0):
-            temp_sig.append(t_sigma[x])
-            temp_pos_sig.append(t_pos[x])
-        if(t_gamma[x] > 0):
-            temp_gam.append(t_gamma[x])
-            temp_pos_gam.append(t_pos[x])
+#    temp_sig = []
+ #   temp_gam = []
+  #  temp_pos_sig = []
+   # temp_pos_gam = []
+    #for x in range(t_pos.shape[0]):
+     #   if(t_sigma[x] > 0):
+      #      temp_sig.append(t_sigma[x])
+       #     temp_pos_sig.append(t_pos[x])
+        #if(t_gamma[x] > 0):
+         #   temp_gam.append(t_gamma[x])
+          #  temp_pos_gam.append(t_pos[x])
     # Check if sig, gam values are reasonable
     # Leading to a number of rejected peaks currently
-    m, b = np.polyfit(temp_pos_sig, temp_sig, 1)
+  #  m, b = np.polyfit(temp_pos_sig, temp_sig, 1)
 
-    for x in range(t_pos.shape[0]):
-        if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[max_int] or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[max_int]):
-            verify_list[x] = False
+   # for x in range(t_pos.shape[0]):
+    #    if(t_sigma[x] > (m * t_pos[x] + b) + t_sigma[max_int] or t_sigma[x] < (m * t_pos[x] + b) - t_sigma[max_int]):
+     #       verify_list[x] = False
 
-    m, b = np.polyfit(temp_pos_gam, temp_gam, 1)
+    #m, b = np.polyfit(temp_pos_gam, temp_gam, 1)
 
-    for x in range(t_pos.shape[0]):
-        if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[max_int] or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[max_int]):
-            verify_list[x] = False
+    #for x in range(t_pos.shape[0]):
+     #   if(t_gamma[x] > (m * t_pos[x] + b) + t_gamma[max_int] or t_gamma[x] < (m * t_pos[x] + b) - t_gamma[max_int]):
+      #      verify_list[x] = False
     
-    print(verify_list)
+    #print(verify_list)
     return verify_list

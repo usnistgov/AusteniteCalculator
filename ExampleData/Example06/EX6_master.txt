@@ -1,0 +1,8 @@
+3
+Phase: epsilon-martensite-SRI.cif, austenite-SRI.cif, alpha-prime-martensite-SRI.cif
+Phase_Fraction: 0.436, 0.342, 0.222
+Phase_Fraction_StDev: 0.811, 0.127, 0.128
+Number_hkls: 11, 8, 12
+hkls: 
+Mean_nint: 0.603, 0.473, 0.306
+StDev_nint: 1.12, 0.175, 0.176

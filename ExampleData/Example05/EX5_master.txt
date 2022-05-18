@@ -1,0 +1,8 @@
+2
+Phase: austenite-SRM487.cif, ferrite-SRM487.cif
+Phase_Fraction: 0.178, 0.822
+Phase_Fraction_StDev: 0.048, 0.108
+Number_hkls: 6, 5
+hkls: 
+Mean_nint: 0.063, 0.292
+StDev_nint: 0.017, 0.038

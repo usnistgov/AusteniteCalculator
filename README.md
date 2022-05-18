@@ -42,7 +42,7 @@ To run the file locally, first download the AusteniteCalculator repository (clic
 ```
 conda env create -f conda_gsas_env.yml
     to update your existing conda environment use:
-    conda env update --name myenv --file myenv.yml
+    conda env update --name myenv --file myenv.yml --force-reinstall
 ```
 Then, activate the environment with 
 ```

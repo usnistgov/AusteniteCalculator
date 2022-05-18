@@ -668,7 +668,6 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inf
     # compute phase fraction uncertainties
 
     if inference_method == 'bayes':
-
         pf_uncertainties = run_mcmc(
             I=np.array(DF_merged_fit_theo['int_fit']),
             R=np.array(DF_merged_fit_theo['R_calc']),
@@ -677,7 +676,6 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inf
             pfs = np.array(DF_merged_fit_theo['Peak_Fit_Success'])
         )
     elif inference_method == 'paul_mandel':
-
         pf_uncertainties = run_paul_mandel(
             I=np.array(DF_merged_fit_theo['int_fit']),
             R=np.array(DF_merged_fit_theo['R_calc']),
