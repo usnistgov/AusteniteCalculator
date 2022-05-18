@@ -39,18 +39,16 @@ We plan to eventually deploy the Austenite Calculator as a web application. For 
 ### Locally
 
 To run the file locally, first download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). Then, build a GSAS conda environment using the following command (using a terminal with the working directory set to the main directory of the AusteniteCalculator project). This may take several minutes.
+
+For this example, the conda environment was set to 'gsas-AustCalc'.
 ```
 conda env create -f conda_gsas_env.yml
-<<<<<<< HEAD
-    to update your existing conda environment use:
-    conda env update --name myenv --file myenv.yml --force-reinstall
-=======
 ```
 To update your existing conda environment use:
 ```
-conda env update --name myenv --file myenv.yml
->>>>>>> f0bd7a3f091c7cf555d4314981ffaefea668e633
+        conda env update --name myenv --file conda_gsas_env.yml
 ```
+
 Then, activate the environment with 
 ```
 conda activate gsas-AustCalc
