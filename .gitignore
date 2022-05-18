@@ -12,3 +12,4 @@ sphinx_docs/build
 sphinx_docs/build/.DS_Store
 sphinx_docs/.DS_Store
 ExampleScripts/cif_composition_simulations.ipynb
+*.pyc
