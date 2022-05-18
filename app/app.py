@@ -3,10 +3,8 @@
 # dash imports
 from fileinput import filename
 import dash
-from dash import dcc
-from dash import html
+from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output, State
-from dash import dash_table
 import dash_bootstrap_components as dbc
 from dash_extensions import Download
 from dash_extensions.snippets import send_file
@@ -52,7 +50,6 @@ elif re.search('schen',os.getcwd()):
 
 import GSASIIscriptable as G2sc
 
-
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
 root_dir = os.getcwd()
@@ -65,13 +62,62 @@ app.layout = dbc.Container([
     html.Br(),
     
     dbc.Tabs([
-        ### --- start tab 1 --- ###
+
+        ### --- start tab 0 --- ###
 
         dbc.Tab([
             html.Br(),
-            html.H1("Manual"),
-            #html.A("Calculator Manual", id="manual-filename", download = "manual.pdf", href = "AusteniteCalculator/app/austenitecalculator.pdf"),
-            html.Div([html.Button("Download Manual", id = "download-button"), Download(id = "download-manual")]),
+            
+                dcc.Markdown(
+                """
+                The Austenite Calculator is this pretty cool app that works most of the time at least on our computers
+                that estimates the phase fraction of Austenite, but not just Austenite, like also other things like Ferrite, 
+                so don't be deceived by the name, we're still working on that, but this is what it is 
+                for now. It also gives you uncertainties of the phase fraction, which is cool. 
+                There is a manual we are working on too you can download if you want to read. 
+                The GitHub repo can be found [here](https://github.com/usnistgov/AusteniteCalculator).
+                """),
+                html.Div([
+                    html.P("To report bugs, please email <link not found>."),
+                    #html.A("Calculator Manual", id="manual-filename", download = "manual.pdf", href = "AusteniteCalculator/app/austenitecalculator.pdf"),
+                    html.Div([html.Button("Download Manual", id = "download-button"), Download(id = "download-manual")]),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),#,
+                    #dbc.Row([
+                    #    dbc.Col(html.Img(src=app.get_asset_url('logo.png')),
+                    #    width={"size": 8, "offset": 3})
+                    #])
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br(),
+                    html.Br()
+                ],style={'background-image':"url('../assets/logo2.png')",
+                        'background-repeat':'no-repeat',
+                        #'background-attachment': 'fixed',
+                        'background-position':'center' })
+
+        ],
+        label="About"),
+
+        ### --- start tab 1 --- ###
+
+        dbc.Tab([
+            
             html.Br(),
             
             # file upload
