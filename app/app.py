@@ -63,57 +63,6 @@ app.layout = dbc.Container([
     
     dbc.Tabs([
 
-        ### --- start tab 0 --- ###
-
-        dbc.Tab([
-            html.Br(),
-            
-                dcc.Markdown(
-                """
-                The Austenite Calculator is this pretty cool app that works most of the time at least on our computers
-                that estimates the phase fraction of Austenite, but not just Austenite, like also other things like Ferrite, 
-                so don't be deceived by the name, we're still working on that, but this is what it is 
-                for now. It also gives you uncertainties of the phase fraction, which is cool. 
-                There is a manual we are working on too you can download if you want to read. 
-                The GitHub repo can be found [here](https://github.com/usnistgov/AusteniteCalculator).
-                """),
-                html.Div([
-                    html.P("To report bugs, please email <link not found>."),
-                    #html.A("Calculator Manual", id="manual-filename", download = "manual.pdf", href = "AusteniteCalculator/app/austenitecalculator.pdf"),
-                    html.Div([html.Button("Download Manual", id = "download-button"), Download(id = "download-manual")]),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),#,
-                    #dbc.Row([
-                    #    dbc.Col(html.Img(src=app.get_asset_url('logo.png')),
-                    #    width={"size": 8, "offset": 3})
-                    #])
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br()
-                ],style={'background-image':"url('../assets/logo2.png')",
-                        'background-repeat':'no-repeat',
-                        #'background-attachment': 'fixed',
-                        'background-position':'center' })
-
-        ],
-        label="About"),
-
         ### --- start tab 1 --- ###
 
         dbc.Tab([
@@ -288,6 +237,30 @@ app.layout = dbc.Container([
             
             
         ### --- end tab 3 --- ###
+
+        ### --- start tab 4 --- ###
+
+        dbc.Tab([
+            html.Br(),
+            
+            dcc.Markdown(
+                """
+                This project is still in development. 
+                When completed, we hope to have a robust method to determine the phase fraction of austenite 
+                in steels with metrics on the uncertainties and recommendations on methods to reduce the uncertainty.
+
+                To report bugs, email adam.creuziger@nist.gov.
+
+                For more details, check out the GitHub repo [here](https://github.com/usnistgov/AusteniteCalculator),
+                or click the "Download Manual" button below.
+                """),
+            html.Br(),
+            html.Div([html.Button("Download Manual", id = "download-button"), Download(id = "download-manual")]),
+            html.Br()
+                    
+
+        ],
+        label="About")
 
     ], # end dbc.Tabs()
     id="tabs")
