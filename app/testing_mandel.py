@@ -88,7 +88,7 @@ def test_EX2():
     workdir = '../server_workdir'
     xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
     instprm_fname = 'TestCalibration.instprm'
-    master_data = '../server_default_datadir/EX2_master.txt'
+    master_data = '../ExampleData/Example02/EX2_master.txt'
     inference_method = 'paul_mandel'
     check_list, phases = dataGrabber.read_data(master_data)
     fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
@@ -110,12 +110,12 @@ def test_EX2():
                 assert abs(check_list.loc[j, keys[i]] - phase_frac_DF.loc[j, keys[i]]) <= check_list.loc[j, keys[i]] * 0.05
     
 def test_EX3():
-    datadir = '../server_default_datadir' 
+    datadir = '../ExampleData/Example03' 
     cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
     workdir = '../server_workdir'
-    xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
-    instprm_fname = 'TestCalibration.instprm'
-    master_data = '../server_default_datadir/EX1_master.txt'
+    xrdml_fname = 'E211110-AAC-001_018-000_summed.csv'
+    instprm_fname = 'BrukerD8_E211110.instprm'
+    master_data = '../ExampleData/Example03/EX3_master.txt'
     inference_method = 'paul_mandel'
     check_list, phases = dataGrabber.read_data(master_data)
     fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
@@ -137,12 +137,12 @@ def test_EX3():
                 assert abs(check_list.loc[j, keys[i]] - phase_frac_DF.loc[j, keys[i]]) <= check_list.loc[j, keys[i]] * 0.05
     
 def test_EX4():
-    datadir = '../server_default_datadir' 
-    cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+    datadir = '../ExampleData/Example04' 
+    cif_fnames = ['ferrite-PureFe.cif']
     workdir = '../server_workdir'
-    xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
-    instprm_fname = 'TestCalibration.instprm'
-    master_data = '../server_default_datadir/EX1_master.txt'
+    xrdml_fname = 'E211110-AAC-001_001-000_summed.csv'
+    instprm_fname = 'BrukerD8_E211110.instprm'
+    master_data = '../ExampleData/Example04/EX4_master.txt'
     inference_method = 'paul_mandel'
     check_list, phases = dataGrabber.read_data(master_data)
     fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
