@@ -7,6 +7,7 @@ import pymc3 as pm
 from scipy.stats import median_abs_deviation as mad
 #from scipy.stats import invgamma, t
 from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
+from scipy.stats import truncnorm
 
 def gen_mu_sigma(x,n_draws):
     
@@ -85,7 +86,8 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
 
         inds = phases==unique_phase_names[ii]
         res = combine_effects(Z[inds],sigma_Z[inds]**2,method_re='iterated').summary_frame()
-        mu_samps = np.random.normal(loc=res.loc['random effect','eff'],scale=res.loc['random effect','sd_eff'],size=n_draws)
+        # simulate samples from approximate 'posterior'
+        mu_samps = truncnorm.rvs(0, np.Inf,loc=res.loc['random effect','eff'],scale=res.loc['random effect','sd_eff'], size=n_draws)
         mu_dfs[ii] = pd.DataFrame({
             'which_phase':unique_phase_names[ii],
             'value':mu_samps
