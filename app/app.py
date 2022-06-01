@@ -2,6 +2,8 @@
 
 # dash imports
 from fileinput import filename
+from posixpath import split
+from unittest import result
 import dash
 from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output, State
@@ -24,6 +26,8 @@ import platform
 import re
 import sys
 import flask
+import shutil
+import fnmatch
 
 # Add example comment
 
@@ -161,8 +165,38 @@ app.layout = dbc.Container([
             id='Data Upload'),
             
         ### --- end tab 1 --- ###
-        
+
         ### --- start tab 2 --- ###
+        dbc.Tab([
+            html.Div([
+                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
+                dcc.Dropdown(['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank'], 
+                ' ', id = 'default-dropdown'),
+                html.Div(id = 'default-name', style={'display':'none'}),
+            ]),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-default-xrdml',
+                    children=html.Div([
+                            dbc.Button('X-Ray Diffraction File (.xrdml)')
+                            ])),
+            html.Div(id='default-xrdml'),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-default-cif',
+                    children=html.Div([
+                            dbc.Button('Crystallographic Information Files (.cif)')
+                            ]),
+                    multiple=True),
+            html.Div(id='default-cif'),
+            ## Button for uploading Instrument Parameter File
+            html.Br(),
+            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
+            
+        ],
+        label="Instrument Parameter Creation"),
+        ### --- end tab 2 --- ###
+        ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
             html.Div("""Plot of the raw data."""),
@@ -173,9 +207,9 @@ app.layout = dbc.Container([
             ],
             label="Intensity Plots"),
         
-        ### --- end tab 2 --- ###
+        ### --- end tab 3 --- ###
         
-        ### --- start tab 3 --- ###
+        ### --- start tab 4 --- ###
         dbc.Tab([
             html.Br(),
             html.Div("""Table of Phase Fractions"""),
@@ -236,9 +270,9 @@ app.layout = dbc.Container([
             
             
             
-        ### --- end tab 3 --- ###
+        ### --- end tab 4 --- ###
 
-        ### --- start tab 4 --- ###
+        ### --- start tab 5 --- ###
 
         dbc.Tab([
             html.Br(),
@@ -305,7 +339,115 @@ def show_f_name2(filename):
         print(filename)
         return "Uploaded Files: " + ', '.join(filename)
 
+@app.callback(
+    Output('default-name', 'children'),
+    Input('default-dropdown', 'value')
+)
+def update_dropdown(value):
+    if value == 'CuKa':
+        return 'DefaultInstprmFiles/CuKa_default.instprm'
+    elif value == 'APS 30keV 11BM':
+        return 'DefaultInstprmFiles/APS30keV_default.instprm'
+    elif value == '0.7A synchrotron':
+        return 'DefaultInstprmFiles/0.7Asynchrotron_default.instprm'
+    elif value == '1.9A ILL D1A CW':
+        return 'DefaultInstprmFiles/1.9ILLD1A_default.instprm'
+    elif value == '9m HIPD 151 deg bank TOF':
+        return 'DefaultInstprmFiles/9mHIPD_default.instprm'
+    elif value == '10m TOF 90deg bank':
+        return 'DefaultInstprmFiles/10mTOF_default.instprm'
 
+@app.callback(
+    Output('default-cif','children'),
+    Input('upload-default-cif','filename')
+)
+def show_cif_names(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        return "Uploaded Files: " + ', '.join(filename)
+
+@app.callback(
+    Output('default-xrdml','children'),
+    Input('upload-default-xrdml','filename')
+)
+def show_xrdml_name(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        return "Uploaded File: " + filename
+
+@app.callback(
+    Output("download-instprm", "data"),
+    Input("download-created-file", "n_clicks"),
+    State("upload-default-xrdml", "contents"),
+    State("upload-default-xrdml", "filename"),
+    State("upload-default-cif", "contents"),
+    State("upload-default-cif", "filename"),
+    State("default-dropdown", "value"),
+    prevent_initial_call = True
+)
+def download_created_instprm(n_clicks,
+                            xrdml_contents, xrdml_fname,
+                            cif_contents, cif_fnames,
+                            instprm_contents):
+    datadir = '../server_datadir'
+    workdir = '../server_workdir'
+
+    if instprm_contents == 'CuKa':
+        instprm_contents = 'DefaultInstprmFiles/CuKa_default.instprm'
+    elif instprm_contents == 'APS 30keV 11BM':
+        instprm_contents = 'DefaultInstprmFiles/APS30keV_default.instprm'
+    elif instprm_contents == '0.7A synchrotron':
+        instprm_contents = 'DefaultInstprmFiles/0.7Asynchrotron_default.instprm'
+    elif instprm_contents == '1.9A ILL D1A CW':
+        instprm_contents = 'DefaultInstprmFiles/1.9ILLD1A_default.instprm'
+    elif instprm_contents == '9m HIPD 151 deg bank TOF':
+        instprm_contents = 'DefaultInstprmFiles/9mHIPD_default.instprm'
+    elif instprm_contents == '10m TOF 90deg bank':
+        instprm_contents = 'DefaultInstprmFiles/10mTOF_default.instprm'
+    
+    non_cif_contents = [[xrdml_contents,xrdml_fname]]
+
+        # For each uploaded file, save (on the server)
+        # ensuring that the format matches what GSAS expects.
+
+        # first, read non-cif files
+    for i in range(len(non_cif_contents)):
+        contents = non_cif_contents[i][0]
+        fname = non_cif_contents[i][1]
+
+        content_type, content_string = contents.split(',')
+        print(content_string)
+        decoded = base64.b64decode(content_string)
+        f = open(datadir + '/' + fname,'w')
+        to_write = decoded.decode('utf-8')
+        if re.search('(instprm$)',fname) is not None:
+            to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+
+        # next, read the cif files
+    for i in range(len(cif_contents)):
+        contents = cif_contents[i]
+        fname = cif_fnames[i]
+
+        content_type, content_string = contents.split(',')
+
+        decoded = base64.b64decode(content_string)
+        f = open(datadir + '/' + fname,'w')
+        to_write = decoded.decode('utf-8')
+        to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+
+    compute_results.create_instprm_file(datadir,workdir,xrdml_fname,instprm_contents,cif_fnames,G2sc)
+    
+    return send_file("created_instprm.instprm")
 
 ### --- end file upload messages --- ###
 
@@ -442,7 +584,6 @@ def update_output(n_clicks,
             f.close()
         
     # Now, we just run the desired computations
-    
     fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
     
     with open('export_file.txt', 'w') as writer:
@@ -483,3 +624,15 @@ if __name__ == '__main__':
 @server.route("/AusteniteCalculator/app/")
 def download():
     return flask.send_from_directory(root_dir, "austenitecalculator.pdf")
+
+@server.route("/AusteniteCalculator/server_datadir/DefaultInstprmFiles/")
+def download_instprm():
+    return flask.send_from_directory("/AusteniteCalculator/server_datadir/DefaultInstprmFiles/", find_file("*(edit).txt", "../server_datadir/DefaultInstprmFiles/"))
+
+def find_file(pattern, path):
+    result = None
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if fnmatch.fnmatch(name, pattern):
+                result.append(os.path.join(root, name))
+    return result

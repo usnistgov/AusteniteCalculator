@@ -1,3 +1,4 @@
+from bdb import Breakpoint
 from enum import unique
 from tkinter import TRUE
 import plotly.express as px
@@ -191,7 +192,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
             # reset and repopulate the peak list
             peaks_list=tis['two_theta']
 
-    
+
     two_theta = hist.data['data'][1][0]
     h_data = hist.data['data'][1][1]
     h_background = hist.data['data'][1][4]
@@ -749,3 +750,190 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(DF_to_append)
     #print(flags_DF)
     return flags_DF
+
+
+def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
+    """
+
+    Main computation program for phase calculations
+    
+    Args:
+        datadir: Location data is stored
+        workdir: Working directory for data
+        xrdml_fname: Diffraction data (xrdml title legacy)
+        instprm_fname: Instrument Parameter File
+        cif_fnames: Crystollographic Info File
+        G2sc: GSAS-II Scripting Toolkit location
+    
+    Returns:
+        fig_raw_hist: Intensity vs. two_theta plot of raw data
+        fig_fit_hist: Intensity vs. two_theta plot with fit data
+        DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
+        fig_norm_itensity: Figure of normalized intensities
+        fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
+        DF_phase_fraction: pandas DataFrame with phase fraction
+    """
+    
+    #Helper functions to create full path descriptions
+    data_path_wrap = lambda fil: datadir + '/' + fil
+    save_wrap = lambda fil: workdir + '/' + fil
+    
+    # start new GSAS-II project
+    gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
+
+    #initialize Uncertainty DataFrame
+    DF_flags_for_user=flag_phase_fraction(np.nan, " ", "Initialize", " ")
+
+    #############################
+    # Read in diffraction data
+    #############################
+    print("\n\n Read in diffraction data\n")
+    
+    # read in diffraction data as a powder histogram
+    # Do this first to get the two_theta range
+    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
+                                    data_path_wrap(instprm_fname),
+                                    databank=1, instbank=1)
+
+    # Get the two_theta range of the histogram
+    two_theta_range=hist.getdata('X')
+    min_two_theta=min(two_theta_range)
+    max_two_theta=max(two_theta_range)
+    #print(min_two_theta,max_two_theta)
+
+    ########################################
+    # Caculate the theoretical intensities from cif files
+    ########################################
+    #? Could this be merged with Read in Phase data?
+    print("\n\n Calculate Theoretical Intensities\n")
+
+    tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
+
+    for i in range(len(cif_fnames)):
+        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
+                                                         material=cif_fnames[i],
+                                                         cif_file=cif_fnames[i],
+                                                         instrument_calibration_file=instprm_fname,
+                                                         G2sc=G2sc,
+                                                         x_range=[min_two_theta,max_two_theta],
+                                                         DataPathWrap=data_path_wrap,
+                                                         SaveWrap=save_wrap)
+
+    # Merge and sort the theoretical intensities
+    #? Sort seems a kind of fragile way to align the data 
+    tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
+    tis = tis.sort_values(by='two_theta')
+    tis = tis.reset_index(drop=True)
+    print("\n\n Theoretical Intensity Dataframe")
+    print(tis)
+
+    ########################################
+    # Read in phase data
+    ########################################
+    print("\n\n Read in Phase Data\n")
+
+    phases = {}
+    a0 = {}
+    for i in range(len(cif_fnames)):
+        phases[cif_fnames[i]] = get_phase(data_path_wrap(cif_fnames[i]), cif_fnames[i], gpx) # phase data
+        a0[cif_fnames[i]] = phases[cif_fnames[i]].data['General']['Cell'][1] # lattice parameter
+
+    # Find the ka1 wavelength in the file
+    # works for some data files that have information encode, otherwise may need to prompt
+    try:
+        #Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
+        # pull from instrument parameters not comments
+        Ka1_wavelength=hist.data['Instrument Parameters'][0]['Lam1'][0]
+    except:
+        # hardcoded in for now with Cu source.
+        #? Read from instrument parameter file? Prompt user?
+        Ka1_wavelength=1.5405
+        DF_flags_for_user=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_flags_for_user)
+
+    ########################################
+    # use the theoretical intensities for peak fit location
+    ########################################
+    print("\n\n Peak Fit (LeBail) of Experimental Data \n")
+
+    # use the theoretical intensities for peak fit location
+    peaks_list=tis['two_theta']
+    
+    # Add to the two_theta values to move the peak location for debugging
+    # 0.2 on example 5 is enough to throw off the last two peaks
+    # 0.5 on example 5 will result in negative intensities being fit
+    # tis['two_theta']+= 0.5
+    #peaks_list=tis['two_theta']+0.5
+    
+    #breakpoint()
+
+    peaks_ok = False
+    fit_attempts = 0
+    fit_attempt_limit = 3
+    peak_verify = []
+    t_peaks = 0
+    t_sigma = 0
+    t_gamma = 0
+    t_int = 0
+    t_pos = 0
+
+    while not (peaks_ok):
+        print("\n\n Fit attempt number ", fit_attempts," \n")
+        if(fit_attempts == 0):
+            fit.fit_peaks(hist, peaks_list)
+        # Currently the fit processes are a little different...
+        elif(fit_attempts == 1):
+            fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+        elif(fit_attempts == 2):
+            fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+        elif(fit_attempts == 3):
+            holding_sig = False
+            holding_gam = True
+            for x in range(6):
+                if not(np.all(peak_verify == True)):
+                    if holding_gam:
+                        fit.fit_peaks_holdgam(hist, peaks_list, Chebyschev_coeffiecients, peak_verify)
+                        holding_gam = False
+                        holding_sig = True
+                    elif holding_sig:
+                        fit.fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify)
+                        holding_sig = False
+                        holding_gam = True
+            t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
+            t_sigma = t_peaks.iloc[:,4]
+            t_gamma = t_peaks.iloc[:,6]
+            t_int = t_peaks.iloc[:,2]
+            t_pos = t_peaks.iloc[:,0]
+            peak_verify = fit.create_verify_list(t_pos, t_int, t_sigma, t_gamma)
+
+        t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
+        t_sigma = t_peaks.iloc[:,4]
+        t_gamma = t_peaks.iloc[:,6]
+        t_int = t_peaks.iloc[:,2]
+        t_pos = t_peaks.iloc[:,0]
+
+        peak_verify = fit.create_verify_list(t_pos, t_int, t_sigma, t_gamma)
+
+        fit_attempts += 1
+
+        if(np.all(peak_verify == True)):
+            print("\n\n All values are within a likeable range \n")
+            peaks_ok = True
+        
+        elif(fit_attempts >= fit_attempt_limit):
+            print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
+            peaks_ok = True
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            
+        else:
+            print("\n\n Intensities and Positions are NOT all positive, retrying \n")
+            peaks_ok = False
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=DF_flags_for_user)
+            # reset the peak list in the histogram to avoid appending during successive attempts
+            hist.data['Peak List']['peaks']=[]
+            # reset and repopulate the peak list
+            peaks_list=tis['two_theta']
+
+    fit.fit_instprm_file(hist, peaks_list)
+    hist.SaveProfile("created_instprm")
