@@ -140,7 +140,7 @@ def test_EX4():
     datadir = '../ExampleData/Example04' 
     cif_fnames = ['ferrite-PureFe.cif']
     workdir = '../server_workdir'
-    xrdml_fname = 'E211110-AAC-001_001-000_summed.csv'
+    xrdml_fname = 'E211110-AAC-001_013-000_exported.csv'
     instprm_fname = 'BrukerD8_E211110.instprm'
     master_data = '../ExampleData/Example04/EX4_master.txt'
     inference_method = 'paul_mandel'
