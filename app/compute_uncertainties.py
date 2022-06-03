@@ -194,7 +194,7 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
     for ii, pn in enumerate(unique_phase_names):
 
-        quantiles = np.quantile(mu_df['value'].loc[['which_phase']==pn],[.5,.025,.975])
+        quantiles = np.quantile(mu_df['value'].loc[mu_df['which_phase']==pn],[.5,.025,.975])
         summary_table.loc[summary_table['phase'] == pn, ['PF_Est','PF_L95','PF_U95']] = quantiles
 
     return {'mu_df':mu_df,'trace':trace,
