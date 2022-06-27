@@ -105,8 +105,8 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
         summary_table.loc[summary_table['phase'] == unique_phase_names[ii],['PF_Est','PF_L95','PF_U95']] = quantiles
 
     summary_table = pd.DataFrame(summary_table)
-
-    return {'mu_df':pd.concat(mu_dfs,axis=0),
+    
+    return {'mu_df':mu_dfs,
             'unique_phase_names':unique_phase_names,
             'summary_table':summary_table}
 

@@ -26,7 +26,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
         fig_raw_hist: Intensity vs. two_theta plot of raw data
         fig_fit_hist: Intensity vs. two_theta plot with fit data
         DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
-        fig_norm_itensity: Figure of normalized intensities
+        fig_norm_intensity: Figure of normalized intensities
         fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
         DF_phase_fraction: pandas DataFrame with phase fraction
     """
@@ -283,12 +283,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     ########################################
     # Moved all plotting functions to the end, allows use of all data in plot
 
-    if pf_uncertainties is not None:
-        pf_uncertainty_fig = get_pf_uncertainty_fig(pf_uncertainties)
-
-
-    else:
-        pf_uncertainty_fig = go.Figure()
     ########################################
     # Create Figure of raw data
     ########################################
@@ -315,55 +309,18 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
         yaxis_title="Intensity"
     )
 
+    fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
+
     ########################################
     # Create Plot the Normalized Intensities
     ########################################
     print("Create Normalized Intensities Figure \n")
-
-    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
-
-        fig_norm_itensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
-                            labels = {
-                                'pos_fit':'2-theta',
-                                'n_int':'Normalized Intensity'
-                                }
-                            )
-        # I'd like to have the color be the same, but haven't figured out how.
-        for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
-            fig_norm_itensity.add_trace(
-                        go.Scatter(
-                            x=two_theta,
-                            y=[value]*len(two_theta),
-                            mode='lines',
-                            name="Mean "+DF_phase_fraction["Phase"][i] )
-                        )
-        
-        ## Add crosses to indicate values that didn't work
-        fig_norm_itensity.add_trace(
-                        go.Scatter(
-                            x=DF_merged_fit_theo["pos_fit"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
-                            y=DF_merged_fit_theo["n_int"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
-                            mode="markers",
-                            name="Excluded from Analysis",
-                            marker_symbol='x',
-                            marker_color='red',
-                            marker_size = 8
-                            )
-                        )
-        
-        
-    else:
-        print("Warning: I and R values different lengths. Returning empty figure.")
-        print(DF_merged_fit_theo)
-        fig_norm_itensity = go.Figure()
-
 
     ########################################
     # Create Plot comparing the two theta positions
     ########################################
     print("Create Two Theta Comparison Figure \n")
     
-    fig_raw_fit_compare_two_theta = two_theta_compare_figure(DF_merged_fit_theo)
 
     ##############################
     # Create phase fraction plot #
@@ -375,15 +332,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     ########################################
     #DF_phase_fraction = DF_phase_fraction.reindex(columns=["Phase","Phase_Fraction","Phase_Fraction_StDev",
     #        "Number_hkls","hkls","Mean_nint","StDev_nint"])
-
-    return (fig_raw_hist, 
-            fig_fit_hist, 
-            DF_merged_fit_theo, 
-            fig_norm_itensity, 
-            fig_raw_fit_compare_two_theta, 
-            DF_phase_fraction, 
+    
+    return (fit_data, 
+            DF_merged_fit_theo,   
+            DF_phase_fraction,
+            two_theta,
+            tis, 
             DF_flags_for_user, 
-            pf_uncertainty_fig,
+            pf_uncertainties,
             pf_uncertainty_table)
 
 #####################################
@@ -751,6 +707,44 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(flags_DF)
     return flags_DF
 
+def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta):
+    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
+
+        fig_norm_intensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
+                            labels = {
+                                'pos_fit':'2-theta',
+                                'n_int':'Normalized Intensity'
+                                }
+                            )
+        # I'd like to have the color be the same, but haven't figured out how.
+        for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
+            fig_norm_intensity.add_trace(
+                        go.Scatter(
+                            x=two_theta,
+                            y=[value]*len(two_theta),
+                            mode='lines',
+                            name="Mean "+DF_phase_fraction["Phase"][i] )
+                        )
+        
+        ## Add crosses to indicate values that didn't work
+        fig_norm_intensity.add_trace(
+                        go.Scatter(
+                            x=DF_merged_fit_theo["pos_fit"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
+                            y=DF_merged_fit_theo["n_int"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
+                            mode="markers",
+                            name="Excluded from Analysis",
+                            marker_symbol='x',
+                            marker_color='red',
+                            marker_size = 8
+                            )
+                        )
+    else:
+        print("Warning: I and R values different lengths. Returning empty figure.")
+        print(DF_merged_fit_theo)
+        fig_norm_intensity = go.Figure()
+
+    return fig_norm_intensity
+
 
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
@@ -769,7 +763,7 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
         fig_raw_hist: Intensity vs. two_theta plot of raw data
         fig_fit_hist: Intensity vs. two_theta plot with fit data
         DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
-        fig_norm_itensity: Figure of normalized intensities
+        fig_norm_intensity: Figure of normalized intensities
         fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
         DF_phase_fraction: pandas DataFrame with phase fraction
     """

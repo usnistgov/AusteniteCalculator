@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # dash imports
+from doctest import master
 from fileinput import filename
+import json
 from posixpath import split
 from unittest import result
 import dash
@@ -17,6 +19,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+import plotly.utils as pltu
 
 # utils
 import base64
@@ -55,6 +58,7 @@ elif re.search('schen',os.getcwd()):
 import GSASIIscriptable as G2sc
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
+app.config.suppress_callback_exceptions=True
 server = app.server
 root_dir = os.getcwd()
 
@@ -83,7 +87,8 @@ app.layout = dbc.Container([
                     id='upload-data-xrdml',
                     children=html.Div([
                             dbc.Button('X-Ray Diffraction File (.xrdml)')
-                            ])),
+                            ]),
+                            multiple=True),
             html.Div(id='f1-name'),
             html.Br(),
             
@@ -150,6 +155,7 @@ app.layout = dbc.Container([
             html.Br(),
             dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'),
             html.Br(),
+            dcc.Store(id='store-calculations', storage_type='session'),
             html.Br(),
             dcc.Loading(
                 id="loading",
@@ -179,7 +185,8 @@ app.layout = dbc.Container([
                     id='upload-default-xrdml',
                     children=html.Div([
                             dbc.Button('X-Ray Diffraction File (.xrdml)')
-                            ])),
+                            ]),
+                            multiple=True),
             html.Div(id='default-xrdml'),
             html.Br(),
             dcc.Upload(
@@ -199,6 +206,8 @@ app.layout = dbc.Container([
         ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
+            html.Div(id='plot-placeholder'),
+            html.Br(),
             html.Div("""Plot of the raw data."""),
             dcc.Graph(id='intensity-plot'),
             html.Br(),
@@ -211,6 +220,8 @@ app.layout = dbc.Container([
         
         ### --- start tab 4 --- ###
         dbc.Tab([
+            html.Br(),
+            html.Div(id='table-placeholder'),
             html.Br(),
             html.Div("""Table of Phase Fractions"""),
             dash_table.DataTable(id='phase-frac-table'),
@@ -244,6 +255,8 @@ app.layout = dbc.Container([
             dcc.Download(id="intensity-table-download"),
             #
             html.Br(),
+            html.Br(),
+            html.Div(id='graph-placeholder'),
             html.Br(),
             html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant.
                         Deviation from a constant value indicates unaccounted for factors in normalization,
@@ -312,7 +325,7 @@ def show_f_name(filename):
         return ""
         
     else:
-        return "Uploaded File: " + filename
+        return "Uploaded Files: " + ', '.join(filename)
 
 @app.callback(
     Output('f2-name','children'),
@@ -379,7 +392,7 @@ def show_xrdml_name(filename):
         return ""
         
     else:
-        return "Uploaded File: " + filename
+        return "Uploaded Files: " + ', '.join(filename)
 
 @app.callback(
     Output("download-instprm", "data"),
@@ -411,15 +424,15 @@ def download_created_instprm(n_clicks,
     elif instprm_contents == '10m TOF 90deg bank':
         instprm_contents = 'DefaultInstprmFiles/10mTOF_default.instprm'
     
-    non_cif_contents = [[xrdml_contents,xrdml_fname]]
+    instprm_contents = [[xrdml_contents,xrdml_fname]]
 
         # For each uploaded file, save (on the server)
         # ensuring that the format matches what GSAS expects.
 
         # first, read non-cif files
-    for i in range(len(non_cif_contents)):
-        contents = non_cif_contents[i][0]
-        fname = non_cif_contents[i][1]
+    for i in range(len(instprm_contents)):
+        contents = instprm_contents[i][0]
+        fname = instprm_contents[i][1]
 
         content_type, content_string = contents.split(',')
         print(content_string)
@@ -471,19 +484,10 @@ def func(n_clicks):
 
 ### --- all other outputs --- ###
 @app.callback(
-    Output('intensity-plot','figure'),
-    Output('fitted-intensity-plot','figure'),
-    Output('intensity-table','data'),
-    Output('intensity-table','columns'),
-    Output('normalized-intensity-plot','figure'),
-    Output('two_theta-plot','figure'),
-    Output('phase-frac-table','data'),
-    Output('phase-frac-table','columns'),
-    Output('uncert-table','data'),
-    Output('uncert-table','columns'),
-    Output('pf-uncert-fig','figure'),
-    Output('pf-uncert-table','data'),
-    Output('pf-uncert-table','columns'),
+    Output('plot-placeholder', 'children'),
+    Output('table-placeholder', 'children'),
+    Output('graph-placeholder', 'children'),
+    Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
@@ -495,18 +499,16 @@ def func(n_clicks):
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
-    State('inference-method','value')
+    State('inference-method','value'),
+    prevent_initial_call = True
 )
 def update_output(n_clicks,
-                  xrdml_contents,xrdml_fname,
+                  xrdml_contents,xrdml_fnames,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
                   use_default_files, use_example05_files, use_example06_files,inference_method_value):
     
-    # return nothing when app opens
-    if n_clicks == 0:
-        return go.Figure(), go.Figure(), [], [], go.Figure(), go.Figure(), [], [], [], [], go.Figure(), [], [], ''
-
+    
     # point towards directory and upload data using GSASII
     # Default data location
     print(use_default_files)
@@ -521,7 +523,7 @@ def update_output(n_clicks,
         #datadir = '../ExampleData/Example01'
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
-        xrdml_fname = 'Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml'
+        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
         instprm_fname = 'TestCalibration.instprm'
         
     # Use Example05 data
@@ -532,7 +534,7 @@ def update_output(n_clicks,
         #datadir = '../ExampleData/Example01'
         cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
         workdir = '../server_workdir'
-        xrdml_fname = 'E211110-AAC-001_019-000_exported.csv'
+        xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
 
     elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
@@ -540,7 +542,7 @@ def update_output(n_clicks,
         #datadir = '../ExampleData/Example01'
         cif_fnames = ['alpha-prime-martensite-SRI.cif','epsilon-martensite-SRI.cif','austenite-SRI.cif']
         workdir = '../server_workdir'
-        xrdml_fname = 'Example06_simulation_generation_data.csv'
+        xrdml_fnames = ['Example06_simulation_generation_data.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
 
     #Stores user files in a directory
@@ -548,27 +550,21 @@ def update_output(n_clicks,
         datadir = '../server_datadir'
         workdir = '../server_workdir'
 
-        non_cif_contents = [[xrdml_contents,xrdml_fname],
-                        [instprm_contents,instprm_fname]]
-
         # For each uploaded file, save (on the server)
         # ensuring that the format matches what GSAS expects.
 
         # first, read non-cif files
-        for i in range(len(non_cif_contents)):
-            contents = non_cif_contents[i][0]
-            fname = non_cif_contents[i][1]
 
-            content_type, content_string = contents.split(',')
+        instprm_type, instprm_string = instprm_contents.split(',')
 
-            decoded = base64.b64decode(content_string)
-            f = open(datadir + '/' + fname,'w')
-            to_write = decoded.decode('utf-8')
-            if re.search('(instprm$)',fname) is not None:
-                to_write = re.sub('\\r','',to_write)
-            f.write(to_write)
-            f.close()
-
+        decoded = base64.b64decode(instprm_string)
+        f = open(datadir + '/' + instprm_fname,'w')
+        to_write = decoded.decode('utf-8')
+        if re.search('(instprm$)',instprm_fname) is not None:
+            to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+        
         # next, read the cif files
         for i in range(len(cif_contents)):
             contents = cif_contents[i]
@@ -583,40 +579,228 @@ def update_output(n_clicks,
             f.write(to_write)
             f.close()
         
+        for i in range(len(xrdml_contents)):
+            contents = xrdml_contents[i]
+            fname = xrdml_fnames[i]
+            
+            content_type, content_string = contents.split(',')
+
+            decoded = base64.b64decode(content_string)
+            f = open(datadir + '/' + fname,'w')
+            to_write = decoded.decode('utf-8')
+            to_write = re.sub('\\r','',to_write)
+            f.write(to_write)
+            f.close()
+    
+    results_table = {}
+    phase_frac = {}
+    two_thetas = {}
+    uncert = {}
+    pf_uncerts = {}
+    pf_uncert_table = {}
+    ti_tables = {}
+    altered_results = {}
+    altered_phase = {}
+    altered_ti = {}
+    fit_points = {}
     # Now, we just run the desired computations
-    fig1, fig2, results_df, ni_fig, two_theta_fig, phase_frac_DF, uncert_DF, pf_uncertainty_fig, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method)
+    for x in range(len(xrdml_fnames)):
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF, pf_uncertainties, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc,inference_method)
+        temp_string = 'Dataset: ' + str(x + 1)
+
+        results_table[temp_string] = results_df
+        phase_frac[temp_string] = phase_frac_DF
+        two_thetas[temp_string] = two_theta.tolist()
+        ti_tables[temp_string] = tis
+        uncert[temp_string] = uncert_DF
+        pf_uncerts[temp_string] = pf_uncertainties
+        pf_uncert_table[temp_string] = pf_uncertainty_table
+        altered_results[temp_string] = results_df
+        altered_phase[temp_string] = phase_frac_DF
+        altered_ti[temp_string] = tis
+        fit_points[temp_string] = fit_data
+        
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
-
+    
     # table for plotting intensity results
-    intensity_tbl, tbl_columns = compute_results.df_to_dict(results_df.round(3))
+    for key, value in results_table.items():
+        intensity_tbl, tbl_columns = compute_results.df_to_dict(value.round(3))
+        results_table[key] = (intensity_tbl, tbl_columns)
 
     # table for plotting phase fraction results
-    phase_frac_dict, phase_frac_col = compute_results.df_to_dict(phase_frac_DF.round(3))
+    for key, value in phase_frac.items():
+        phase_frac_dict, phase_frac_col = compute_results.df_to_dict(value.round(3))
+        phase_frac[key] = (phase_frac_dict, phase_frac_col)
 
     # table for plotting uncertainty table
-    uncert_dict, uncert_col = compute_results.df_to_dict(uncert_DF.round(3))
+    for key, value in uncert.items():
+        uncert_dict, uncert_col = compute_results.df_to_dict(value.round(3))
+        uncert[key] = (uncert_dict, uncert_col)
 
     # table for plotting pf uncertainties
-    pfu_dict, pfu_col = compute_results.df_to_dict(pf_uncertainty_table.round(5))
+    for key, value in pf_uncert_table.items():
+        pfu_dict, pfu_col = compute_results.df_to_dict(value.round(5))
+        pf_uncert_table[key] = (pfu_dict, pfu_col)
+
+    for key, value in ti_tables.items():
+        ti_dict, ti_cols = compute_results.df_to_dict(value.round(5))
+        ti_tables[key] = (ti_dict, ti_cols)
+
+    for key, value in altered_results.items():
+        res_table, res_col = compute_results.df_to_dict(value.round(3))
+        res_table = value.to_dict('dict')
+        altered_results[key] = (res_table, res_col)
+
+    for key, value in altered_phase.items():
+        phase_table, phase_col = compute_results.df_to_dict(value.round(3))
+        phase_table = value.to_dict('dict')
+        altered_phase[key] = (phase_table, phase_col)
+
+    for key, value in altered_ti.items():
+        ti_tbl, ti_col = compute_results.df_to_dict(value.round(3))
+        ti_tbl = value.to_dict('dict')
+        altered_ti[key] = (ti_tbl, ti_col)
+    
+    for key, value in pf_uncerts.items():
+        value['unique_phase_names'] = value['unique_phase_names'].tolist()
+        value['summary_table'] = value['summary_table'].to_dict('dict')
+        saved_list = []
+        for current_phase in range(len(value['mu_df'])):
+            for index in range(len(value['mu_df'][current_phase])):
+                temp_list = [value['mu_df'][current_phase].iloc[index, 0], value['mu_df'][current_phase].iloc[index, 1]]
+                saved_list.append(temp_list)
+        value['mu_df'] = saved_list
+        
+    master_dict = {
+        'results_table':results_table,
+        'phase_frac':phase_frac,
+        'two_thetas':two_thetas,
+        'ti_tables':ti_tables,
+        'uncert':uncert,
+        'pf_uncerts':pf_uncerts,
+        'pf_uncert_table':pf_uncert_table,
+        'altered_results':altered_results,
+        'altered_phase':altered_phase,
+        'altered_ti':altered_ti,
+        'fit_points':fit_points
+    }
+    
+    plot_dropdown = html.Div([
+        'Please select a dataset to view',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], id = 'plot-dropdown')
+    ])
+
+    table_dropdown = html.Div([
+        'Please select a dataset to view',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], id = 'table-dropdown')
+    ])
+
+    graph_dropdown = html.Div([
+        'Please select a dataset to view',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], id = 'graph-dropdown')
+    ])
 
     conf = "Submission complete. Navigate the above tabs to view results."
 
-    return (fig1, 
-            fig2, 
-            intensity_tbl, 
-            tbl_columns, 
-            ni_fig, 
-            two_theta_fig, 
-            phase_frac_dict, 
-            phase_frac_col,  
-            uncert_dict, 
-            uncert_col, 
-            pf_uncertainty_fig, 
-            pfu_dict,
-            pfu_col, 
+    return (plot_dropdown,
+            table_dropdown,
+            graph_dropdown,
+            master_dict,
             conf)
+
+@app.callback(
+    Output('intensity-plot', 'figure'),
+    Output('fitted-intensity-plot', 'figure'),
+    Input('store-calculations', 'data'),
+    Input('plot-dropdown', 'value'),
+    prevent_initial_call=True
+)
+def update_figures(data, value):
+    fit_data = data.get('fit_points').get(value)
+    current_two_theta = data.get('two_thetas').get(value)
+
+    df = pd.DataFrame({
+        "two_theta":current_two_theta,
+        "intensity":fit_data[0]
+    })
+
+    raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+
+    fig_fit_hist = go.Figure()
+
+    fig_fit_hist.add_trace(go.Scatter(x=current_two_theta,y=fit_data[0],mode='markers',name='data'))
+    fig_fit_hist.add_trace(go.Scatter(x=current_two_theta,y=fit_data[1],mode='markers',name='background'))
+    fig_fit_hist.add_trace(go.Scatter(x=current_two_theta,y=fit_data[2],mode='lines',name='fit'))
+
+    fig_fit_hist.update_layout(
+        title="",
+        xaxis_title="2theta",
+        yaxis_title="Intensity"
+    )
+
+    return raw_fig, fig_fit_hist
+
+@app.callback(
+    Output('intensity-table','data'),
+    Output('intensity-table','columns'),
+    Output('phase-frac-table','data'),
+    Output('phase-frac-table','columns'),
+    Output('uncert-table','data'),
+    Output('uncert-table','columns'),
+    Input('store-calculations', 'data'),
+    Input('table-dropdown', 'value'),
+    prevent_initial_call=True
+)
+def update_tables(data, value):
+    table = data.get('results_table').get(value)[0]
+    cols = data.get('results_table').get(value)[1]
+    frac_table = data.get('phase_frac').get(value)[0]
+    frac_cols = data.get('phase_frac').get(value)[1]
+    uncert_table = data.get('uncert').get(value)[0]
+    uncert_cols = data.get('uncert').get(value)[1]
+
+    return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
+
+@app.callback(
+    Output('normalized-intensity-plot','figure'),
+    Output('two_theta-plot','figure'),
+    Output('pf-uncert-fig','figure'),
+    Output('pf-uncert-table','data'),
+    Output('pf-uncert-table','columns'),
+    Input('store-calculations', 'data'),
+    Input('graph-dropdown', 'value'),
+    prevent_initial_call=True
+)
+def update_graphs(data, value):
+    table = data.get('altered_results').get(value)[0]
+    cols = data.get('altered_results').get(value)[1]
+    big_df = pd.DataFrame.from_dict(table)
+
+    ti_table = data.get('altered_ti').get(value)[0]
+    ti_cols = data.get('altered_ti').get(value)[1]
+    ti_df = pd.DataFrame.from_dict(ti_table)
+
+    pf_table = data.get('altered_phase').get(value)[0]
+    pf_cols = data.get('altered_phase').get(value)[1]
+    pf_df = pd.DataFrame.from_dict(pf_table)
+
+    current_two_theta = data.get('two_thetas').get(value)
+
+    pf_uncertainties = data.get('pf_uncerts').get(value)
+
+    remade_df = pd.DataFrame(pf_uncertainties['mu_df'], columns=['which_phase', 'value'])
+    pf_uncertainties['mu_df'] = remade_df
+
+    pf_uncert_table = data.get('pf_uncert_table').get(value)[0]
+    pf_uncert_cols = data.get('pf_uncert_table').get(value)[1]
+
+    norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta)
+    two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
+    pf_uncert_fig = compute_results.get_pf_uncertainty_fig(pf_uncertainties)
+    
+    return norm_int_plot, two_theta_diff_plot, pf_uncert_fig, pf_uncert_table, pf_uncert_cols
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 
