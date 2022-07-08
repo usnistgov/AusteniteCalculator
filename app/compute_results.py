@@ -708,6 +708,21 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     return flags_DF
 
 def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta):
+    """Creates plot of variation in normalized intensities
+
+    Args:
+        DF_merged_fit_theo: dataframe of fit values(Dataframe)
+        tis: Dataframe of theoretical intensities (Dataframe)
+        DF_phase_fraction: Dataframe of phase fraction values (Dataframe)
+        two_theta: List of two thetas(List)
+        
+    Returns:
+        fig_norm_intensity: plotly figure showing the variation in normalized intensity for each phase
+
+    Raises:
+
+    """
+
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
 
         fig_norm_intensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
@@ -744,6 +759,34 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
         fig_norm_intensity = go.Figure()
 
     return fig_norm_intensity
+
+def create_fit_fig(two_thetas, intensity_list, dataset):
+    """Creates plot of fit intensity vs two_theta data
+
+    Args:
+        two_thetas: list of two_theta values
+        intensity_list: list of various fitted intensity data(raw, fit, background)
+        dataset: current dataset graph being created
+        
+    Returns:
+        fig_fit_hist: plotly figure of fit intensity vs two_theta data
+
+    Raises:
+
+    """
+    fig_fit_hist = go.Figure()
+
+    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[0],mode='markers',name='data: ' + str(dataset)))
+    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[1],mode='markers',name='background: ' + str(dataset)))
+    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[2],mode='lines',name='fit: ' + str(dataset)))
+
+    fig_fit_hist.update_layout(
+        title="",
+        xaxis_title="2theta",
+        yaxis_title="Intensity"
+    )
+
+    return fig_fit_hist
 
 
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
