@@ -110,6 +110,10 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
             'unique_phase_names':unique_phase_names,
             'summary_table':summary_table}
 
+def run_stan(results_table):
+
+    return(None)
+
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
     I = np.array(I)[pfs]

@@ -36,6 +36,7 @@ import fnmatch
 
 # user created
 import compute_results
+import compute_uncertainties
 
 # Gsas
 if platform.system() == 'Linux':
@@ -43,7 +44,7 @@ if platform.system() == 'Linux':
 
 # David's local development (add your own line to work on the project locally)
 elif re.search('dtn1',os.getcwd()):
-    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/G2_2/GSASII/')
+    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/gsas-AustCalc/GSASII/')
 
 elif re.search('maxgarman',os.getcwd()):
     sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/GSASII/') 
@@ -619,7 +620,9 @@ def update_output(n_clicks,
         altered_phase[temp_string] = phase_frac_DF
         altered_ti[temp_string] = tis
         fit_points[temp_string] = fit_data
-        
+
+    # run MCMC using full results
+    mcmc_res = compute_uncertainties.run_stan(results_table)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
