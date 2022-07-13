@@ -8,7 +8,7 @@ import pandas as pd
 #from scipy.stats import invgamma, t
 from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
 from scipy.stats import truncnorm
-#from cmdstanpy import cmdstan_path, CmdStanModel
+from cmdstanpy import cmdstan_path, CmdStanModel
 
 def gen_mu_sigma(x,n_draws):
     
@@ -113,21 +113,22 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
 
 def run_stan(results_table):
 
-    intable = list(results_table.values())
+    intables = list(results_table.values())
 
-    for ii, val in enumerate(list(in_table.values())): 
-        
-        in_table[ii]['sample_id'] == ii
+    # create numeric sample ids
+    for ii, val in enumerate(intables): 
+        intables[ii] = intables[ii].loc[intables[ii]['Peak_Fit_Success'],:]
+        intables[ii]['sample_id'] = ii+1
 
-
-    indata = pd.concat(in_table,axis=0).reset_index(drop=True)
+    indata = pd.concat(intables,axis=0).reset_index(drop=True)
 
     mydf = pd.DataFrame({
         'I':indata.int_fit,
         'R':indata.R_calc,
         'sigma_I':indata.u_int_fit,
         'phases':indata.Phase,
-        'two_th':indata.two_theta
+        'two_th':indata.two_theta,
+        'sample_id':indata.sample_id
     })
 
     # create numeric phase id's
@@ -142,11 +143,11 @@ def run_stan(results_table):
 
     #mydf = mydf.sort_values('phases').reset_index(drop=True)
 
-    if len(results_table == 1):
+    if len(results_table) == 1:
 
         # stan
-        stan_file = 'one_sample.stan'
-        model = CmdStanModel(stan_file=stan_file)
+        exe_file = '../stan_files/one_sample.exe'
+        model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
             "N":mydf.shape[0],
@@ -157,19 +158,24 @@ def run_stan(results_table):
             "prior_location":np.mean(mydf.IR)
         }
 
-        stan_init = {
-            "mu_phase":np.mean(mydf.IR),
-            "sigma_exp":np.std(mydf.IR)
-        }
-
         fit = model.sample(data=stan_data,
-                        chains=4,
-                        iter_warmup=1000, 
-                        iter_sampling=1000)
+                           chains=4,
+                           iter_warmup=1000, 
+                           iter_sampling=1000)
+
+        mu_df = pd.DataFrame()
+
+        for ii, name in enumerate(unique_phases):
+            
+            mu_df[name] = fit.stan_variable('phase_mu')[:,ii]
+
+        return {
+            'mu_df':mu_df
+        }
 
     elif len(results_table > 1):
         pass
-    
+
     return None
 
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
