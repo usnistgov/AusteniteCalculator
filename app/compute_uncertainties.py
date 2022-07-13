@@ -8,7 +8,7 @@ import pandas as pd
 #from scipy.stats import invgamma, t
 from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
 from scipy.stats import truncnorm
-from cmdstanpy import cmdstan_path, CmdStanModel
+#from cmdstanpy import cmdstan_path, CmdStanModel
 
 def gen_mu_sigma(x,n_draws):
     
