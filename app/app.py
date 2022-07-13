@@ -622,7 +622,8 @@ def update_output(n_clicks,
         fit_points[temp_string] = fit_data
 
     # run MCMC using full results
-    mcmc_res = compute_uncertainties.run_stan(results_table)
+    #breakpoint()
+    #mcmc_res = compute_uncertainties.run_stan(results_table)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')

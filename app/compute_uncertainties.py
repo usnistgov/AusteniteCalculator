@@ -3,11 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 #import arviz as az
-import pymc3 as pm
-from scipy.stats import median_abs_deviation as mad
+#import pymc3 as pm
+#from scipy.stats import median_abs_deviation as mad
 #from scipy.stats import invgamma, t
 from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
 from scipy.stats import truncnorm
+#from cmdstanpy import cmdstan_path, CmdStanModel
 
 def gen_mu_sigma(x,n_draws):
     
@@ -112,7 +113,64 @@ def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
 
 def run_stan(results_table):
 
-    return(None)
+    intable = list(results_table.values())
+
+    for ii, val in enumerate(list(in_table.values())): 
+        
+        in_table[ii]['sample_id'] == ii
+
+
+    indata = pd.concat(in_table,axis=0).reset_index(drop=True)
+
+    mydf = pd.DataFrame({
+        'I':indata.int_fit,
+        'R':indata.R_calc,
+        'sigma_I':indata.u_int_fit,
+        'phases':indata.Phase,
+        'two_th':indata.two_theta
+    })
+
+    # create numeric phase id's
+    mydf['phase_id'] = 0
+    unique_phases = np.unique(mydf.phases)
+    for ii, pn in enumerate(unique_phases):
+        mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
+
+    # compute normalized intensities
+    mydf['IR'] = mydf.I / mydf.R
+    mydf['sig_IR'] = mydf['sigma_I']/mydf.R
+
+    #mydf = mydf.sort_values('phases').reset_index(drop=True)
+
+    if len(results_table == 1):
+
+        # stan
+        stan_file = 'one_sample.stan'
+        model = CmdStanModel(stan_file=stan_file)
+
+        stan_data = {
+            "N":mydf.shape[0],
+            "N_phases":len(np.unique(mydf.phases)),
+            "Y":mydf.IR,
+            "phase":mydf.phase_id,
+            "prior_scale":np.std(mydf.IR),
+            "prior_location":np.mean(mydf.IR)
+        }
+
+        stan_init = {
+            "mu_phase":np.mean(mydf.IR),
+            "sigma_exp":np.std(mydf.IR)
+        }
+
+        fit = model.sample(data=stan_data,
+                        chains=4,
+                        iter_warmup=1000, 
+                        iter_sampling=1000)
+
+    elif len(results_table > 1):
+        pass
+    
+    return None
 
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
 
