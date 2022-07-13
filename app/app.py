@@ -207,7 +207,11 @@ app.layout = dbc.Container([
         ### --- start tab 3 --- ###
         dbc.Tab([
             html.Br(),
-            html.Div(id='plot-placeholder'),
+            html.Div(id='plot-placeholder',children=[ 
+                dcc.Dropdown(options = ['Dataset: 1'], 
+                            id = 'plot-dropdown',
+                            value='Dataset: 1')
+             ]),
             html.Br(),
             html.Div("""Plot of the raw data."""),
             dcc.Graph(id='intensity-plot'),
@@ -222,7 +226,11 @@ app.layout = dbc.Container([
         ### --- start tab 4 --- ###
         dbc.Tab([
             html.Br(),
-            html.Div(id='table-placeholder'),
+            html.Div(id='table-placeholder',children=[ 
+                dcc.Dropdown(options = ['Dataset: 1'], 
+                            id = 'table-dropdown',
+                            value='Dataset: 1')
+             ]),
             html.Br(),
             html.Div("""Table of Phase Fractions"""),
             dash_table.DataTable(id='phase-frac-table'),
@@ -257,7 +265,11 @@ app.layout = dbc.Container([
             #
             html.Br(),
             html.Br(),
-            html.Div(id='graph-placeholder'),
+            html.Div(id='graph-placeholder',children=[ 
+                dcc.Dropdown(options = ['Dataset: 1'], 
+                            id = 'graph-dropdown',
+                            value='Dataset: 1')
+             ]),
             html.Br(),
             html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant.
                         Deviation from a constant value indicates unaccounted for factors in normalization,
@@ -508,8 +520,8 @@ def update_output(n_clicks,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
                   use_default_files, use_example05_files, use_example06_files,inference_method_value):
-    
-    
+
+
     # point towards directory and upload data using GSASII
     # Default data location
     print(use_default_files)
@@ -693,17 +705,23 @@ def update_output(n_clicks,
     
     plot_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], id = 'plot-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+                     id = 'plot-dropdown',
+                     value='Dataset: 1')
     ])
 
     table_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], id = 'table-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+                     id = 'table-dropdown',
+                     value='Dataset: 1')
     ])
 
     graph_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], id = 'graph-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+                     id = 'graph-dropdown',
+                     value='Dataset: 1')
     ])
 
     conf = "Submission complete. Navigate the above tabs to view results."
@@ -722,6 +740,7 @@ def update_output(n_clicks,
     prevent_initial_call=True
 )
 def update_figures(data, value):
+
     fit_data = data.get('fit_points').get(value)
     current_two_theta = data.get('two_thetas').get(value)
 
@@ -758,6 +777,7 @@ def update_figures(data, value):
     prevent_initial_call=True
 )
 def update_tables(data, value):
+
     table = data.get('results_table').get(value)[0]
     cols = data.get('results_table').get(value)[1]
     frac_table = data.get('phase_frac').get(value)[0]
@@ -778,6 +798,7 @@ def update_tables(data, value):
     prevent_initial_call=True
 )
 def update_graphs(data, value):
+
     table = data.get('altered_results').get(value)[0]
     cols = data.get('altered_results').get(value)[1]
     big_df = pd.DataFrame.from_dict(table)
