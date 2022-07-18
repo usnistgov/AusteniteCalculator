@@ -609,8 +609,6 @@ def update_output(n_clicks,
     phase_frac = {}
     two_thetas = {}
     uncert = {}
-    pf_uncerts = {}
-    pf_uncert_table = {}
     ti_tables = {}
     altered_results = {}
     altered_phase = {}
@@ -618,7 +616,7 @@ def update_output(n_clicks,
     fit_points = {}
     # Now, we just run the desired computations
     for x in range(len(xrdml_fnames)):
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF, pf_uncertainties, pf_uncertainty_table = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc,inference_method)
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc,inference_method)
         temp_string = 'Dataset: ' + str(x + 1)
 
         results_table[temp_string] = results_df
@@ -626,8 +624,6 @@ def update_output(n_clicks,
         two_thetas[temp_string] = two_theta.tolist()
         ti_tables[temp_string] = tis
         uncert[temp_string] = uncert_DF
-        pf_uncerts[temp_string] = pf_uncertainties
-        pf_uncert_table[temp_string] = pf_uncertainty_table
         altered_results[temp_string] = results_df
         altered_phase[temp_string] = phase_frac_DF
         altered_ti[temp_string] = tis
@@ -655,11 +651,6 @@ def update_output(n_clicks,
         uncert_dict, uncert_col = compute_results.df_to_dict(value.round(3))
         uncert[key] = (uncert_dict, uncert_col)
 
-    # table for plotting pf uncertainties
-    for key, value in pf_uncert_table.items():
-        pfu_dict, pfu_col = compute_results.df_to_dict(value.round(5))
-        pf_uncert_table[key] = (pfu_dict, pfu_col)
-
     for key, value in ti_tables.items():
         ti_dict, ti_cols = compute_results.df_to_dict(value.round(5))
         ti_tables[key] = (ti_dict, ti_cols)
@@ -678,16 +669,6 @@ def update_output(n_clicks,
         ti_tbl, ti_col = compute_results.df_to_dict(value.round(3))
         ti_tbl = value.to_dict('dict')
         altered_ti[key] = (ti_tbl, ti_col)
-    
-    for key, value in pf_uncerts.items():
-        value['unique_phase_names'] = value['unique_phase_names'].tolist()
-        value['summary_table'] = value['summary_table'].to_dict('dict')
-        saved_list = []
-        for current_phase in range(len(value['mu_df'])):
-            for index in range(len(value['mu_df'][current_phase])):
-                temp_list = [value['mu_df'][current_phase].iloc[index, 0], value['mu_df'][current_phase].iloc[index, 1]]
-                saved_list.append(temp_list)
-        value['mu_df'] = saved_list
         
     master_dict = {
         'results_table':results_table,
@@ -695,8 +676,6 @@ def update_output(n_clicks,
         'two_thetas':two_thetas,
         'ti_tables':ti_tables,
         'uncert':uncert,
-        'pf_uncerts':pf_uncerts,
-        'pf_uncert_table':pf_uncert_table,
         'altered_results':altered_results,
         'altered_phase':altered_phase,
         'altered_ti':altered_ti,
@@ -740,6 +719,9 @@ def update_output(n_clicks,
     prevent_initial_call=True
 )
 def update_figures(data, value):
+    
+    if data is None:
+        return go.Figure(), go.Figure()
 
     fit_data = data.get('fit_points').get(value)
     current_two_theta = data.get('two_thetas').get(value)
@@ -778,6 +760,9 @@ def update_figures(data, value):
 )
 def update_tables(data, value):
 
+    if data is None:
+        return [], [], [], [], [], []
+
     table = data.get('results_table').get(value)[0]
     cols = data.get('results_table').get(value)[1]
     frac_table = data.get('phase_frac').get(value)[0]
@@ -790,9 +775,9 @@ def update_tables(data, value):
 @app.callback(
     Output('normalized-intensity-plot','figure'),
     Output('two_theta-plot','figure'),
-    Output('pf-uncert-fig','figure'),
-    Output('pf-uncert-table','data'),
-    Output('pf-uncert-table','columns'),
+    #Output('pf-uncert-fig','figure'),
+    #Output('pf-uncert-table','data'),
+    #Output('pf-uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('graph-dropdown', 'value'),
     prevent_initial_call=True
@@ -813,19 +798,19 @@ def update_graphs(data, value):
 
     current_two_theta = data.get('two_thetas').get(value)
 
-    pf_uncertainties = data.get('pf_uncerts').get(value)
+    #pf_uncertainties = data.get('pf_uncerts').get(value)
 
-    remade_df = pd.DataFrame(pf_uncertainties['mu_df'], columns=['which_phase', 'value'])
-    pf_uncertainties['mu_df'] = remade_df
+    #remade_df = pd.DataFrame(pf_uncertainties['mu_df'], columns=['which_phase', 'value'])
+    #pf_uncertainties['mu_df'] = remade_df
 
-    pf_uncert_table = data.get('pf_uncert_table').get(value)[0]
-    pf_uncert_cols = data.get('pf_uncert_table').get(value)[1]
+    #pf_uncert_table = data.get('pf_uncert_table').get(value)[0]
+    #pf_uncert_cols = data.get('pf_uncert_table').get(value)[1]
 
     norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta)
     two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
-    pf_uncert_fig = compute_results.get_pf_uncertainty_fig(pf_uncertainties)
+    #pf_uncert_fig = compute_results.get_pf_uncertainty_fig(pf_uncertainties)
     
-    return norm_int_plot, two_theta_diff_plot, pf_uncert_fig, pf_uncert_table, pf_uncert_cols
+    return norm_int_plot, two_theta_diff_plot#, pf_uncert_fig, pf_uncert_table, pf_uncert_cols
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 

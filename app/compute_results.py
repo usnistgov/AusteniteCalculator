@@ -273,8 +273,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction, pf_uncertainties, DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)
-    pf_uncertainty_table = pf_uncertainties['summary_table']
+    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)
 
     ########################################
     ########################################
@@ -338,9 +337,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
             DF_phase_fraction,
             two_theta,
             tis, 
-            DF_flags_for_user, 
-            pf_uncertainties,
-            pf_uncertainty_table)
+            DF_flags_for_user)
 
 #####################################
 ######### Plotting Fuctions #########
@@ -622,25 +619,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inf
     phase_fraction_DF["Phase_Fraction_StDev"]=phase_fraction_DF["StDev_nint"]/(phase_fraction_DF["Mean_nint"].sum())
     norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
-    # compute phase fraction uncertainties
 
-    if inference_method == 'bayes':
-        pf_uncertainties = run_mcmc(
-            I=np.array(DF_merged_fit_theo['int_fit']),
-            R=np.array(DF_merged_fit_theo['R_calc']),
-            sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
-            phases=DF_merged_fit_theo['Phase'],
-            pfs = np.array(DF_merged_fit_theo['Peak_Fit_Success'])
-        )
-    elif inference_method == 'paul_mandel':
-        pf_uncertainties = run_paul_mandel(
-            I=np.array(DF_merged_fit_theo['int_fit']),
-            R=np.array(DF_merged_fit_theo['R_calc']),
-            sigma_I=np.array(DF_merged_fit_theo['u_int_fit']),
-            phases=DF_merged_fit_theo['Phase'],
-            pfs = np.array(DF_merged_fit_theo['Peak_Fit_Success']),
-            n_draws = 5000
-        )
 
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
     #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
@@ -656,7 +635,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inf
     #print(fraction_dict)
     print(phase_fraction_DF)
     
-    return phase_fraction_DF, pf_uncertainties, DF_flags
+    return phase_fraction_DF, DF_flags
         #['h','k','l','n_int']
     #df.loc[df['column_name'] == some_value]
 
