@@ -33,6 +33,9 @@ import sys
 import flask
 import shutil
 import fnmatch
+import glob
+import random
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Add example comment
 
@@ -59,6 +62,17 @@ elif re.search('schen',os.getcwd()):
 
 import GSASIIscriptable as G2sc
 
+def clear_directory():
+    dirs = glob.glob("calculator_report*/")
+    for dir in dirs:
+        shutil.rmtree(dir)
+    zips = glob.glob("report*")
+    for zip in zips:
+        os.remove(zip)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(clear_directory, 'interval', minutes=2)
+scheduler.start()
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
 root_dir = os.getcwd()
@@ -155,6 +169,8 @@ app.layout = dbc.Container([
                      to begin the analysis."""),
             html.Br(),
             dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'), 
+            html.Br(),
+            html.Br(),
             dbc.Button(id='report-button', children='Download Analysis Report'),
             Download(id='download-full-report'),
             html.Br(),
@@ -779,13 +795,9 @@ def update_figures(data, value):
         created_fit = []
         for key, data_value in data.get('fit_points').items():
             current_two_theta = data.get('two_thetas')[key]
-
-            temp_df = pd.DataFrame({
-                "two_theta: " + str(key):current_two_theta,
-                "intensity: " + str(key):data_value[0]
-            })
-
-            raw_fig = px.line(temp_df,x='two_theta: ' + str(key),y='intensity: ' + str(key),title='Peak Fitting Plot')
+            
+            raw_fig = go.Figure()
+            raw_fig.add_trace(go.Scatter(x=current_two_theta,y=data_value[0],mode='lines',name='data: ' + str(key)))
             created_raw.append(raw_fig)
 
             fig_fit_hist = compute_results.create_fit_fig(current_two_theta, data_value, key)
@@ -929,7 +941,7 @@ def update_norm_int(data, value):
 
             current_two_theta = data.get('two_thetas')[key]
 
-            temp_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta)
+            temp_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, key)
             created_plots.append(temp_plot)
 
         #graph data can be added together as tuples
@@ -952,7 +964,7 @@ def update_norm_int(data, value):
 
         current_two_theta = data.get('two_thetas').get(value)
 
-        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta)
+        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, key)
 
         return norm_int_plot
 
@@ -960,7 +972,7 @@ def update_norm_int(data, value):
     Output('download-full-report', 'data'),
     Input('store-calculations', 'data'),
     Input('report-button', 'n_clicks'),
-    prevent_initial_call = True
+    prevent_initial_call=True
 )
 def create_zip_report(data, n_clicks):
     """create and send a .zip file of a report with the calculated data 
@@ -974,10 +986,11 @@ def create_zip_report(data, n_clicks):
     Raises:
         
     """
-    if data == None or n_clicks == 0:
-        return -1
+    hash = random.randrange(10000)
+    if data == None or n_clicks is None:
+        raise dash.exceptions.PreventUpdate
     
-    temp_path = os.path.join(root_dir, 'calculator_report')
+    temp_path = os.path.join(root_dir, 'calculator_report' + str(hash))
 
     os.mkdir(temp_path)
     
@@ -1033,13 +1046,14 @@ def create_zip_report(data, n_clicks):
         current_two_theta = data.get('two_thetas')[key]
 
         two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
-        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta)
-        norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
+        #norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta)
+        #norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
         two_theta_diff_plot.write_image(os.path.join(temp_path, key, 'two_theta_diff.pdf'))
 
     #send directory to zip and return
-    shutil.make_archive('report', 'zip', 'calculator_report')
-    return send_file('report.zip')
+    report_str = 'report' + str(hash)
+    shutil.make_archive(report_str, 'zip', 'calculator_report' + str(hash))
+    return send_file(report_str + '.zip')
 
 @app.callback(
     Output('store-calculations', 'clear_data'),

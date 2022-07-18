@@ -707,7 +707,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(flags_DF)
     return flags_DF
 
-def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta):
+def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta, dataset):
     """Creates plot of variation in normalized intensities
 
     Args:
@@ -724,13 +724,8 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
     """
 
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
-
-        fig_norm_intensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
-                            labels = {
-                                'pos_fit':'2-theta',
-                                'n_int':'Normalized Intensity'
-                                }
-                            )
+        fig_norm_intensity = go.Figure()
+        fig_norm_intensity.add_trace(go.Scatter(x=DF_merged_fit_theo["pos_fit"], y=DF_merged_fit_theo["n_int"], mode = 'markers', name = DF_merged_fit_theo['Phase'] + dataset))
         # I'd like to have the color be the same, but haven't figured out how.
         for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
             fig_norm_intensity.add_trace(
