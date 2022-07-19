@@ -285,9 +285,9 @@ app.layout = dbc.Container([
             #
             html.Br(),
             html.Br(),
-            html.Div(id='graph-placeholder',children=[ 
+            html.Div(id='norm-int-placeholder',children=[ 
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'graph-dropdown',
+                            id = 'norm-int-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -295,11 +295,14 @@ app.layout = dbc.Container([
                         Deviation from a constant value indicates unaccounted for factors in normalization,
                         such as texture, instrument calibration, and/or microstructure effects"""),
             dcc.Graph(id='normalized-intensity-plot'),
-            
+            html.Br(),
+            html.Div(id='graph-placeholder',children=[ 
+                dcc.Dropdown(options = ['Dataset: 1'], 
+                            id = 'graph-dropdown',
+                            value='Dataset: 1')
+             ]),
+            html.Br(),
             # Graph of the two_theta values
-            html.Br(),
-            html.Div(id='graph-placeholder'),
-            html.Br(),
             # Doesn't look like newlines work, but I'd like to separate this a bit more.
             html.Div("""Plot of the difference between the fit and theoretical two theta values. \n
                         Nominally all values should be near zero. \n
