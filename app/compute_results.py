@@ -1,4 +1,5 @@
 from bdb import Breakpoint
+from cProfile import label
 from enum import unique
 from tkinter import TRUE
 import plotly.express as px
@@ -722,10 +723,20 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
     Raises:
 
     """
-
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
         fig_norm_intensity = go.Figure()
-        fig_norm_intensity.add_trace(go.Scatter(x=DF_merged_fit_theo["pos_fit"], y=DF_merged_fit_theo["n_int"], mode = 'markers', name = DF_merged_fit_theo['Phase'] + dataset))
+        phase_list = DF_merged_fit_theo['Phase'].unique().tolist()
+        for i in range(len(phase_list)):
+            temp_df = DF_merged_fit_theo.iloc[:0,:].copy()
+            for index, row in DF_merged_fit_theo.iterrows():
+                if row['Phase'] == phase_list[i]:
+                    temp_df = temp_df.append([row])
+
+            fig_norm_intensity.add_trace(go.Scatter(x=temp_df['pos_fit'],
+                                                    y=temp_df['n_int'],
+                                                    mode='markers',
+                                                    name=phase_list[i] + '(' + str(dataset) + ')'))
+
         # I'd like to have the color be the same, but haven't figured out how.
         for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
             fig_norm_intensity.add_trace(
@@ -733,7 +744,7 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
                             x=two_theta,
                             y=[value]*len(two_theta),
                             mode='lines',
-                            name="Mean "+DF_phase_fraction["Phase"][i] )
+                            name="Mean "+DF_phase_fraction["Phase"][i] + '(' + str(dataset) + ')')
                         )
         
         ## Add crosses to indicate values that didn't work

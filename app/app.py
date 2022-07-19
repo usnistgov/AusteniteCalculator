@@ -71,7 +71,7 @@ def clear_directory():
         os.remove(zip)
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(clear_directory, 'interval', minutes=2)
+scheduler.add_job(clear_directory, 'interval', hours=24)
 scheduler.start()
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 server = app.server
@@ -964,7 +964,7 @@ def update_norm_int(data, value):
 
         current_two_theta = data.get('two_thetas').get(value)
 
-        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, key)
+        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, value)
 
         return norm_int_plot
 
@@ -1046,8 +1046,8 @@ def create_zip_report(data, n_clicks):
         current_two_theta = data.get('two_thetas')[key]
 
         two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
-        #norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta)
-        #norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
+        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta, key)
+        norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
         two_theta_diff_plot.write_image(os.path.join(temp_path, key, 'two_theta_diff.pdf'))
 
     #send directory to zip and return
