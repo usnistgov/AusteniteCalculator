@@ -502,6 +502,7 @@ def func(n_clicks):
     Output('graph-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
+    Output('pf-uncert-fig','figure'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -631,7 +632,8 @@ def update_output(n_clicks,
 
     # run MCMC using full results
     #breakpoint()
-    #mcmc_res = compute_uncertainties.run_stan(results_table)
+    stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
+    pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
@@ -709,7 +711,8 @@ def update_output(n_clicks,
             table_dropdown,
             graph_dropdown,
             master_dict,
-            conf)
+            conf,
+            pf_figure)
 
 @app.callback(
     Output('intensity-plot', 'figure'),

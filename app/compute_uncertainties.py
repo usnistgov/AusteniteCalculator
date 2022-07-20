@@ -2,13 +2,14 @@ from enum import unique
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 #import arviz as az
 #import pymc3 as pm
 #from scipy.stats import median_abs_deviation as mad
 #from scipy.stats import invgamma, t
 from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
 from scipy.stats import truncnorm
-#from cmdstanpy import cmdstan_path, CmdStanModel
+from cmdstanpy import CmdStanModel
 
 def gen_mu_sigma(x,n_draws):
     
@@ -134,6 +135,7 @@ def run_stan(results_table):
     # create numeric phase id's
     mydf['phase_id'] = 0
     unique_phases = np.unique(mydf.phases)
+
     for ii, pn in enumerate(unique_phases):
         mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
 
@@ -141,8 +143,7 @@ def run_stan(results_table):
     mydf['IR'] = mydf.I / mydf.R
     mydf['sig_IR'] = mydf['sigma_I']/mydf.R
 
-    #mydf = mydf.sort_values('phases').reset_index(drop=True)
-
+    # sigle sample
     if len(results_table) == 1:
 
         # stan
@@ -163,22 +164,32 @@ def run_stan(results_table):
                            iter_warmup=1000, 
                            iter_sampling=1000)
 
-        mu_df = pd.DataFrame()
+    # multiple samples
+    elif len(results_table) > 1:
+    
+        exe_file = '../stan_files/multiple_samples.exe'
+        model = CmdStanModel(exe_file=exe_file)
 
-        for ii, name in enumerate(unique_phases):
-            
-            mu_df[name] = fit.stan_variable('phase_mu')[:,ii]
-
-        return {
-            'mu_df':mu_df
+        stan_data = {
+            "N":mydf.shape[0],
+            "N_samples":len(np.unique(mydf.sample_id)),
+            "N_phases":len(np.unique(mydf.phases)),
+            "Y":mydf.IR,
+            "phase":mydf.phase_id,
+            "group":mydf.sample_id,
+            "prior_scale":np.std(mydf.IR),
+            "prior_location":np.mean(mydf.IR)
         }
 
-    elif len(results_table > 1):
-        pass
+        fit = model.sample(data=stan_data,
+                           chains=4,
+                           iter_warmup=1000, 
+                           iter_sampling=1000)
 
-    return None
+    return fit, unique_phases
 
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
+    # uses pymc3
 
     I = np.array(I)[pfs]
     R = np.array(R)[pfs]
@@ -268,3 +279,41 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
     return {'mu_df':mu_df,'trace':trace,
             'unique_phase_names':unique_phase_names,
             'summary_table':summary_table}
+
+
+def generate_pf_plot(fit,unique_phase_names):
+    # fit from model.sample() in cmdstanpy
+    mcmc_df = fit.draws_pd()
+    mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
+    n_phase = mu_res.shape[1]
+    
+    row_sums = np.sum(mu_res,axis=1)
+    mu_res_norm = mu_res
+
+    for ii in range(n_phase):
+        mu_res_norm[:,ii] = mu_res_norm[:,ii]/row_sums
+        
+    out_df = [None]*n_phase
+
+    quantiles = np.zeros((n_phase,2))
+
+    for ii in range(n_phase):
+
+        out_df[ii] = pd.DataFrame({
+            'mu_samps':mu_res_norm[:,ii],
+            'phase':unique_phase_names[ii]
+        })
+
+        quantiles[ii,:] = np.quantile(mu_res_norm[:,ii],(.025,.975))
+
+    out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
+    
+    quantiles = quantiles.flatten()
+    
+    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75)
+    
+    for ii in range(len(quantiles)):
+        fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash')
+    #fig.show()
+    
+    return fig
