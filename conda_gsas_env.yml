@@ -21,3 +21,4 @@ dependencies:
     - dash-extensions==0.0.71
     - kaleido
     - dash-unload-component
+    - apscheduler

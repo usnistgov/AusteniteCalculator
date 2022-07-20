@@ -3,11 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
-#import arviz as az
-#import pymc3 as pm
-#from scipy.stats import median_abs_deviation as mad
-#from scipy.stats import invgamma, t
-from statsmodels.stats.meta_analysis import combine_effects, _fit_tau_iterative
 from scipy.stats import truncnorm
 from cmdstanpy import CmdStanModel
 
@@ -161,8 +156,8 @@ def run_stan(results_table):
 
         fit = model.sample(data=stan_data,
                            chains=4,
-                           iter_warmup=1000, 
-                           iter_sampling=1000)
+                           iter_warmup=2000, 
+                           iter_sampling=2000)
 
     # multiple samples
     elif len(results_table) > 1:
@@ -183,8 +178,8 @@ def run_stan(results_table):
 
         fit = model.sample(data=stan_data,
                            chains=4,
-                           iter_warmup=1000, 
-                           iter_sampling=1000)
+                           iter_warmup=2000, 
+                           iter_sampling=2000)
 
     return fit, unique_phases
 

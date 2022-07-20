@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 import math
 import fit
-from compute_uncertainties import run_mcmc, run_paul_mandel
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method):
     """
