@@ -5,10 +5,12 @@ from doctest import master
 from fileinput import filename
 import json
 from posixpath import split
+from ssl import create_default_context
 from unittest import result
 import dash
 from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output, State
+import dash_unload_component as duc
 import dash_bootstrap_components as dbc
 from dash_extensions import Download
 from dash_extensions.snippets import send_file
@@ -31,6 +33,9 @@ import sys
 import flask
 import shutil
 import fnmatch
+import glob
+import random
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Add example comment
 
@@ -58,8 +63,18 @@ elif re.search('schen',os.getcwd()):
 
 import GSASIIscriptable as G2sc
 
+def clear_directory():
+    dirs = glob.glob("calculator_report*/")
+    for dir in dirs:
+        shutil.rmtree(dir)
+    zips = glob.glob("report*")
+    for zip in zips:
+        os.remove(zip)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(clear_directory, 'interval', hours=24)
+scheduler.start()
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
-app.config.suppress_callback_exceptions=True
 server = app.server
 root_dir = os.getcwd()
 
@@ -154,7 +169,11 @@ app.layout = dbc.Container([
             html.Div("""Once your files have been uploaded, click the button below
                      to begin the analysis."""),
             html.Br(),
-            dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'),
+            dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'), 
+            html.Br(),
+            html.Br(),
+            dbc.Button(id='report-button', children='Download Analysis Report'),
+            Download(id='download-full-report'),
             html.Br(),
             dcc.Store(id='store-calculations', storage_type='session'),
             html.Br(),
@@ -164,6 +183,7 @@ app.layout = dbc.Container([
                 fullscreen=False,
                 children=html.Div(id="submit-confirmation",style={'color':'#1E8449'})
             ),
+            duc.Unload(id='page-listener'),
             html.Br(),
             html.Br(),
             html.Br()
@@ -265,9 +285,9 @@ app.layout = dbc.Container([
             #
             html.Br(),
             html.Br(),
-            html.Div(id='graph-placeholder',children=[ 
+            html.Div(id='norm-int-placeholder',children=[ 
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'graph-dropdown',
+                            id = 'norm-int-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -275,9 +295,14 @@ app.layout = dbc.Container([
                         Deviation from a constant value indicates unaccounted for factors in normalization,
                         such as texture, instrument calibration, and/or microstructure effects"""),
             dcc.Graph(id='normalized-intensity-plot'),
-            
-            # Graph of the two_theta values
             html.Br(),
+            html.Div(id='graph-placeholder',children=[ 
+                dcc.Dropdown(options = ['Dataset: 1'], 
+                            id = 'graph-dropdown',
+                            value='Dataset: 1')
+             ]),
+            html.Br(),
+            # Graph of the two_theta values
             # Doesn't look like newlines work, but I'd like to separate this a bit more.
             html.Div("""Plot of the difference between the fit and theoretical two theta values. \n
                         Nominally all values should be near zero. \n
@@ -500,6 +525,7 @@ def func(n_clicks):
     Output('plot-placeholder', 'children'),
     Output('table-placeholder', 'children'),
     Output('graph-placeholder', 'children'),
+    Output('norm-int-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
     Output('pf-uncert-fig','figure'),
@@ -521,8 +547,33 @@ def update_output(n_clicks,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
                   use_default_files, use_example05_files, use_example06_files,inference_method_value):
+    '''Callback for the "Begin Analysis" button, runs our expensive compute_results function
 
+    Args:
+       n_clicks: button clicks
+       xrdml_contents: contents for x-ray diffraction files
+       xrdml_fnames: list of names for x-ray diffraction files
+       instprm_contents: contents for instrument parameter file
+       instprm_fname: name of instrument parameter file
+       cif_contents: contents for .cif files
+       cif_fnames: list of names for .cif files
+       use_default_files: checkbox to use example data 1
+       use_example05_files: checkbox to use example data 5
+       use_example06_files: checkbox to use example data 6
+       inference_method_value: selection for statistical inference method
 
+    Returns:
+        plot_dropdown: dropdown created for the raw and fit data graphs
+        table_dropdown: dropdown created for the norm_int table and phase_frac table
+        graph_dropdown: dropdown created for the difference in theo_int graph and phase_frac variation graph
+        norm_int_dropdown: dropdown for the variation in normalized intensity graph
+        master_dict: dictionary created to store data from compute_results
+        conf: return to show that app is done loading
+
+    Raises:
+       
+    '''
+    
     # point towards directory and upload data using GSASII
     # Default data location
     print(use_default_files)
@@ -615,11 +666,13 @@ def update_output(n_clicks,
     altered_phase = {}
     altered_ti = {}
     fit_points = {}
-    # Now, we just run the desired computations
+    #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
         fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc,inference_method)
         temp_string = 'Dataset: ' + str(x + 1)
 
+        #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
+        #some are duplicated because they needed to be converted in multiple ways
         results_table[temp_string] = results_df
         phase_frac[temp_string] = phase_frac_DF
         two_thetas[temp_string] = two_theta.tolist()
@@ -638,17 +691,15 @@ def update_output(n_clicks,
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
     
-    # table for plotting intensity results
+    # convert Dataframes to dictionaries, and save the table and cols in a tuple
     for key, value in results_table.items():
         intensity_tbl, tbl_columns = compute_results.df_to_dict(value.round(3))
         results_table[key] = (intensity_tbl, tbl_columns)
 
-    # table for plotting phase fraction results
     for key, value in phase_frac.items():
         phase_frac_dict, phase_frac_col = compute_results.df_to_dict(value.round(3))
         phase_frac[key] = (phase_frac_dict, phase_frac_col)
 
-    # table for plotting uncertainty table
     for key, value in uncert.items():
         uncert_dict, uncert_col = compute_results.df_to_dict(value.round(3))
         uncert[key] = (uncert_dict, uncert_col)
@@ -657,6 +708,7 @@ def update_output(n_clicks,
         ti_dict, ti_cols = compute_results.df_to_dict(value.round(5))
         ti_tables[key] = (ti_dict, ti_cols)
 
+    #convert duplicate dataframes to different format(df_to_dict('dict') rather than 'records')
     for key, value in altered_results.items():
         res_table, res_col = compute_results.df_to_dict(value.round(3))
         res_table = value.to_dict('dict')
@@ -684,11 +736,15 @@ def update_output(n_clicks,
         'fit_points':fit_points
     }
     
+    #create html components to replace the placeholders in the app
     plot_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'plot-dropdown',
-                     value='Dataset: 1')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], id = 'plot-dropdown')
+    ])
+
+    norm_int_dropdown = html.Div([
+        'Please select a dataset to view',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], id = 'norm-int-dropdown')
     ])
 
     table_dropdown = html.Div([
@@ -710,6 +766,7 @@ def update_output(n_clicks,
     return (plot_dropdown,
             table_dropdown,
             graph_dropdown,
+            norm_int_dropdown,
             master_dict,
             conf,
             pf_figure)
@@ -719,36 +776,68 @@ def update_output(n_clicks,
     Output('fitted-intensity-plot', 'figure'),
     Input('store-calculations', 'data'),
     Input('plot-dropdown', 'value'),
-    prevent_initial_call=True
+    prevent_initial_call = True
 )
 def update_figures(data, value):
     
+    
+    '''
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        value: dataset selected from dropdown
+
+    Returns:
+        raw_fig: raw data figure dynamically created in callback
+        fig_fit_hist: fit data figure dynamically created in callback
+
+    Raises:
+        
+    '''
     if data is None:
         return go.Figure(), go.Figure()
 
     fit_data = data.get('fit_points').get(value)
     current_two_theta = data.get('two_thetas').get(value)
+    
+    #option to select all datasets
+    if value == 'View all datasets':
+        created_raw = []
+        created_fit = []
+        for key, data_value in data.get('fit_points').items():
+            current_two_theta = data.get('two_thetas')[key]
+            
+            raw_fig = go.Figure()
+            raw_fig.add_trace(go.Scatter(x=current_two_theta,y=data_value[0],mode='lines',name='data: ' + str(key)))
+            created_raw.append(raw_fig)
 
-    df = pd.DataFrame({
-        "two_theta":current_two_theta,
-        "intensity":fit_data[0]
-    })
+            fig_fit_hist = compute_results.create_fit_fig(current_two_theta, data_value, key)
+            created_fit.append(fig_fit_hist)
 
-    raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+        #graph data can be added together as tuples
+        raw_graph_data = ()
+        fit_graph_data = ()
+        for i in range(len(created_raw)):
+            raw_graph_data += created_raw[i].data
+            fit_graph_data += created_fit[i].data
 
-    fig_fit_hist = go.Figure()
+        big_raw = go.Figure(raw_graph_data)
+        big_fit = go.Figure(fit_graph_data)
+        return big_raw, big_fit
+    else:
+        #select a specific dataset from the dropdown
+        fit_data = data.get('fit_points').get(value)
+        current_two_theta = data.get('two_thetas').get(value)
 
-    fig_fit_hist.add_trace(go.Scatter(x=current_two_theta,y=fit_data[0],mode='markers',name='data'))
-    fig_fit_hist.add_trace(go.Scatter(x=current_two_theta,y=fit_data[1],mode='markers',name='background'))
-    fig_fit_hist.add_trace(go.Scatter(x=current_two_theta,y=fit_data[2],mode='lines',name='fit'))
+        df = pd.DataFrame({
+            "two_theta":current_two_theta,
+            "intensity":fit_data[0]
+        })
 
-    fig_fit_hist.update_layout(
-        title="",
-        xaxis_title="2theta",
-        yaxis_title="Intensity"
-    )
+        raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
 
-    return raw_fig, fig_fit_hist
+        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, value)
+
+        return raw_fig, fig_fit_hist
 
 @app.callback(
     Output('intensity-table','data'),
@@ -759,13 +848,30 @@ def update_figures(data, value):
     Output('uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('table-dropdown', 'value'),
-    prevent_initial_call=True
+    prevent_initial_call = True
 )
 def update_tables(data, value):
 
     if data is None:
         return [], [], [], [], [], []
 
+    """shuffle through tables using created dropdown
+
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        value: dataset selected from dropdown
+
+    Returns:
+       table: table of normalized intensities 
+       cols: cols for normalized intensities data
+       frac_table: table of phase fractions
+       frac_cols: cols for phase fractions data
+       uncert_table: table of flags for users
+       uncert_cols: cols of user flags data
+
+    Raises:
+        
+    """
     table = data.get('results_table').get(value)[0]
     cols = data.get('results_table').get(value)[1]
     frac_table = data.get('phase_frac').get(value)[0]
@@ -776,30 +882,36 @@ def update_tables(data, value):
     return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
 
 @app.callback(
-    Output('normalized-intensity-plot','figure'),
     Output('two_theta-plot','figure'),
     #Output('pf-uncert-fig','figure'),
     #Output('pf-uncert-table','data'),
     #Output('pf-uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('graph-dropdown', 'value'),
-    prevent_initial_call=True
+    prevent_initial_call = True
 )
 def update_graphs(data, value):
 
     table = data.get('altered_results').get(value)[0]
     cols = data.get('altered_results').get(value)[1]
     big_df = pd.DataFrame.from_dict(table)
+    """Shuffle through two_theta difference and phase_frac variation graphs
 
-    ti_table = data.get('altered_ti').get(value)[0]
-    ti_cols = data.get('altered_ti').get(value)[1]
-    ti_df = pd.DataFrame.from_dict(ti_table)
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        value: dataset selected from dropdown
 
-    pf_table = data.get('altered_phase').get(value)[0]
-    pf_cols = data.get('altered_phase').get(value)[1]
-    pf_df = pd.DataFrame.from_dict(pf_table)
+    Returns:
+        two_theta_diff_plot: plot of differences in two_theta created dynamically
+        pf_uncert_fig: variation in phase_frac plot
+        pf_uncert_table: table of phase_frac variation data
+        pf_uncert_cols: cols of pf_uncert_table
 
-    current_two_theta = data.get('two_thetas').get(value)
+    Raises:
+        
+    """
+    table = data.get('altered_results').get(value)[0]
+    big_df = pd.DataFrame.from_dict(table)
 
     #pf_uncertainties = data.get('pf_uncerts').get(value)
 
@@ -809,11 +921,167 @@ def update_graphs(data, value):
     #pf_uncert_table = data.get('pf_uncert_table').get(value)[0]
     #pf_uncert_cols = data.get('pf_uncert_table').get(value)[1]
 
-    norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta)
     two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
     #pf_uncert_fig = compute_results.get_pf_uncertainty_fig(pf_uncertainties)
     
-    return norm_int_plot, two_theta_diff_plot#, pf_uncert_fig, pf_uncert_table, pf_uncert_cols
+    return two_theta_diff_plot#, pf_uncert_fig, pf_uncert_table, pf_uncert_cols
+
+@app.callback(
+    Output('normalized-intensity-plot','figure'),
+    Input('store-calculations', 'data'),
+    Input('norm-int-dropdown', 'value'),
+    prevent_initial_call = True
+)
+def update_norm_int(data, value):
+    """Shuffle through difference in norm_int plot
+
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        value: dataset selected from dropdown
+
+    Returns:
+        norm_int_plot: plot of variation in normalized intensities created dynamically
+
+    Raises:
+        
+    """
+    #option to view all datasets in one graph
+    if value == 'View all datasets':
+        created_plots = []
+        for key, data_value in data.get('altered_results').items():
+            big_df = pd.DataFrame.from_dict(data_value[0])
+
+            ti_table = data.get('altered_ti')[key][0]
+            ti_df = pd.DataFrame.from_dict(ti_table)
+
+            pf_table = data.get('altered_phase')[key][0]
+            pf_df = pd.DataFrame.from_dict(pf_table)
+
+            current_two_theta = data.get('two_thetas')[key]
+
+            temp_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, key)
+            created_plots.append(temp_plot)
+
+        #graph data can be added together as tuples
+        big_fig_data = ()
+        for i in range(len(created_plots)):
+            big_fig_data += created_plots[i].data
+
+        big_fig = go.Figure(big_fig_data)
+        return big_fig
+    else:
+        #option to select a single dataset
+        table = data.get('altered_results').get(value)[0]
+        big_df = pd.DataFrame.from_dict(table)
+
+        ti_table = data.get('altered_ti').get(value)[0]
+        ti_df = pd.DataFrame.from_dict(ti_table)
+
+        pf_table = data.get('altered_phase').get(value)[0]
+        pf_df = pd.DataFrame.from_dict(pf_table)
+
+        current_two_theta = data.get('two_thetas').get(value)
+
+        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, value)
+
+        return norm_int_plot
+
+@app.callback(
+    Output('download-full-report', 'data'),
+    Input('store-calculations', 'data'),
+    Input('report-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def create_zip_report(data, n_clicks):
+    """create and send a .zip file of a report with the calculated data 
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        n_clicks: button clicks
+
+    Returns:
+        send_file('report.zip'): send created .zip file to be downloaded
+
+    Raises:
+        
+    """
+    hash = random.randrange(10000)
+    if data == None or n_clicks is None:
+        raise dash.exceptions.PreventUpdate
+    
+    temp_path = os.path.join(root_dir, 'calculator_report' + str(hash))
+
+    os.mkdir(temp_path)
+    
+    #make directory for each dataset
+    for creation_key, dataset_value in data.get('results_table').items():
+        dataset_path = os.path.join(temp_path, creation_key)
+        if not(os.path.isdir(dataset_path)):
+            os.mkdir(dataset_path)
+            
+    #make raw and fit data figures
+    for key, value in data.get('fit_points').items():
+        current_two_theta = data.get('two_thetas')[key]
+
+        temp_df = pd.DataFrame({
+        "two_theta":current_two_theta,
+        "intensity":value[0]
+        })
+
+        raw_fig = px.line(temp_df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+
+        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, value, key)
+
+        #send figs to pdfs
+        raw_fig.write_image(os.path.join(temp_path, key, 'raw_data.pdf'))
+        fig_fit_hist.write_image(os.path.join(temp_path, key, 'fit_data.pdf'))
+
+    #get tables and send to .csv files
+    for key, value in data.get('results_table').items():
+        results_df = pd.DataFrame.from_dict(value[0])
+        results_df.to_csv(os.path.join(temp_path, key, 'norm_int.csv'))
+    
+    for key, value in data.get('phase_frac').items():
+        phase_frac_df = pd.DataFrame.from_dict(value[0])
+        phase_frac_df.to_csv(os.path.join(temp_path, key, 'phase_frac.csv'))
+
+    for key, value in data.get('pf_uncerts').items():
+        remade_df = pd.DataFrame(value['mu_df'], columns=['which_phase', 'value'])
+        value['mu_df'] = remade_df
+
+        pf_uncert_fig = compute_results.get_pf_uncertainty_fig(value)
+        pf_uncert_fig.write_image(os.path.join(temp_path, key, 'pf_uncert_fig.pdf'))
+
+    for key, value in data.get('altered_results').items():
+        big_table = value[0]
+        big_df = pd.DataFrame.from_dict(big_table)
+
+        altered_ti = data.get('altered_ti')[key][0]
+        ti_df = pd.DataFrame.from_dict(altered_ti)
+
+        altered_phase = data.get('altered_phase')[key][0]
+        phase_df = pd.DataFrame.from_dict(altered_phase)
+
+        current_two_theta = data.get('two_thetas')[key]
+
+        two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
+        norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta, key)
+        norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
+        two_theta_diff_plot.write_image(os.path.join(temp_path, key, 'two_theta_diff.pdf'))
+
+    #send directory to zip and return
+    report_str = 'report' + str(hash)
+    shutil.make_archive(report_str, 'zip', 'calculator_report' + str(hash))
+    return send_file(report_str + '.zip')
+
+@app.callback(
+    Output('store-calculations', 'clear_data'),
+    Input('page-listener', 'close')
+)
+def tab_close(close):
+    if close == True:
+        return True
+    else:
+        return None
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0',debug=True,port=8050) 
@@ -821,6 +1089,10 @@ if __name__ == '__main__':
 @server.route("/AusteniteCalculator/app/")
 def download():
     return flask.send_from_directory(root_dir, "austenitecalculator.pdf")
+
+@server.route("/AusteniteCalculator/app/")
+def download_report():
+    return flask.send_from_directory(root_dir, "report.zip")
 
 @server.route("/AusteniteCalculator/server_datadir/DefaultInstprmFiles/")
 def download_instprm():

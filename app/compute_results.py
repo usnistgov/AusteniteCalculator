@@ -1,4 +1,5 @@
 from bdb import Breakpoint
+from cProfile import label
 from enum import unique
 from tkinter import TRUE
 import plotly.express as px
@@ -686,15 +687,35 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print(flags_DF)
     return flags_DF
 
-def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta):
-    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
+def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta, dataset):
+    """Creates plot of variation in normalized intensities
 
-        fig_norm_intensity = px.scatter(DF_merged_fit_theo, x="pos_fit", y="n_int", color="Phase",
-                            labels = {
-                                'pos_fit':'2-theta',
-                                'n_int':'Normalized Intensity'
-                                }
-                            )
+    Args:
+        DF_merged_fit_theo: dataframe of fit values(Dataframe)
+        tis: Dataframe of theoretical intensities (Dataframe)
+        DF_phase_fraction: Dataframe of phase fraction values (Dataframe)
+        two_theta: List of two thetas(List)
+        
+    Returns:
+        fig_norm_intensity: plotly figure showing the variation in normalized intensity for each phase
+
+    Raises:
+
+    """
+    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
+        fig_norm_intensity = go.Figure()
+        phase_list = DF_merged_fit_theo['Phase'].unique().tolist()
+        for i in range(len(phase_list)):
+            temp_df = DF_merged_fit_theo.iloc[:0,:].copy()
+            for index, row in DF_merged_fit_theo.iterrows():
+                if row['Phase'] == phase_list[i]:
+                    temp_df = temp_df.append([row])
+
+            fig_norm_intensity.add_trace(go.Scatter(x=temp_df['pos_fit'],
+                                                    y=temp_df['n_int'],
+                                                    mode='markers',
+                                                    name=phase_list[i] + '(' + str(dataset) + ')'))
+
         # I'd like to have the color be the same, but haven't figured out how.
         for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
             fig_norm_intensity.add_trace(
@@ -702,7 +723,7 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
                             x=two_theta,
                             y=[value]*len(two_theta),
                             mode='lines',
-                            name="Mean "+DF_phase_fraction["Phase"][i] )
+                            name="Mean "+DF_phase_fraction["Phase"][i] + '(' + str(dataset) + ')')
                         )
         
         ## Add crosses to indicate values that didn't work
@@ -723,6 +744,34 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
         fig_norm_intensity = go.Figure()
 
     return fig_norm_intensity
+
+def create_fit_fig(two_thetas, intensity_list, dataset):
+    """Creates plot of fit intensity vs two_theta data
+
+    Args:
+        two_thetas: list of two_theta values
+        intensity_list: list of various fitted intensity data(raw, fit, background)
+        dataset: current dataset graph being created
+        
+    Returns:
+        fig_fit_hist: plotly figure of fit intensity vs two_theta data
+
+    Raises:
+
+    """
+    fig_fit_hist = go.Figure()
+
+    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[0],mode='markers',name='data: ' + str(dataset)))
+    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[1],mode='markers',name='background: ' + str(dataset)))
+    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[2],mode='lines',name='fit: ' + str(dataset)))
+
+    fig_fit_hist.update_layout(
+        title="",
+        xaxis_title="2theta",
+        yaxis_title="Intensity"
+    )
+
+    return fig_fit_hist
 
 
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
