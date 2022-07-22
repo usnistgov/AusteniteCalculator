@@ -14,7 +14,6 @@ import dash_unload_component as duc
 import dash_bootstrap_components as dbc
 from dash_extensions import Download
 from dash_extensions.snippets import send_file
-#from dash.dash_table.Format import Format, Scheme, Trim # Tried to set format, failed...
 
 # plotting
 import plotly.express as px
@@ -255,23 +254,6 @@ app.layout = dbc.Container([
             html.Div("""Table of Phase Fractions"""),
             dash_table.DataTable(id='phase-frac-table'),
             
-            #? Format data output
-            # Tried example from https://community.plotly.com/t/dash-table-formatting-decimal-place/34975/8, https://formattable.pythonanywhere.com/
-            # But keep running into issues
-            #dash_table.DataTable(id='intensity-table',format=Format(precision=2, scheme=Scheme.fixed)), #tried to set format, failed unexpeced keyword arguement 'format'
-#            dash_table.DataTable(id='intensity-table',
-#            columns=[
-#                {
-#                    "name": i,
-#                    "id": i,
-#                    "type": "numeric",  # Required!
-#                    "format": formatted
-#                }
-#                for i in df.columns
-#            ],
-#            data=df.to_dict("records"),
-#            editable=True,
-#            ),
             html.Br(),
             html.Div("""Flagged Notes to Users"""),
             dash_table.DataTable(id='uncert-table'),
@@ -303,7 +285,7 @@ app.layout = dbc.Container([
              ]),
             html.Br(),
             # Graph of the two_theta values
-            # Doesn't look like newlines work, but I'd like to separate this a bit more.
+            
             html.Div("""Plot of the difference between the fit and theoretical two theta values. \n
                         Nominally all values should be near zero. \n
                         Large deviations for single peaks indicate the fit may not be correct. \n
@@ -684,7 +666,7 @@ def update_output(n_clicks,
         fit_points[temp_string] = fit_data
 
     # run MCMC using full results
-    #breakpoint()
+    
     stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
     pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
     
@@ -883,9 +865,6 @@ def update_tables(data, value):
 
 @app.callback(
     Output('two_theta-plot','figure'),
-    #Output('pf-uncert-fig','figure'),
-    #Output('pf-uncert-table','data'),
-    #Output('pf-uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('graph-dropdown', 'value'),
     prevent_initial_call = True
@@ -913,18 +892,9 @@ def update_graphs(data, value):
     table = data.get('altered_results').get(value)[0]
     big_df = pd.DataFrame.from_dict(table)
 
-    #pf_uncertainties = data.get('pf_uncerts').get(value)
-
-    #remade_df = pd.DataFrame(pf_uncertainties['mu_df'], columns=['which_phase', 'value'])
-    #pf_uncertainties['mu_df'] = remade_df
-
-    #pf_uncert_table = data.get('pf_uncert_table').get(value)[0]
-    #pf_uncert_cols = data.get('pf_uncert_table').get(value)[1]
-
     two_theta_diff_plot = compute_results.two_theta_compare_figure(big_df)
-    #pf_uncert_fig = compute_results.get_pf_uncertainty_fig(pf_uncertainties)
     
-    return two_theta_diff_plot#, pf_uncert_fig, pf_uncert_table, pf_uncert_cols
+    return two_theta_diff_plot
 
 @app.callback(
     Output('normalized-intensity-plot','figure'),

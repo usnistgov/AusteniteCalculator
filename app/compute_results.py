@@ -61,7 +61,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     ########################################
     # Caculate the theoretical intensities from cif files
     ########################################
-    #? Could this be merged with Read in Phase data?
     print("\n\n Calculate Theoretical Intensities\n")
 
     tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
@@ -120,8 +119,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     # 0.5 on example 5 will result in negative intensities being fit
     # tis['two_theta']+= 0.5
     #peaks_list=tis['two_theta']+0.5
-    
-    #breakpoint()
 
     peaks_ok = False
     fit_attempts = 0
@@ -206,10 +203,6 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     ########################################
     print("\n\n Create dataframe from fit data \n")
 
-    #print(hist.data['Peak List']['peaks'])
-    #print(hist.data['Peak List']['sigDict'])
-    #hist.Peaks['sigDict'][name]
-
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
     DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
@@ -219,20 +212,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     DF_merged_fit_theo["Peak_Fit_Success"]= peak_verify
     DF_merged_fit_theo["Peak_Fit_Success"] = DF_merged_fit_theo["Peak_Fit_Success"].astype('bool')
     
-    #print(DF_merged_fit_theo)
-    
-    #print(list(range(len(DF_merged_fit_theo.index))))
-    #print(hist.data['Peak List']['sigDict']['int0'])
-    
     ##### Extract uncertainties from the fitting process
     u_pos_fit_list=[]
     u_int_fit_list=[]
     for i in list(range(len(DF_merged_fit_theo.index))):
-        #print(i)
         u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
         u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
-        #print(hist.data['Peak List']['sigDict']['int'+str(i)])
-        #print(hist.data['Peak List']['sigDict']['pos'+str(i)])
 
     DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
     DF_merged_fit_theo['u_int_fit']=u_int_fit_list
@@ -245,17 +230,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     
     #DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
 
-
     DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos_fit')
     DF_merged_fit_theo = DF_merged_fit_theo.reset_index(drop=True)
 
     ##### add relative uncertainties.  Maybe cut later, but diagnostic for now
     DF_merged_fit_theo['rel_int_fit']=DF_merged_fit_theo['u_int_fit']/DF_merged_fit_theo['int_fit']
     DF_merged_fit_theo['rel_int_count']=DF_merged_fit_theo['u_int_count']/DF_merged_fit_theo['int_fit']
-    #print(DF_merged_fit_theo)
 
     #DF_merged_fit_theo = DF_merged_fit_theo.loc[(0 < DF_merged_fit_theo.sig) & (DF_merged_fit_theo.sig < 90),:]
-    #print(DF_merged_fit_theo)
 
     # Merge the theoretical and experimental peak values
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
@@ -267,71 +249,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
 
     DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['two_theta']
 
-
-        
     ########################################
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)
-
-    ########################################
-    ########################################
-    # Create Plots
-    ########################################
-    ########################################
-    # Moved all plotting functions to the end, allows use of all data in plot
-
-    ########################################
-    # Create Figure of raw data
-    ########################################
-    # display the raw intensity vs. two_theta data
-    print("Create Raw Data Figure \n")
-    fig_raw_hist = get_figures(hist)
-
-    ########################################
-    # Create Fit Figure
-    ########################################
-    print("Create Fit Figure \n")
-
-    # Create a figure with the fit data
-    #? Does this belong in a function?
-    fig_fit_hist = go.Figure()
-
-    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_data,mode='markers',name='data'))
-    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_background,mode='markers',name='background'))
-    fig_fit_hist.add_trace(go.Scatter(x=two_theta,y=h_fit,mode='lines',name='fit'))
-
-    fig_fit_hist.update_layout(
-        title="",
-        xaxis_title="2theta",
-        yaxis_title="Intensity"
-    )
+    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)    
 
     fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
 
-    ########################################
-    # Create Plot the Normalized Intensities
-    ########################################
-    print("Create Normalized Intensities Figure \n")
-
-    ########################################
-    # Create Plot comparing the two theta positions
-    ########################################
-    print("Create Two Theta Comparison Figure \n")
-    
-
-    ##############################
-    # Create phase fraction plot #
-    ##############################
-
-
-    ########################################
-    # Resort dataframes for output
-    ########################################
-    #DF_phase_fraction = DF_phase_fraction.reindex(columns=["Phase","Phase_Fraction","Phase_Fraction_StDev",
-    #        "Number_hkls","hkls","Mean_nint","StDev_nint"])
-    
+   #return a bunch of data in dataframes, plots are created dynamically
     return (fit_data, 
             DF_merged_fit_theo,   
             DF_phase_fraction,
@@ -377,10 +303,6 @@ def get_figures(hist):
         "intensity":hist.data['data'][1][1]
     })
 
-    # I'd like the lines to be in black, with markers, but I keep failing at that.
-    #fig = px.line(x=df['two_theta'],y=df['intensity'],color='#000000')#,markers=True)
-    #fig.set_color('black')
-
     fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
     return fig
 
@@ -416,10 +338,6 @@ def two_theta_compare_figure(Merged_DataFrame):
                         'two_theta':'two theta value'
                         }
                     )
-                    
-     ## Add a diagonal line in the background, https://github.com/plotly/plotly_express/issues/143
-#    fig = px.line(x=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]],
-#                  y=[Merged_DataFrame["two_theta"][0],Merged_DataFrame["two_theta"][-1]])
     
     return fig
 
@@ -482,7 +400,6 @@ def find_two_theta_in_range(sin_theta, hist):
     """
     two_theta=[np.nan]*len(sin_theta)
     for i,value in enumerate(sin_theta):
-        #print(value)
         try:
             two_theta[i]=(2*math.degrees(math.asin(value)))
         except:
@@ -550,7 +467,6 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     # Ran into this for Example 06
     ti_table= ti_table.loc[(ti_table["R_calc"]>0)]
     
-    #print(ti_table)
     return ti_table
 
 #####################################
@@ -582,8 +498,6 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inf
     })
 
     fraction_dict = {} # DN: not sure why we need this?
-    
-    #print(phase_list)
 
     # first, fill in table
     for ii, phase in enumerate(phase_list):
@@ -636,8 +550,6 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inf
     print(phase_fraction_DF)
     
     return phase_fraction_DF, DF_flags
-        #['h','k','l','n_int']
-    #df.loc[df['column_name'] == some_value]
 
 
 #####################################
@@ -682,8 +594,6 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     
     #flags_DF.sort_values(by=["Value"],inplace=True)
     
-    #print(DF_to_append)
-    #print(flags_DF)
     return flags_DF
 
 def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta, dataset):
@@ -884,8 +794,6 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
     # 0.5 on example 5 will result in negative intensities being fit
     # tis['two_theta']+= 0.5
     #peaks_list=tis['two_theta']+0.5
-    
-    #breakpoint()
 
     peaks_ok = False
     fit_attempts = 0
