@@ -24,11 +24,10 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     hist.set_refinements({'Background': {"no. coeffs": Chebyschev_coeffiecients,'type': 'chebyschev-1', 'refine': True}})
     hist.refine_peaks()
 
-    #print("Assign from peaks_list\n")
     # Fit all of the peaks in the peak list
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
-        #print("peak location ", peak)
+        
     # Use this order (based on Vulcan process)
     #? otherwise fitting gets unstable
     #? How to make the fitting more stable?
@@ -101,8 +100,6 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
         if(not(peak_verify[x])):
             temp_list.append(x)
 
-    #temp_list = peaks_list
-
     # First fit only the area
     hist.set_peakFlags(peaklist = temp_list, area=True)
     hist.refine_peaks(mode = 'hold')
@@ -151,8 +148,6 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
         if(not(peak_verify[x])):
             temp_list.append(x)
 
-    #temp_list = peaks_list
-
     # First fit only the area
     hist.set_peakFlags(peaklist = temp_list, area=True)
     hist.refine_peaks(mode = 'hold')
@@ -189,7 +184,7 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     # Fit all of the peaks in the peak list
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
-        #print("peak location ", peak)
+        
     # Use this order (based on Vulcan process)
     #? otherwise fitting gets unstable
     #? How to make the fitting more stable?
@@ -200,7 +195,6 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
         if(not(peak_verify[x])):
             temp_list.append(x)
 
-    #temp_list = peaks_list
     # First fit only the area
     hist.set_peakFlags(peaklist = temp_list, area=True)
     hist.refine_peaks(mode = 'hold')
@@ -237,7 +231,6 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     # Fit all of the peaks in the peak list
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
-        #print("peak location ", peak)
     # Use this order (based on Vulcan process)
     #? otherwise fitting gets unstable
     #? How to make the fitting more stable?
@@ -285,7 +278,6 @@ def fit_instprm_file(hist, peaks_list, Chebyschev_coeffiecients=5):
     # Fit all of the peaks in the peak list
     for peak in peaks_list:
         hist.add_peak(1, ttheta=peak)
-        #print("peak location ", peak)
     # Use this order (based on Vulcan process)
     #? otherwise fitting gets unstable
     #? How to make the fitting more stable?
@@ -344,11 +336,9 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
             back_counts=back_counts+hist.data['data'][1][4][index]
             fit_counts=fit_counts+hist.data['data'][1][3][index]
             data_counts=data_counts+hist.data['data'][1][1][index]
-            # print(index, hist.data['data'][1][0][index],hist.data['data'][1][4][index])
+
         print("Counts: ",back_counts,fit_counts,data_counts,data_counts-back_counts, peak[2]/(data_counts-back_counts) )
-        #print(peak[2],back_counts,peak[2]/back_counts,"\n")
-        #print(peak[2]/math.sqrt(back_counts+peak[2]))
-        #print(peak[2],back_counts,back_counts+peak[2], math.sqrt(back_counts+peak[2]))
+        
         print("\n")
         back_counts_list.append(back_counts)
         fit_counts_list.append(fit_counts)
