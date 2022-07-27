@@ -960,9 +960,22 @@ def update_norm_int(data, value):
     Output('download-full-report', 'data'),
     Input('store-calculations', 'data'),
     Input('report-button', 'n_clicks'),
+    State('upload-data-xrdml','contents'),
+    State('upload-data-xrdml','filename'),
+    State('upload-data-instprm','contents'),
+    State('upload-data-instprm','filename'),
+    State('upload-cif','contents'),
+    State('upload-cif','filename'),
+    State('default-files-check','value'),
+    State('example05-files-check','value'),
+    State('example06-files-check','value'),
     prevent_initial_call=True
 )
-def create_zip_report(data, n_clicks):
+def create_zip_report(data, n_clicks, 
+                    xrdml_contents,xrdml_fnames,
+                    instprm_contents,instprm_fname,
+                    cif_contents,cif_fnames,
+                    use_default_files, use_example05_files, use_example06_files):
     """create and send a .zip file of a report with the calculated data 
     Args:
         data: data saved in dcc.Store from running compute_results
@@ -981,7 +994,15 @@ def create_zip_report(data, n_clicks):
     temp_path = os.path.join(root_dir, 'calculator_report' + str(hash))
 
     os.mkdir(temp_path)
-    
+
+    send_input=True
+
+    if use_default_files not in [None, []] and use_default_files[0] == 1:
+        send_input=False
+    elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
+        send_input=False
+    elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
+        send_input=False
     #make directory for each dataset
     for creation_key, dataset_value in data.get('results_table').items():
         dataset_path = os.path.join(temp_path, creation_key)
@@ -1037,6 +1058,44 @@ def create_zip_report(data, n_clicks):
         norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta, key)
         norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
         two_theta_diff_plot.write_image(os.path.join(temp_path, key, 'two_theta_diff.pdf'))
+
+    if send_input:
+        instprm_type, instprm_string = instprm_contents.split(',')
+
+        decoded = base64.b64decode(instprm_string)
+        f = open(temp_path + '/' + 'Input' + '/' + instprm_fname,'w')
+        to_write = decoded.decode('utf-8')
+        if re.search('(instprm$)',instprm_fname) is not None:
+            to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+        
+        # next, read the cif files
+        for i in range(len(cif_contents)):
+            contents = cif_contents[i]
+            fname = cif_fnames[i]
+
+            content_type, content_string = contents.split(',')
+
+            decoded = base64.b64decode(content_string)
+            f = open(temp_path + '/' + 'Input' + '/' + fname,'w')
+            to_write = decoded.decode('utf-8')
+            to_write = re.sub('\\r','',to_write)
+            f.write(to_write)
+            f.close()
+        
+        for i in range(len(xrdml_contents)):
+            contents = xrdml_contents[i]
+            fname = xrdml_fnames[i]
+            
+            content_type, content_string = contents.split(',')
+
+            decoded = base64.b64decode(content_string)
+            f = open(temp_path + '/' + 'Input' + '/' + fname,'w')
+            to_write = decoded.decode('utf-8')
+            to_write = re.sub('\\r','',to_write)
+            f.write(to_write)
+            f.close()
 
     #send directory to zip and return
     report_str = 'report' + str(hash)
