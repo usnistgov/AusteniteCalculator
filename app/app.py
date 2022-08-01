@@ -153,13 +153,13 @@ app.layout = dbc.Container([
             ),
             # inference method
             html.Hr(),
-            html.Div("Statistical Inference Method:"),
+            html.Div("Statistical Inference Option:"),
             dbc.RadioItems(
                 options=[
-                    {"label": "Hierarchical Bayesian (more accurate, but slower to run)", "value": 1},
-                    {"label": "Paul Mandel (less accurate, but faster to run)", "value": 2}
+                    {"label": "Perform statistical inference (MCMC)", "value": 1},
+                    {"label": "Skip the inference for now", "value": 2}
                 ],
-                value=2,
+                value=1,
                 id="inference-method",
             ),
 
@@ -560,11 +560,6 @@ def update_output(n_clicks,
     # Default data location
     print(use_default_files)
 
-    if inference_method_value == 1:
-        inference_method = 'bayes'
-    elif inference_method_value == 2:
-        inference_method = 'paul_mandel'
-
     if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
         #datadir = '../ExampleData/Example01'
@@ -650,7 +645,7 @@ def update_output(n_clicks,
     fit_points = {}
     #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc,inference_method)
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
 
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
@@ -667,8 +662,14 @@ def update_output(n_clicks,
 
     # run MCMC using full results
     
-    stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
-    pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
+    if inference_method_value == 1:
+    
+        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
+        pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
+
+    elif inference_method_value == 2:
+        stan_fit, unique_phases = None, None
+        pf_figure = go.Figure()
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
