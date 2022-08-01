@@ -722,12 +722,16 @@ def update_output(n_clicks,
     #create html components to replace the placeholders in the app
     plot_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], id = 'plot-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+                    id = 'plot-dropdown',
+                    value = 'Dataset: 1')
     ])
 
     norm_int_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], id = 'norm-int-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+                     id = 'norm-int-dropdown',
+                     value="Dataset: 1")
     ])
 
     table_dropdown = html.Div([
@@ -872,6 +876,9 @@ def update_tables(data, value):
 )
 def update_graphs(data, value):
 
+    if data is None:
+        return go.Figure()
+
     table = data.get('altered_results').get(value)[0]
     cols = data.get('altered_results').get(value)[1]
     big_df = pd.DataFrame.from_dict(table)
@@ -916,6 +923,9 @@ def update_norm_int(data, value):
     Raises:
         
     """
+    if data is None:
+        return go.Figure()
+
     #option to view all datasets in one graph
     if value == 'View all datasets':
         created_plots = []
