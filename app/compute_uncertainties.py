@@ -43,22 +43,37 @@ def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
     return res_dict
 
 
-def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
+def run_paul_mandel(results_table):
 
-    I = np.array(I)[pfs]
-    R = np.array(R)[pfs]
-    sigma_I = np.array(sigma_I)[pfs]
-    phases = np.array(phases)[pfs]
+    intables = list(results_table.values())
+
+    # create numeric sample ids
+    for ii, val in enumerate(intables): 
+        intables[ii] = intables[ii].loc[intables[ii]['Peak_Fit_Success'],:]
+        intables[ii]['sample_id'] = ii+1
+
+    indata = pd.concat(intables,axis=0).reset_index(drop=True)
+
+    mydf = pd.DataFrame({
+        'I':indata.int_fit,
+        'R':indata.R_calc,
+        'sigma_I':indata.u_int_fit,
+        'phases':indata.Phase,
+        'two_th':indata.two_theta,
+        'sample_id':indata.sample_id
+    })
 
 
-    phase_counts = np.unique(phases, return_counts=True)[1]
+    # create numeric phase id's
+    mydf['phase_id'] = 0
+    unique_phases = np.unique(mydf.phases)
 
-    if np.min(phase_counts) <= 2:
-        return None
+    for ii, pn in enumerate(unique_phases):
+        mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
 
-    phase_names = phases.copy()
-
-    Z = I/R
+    # compute normalized intensities
+    mydf['IR'] = mydf.I / mydf.R
+    mydf['sig_IR'] = mydf['sigma_I']/mydf.R
     # unceratinty from fitting and from poisson noise
     # the sqrt(x)**2 is redundant but shows thought process
     sigma_Z = np.sqrt(sigma_I**2 + np.sqrt(I)**2)/R 
