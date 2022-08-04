@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 from scipy.stats import truncnorm
 from cmdstanpy import CmdStanModel
+import sys
 
 def gen_mu_sigma(x,n_draws):
     
@@ -157,7 +158,21 @@ def run_stan(results_table):
     if len(results_table) == 1:
 
         # stan
-        exe_file = '../stan_files/one_sample.exe'
+        
+        #check OS to determine which stan executable to use
+        # Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
+        if sys.platform.startswith('win'): #windows
+            #Untested
+            exe_file = '../stan_files/one_sample.exe'
+        elif sys.platform.startswith('darwin'): # MacOS
+            exe_file = '../stan_files/one_sample'
+        elif sys.platform.startswith('linux'):
+            # Untested.  If we include precompiled files, we may need to change the filename
+            exe_file = '../stan_files/one_sample'
+        else:
+            print("Not a recognized OS")
+        
+        
         model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
