@@ -61,6 +61,25 @@ to start the flask server. The application should then be visible at localhost:8
 
 You may need to edit the app.py file before the `import GSASIIscriptable as G2sc` line so that the application can find your local installation of GSAS-II to use the scripting toolkit
 
+#### Stan install on a mac  
+
+Some of the uncertainty calculations use the package cmdstanpy (https://mc-stan.org/cmdstanpy/).  We've run into some issues where the cmdstanpy package does not compile or install properly. It seems to be a known issue as of 4 Aug 2022, as indicated in their v2.30 User Guide.
+To fix the issue, users may need to compile cmdstanpy and any .stan files on their own by directly specifiying the compiler to use.  I've included example paths for reference.
+
+To recompile cmdstan with a specific compiler (Mac OS clang++):
+```
+cd <cmdstan directory inside conda environment>   (/Users/creuzige/gsas2full/envs/stan-test/bin/cmdstan)
+make clean-all
+CXX=$(xcrun -f clang++) make build 
+```
+
+Then we need to compile the .stan files in the Austenite Calculator. These commands need to be run from the cmdstan directory, but the full link to the location of the stan files is needed.
+```
+CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/AusteniteCalculator/stan_files/one_sample
+CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/AusteniteCalculator/stan_files/multiple_samples
+```
+
+
 ### From a Docker Container
 
 To run the application using Docker you will first need to install Docker (installation instructions can be found [here](https://docs.docker.com/get-docker/)). Once Docker is installed, download the AusteniteCalculator repository (click 'Code' and then 'Download ZIP' at [the main repository page](https://github.com/usnistgov/AusteniteCalculator)). After decompressing the file, navigate your terminal to the main directory of the project (the same level as Dockerfile). Then, run the following command to build the image:
