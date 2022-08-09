@@ -122,7 +122,7 @@ None currently set.
 
 Every change, will need to make the html files, use:
 `make html`
-in the sphinx_docs file
+in the sphinx_docs folder
 
 # DATA & FILE OVERVIEW
 ## Files needed
