@@ -151,6 +151,12 @@ app.layout = dbc.Container([
                 ],
                 id="example06-files-check",
             ),
+
+            #start of interaction volume inputs
+            #atoms per cell-.cif file
+            #f-prime and f-doubleprime-each element in .cif
+            #
+
             # inference method
             html.Hr(),
             html.Div("Statistical Inference Method:"),
@@ -303,9 +309,12 @@ app.layout = dbc.Container([
             
             
             
-        ### --- end tab 4 --- ###
+        ### --- end tab 5 --- ###
+        dbc.Tab([
 
-        ### --- start tab 5 --- ###
+        ],
+        label='Interaction Volume'),
+        ### --- start tab 6 --- ###
 
         dbc.Tab([
             html.Br(),
@@ -664,6 +673,21 @@ def update_output(n_clicks,
         altered_phase[temp_string] = phase_frac_DF
         altered_ti[temp_string] = tis
         fit_points[temp_string] = fit_data
+
+    for x in range(len(cif_fnames)):
+        cif_path = os.path.join(datadir, cif_fnames[x])
+        elems = []
+        addon = False
+        with open(cif_path) as f:
+            lines = f.readlines()
+            for line in lines:
+                if addon:
+                    elems.append(line)
+                if line == '   _atom_site_symmetry_multiplicity':
+                    addon = True
+        
+        
+
 
     # run MCMC using full results
     
