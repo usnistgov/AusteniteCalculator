@@ -9,7 +9,7 @@ import numpy as np
 import math
 import fit
 
-def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_method):
+def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
 
     Main computation program for phase calculations
@@ -253,7 +253,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc,inference_
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user,inference_method)    
+    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user)    
 
     fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
 
@@ -470,7 +470,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     return ti_table
 
 #####################################
-def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags, inference_method):
+def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
     """Calculate Phase Fraction
     
     Args:

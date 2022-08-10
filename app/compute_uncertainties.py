@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 from scipy.stats import truncnorm
 from cmdstanpy import CmdStanModel
+import sys
 
 def gen_mu_sigma(x,n_draws):
     
@@ -43,22 +44,37 @@ def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
     return res_dict
 
 
-def run_paul_mandel(I,R,sigma_I,phases,pfs,n_draws):
+def run_paul_mandel(results_table):
 
-    I = np.array(I)[pfs]
-    R = np.array(R)[pfs]
-    sigma_I = np.array(sigma_I)[pfs]
-    phases = np.array(phases)[pfs]
+    intables = list(results_table.values())
+
+    # create numeric sample ids
+    for ii, val in enumerate(intables): 
+        intables[ii] = intables[ii].loc[intables[ii]['Peak_Fit_Success'],:]
+        intables[ii]['sample_id'] = ii+1
+
+    indata = pd.concat(intables,axis=0).reset_index(drop=True)
+
+    mydf = pd.DataFrame({
+        'I':indata.int_fit,
+        'R':indata.R_calc,
+        'sigma_I':indata.u_int_fit,
+        'phases':indata.Phase,
+        'two_th':indata.two_theta,
+        'sample_id':indata.sample_id
+    })
 
 
-    phase_counts = np.unique(phases, return_counts=True)[1]
+    # create numeric phase id's
+    mydf['phase_id'] = 0
+    unique_phases = np.unique(mydf.phases)
 
-    if np.min(phase_counts) <= 2:
-        return None
+    for ii, pn in enumerate(unique_phases):
+        mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
 
-    phase_names = phases.copy()
-
-    Z = I/R
+    # compute normalized intensities
+    mydf['IR'] = mydf.I / mydf.R
+    mydf['sig_IR'] = mydf['sigma_I']/mydf.R
     # unceratinty from fitting and from poisson noise
     # the sqrt(x)**2 is redundant but shows thought process
     sigma_Z = np.sqrt(sigma_I**2 + np.sqrt(I)**2)/R 
@@ -142,7 +158,21 @@ def run_stan(results_table):
     if len(results_table) == 1:
 
         # stan
-        exe_file = '../stan_files/one_sample.exe'
+        
+        #check OS to determine which stan executable to use
+        # Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
+        if sys.platform.startswith('win'): #windows
+            #Untested
+            exe_file = '../stan_files/one_sample.exe'
+        elif sys.platform.startswith('darwin'): # MacOS
+            exe_file = '../stan_files/one_sample'
+        elif sys.platform.startswith('linux'):
+            # Untested.  If we include precompiled files, we may need to change the filename
+            exe_file = '../stan_files/one_sample'
+        else:
+            print("Not a recognized OS")
+        
+        
         model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {

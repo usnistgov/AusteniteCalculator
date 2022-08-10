@@ -86,7 +86,7 @@ app.layout = dbc.Container([
     
     dbc.Tabs([
 
-        ### --- start tab 1 --- ###
+        ### --- start data upload tab --- ###
 
         dbc.Tab([
             
@@ -159,13 +159,13 @@ app.layout = dbc.Container([
 
             # inference method
             html.Hr(),
-            html.Div("Statistical Inference Method:"),
+            html.Div("Statistical Inference Option:"),
             dbc.RadioItems(
                 options=[
-                    {"label": "Hierarchical Bayesian (more accurate, but slower to run)", "value": 1},
-                    {"label": "Paul Mandel (less accurate, but faster to run)", "value": 2}
+                    {"label": "Perform statistical inference (MCMC)", "value": 1},
+                    {"label": "Skip the inference for now", "value": 2}
                 ],
-                value=2,
+                value=1,
                 id="inference-method",
             ),
 
@@ -196,40 +196,10 @@ app.layout = dbc.Container([
             label="Data Upload",
             id='Data Upload'),
             
-        ### --- end tab 1 --- ###
+        ### --- end data upload tab --- ###
 
-        ### --- start tab 2 --- ###
-        dbc.Tab([
-            html.Div([
-                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
-                dcc.Dropdown(['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank'], 
-                ' ', id = 'default-dropdown'),
-                html.Div(id = 'default-name', style={'display':'none'}),
-            ]),
-            html.Br(),
-            dcc.Upload(
-                    id='upload-default-xrdml',
-                    children=html.Div([
-                            dbc.Button('X-Ray Diffraction File (.xrdml)')
-                            ]),
-                            multiple=True),
-            html.Div(id='default-xrdml'),
-            html.Br(),
-            dcc.Upload(
-                    id='upload-default-cif',
-                    children=html.Div([
-                            dbc.Button('Crystallographic Information Files (.cif)')
-                            ]),
-                    multiple=True),
-            html.Div(id='default-cif'),
-            ## Button for uploading Instrument Parameter File
-            html.Br(),
-            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
-            
-        ],
-        label="Instrument Parameter Creation"),
-        ### --- end tab 2 --- ###
-        ### --- start tab 3 --- ###
+
+        ### --- start I-2theta Plots --- ###
         dbc.Tab([
             html.Br(),
             html.Div(id='plot-placeholder',children=[ 
@@ -246,9 +216,9 @@ app.layout = dbc.Container([
             ],
             label="Intensity Plots"),
         
-        ### --- end tab 3 --- ###
+        ### --- end I-2theta Plots --- ###
         
-        ### --- start tab 4 --- ###
+        ### --- start Results Tables and Plots --- ###
         dbc.Tab([
             html.Br(),
             html.Div(id='table-placeholder',children=[ 
@@ -315,6 +285,41 @@ app.layout = dbc.Container([
         ],
         label='Interaction Volume'),
         ### --- start tab 6 --- ###
+        ### --- end Results Tables and Plots --- ###
+
+        ### --- start Instrument Parameter Creation --- ###
+        dbc.Tab([
+            html.Div([
+                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
+                dcc.Dropdown(['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank'],
+                ' ', id = 'default-dropdown'),
+                html.Div(id = 'default-name', style={'display':'none'}),
+            ]),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-default-xrdml',
+                    children=html.Div([
+                            dbc.Button('X-Ray Diffraction File (.xrdml)')
+                            ]),
+                            multiple=True),
+            html.Div(id='default-xrdml'),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-default-cif',
+                    children=html.Div([
+                            dbc.Button('Crystallographic Information Files (.cif)')
+                            ]),
+                    multiple=True),
+            html.Div(id='default-cif'),
+            ## Button for uploading Instrument Parameter File
+            html.Br(),
+            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
+            
+        ],
+        label="Instrument Parameter Creation"),
+        ### --- end Instrument Parameter Creation --- ###
+
+        ### --- start About Tab --- ###
 
         dbc.Tab([
             html.Br(),
@@ -337,6 +342,7 @@ app.layout = dbc.Container([
 
         ],
         label="About")
+        ### --- end About Tab --- ###
 
     ], # end dbc.Tabs()
     id="tabs")
@@ -569,11 +575,6 @@ def update_output(n_clicks,
     # Default data location
     print(use_default_files)
 
-    if inference_method_value == 1:
-        inference_method = 'bayes'
-    elif inference_method_value == 2:
-        inference_method = 'paul_mandel'
-
     if use_default_files not in [None, []] and use_default_files[0] == 1:
         datadir = '../server_default_datadir' 
         #datadir = '../ExampleData/Example01'
@@ -659,7 +660,7 @@ def update_output(n_clicks,
     fit_points = {}
     #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc,inference_method)
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
 
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
@@ -691,8 +692,14 @@ def update_output(n_clicks,
 
     # run MCMC using full results
     
-    stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
-    pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
+    if inference_method_value == 1:
+    
+        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
+        pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
+
+    elif inference_method_value == 2:
+        stan_fit, unique_phases = None, None
+        pf_figure = go.Figure()
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
@@ -745,12 +752,16 @@ def update_output(n_clicks,
     #create html components to replace the placeholders in the app
     plot_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], id = 'plot-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+                    id = 'plot-dropdown',
+                    value = 'Dataset: 1')
     ])
 
     norm_int_dropdown = html.Div([
         'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], id = 'norm-int-dropdown')
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+                     id = 'norm-int-dropdown',
+                     value="Dataset: 1")
     ])
 
     table_dropdown = html.Div([
@@ -895,6 +906,9 @@ def update_tables(data, value):
 )
 def update_graphs(data, value):
 
+    if data is None:
+        return go.Figure()
+
     table = data.get('altered_results').get(value)[0]
     cols = data.get('altered_results').get(value)[1]
     big_df = pd.DataFrame.from_dict(table)
@@ -939,6 +953,9 @@ def update_norm_int(data, value):
     Raises:
         
     """
+    if data is None:
+        return go.Figure()
+
     #option to view all datasets in one graph
     if value == 'View all datasets':
         created_plots = []
