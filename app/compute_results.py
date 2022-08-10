@@ -173,6 +173,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
         if(np.all(peak_verify == True)):
             print("\n\n All values are within a likeable range \n")
+            
+            # Print out some of the goodness of fit data
+            try:
+                print("\n\n Goodness of fit value: ", hist.data['Peak Fit Rvals']['GOF'])
+                DF_flags_for_user=flag_phase_fraction(hist.data['Peak Fit Rvals']['GOF'],"Fitting", "Fitting Goodness of Fit (GOF)", "--ADD Guidance--", DF_to_append=DF_flags_for_user)
+            except:
+                print("Error creating Goodness of fit")
+                DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Missing Goodness of Fit (GOF) Value", "Missing bits of code in GSAS-II", DF_to_append=DF_flags_for_user)                
             peaks_ok = True
         
         elif(fit_attempts >= fit_attempt_limit):
