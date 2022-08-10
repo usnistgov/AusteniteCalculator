@@ -106,6 +106,16 @@ Alternatively, you can run, stop, and remove the container using the Docker Desk
 
 Note that the port number is different between the local installation and the docker container
 
+#### GSAS-II Modification
+To get the goodness of fit and other parameters saved with the histogram, it's necessary to add additional result parameters to the **refine_peaks** subroutine in the GSASIIscriptable.py file.  Lines to add have the `>` symbol below.
+
+```
+        peaks['sigDict'] = result[0]
+>        self.data['Peak Fit Result']=result[1]
+>        self.data['Peak Fit Sig']=result[2]
+>        self.data['Peak Fit Rvals'] =result[3]
+        return result
+```
 ## Licence
 See [license.md](license.md).
 
