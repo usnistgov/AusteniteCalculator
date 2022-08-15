@@ -73,6 +73,7 @@ Examples
    :caption: Contents:
 
    Example01
+   Example01A
    Example05
    
 =========================

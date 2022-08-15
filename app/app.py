@@ -86,7 +86,7 @@ app.layout = dbc.Container([
     
     dbc.Tabs([
 
-        ### --- start tab 1 --- ###
+        ### --- start data upload tab --- ###
 
         dbc.Tab([
             
@@ -151,6 +151,12 @@ app.layout = dbc.Container([
                 ],
                 id="example06-files-check",
             ),
+
+            #start of interaction volume inputs
+            #atoms per cell-.cif file
+            #f-prime and f-doubleprime-each element in .cif
+            #
+
             # inference method
             html.Hr(),
             html.Div("Statistical Inference Option:"),
@@ -190,40 +196,10 @@ app.layout = dbc.Container([
             label="Data Upload",
             id='Data Upload'),
             
-        ### --- end tab 1 --- ###
+        ### --- end data upload tab --- ###
 
-        ### --- start tab 2 --- ###
-        dbc.Tab([
-            html.Div([
-                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
-                dcc.Dropdown(['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank'], 
-                ' ', id = 'default-dropdown'),
-                html.Div(id = 'default-name', style={'display':'none'}),
-            ]),
-            html.Br(),
-            dcc.Upload(
-                    id='upload-default-xrdml',
-                    children=html.Div([
-                            dbc.Button('X-Ray Diffraction File (.xrdml)')
-                            ]),
-                            multiple=True),
-            html.Div(id='default-xrdml'),
-            html.Br(),
-            dcc.Upload(
-                    id='upload-default-cif',
-                    children=html.Div([
-                            dbc.Button('Crystallographic Information Files (.cif)')
-                            ]),
-                    multiple=True),
-            html.Div(id='default-cif'),
-            ## Button for uploading Instrument Parameter File
-            html.Br(),
-            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
-            
-        ],
-        label="Instrument Parameter Creation"),
-        ### --- end tab 2 --- ###
-        ### --- start tab 3 --- ###
+
+        ### --- start I-2theta Plots --- ###
         dbc.Tab([
             html.Br(),
             html.Div(id='plot-placeholder',children=[ 
@@ -240,9 +216,9 @@ app.layout = dbc.Container([
             ],
             label="Intensity Plots"),
         
-        ### --- end tab 3 --- ###
+        ### --- end I-2theta Plots --- ###
         
-        ### --- start tab 4 --- ###
+        ### --- start Results Tables and Plots --- ###
         dbc.Tab([
             html.Br(),
             html.Div(id='table-placeholder',children=[ 
@@ -303,9 +279,47 @@ app.layout = dbc.Container([
             
             
             
-        ### --- end tab 4 --- ###
+        ### --- end tab 5 --- ###
+        dbc.Tab([
 
-        ### --- start tab 5 --- ###
+        ],
+        label='Interaction Volume'),
+        ### --- start tab 6 --- ###
+        ### --- end Results Tables and Plots --- ###
+
+        ### --- start Instrument Parameter Creation --- ###
+        dbc.Tab([
+            html.Div([
+                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
+                dcc.Dropdown(['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank'],
+                ' ', id = 'default-dropdown'),
+                html.Div(id = 'default-name', style={'display':'none'}),
+            ]),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-default-xrdml',
+                    children=html.Div([
+                            dbc.Button('X-Ray Diffraction File (.xrdml)')
+                            ]),
+                            multiple=True),
+            html.Div(id='default-xrdml'),
+            html.Br(),
+            dcc.Upload(
+                    id='upload-default-cif',
+                    children=html.Div([
+                            dbc.Button('Crystallographic Information Files (.cif)')
+                            ]),
+                    multiple=True),
+            html.Div(id='default-cif'),
+            ## Button for uploading Instrument Parameter File
+            html.Br(),
+            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
+            
+        ],
+        label="Instrument Parameter Creation"),
+        ### --- end Instrument Parameter Creation --- ###
+
+        ### --- start About Tab --- ###
 
         dbc.Tab([
             html.Br(),
@@ -328,6 +342,7 @@ app.layout = dbc.Container([
 
         ],
         label="About")
+        ### --- end About Tab --- ###
 
     ], # end dbc.Tabs()
     id="tabs")
@@ -661,6 +676,21 @@ def update_output(n_clicks,
         altered_phase[temp_string] = phase_frac_DF
         altered_ti[temp_string] = tis
         fit_points[temp_string] = fit_data
+
+    for x in range(len(cif_fnames)):
+        cif_path = os.path.join(datadir, cif_fnames[x])
+        elems = []
+        addon = False
+        with open(cif_path) as f:
+            lines = f.readlines()
+            for line in lines:
+                if addon:
+                    elems.append(line)
+                if line == '   _atom_site_symmetry_multiplicity':
+                    addon = True
+        
+        
+
 
     # run MCMC using full results
     
