@@ -290,8 +290,7 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
             'unique_phase_names':unique_phase_names,
             'summary_table':summary_table}
 
-
-def generate_pf_plot(fit,unique_phase_names):
+def generate_pf_plot_and_table(fit,unique_phase_names):
     # fit from model.sample() in cmdstanpy
     mcmc_df = fit.draws_pd()
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
@@ -307,7 +306,15 @@ def generate_pf_plot(fit,unique_phase_names):
 
     quantiles = np.zeros((n_phase,2))
 
-    for ii in range(n_phase):
+    table = pd.DataFrame({
+        'Phase':unique_phase_names,
+        'PF Est':0,
+        'PF Lwr95':0,
+        'PF Upr95':0,
+        'ExpErr':0
+    })
+
+    for ii,ph in enumerate(unique_phase_names):
 
         out_df[ii] = pd.DataFrame({
             'mu_samps':mu_res_norm[:,ii],
@@ -315,15 +322,28 @@ def generate_pf_plot(fit,unique_phase_names):
         })
 
         quantiles[ii,:] = np.quantile(mu_res_norm[:,ii],(.025,.975))
+        
+        t_mu_samps = mcmc_df['phase_mu[' + str(ii+1) + ']']
+        t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
+        
+        table.loc[table['Phase'] == ph,'PF Est'] = np.mean(mu_res_norm[:,ii])
+        table.loc[table['Phase'] == ph,'PF Lwr95'] = np.quantile(mu_res_norm[:,ii],.025)
+        table.loc[table['Phase'] == ph,'PF Upr95'] = np.quantile(mu_res_norm[:,ii],.975)
+        table.loc[table['Phase'] == ph,'ExpErr'] = np.mean(t_sigexp_samps)
+    
+    if 'sigma_sample' in mcmc_df.columns:
+        table['sigma_sample'] = np.mean(mcmc_df['sigma_sample'])
 
     out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
     
     quantiles = quantiles.flatten()
     
+    # figure
     fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75)
     
     for ii in range(len(quantiles)):
         fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash')
-    #fig.show()
-    
-    return fig
+
+    # table
+
+    return fig, table
