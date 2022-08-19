@@ -271,6 +271,7 @@ app.layout = dbc.Container([
             dcc.Graph(id='pf-uncert-fig'),
             dash_table.DataTable(id='pf-uncert-table'),
             html.Br(),
+            dash_table.DataTable(id='param-table'),
             html.Br()
             
             #Tab label
@@ -528,6 +529,8 @@ def func(n_clicks):
     Output('pf-uncert-fig','figure'),
     Output('pf-uncert-table','data'),
     Output('pf-uncert-table','columns'),
+    Output('param-table','data'),
+    Output('param-table','columns'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -697,13 +700,14 @@ def update_output(n_clicks,
     if inference_method_value == 1:
     
         stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
-        pf_figure, pf_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases)
+        pf_figure, pf_table, param_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases,results_table)
         pf_uncert_table, pf_uncert_table_columns = compute_results.df_to_dict(pf_table.round(4))
+        param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
 
     elif inference_method_value == 2:
         stan_fit, unique_phases = None, None
         pf_figure = go.Figure()
-        pf_uncert_table, pf_uncert_table_columns = None, None
+        pf_uncert_table, pf_uncert_table_columns, param_table = None, None, None
     
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
@@ -792,7 +796,9 @@ def update_output(n_clicks,
             conf,
             pf_figure,
             pf_uncert_table,
-            pf_uncert_table_columns)
+            pf_uncert_table_columns,
+            param_table_data,
+            param_table_columns)
 
 @app.callback(
     Output('intensity-plot', 'figure'),
