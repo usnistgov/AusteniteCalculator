@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('../../app'))
 # -- Project information -----------------------------------------------------
 
 project = 'AusteniteCalculator'
-copyright = '2021, Adam Creuziger, David Newton, Max Garman, Caleb Schenck'
+copyright = 'Pursuant to Title 17 United States Code § 105, works of the United States Government are not subject to copyright protection within the United States.'
 author = 'Adam Creuziger, David Newton, Max Garman, Caleb Schenck'
 
 # The full version, including alpha/beta/rc tags

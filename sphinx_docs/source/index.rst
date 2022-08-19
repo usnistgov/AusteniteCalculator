@@ -25,10 +25,12 @@ See User Guide
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
-
-   compute_results
+ 
+   user_guide 
    app
-   user_guide
+   compute_results
+   compute_uncertainties
+
 
 
 Indices and tables
