@@ -21,6 +21,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import plotly.utils as pltu
+from plotly.tools import mpl_to_plotly
 
 # utils
 import base64
@@ -34,13 +35,16 @@ import shutil
 import fnmatch
 import glob
 import random
+import math
 from apscheduler.schedulers.background import BackgroundScheduler
+import atmdata
 
 # Add example comment
 
 # user created
 import compute_results
 import compute_uncertainties
+import interaction_vol
 
 # Gsas
 if platform.system() == 'Linux':
@@ -281,7 +285,15 @@ app.layout = dbc.Container([
             
         ### --- end tab 5 --- ###
         dbc.Tab([
-
+            html.Div(id='phase-placeholder'),
+            html.Br(),
+            html.Div(id='peak-placeholder'),
+            html.Br(),
+            html.Br(),
+            html.Div([
+                dcc.Graph(id='centroid-plot'),
+                dcc.Graph(id='interaction-depth-plot'),
+            ]),
         ],
         label='Interaction Volume'),
         ### --- start tab 6 --- ###
@@ -291,8 +303,7 @@ app.layout = dbc.Container([
         dbc.Tab([
             html.Div([
                 'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
-                dcc.Dropdown(['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank'],
-                ' ', id = 'default-dropdown'),
+                dcc.Dropdown(id='default-dropdown',options=['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank']),
                 html.Div(id = 'default-name', style={'display':'none'}),
             ]),
             html.Br(),
@@ -523,6 +534,7 @@ def func(n_clicks):
     Output('table-placeholder', 'children'),
     Output('graph-placeholder', 'children'),
     Output('norm-int-placeholder', 'children'),
+    Output('phase-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
     Output('pf-uncert-fig','figure'),
@@ -660,7 +672,7 @@ def update_output(n_clicks,
     fit_points = {}
     #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF,  = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
 
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
@@ -675,25 +687,113 @@ def update_output(n_clicks,
         altered_ti[temp_string] = tis
         fit_points[temp_string] = fit_data
 
+    
+    #have the option to run the interaction volume calcs for each dataset(assume they are the "same data"), default is no
+    scattering_dict = {}
+    atomic_masses = {}
+    elem_fractions = {}
     for x in range(len(cif_fnames)):
         cif_path = os.path.join(datadir, cif_fnames[x])
-        elems = []
+        instprm_path = os.path.join(datadir, instprm_fname)
+        
         addon = False
+        elems = []
+        cell_volume = None
+        crystal_density = None
         with open(cif_path) as f:
             lines = f.readlines()
             for line in lines:
-                if addon:
+                if len(line.split()) > 0:
+                    if line.split()[0] == '_cell_volume':
+                        cell_volume = float(line.split()[1].split('(')[0])
+                    if line.split()[0] == '_exptl_crystal_density_diffrn':
+                        crystal_density = float(line.split()[1])
+                if addon == True:
                     elems.append(line)
-                if line == '   _atom_site_symmetry_multiplicity':
+                if line == '   _atom_site_site_symmetry_multiplicity\n':
                     addon = True
         
+        wavelengths = []
+        with open(instprm_path) as fi:
+            lines = fi.readlines()
+            for line in lines:
+                if line != '#GSAS-II instrument parameter file; do not add/delete items!':
+                    line_split = line.split(':')
+                    if line_split[0] == 'Lam1' or line_split[0] == 'Lam2':
+                        wavelengths.append(float(line_split[1].strip('\n')))
         
+        elems_for_phase = []
+        elem_percentage = []
+        atoms_per_cell = None
+        for elem in elems:
+            temp = elem.split()
+            elems_for_phase.append(temp[1])
+            elem_percentage.append(float(temp[5]))
+            atoms_per_cell = int(temp[8])
+        
+        cell_mass = 0.0
+        for elem in elems_for_phase:
+            key = elem + '_'
+            count = 0
+            elem_mass = atmdata.AtmBlens[key]['Mass']
+            cell_mass += elem_mass * elem_percentage[count]
+            atomic_masses[elem] = elem_mass
+            count += 1
+        
+        cell_density = cell_mass/cell_volume
+        pack_fraction = crystal_density/cell_density
 
+        elem_details = interaction_vol.getFormFactors(elems_for_phase)
+        scattering_nums = []
+        for elem in elem_details:
+            scattering_nums.append(interaction_vol.findMu(elem, wavelengths, pack_fraction, cell_volume)) #scattering nums has elem_sym, f', f'', and mu
+        
+        for elem in scattering_nums:
+            elem[1] = elem[1][0]
+            elem[2] = elem[2][0]
+            elem.append(atoms_per_cell)
 
+        scattering_dict[cif_fnames[x]] = scattering_nums
+        elem_fractions[cif_fnames[x]] = elem_percentage
+   
+    peaks_dict = {}
+    for phase_name in cif_fnames:
+        peaks_dict[phase_name] = []
+
+    for row in results_table['Dataset: 1'].iterrows():
+        current_peak = []
+        current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
+        current_peak.append(row[1]['mul'])
+        current_peak.append(row[1]['pos_fit']/2)
+        final_FF = 0.0
+        for elem in scattering_dict[row[1]['Phase']]:
+            count = 0
+            FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
+            final_FF += FF * elem_fractions[row[1]['Phase']][count]
+            count += 1
+        current_peak.append(final_FF)
+        peaks_dict[row[1]['Phase']].append(current_peak)
+
+    summarized_phase_info = {}
+    for key, value in scattering_dict.items():
+        summarized_phase_info[key] = [0.0,0.0, 0.0]
+        current_fracs = elem_fractions[key]
+        for i in range(len(value)):
+            summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
+            summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
+            summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
+    
+    graph_data_dict = {}
+    for key, value in peaks_dict.items():
+        current_summarized_data = summarized_phase_info[key]
+        graph_data_dict[key] = []
+        for peak in value:
+            data_list = interaction_vol.create_graph_data(peak, current_summarized_data)
+            graph_data_dict[key].append(data_list)
+        #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
     # run MCMC using full results
     
     if inference_method_value == 1:
-    
         stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
         pf_figure = compute_uncertainties.generate_pf_plot(stan_fit,unique_phases)
 
@@ -720,6 +820,13 @@ def update_output(n_clicks,
     for key, value in ti_tables.items():
         ti_dict, ti_cols = compute_results.df_to_dict(value.round(5))
         ti_tables[key] = (ti_dict, ti_cols)
+    
+    for key, value in graph_data_dict.items():
+        for peak in value:
+            endpoints_dict, endpoints_cols = compute_results.df_to_dict(peak[0].round(3))
+            mids_dict, mids_cols = compute_results.df_to_dict(peak[1].round(3))
+            peak[0] = (endpoints_dict, endpoints_cols)
+            peak[1] = (mids_dict, mids_cols)
 
     #convert duplicate dataframes to different format(df_to_dict('dict') rather than 'records')
     for key, value in altered_results.items():
@@ -746,7 +853,9 @@ def update_output(n_clicks,
         'altered_results':altered_results,
         'altered_phase':altered_phase,
         'altered_ti':altered_ti,
-        'fit_points':fit_points
+        'fit_points':fit_points,
+        'interaction_vol_data':graph_data_dict,
+        'atomic_masses':atomic_masses
     }
     
     #create html components to replace the placeholders in the app
@@ -778,11 +887,19 @@ def update_output(n_clicks,
                      value='Dataset: 1')
     ])
 
+    phase_dropdown = html.Div([
+        'Please select a phase to view',
+        dcc.Dropdown(options = [phase for phase in cif_fnames], 
+                     id = 'phase-dropdown',
+                     value=' ')
+    ])
+
     conf = "Submission complete. Navigate the above tabs to view results."
 
     return (plot_dropdown,
             table_dropdown,
             graph_dropdown,
+            phase_dropdown,
             norm_int_dropdown,
             master_dict,
             conf,
@@ -996,6 +1113,37 @@ def update_norm_int(data, value):
         norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, pf_df, current_two_theta, value)
 
         return norm_int_plot
+
+@app.callback(
+    Output('peak-placeholder', 'children'),
+    Input('store-calculations', 'data'),
+    Input('phase-dropdown', 'value'),
+    prevent_initial_call = True
+)
+def update_peak_dropdown(data, value):
+    peaks = data.get(value)
+
+    peak_dropdown = html.Div([
+        'Please select a peak to view',
+        dcc.Dropdown(options = [str(i + 1) for i in range(len(peaks))], 
+                     id = 'peak-dropdown',
+                     value='1')
+    ])
+    return peak_dropdown
+
+@app.callback(
+    Output('centroid-plot', 'figure'),
+    Output('interaction_depth_plot', 'figure'),
+    Input('store-calculations', 'data'),
+    Input('phase-dropdown', 'value'),
+    Input('peak-dropdown', 'value'),
+    prevent_initial_call = True
+)
+def update_interaction_vol_plot(data, phase_value, peak_value):
+    current_peak = data.get(phase_value)[int(peak_value) - 1]
+    df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
+    df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
+    return
 
 @app.callback(
     Output('download-full-report', 'data'),

@@ -1,53 +1,122 @@
-def getElems():
-    elems = []
-    return elems
+import atmdata
+import os
+import sys
+import math
 
-def getFormFactors():
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+getElSym = lambda sym: sym.split('+')[0].split('-')[0].capitalize()
+
+def getFormFactors(Elems):
+    elemInfo = []
     if Elems:
         for El in Elems:
+            Z = None
+            setFormFac = None
             ElemSym = El.strip().upper() #formats elem string...ex(turns  Fe into FE)
-            if ElemSym not in ElList:
-            FormFactors = G2elem.GetFormFactorCoeff(ElemSym)
+            if ElemSym not in elemInfo:
+                FormFactors = getFormFactorCoeff(ElemSym)
             for FormFac in FormFactors:
-            FormSym = FormFac['Symbol'].strip()
-            if FormSym == ElemSym:
-            Z = FormFac['Z']                #At. No.
-            Orbs = G2elem.GetXsectionCoeff(ElemSym)
-            Elem = (ElemSym,Z,FormFac,Orbs)
-        self.Elems.append(Elem)
-    return None
+                FormSym = FormFac['Symbol'].strip()
+                if FormSym == ElemSym:
+                    Z = FormFac['Z']                #At. No.
+                    setFormFac = FormFac
+            Orbs = GetXsectionCoeff(ElemSym)
+            Elem = (ElemSym,Z,setFormFac,Orbs) #The FormFac should always be the non-ionized version of the element ex Fe rather than Fe+3
+            elemInfo.append(Elem)
+    return elemInfo
 
-def findElemfs():
-    for Elem in self.Elems:
-        Els = Elem[0]
-        Els = Els = Els.ljust(2).lower().capitalize()
-        Wmin = self.Wmin
-        Wmax = self.Wmax
-        Z = Elem[1]
-        if Z > 78: Wmin = 0.16        #heavy element high energy failure of Cromer-Liberman
-        if Z > 94: Wmax = 2.67        #heavy element low energy failure of Cromer-Liberman
-        lWmin = math.log(Wmin)
-        N = int(round(math.log(Wmax/Wmin)/self.Wres))    #number of constant delta-lam/lam steps
-        I = range(N+1)
-        Ws = []
-        for i in I: Ws.append(math.exp(i*self.Wres+lWmin))
-        fps = []
-        fpps = []
-        Es = []
-        for W in Ws:
-            E = self.Kev/W
-            DE = E*self.Eres                         #smear by defined source resolution
-            res1 = G2elem.FPcalc(Elem[3],E+DE)
-            res2 = G2elem.FPcalc(Elem[3],E-DE)
-            fps.append((res1[0]+res2[0])/2.0)
-            fpps.append((res1[1]+res2[1])/2.0)
-            Es.append(E)
-        if self.ifWave:
-            Fpps = (Els,Ws,fps,fpps)
-        else:
-            Fpps = (Els,Es,fps,fpps)
-        FPPS.append(Fpps)
-    return None
+def getFormFactorCoeff(El): #this may or may not be getting f_elem
+    Els = El.capitalize().strip()
+    valences = [ky for ky in atmdata.XrayFF.keys() if Els == getElSym(ky)]
+    FormFactors = [atmdata.XrayFF[val] for val in valences]
+    for Sy,FF in zip(valences,FormFactors):
+        FF.update({'Symbol':Sy.upper()})
+    return FormFactors
+
+def GetXsectionCoeff(El):
+    """Read atom orbital scattering cross sections for fprime calculations via Cromer-Lieberman algorithm
+
+    :param El: 2 character element symbol
+    :return: Orbs: list of orbitals each a dictionary with detailed orbital information used by FPcalc
+
+    each dictionary is:
+
+    * 'OrbName': Orbital name read from file
+    * 'IfBe' 0/2 depending on orbital
+    * 'BindEn': binding energy
+    * 'BB': BindEn/0.02721
+    * 'XSectIP': 5 cross section inflection points
+    * 'ElEterm': energy correction term
+    * 'SEdge': absorption edge for orbital
+    * 'Nval': 10/11 depending on IfBe
+    * 'LEner': 10/11 values of log(energy)
+    * 'LXSect': 10/11 values of log(cross section)
+
+    """
+    AU = 2.80022e+7
+    C1 = 0.02721
+    ElS = El.upper()
+    ElS = ElS.ljust(2)
+    filename = os.path.join(os.path.split(__file__)[0],'Xsect.dat')
+    try:
+        xsec = open(filename,'r')
+    except:
+        print ('**** ERROR - File Xsect.dat not found in directory %s'%os.path.split(filename)[0])
+        sys.exit()
+    S = '1'
+    Orbs = []
+    while S:
+        S = xsec.readline()
+        if S[:2] == ElS:
+            S = S[:-1]+xsec.readline()[:-1]+xsec.readline()
+            OrbName = S[9:14]
+            S = S[14:]
+            IfBe = int(S[0])
+            S = S[1:]
+            val = S.split()
+            BindEn = float(val[0])
+            BB = BindEn/C1
+            Orb = {'OrbName':OrbName,'IfBe':IfBe,'BindEn':BindEn,'BB':BB}
+            Energy = []
+            XSect = []
+            for i in range(11):
+                Energy.append(float(val[2*i+1]))
+                XSect.append(float(val[2*i+2]))
+            XSecIP = []
+            for i in range(5): XSecIP.append(XSect[i+5]/AU)
+            Orb['XSecIP'] = XSecIP
+            if IfBe == 0:
+                Orb['SEdge'] = XSect[10]/AU
+                Nval = 11
+            else:
+                Orb['ElEterm'] = XSect[10]
+                del Energy[10]
+                del XSect[10]
+                Nval = 10
+                Orb['SEdge'] = 0.0
+            Orb['Nval'] = Nval
+            D = dict(zip(Energy,XSect))
+            Energy.sort()
+            X = []
+            for key in Energy:
+                X.append(D[key])
+            XSect = X
+            LEner = []
+            LXSect = []
+            for i in range(Nval):
+                LEner.append(math.log(Energy[i]))
+                if XSect[i] > 0.0:
+                    LXSect.append(math.log(XSect[i]))
+                else:
+                    LXSect.append(0.0)
+            Orb['LEner'] = LEner
+            Orb['LXSect'] = LXSect
+            Orbs.append(Orb)
+    xsec.close()
+    return Orbs
 
 def FPcalc(Orbs, KEv):
     """Compute real & imaginary resonant X-ray scattering factors
@@ -134,3 +203,106 @@ def FPcalc(Orbs, KEv):
         FP -= ElEterm
     
     return (FP, FPP, Mu)
+
+def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
+    fps = []
+    fpps = []
+    Es = []
+    Eres = 1.5e-4
+    Kev = 12.397639 #idk if this is correct but imma try it
+    mu_list = []
+    for W in wavelengths: #for each wavelength in the instprm files
+        E = Kev/W              #maybe get this from instprm file(lam1 converted to energy: google it)
+        DE = E*Eres                         #smear by defined source resolution 
+        res1 = FPcalc(singular_elem_details[3],E+DE)
+        res2 = FPcalc(singular_elem_details[3],E-DE)
+        fps.append((res1[0]+res2[0])/2.0)
+        fpps.append((res1[1]+res2[1])/2.0)
+        Es.append(E)
+        mu_list.append(res1[2])
+    
+    mu_avg = sum(mu_list)/len(mu_list) #self.Pack*muT/self.Volume conversion for barns to cm
+    mu_converted = (pack_fraction * mu_avg) / cell_volume
+    return [singular_elem_details[0], fps, fpps, mu_converted]
+
+def create_graph_data(peak_data, summarized_data):
+    Max_intensity_drop=1/1000
+    t_max_cm=(1/-summarized_data[2])*np.log(Max_intensity_drop) # change to mu_um?
+    t_max_um=t_max_cm*10000 # this would go away
+    print(t_max_um) 
+    I0=1000000
+    steps=25
+
+    x_list=np.linspace(0,t_max_um*np.cos(np.radians(peak_data[2])),num=steps)
+    y_list=np.linspace(0,-t_max_um*np.sin(np.radians(peak_data[2])),num=steps)
+    df_endpoints = pd.DataFrame(data={'x': x_list, 'y': y_list})
+    df_endpoints['length']=np.sqrt(df_endpoints['x']**2+df_endpoints['y']**2)
+    df_endpoints['I']=I0 *  np.exp(-(summarized_data[2]/10000) * df_endpoints['length'])
+    x_mid=[]
+    y_mid=[]
+    delta_I=[]
+    for i in range(0,len(df_endpoints)-1):
+        #print(i)
+        x_mid.append((df_endpoints['x'].iloc[i]+df_endpoints['x'].iloc[i+1])/2)
+        y_mid.append((df_endpoints['y'].iloc[i]+df_endpoints['y'].iloc[i+1])/2)
+        delta_I.append(df_endpoints['I'].iloc[i]-df_endpoints['I'].iloc[i+1])
+    
+    df_mid = pd.DataFrame(data={'x_mid': x_mid, 'y_mid': y_mid, 'delta_I':delta_I})
+    # It's not clear to me how this should properly be calculated.  
+    # f_prime can occasionally take positive values at higher energies.
+    # That seems to imply a flourescing photon can cause additional scattering?
+
+    # For now I am using rule of mixtures with absolute values
+    df_mid['travel_dist']=np.sqrt(df_mid['x_mid']**2+df_mid['y_mid']**2)
+
+    df_mid['absorbed']=df_mid['delta_I']*(summarized_data[1]/(summarized_data[1]+abs(summarized_data[0])+peak_data[0]))
+    df_mid['anomalous']=df_mid['delta_I']*(abs(summarized_data[0])/(summarized_data[1]+abs(summarized_data[0])+peak_data[0]))
+    df_mid['scattered']=df_mid['delta_I']*(peak_data[0]/(summarized_data[1]+abs(summarized_data[0])+peak_data[0]))
+
+    #scattered, but not absorbed on return to the surface
+    df_mid['Escaped']=df_mid['scattered'] *  np.exp(-(summarized_data[2]/10000) * df_mid['travel_dist'])
+    df_mid['RelativeEscaped']=df_mid['Escaped']/I0
+    
+    Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
+    Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
+
+    return [df_endpoints, df_mid, Centroid_x, Centroid_y]
+
+def create_centroid_plot():
+    plt.figure(figsize=(10,8))
+    plt.barh( df_mid['y_mid'],df_mid['Escaped'],color='0.9')
+    plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")
+    plt.hlines(Centroid_y, 0, df_mid['Escaped'].iloc[0], color='0.3',linestyle="--")
+
+    #plt.plot(theta, z1, label='75% Absorption')
+    #plt.plot(theta, z2, label='50% Absorption')
+
+    #plt.legend()
+
+    plt.ylabel('Z-depth in Fe (microns)', fontsize=18)
+    plt.xlabel('Scattered x-rays (counts)', fontsize=18)
+    #plt.title('Z-depth vs Theta for fractional intensities with a copper k-alpha source')
+
+def create_depth_plot():
+    plt.figure(figsize=(10,8))
+
+    #start x-ray height
+    xray_start=50 
+
+    plt.hlines(0, -150, 150, color='k')
+    plt.plot([-xray_start/np.tan(np.radians(theta_deg)),0], [xray_start,0] , 'ko', linestyle="--")
+    plt.plot(x_list, y_list , 'bo', linestyle="--")
+
+
+    #plt.plot(theta, z1, label='75% Absorption')
+    #plt.plot(theta, z2, label='50% Absorption')
+
+    #plt.legend()
+
+    plt.xlabel('X position (microns)')
+    plt.ylabel('Z-depth in Fe (microns)')
+    #plt.title('Z-depth vs Theta for fractional intensities with a copper k-alpha source')
+
+    plt.xlim(-50,50)
+    plt.ylim(-50,50)
+    plt.gca().set_aspect('equal')  
