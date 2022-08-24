@@ -1,7 +1,7 @@
 from bdb import Breakpoint
 from cProfile import label
 from enum import unique
-from tkinter import TRUE
+#from tkinter import TRUE  #doesn't seem to be used, and causes errors in sphinx
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -12,7 +12,9 @@ import fit
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
 
-    Main computation program for phase calculations
+    Main computation function for phase calculations
+    *ADD MORE ON WHAT IT DOES*
+    
     
     Args:
         datadir: Location data is stored
@@ -23,12 +25,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         G2sc: GSAS-II Scripting Toolkit location
     
     Returns:
-        fig_raw_hist: Intensity vs. two_theta plot of raw data
-        fig_fit_hist: Intensity vs. two_theta plot with fit data
-        DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
-        fig_norm_intensity: Figure of normalized intensities
-        fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
-        DF_phase_fraction: pandas DataFrame with phase fraction
+        | A tuple that contains the following items
+        | **fit_data** a list of lists with the histogram data, fit of the background, and fit of the data;
+        | **DF_merged_fit_theo** a pandas DataFrame with collected fit and theoretical intensities ;
+        | **DF_phase_fraction** a pandas DataFrame with phase fraction ;
+        | **two_theta** a python list (?) with the two_theta data from the GSAS-II histogram ;
+        | **tis** a pandas DataFrame with the theoretical intensities;
+        | **DF_flags_for_user** a pandas DataFrame with the flags and notes to the user
+    
     """
     
     #Helper functions to create full path descriptions
@@ -173,6 +177,14 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
         if(np.all(peak_verify == True)):
             print("\n\n All values are within a likeable range \n")
+            
+            # Print out some of the goodness of fit data
+            try:
+                print("\n\n Goodness of fit value: ", hist.data['Peak Fit Rvals']['GOF'])
+                DF_flags_for_user=flag_phase_fraction(hist.data['Peak Fit Rvals']['GOF'],"Fitting", "Fitting Goodness of Fit (GOF)", "--ADD Guidance--", DF_to_append=DF_flags_for_user)
+            except:
+                print("Error creating Goodness of fit")
+                DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Missing Goodness of Fit (GOF) Value", "Missing bits of code in GSAS-II", DF_to_append=DF_flags_for_user)                
             peaks_ok = True
         
         elif(fit_attempts >= fit_attempt_limit):
@@ -253,7 +265,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_merged_fit_theo, DF_flags_for_user)    
+    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_flags_for_user)
 
     fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
 
@@ -272,14 +284,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 #####################################
 def df_to_dict(df):
     """
-    
-    function for converting pandas dataframe to dictionary for dash data_table
+    Function for converting a pandas dataframe to a python dictionary. Need a dictionary for dash data_table
 
     Args:
         df: pandas Dataframe
 
     Returns:
-
+        | Two dictionaries
+        | **out_dict** a dictionary of the pandas dataframe;
+        | **out_columns** a dictonary with the column name and position
     """
     out_dict = df.to_dict('records')
     out_columns = [{"name": i, "id": i} for i in df.columns]
@@ -289,14 +302,13 @@ def df_to_dict(df):
 #####################################
 def get_figures(hist):
     """
-    plot the intensity vs. two_theta data of a diffraction profile
+    Plot the intensity vs. two_theta data from a GSAS-II diffraction histogram
     
     Args:
-        hist: powder histogram
+        hist: GSAS-II powder histogram
     
     Returns:
-        fig: Figure
-        #? what format?
+        **fig** Plotly Express Figure
     """
     df = pd.DataFrame({
         "two_theta":hist.data['data'][1][0],
@@ -307,6 +319,15 @@ def get_figures(hist):
     return fig
 
 def get_pf_uncertainty_fig(pf_uncertainties): 
+    """
+    *NEEDS DOCSTRING*
+    
+    Args:
+        pf_uncertainties: ???
+    
+    Returns:
+        **pf_uncertainty_fig** ???
+    """
 
     pf_uncertainty_fig = px.histogram(pf_uncertainties['mu_df'],x='value',color='which_phase',opacity=.7,barmode='overlay',histnorm='probability density')
 
@@ -322,14 +343,14 @@ def get_pf_uncertainty_fig(pf_uncertainties):
 #####################################
 def two_theta_compare_figure(Merged_DataFrame):
     """
-    plot the difference between fitted vs. theoretical two_theta data
-    Should be near zero
+    Plot the difference between fitted vs. theoretical two_theta data
+    Nominally this difference should be near zero, outlier values may indicate poor fit.  Trends may indicatate errors in theoretical values
     
     Args:
         Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
     
     Returns:
-        fig: Plotly Express Figure
+        **fig** Plotly Express Figure
     """
     
     fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos_diff", color="Phase",
@@ -351,6 +372,7 @@ def two_theta_compare_figure(Merged_DataFrame):
 def get_phase(cif_wrap, phase_name, project):
     """
     Retreieve the phase information from file.  Assumes phase information is stored in a .cif file with format hint (fmthint)
+    *LIKELY NEEDS AN EXCEPT BLOCK*
     
     Args:
         cif_wrap: path to file
@@ -358,7 +380,7 @@ def get_phase(cif_wrap, phase_name, project):
         project: GSAS-II project file to add phase to
     
     Returns:
-        GSAS-II project file with phase data wrapped in
+        **project** GSAS-II project file with phase data wrapped in
     """
     return project.add_phase(cif_wrap, phase_name, fmthint = 'CIF')
 
@@ -367,7 +389,7 @@ def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
     """
 
     Calculate the position in two theta for a list of hkls.  Used to mark locations for fitting
-    !!! Have only tested cubic crystal symmetry
+    *!!! Have only tested cubic crystal symmetry with widely spaced peaks !!!*
     
     Args:
         phase_lattice_parameter: lattice parameter
@@ -375,9 +397,8 @@ def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
         wavelength: dominant wavelength in the diffraction data
     
     Returns:
-        List of floating point values with the position of each hkl in 2-theta
-        #? Is this in radians or degrees?
-        #? Returning theta or two_theta?
+        **SinTheta** python list of floating point values with the position of each hkl in 2-theta
+        *Is this in radians or degrees? Returning theta or two_theta?*
         
     """
     D=[phase_lattice_parameter/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
@@ -387,16 +408,16 @@ def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
 #####################################
 def find_two_theta_in_range(sin_theta, hist):
     """
-    #Description
-    #? Truncate the calculated 2Theta range?
-    Create a list of 2Theta values from the dspacing and wavelength. Mark any non-physical values with np.nan
+    **Depricated?**
+    Truncate the list of possible peak positions (theoretical calculation?) to the range of data.
+    Mark values outside this range with np.nan
     
-    #Input
-    SinTheta:
-    hist:
+    Args:
+        SinTheta: List of peaks in terms of sin(theta)
+        hist: GSAS-II histogram
     
-    #Returns
-    TwoThetaInRange:
+    Returns:
+        **TwoThetaInRange** python list of peak locations in the two theta range.
     """
     two_theta=[np.nan]*len(sin_theta)
     for i,value in enumerate(sin_theta):
@@ -415,8 +436,8 @@ def find_two_theta_in_range(sin_theta, hist):
 
 #####################################
 def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,x_range,G2sc,DataPathWrap,SaveWrap):
-    """Function to calculate the theoretical intensities.
-    
+    """
+    Function to calculate the theoretical intensities.
     Simulated diffraction profile calculated based on the .cif file and instrument parameter file
     
     Args:
@@ -430,7 +451,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
         SaveWrap: Path prefix to the location where new data should be saved
     
     Returns:
-        ti_table: Pandas dataframe with theoretical intensities
+        **ti_table** Pandas dataframe with theoretical intensities
         
     Raises:
     
@@ -470,16 +491,19 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     return ti_table
 
 #####################################
-def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
-    """Calculate Phase Fraction
+def calculate_phase_fraction(Merged_DataFrame, DF_flags):
+    """
+    **To Be Depricated?**
+    Use conventional mean and standard deviation caculations to determine phase fraction. Also includes rounding for display
     
     Args:
-        Merged_DataFrame: combined theoretical and fit DataFrame
-        Uncertainty_DF: prior uncertainty DataFrame
+        Merged_DataFrame: Pandas DataFrame with combined theoretical and fit data
+        DF_flags: Pandas DataFrame that includes flags to the user
     
     Returns:
-        phase_dict: dictionary with phase values
-    
+        | Two items are returned
+        | **phase_dict** python dictionary with phase fraction values
+        | **DF_flags** Pandas DataFrame that includes flags to the user
     Raises:
     """
     
@@ -554,28 +578,20 @@ def calculate_phase_fraction(Merged_DataFrame, DF_merged_fit_theo, DF_flags):
 
 #####################################
 def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
-    """Adds notes and flags to phase fraction.
-
-    calculation to flag phase_fraction
+    """
+    Adds notes and flags to austenite calculation.
 
     Args:
-        value: uncertainty value (float)
-        source: source of uncertainty (string)
-        flag: alert to user (string)
-        suggestion: suggestions on source or mitigation methods to decrease error (string)
-        DF_to_append: pandas DataFrame with notes from other sources
+        value: numeric value (float) of flagged value
+        source: short string text explaining the what step in the data is flagged
+        flag: longer string text describing the alert to user
+        suggestion: string text with suggestions on source or mitigation methods to decrease error
+        DF_to_append: pandas DataFrame to append flags and notes
 
     Returns:
-        uncertainty_DF: pandas DataFrame with notes about the phase_fraction calculated
-        
-        variable: description
-        
-        examples
-        
-        caveats
+        **DF_flags** Pandas DataFrame that includes flags to the user
 
     Raises:
-        error: error text
     """
     
     print("Issue Flagged")
@@ -597,7 +613,8 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     return flags_DF
 
 def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta, dataset):
-    """Creates plot of variation in normalized intensities
+    """
+    Creates plot of variation in normalized intensities.  The visualization can offer the user feedback on the sources of variation.
 
     Args:
         DF_merged_fit_theo: dataframe of fit values(Dataframe)
@@ -606,7 +623,7 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
         two_theta: List of two thetas(List)
         
     Returns:
-        fig_norm_intensity: plotly figure showing the variation in normalized intensity for each phase
+        **fig_norm_intensity** plotly express figure showing the variation in normalized intensity for each phase
 
     Raises:
 
@@ -655,7 +672,8 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
     return fig_norm_intensity
 
 def create_fit_fig(two_thetas, intensity_list, dataset):
-    """Creates plot of fit intensity vs two_theta data
+    """
+    Creates plot of fit intensity vs two_theta data
 
     Args:
         two_thetas: list of two_theta values
@@ -663,7 +681,7 @@ def create_fit_fig(two_thetas, intensity_list, dataset):
         dataset: current dataset graph being created
         
     Returns:
-        fig_fit_hist: plotly figure of fit intensity vs two_theta data
+        **fig_fit_hist** plotly figure of fit intensity vs two_theta data
 
     Raises:
 
@@ -685,8 +703,7 @@ def create_fit_fig(two_thetas, intensity_list, dataset):
 
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
-
-    Main computation program for phase calculations
+    Create an instrument parameter file if none exists.  Copy of the fitting framework.  Instrument parameter file is available for saving by the user.
     
     Args:
         datadir: Location data is stored
@@ -697,12 +714,6 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
         G2sc: GSAS-II Scripting Toolkit location
     
     Returns:
-        fig_raw_hist: Intensity vs. two_theta plot of raw data
-        fig_fit_hist: Intensity vs. two_theta plot with fit data
-        DF_merged_fit_theo: pandas DataFrame with collected fit and theoretical intensities
-        fig_norm_intensity: Figure of normalized intensities
-        fig_raw_fit_compare_two_theta: two_theta plot of raw data vs. two_theta plot with fit data
-        DF_phase_fraction: pandas DataFrame with phase fraction
     """
     
     #Helper functions to create full path descriptions

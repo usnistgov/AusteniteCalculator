@@ -7,6 +7,8 @@ data {
     array[N] int group;
     real<lower=0> prior_scale;
     real<lower=0> prior_location;
+    vector<lower=0>[N] u_int_fit;
+    vector<lower=0>[N] u_int_count;
 }
 
 parameters {
@@ -29,7 +31,7 @@ model {
     }
     
     for (ii in 1:N) {
-        Y[ii] ~ normal(phase_mu[phase[ii]] + group_effect[group[ii]],sigma_exp[phase[ii]]);
+        Y[ii] ~ normal(phase_mu[phase[ii]] + group_effect[group[ii]],sqrt(sigma_exp[phase[ii]]**2 + u_int_fit[ii]**2 + u_int_count[ii]**2 ));
     }
 
 }

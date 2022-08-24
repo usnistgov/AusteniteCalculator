@@ -19,6 +19,9 @@ Inspired by similar efforts of the [NIST-ConsensusBuilder-webpage]_, [NIST-Uncer
 Details of Implimentation
 ===========================
 
+.. note::
+    There are several ways to express phase fractions.  The default in GSAS-II is to describe the phase fraction as a fraction of unit cells.  In metallurgy, phase fraction is often described as a mass fraction (wt %), where the mass of each unit cell is used to determine a phase fraction.  Alternatively, phase fraction can be also expressed as a volume fraction, where the volume of each unit cell is used to determine a phase fraction.
+
 ---------------------
 Software
 ---------------------

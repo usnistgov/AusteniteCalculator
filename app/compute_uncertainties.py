@@ -138,6 +138,7 @@ def run_stan(results_table):
         'I':indata.int_fit,
         'R':indata.R_calc,
         'sigma_I':indata.u_int_fit,
+        'u_int_count':indata.u_int_count,
         'phases':indata.Phase,
         'two_th':indata.two_theta,
         'sample_id':indata.sample_id
@@ -181,7 +182,9 @@ def run_stan(results_table):
             "Y":mydf.IR,
             "phase":mydf.phase_id,
             "prior_scale":np.std(mydf.IR),
-            "prior_location":np.mean(mydf.IR)
+            "prior_location":np.mean(mydf.IR),
+            "u_int_fit":mydf.sigma_I/mydf.R,
+            "u_int_count":mydf.u_int_count/mydf.R
         }
 
         fit = model.sample(data=stan_data,
@@ -203,7 +206,9 @@ def run_stan(results_table):
             "phase":mydf.phase_id,
             "group":mydf.sample_id,
             "prior_scale":np.std(mydf.IR),
-            "prior_location":np.mean(mydf.IR)
+            "prior_location":np.mean(mydf.IR),
+            "u_int_fit":mydf.sigma_I/mydf.R,
+            "u_int_count":mydf.u_int_count/mydf.R
         }
 
         fit = model.sample(data=stan_data,
@@ -305,12 +310,12 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
             'unique_phase_names':unique_phase_names,
             'summary_table':summary_table}
 
-
-def generate_pf_plot(fit,unique_phase_names):
+def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
     # fit from model.sample() in cmdstanpy
     mcmc_df = fit.draws_pd()
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
     n_phase = mu_res.shape[1]
+    multiple_samples = 'sigma_sample' in mcmc_df.columns
     
     row_sums = np.sum(mu_res,axis=1)
     mu_res_norm = mu_res
@@ -322,7 +327,32 @@ def generate_pf_plot(fit,unique_phase_names):
 
     quantiles = np.zeros((n_phase,2))
 
-    for ii in range(n_phase):
+    # table to store phase fraction estimates and 95% credible intervals
+    pf_table = pd.DataFrame({
+        'Phase':unique_phase_names,
+        'PF Est':0,
+        'PF Lwr95':0,
+        'PF Upr95':0
+    })
+
+    # table to hold parameter estimates for sources of uncertainty
+
+    param_table = pd.DataFrame({
+        'Phase':unique_phase_names,
+        'sigma_exp':[0]*n_phase,
+        'median_u_int_count':[0]*n_phase,
+        'median_u_int_fit':[0]*n_phase
+    })
+
+    if multiple_samples:
+        param_table['sigma_samp']=[0]*n_phase
+
+    results_table = pd.concat(results_table,axis=0).reset_index()
+    results_table = results_table.loc[results_table['Peak_Fit_Success'],:]
+
+    
+
+    for ii,ph in enumerate(unique_phase_names):
 
         out_df[ii] = pd.DataFrame({
             'mu_samps':mu_res_norm[:,ii],
@@ -330,15 +360,35 @@ def generate_pf_plot(fit,unique_phase_names):
         })
 
         quantiles[ii,:] = np.quantile(mu_res_norm[:,ii],(.025,.975))
+        
+        #t_mu_samps = mcmc_df['phase_mu[' + str(ii+1) + ']']
+        t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
+        
+        pf_table.loc[pf_table['Phase'] == ph,'PF Est'] = np.mean(mu_res_norm[:,ii])
+        pf_table.loc[pf_table['Phase'] == ph,'PF Lwr95'] = np.quantile(mu_res_norm[:,ii],.025)
+        pf_table.loc[pf_table['Phase'] == ph,'PF Upr95'] = np.quantile(mu_res_norm[:,ii],.975)
+
+        # sigma_exp
+        param_table.loc[param_table['Phase'] == ph, 'sigma_exp'] = np.mean(t_sigexp_samps)
+
+        # median 
+        dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
+        param_table.loc[param_table['Phase'] == ph, 'median_u_int_count'] = np.median(dummy)
+
+        dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
+        param_table.loc[param_table['Phase'] == ph, 'median_u_int_fit'] = np.median(dummy)
+    
+    if multiple_samples:
+        param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
 
     out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
     
     quantiles = quantiles.flatten()
     
+    # figure
     fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75)
     
     for ii in range(len(quantiles)):
         fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash')
-    #fig.show()
-    
-    return fig
+
+    return fig, pf_table, param_table
