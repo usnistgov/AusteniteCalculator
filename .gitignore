@@ -4,7 +4,7 @@ MiscScripts/
 server_datadir/*
 server_workdir/*
 *.pyc
-
+*.lst
 sphinx_docs/.DS_Store
 sphinx_docs/build/.DS_Store
 sphinx_docs/build
