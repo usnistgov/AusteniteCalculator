@@ -3,8 +3,6 @@ ExampleScripts/.ipynb_*
 MiscScripts/
 server_datadir/*
 server_workdir/*
-*.pyc
-*.lst
 sphinx_docs/.DS_Store
 sphinx_docs/build/.DS_Store
 sphinx_docs/build
@@ -14,3 +12,5 @@ sphinx_docs/.DS_Store
 ExampleScripts/cif_composition_simulations.ipynb
 *.pyc
 *.bak*
+*.lst
+*.hpp
