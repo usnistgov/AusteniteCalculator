@@ -286,9 +286,15 @@ app.layout = dbc.Container([
             
         ### --- end tab 5 --- ###
         dbc.Tab([
-            html.Div(id='phase-placeholder'),
+            html.Div(id='phase-placeholder',children=[ 
+                    dcc.Dropdown(options = ['Phase: 1'], 
+                                id = 'phase-dropdown',
+                                value='Phase: 1')]),
             html.Br(),
-            html.Div(id='peak-placeholder'),
+            html.Div(id='peak-placeholder',children=[ 
+                    dcc.Dropdown(options = ['Peak: 1'], 
+                                id = 'peak-dropdown',
+                                value='Peak: 1')]),
             html.Br(),
             html.Br(),
             html.Div([
@@ -1133,6 +1139,18 @@ def update_norm_int(data, value):
     prevent_initial_call = True
 )
 def update_peak_dropdown(data, value):
+
+    if data is None:
+
+        peak_dropdown = html.Div([
+            'Please select a peak to view',
+             dcc.Dropdown(options = ["Peak: 1"], 
+                          id = 'peak-dropdown',
+                          value="Peak: 1")
+        ])
+
+        return peak_dropdown
+
     peaks = data.get(value)
 
     peak_dropdown = html.Div([
@@ -1141,21 +1159,25 @@ def update_peak_dropdown(data, value):
                      id = 'peak-dropdown',
                      value='1')
     ])
+
     return peak_dropdown
 
 @app.callback(
     Output('centroid-plot', 'figure'),
-    Output('interaction_depth_plot', 'figure'),
+    Output('interaction-depth-plot', 'figure'),
     Input('store-calculations', 'data'),
     Input('phase-dropdown', 'value'),
     Input('peak-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_interaction_vol_plot(data, phase_value, peak_value):
+
+    return go.Figure(), go.Figure()
+
     current_peak = data.get(phase_value)[int(peak_value) - 1]
     df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
     df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
-    return
+    return 
 
 @app.callback(
     Output('download-full-report', 'data'),
