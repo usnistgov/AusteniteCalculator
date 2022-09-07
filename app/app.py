@@ -289,15 +289,24 @@ app.layout = dbc.Container([
         ### --- start Interaction Volume Tables and Plots --- ###
         
         dbc.Tab([
+            html.Br(),
+            html.Div("Select dataset:"),
             html.Div(id='dataset-placeholder',children=[
                     dcc.Dropdown(options = ['Dataset: 1'],
                                 id = 'dataset-dropdown',
                                 value='Dataset: 1')]),
             html.Br(),
+            html.Div("Select peak:"),
             html.Div(id='peak-placeholder',children=[ 
                     dcc.Dropdown(options = ['Peak: 1'], 
                                 id = 'peak-dropdown',
                                 value='Peak: 1')]),
+            html.Br(),
+            html.Div("Select phase:"),
+            html.Div(id='phase-placeholder',children=[ 
+                    dcc.Dropdown(options = ['Phase: 1'], 
+                                id = 'phase-dropdown',
+                                value='Phase: 1')]),
             html.Br(),
             html.Br(),
             html.Div([
@@ -308,9 +317,6 @@ app.layout = dbc.Container([
         label='Interaction Volume'),
         
         ### --- end Interaction Volume Tables and Plots --- ###
-        
-        ### --- start tab 6 --- ###
-        ### --- end Results Tables and Plots --- ###
 
         ### --- start Instrument Parameter Creation --- ###
         dbc.Tab([
@@ -546,9 +552,8 @@ def func(n_clicks):
     Output('plot-placeholder', 'children'),
     Output('table-placeholder', 'children'),
     Output('graph-placeholder', 'children'),
-    Output('norm-int-placeholder', 'children'),
+    Output('phase-placeholder', 'children'),
     Output('dataset-placeholder', 'children'),
-    #Output('phase-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
     Output('pf-uncert-fig','figure'),
@@ -887,7 +892,7 @@ def update_output(n_clicks,
                     value = 'Dataset: 1')
     ])
 
-    norm_int_dropdown = html.Div([
+    dataset_dropdown = html.Div([
         'Please select a dataset to view',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
                      id = 'norm-int-dropdown',
@@ -921,7 +926,7 @@ def update_output(n_clicks,
             table_dropdown,
             graph_dropdown,
             phase_dropdown,
-            norm_int_dropdown,
+            dataset_dropdown,
             master_dict,
             conf,
             pf_figure,
