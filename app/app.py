@@ -284,12 +284,15 @@ app.layout = dbc.Container([
             
             
             
-        ### --- end tab 5 --- ###
+        ### --- end Results Tables and Plots --- ###
+        
+        ### --- start Interaction Volume Tables and Plots --- ###
+        
         dbc.Tab([
-            html.Div(id='phase-placeholder',children=[ 
-                    dcc.Dropdown(options = ['Phase: 1'], 
-                                id = 'phase-dropdown',
-                                value='Phase: 1')]),
+            html.Div(id='dataset-placeholder',children=[
+                    dcc.Dropdown(options = ['Dataset: 1'],
+                                id = 'dataset-dropdown',
+                                value='Dataset: 1')]),
             html.Br(),
             html.Div(id='peak-placeholder',children=[ 
                     dcc.Dropdown(options = ['Peak: 1'], 
@@ -303,6 +306,9 @@ app.layout = dbc.Container([
             ]),
         ],
         label='Interaction Volume'),
+        
+        ### --- end Interaction Volume Tables and Plots --- ###
+        
         ### --- start tab 6 --- ###
         ### --- end Results Tables and Plots --- ###
 
@@ -541,7 +547,8 @@ def func(n_clicks):
     Output('table-placeholder', 'children'),
     Output('graph-placeholder', 'children'),
     Output('norm-int-placeholder', 'children'),
-    Output('phase-placeholder', 'children'),
+    Output('dataset-placeholder', 'children'),
+    #Output('phase-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
     Output('pf-uncert-fig','figure'),
