@@ -5,7 +5,18 @@ import math
 
 import pandas as pd
 import numpy as np
+
+# orginally plotted using matplotlib, need to convert to plotly for dash
 import matplotlib.pyplot as plt
+
+# plotting
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+import plotly.utils as pltu
+from plotly.tools import mpl_to_plotly
+
 
 getElSym = lambda sym: sym.split('+')[0].split('-')[0].capitalize()
 
@@ -269,6 +280,9 @@ def create_graph_data(peak_data, summarized_data):
     return [df_endpoints, df_mid, Centroid_x, Centroid_y]
 
 def create_centroid_plot():
+
+    #raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+
     plt.figure(figsize=(10,8))
     plt.barh( df_mid['y_mid'],df_mid['Escaped'],color='0.9')
     plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")

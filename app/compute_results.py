@@ -267,7 +267,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     print("\n\n Calculating Phase Fraction\n")
     DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_flags_for_user)
 
+    print("\n\n Before fit data\n")
     fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
+    print("\n\n After fit data\n")
 
    #return a bunch of data in dataframes, plots are created dynamically
     return (fit_data, 

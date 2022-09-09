@@ -695,9 +695,10 @@ def update_output(n_clicks,
     fit_points = {}
     #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
+        print("Compute results for file ",x)
         fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
-
+        
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
         #some are duplicated because they needed to be converted in multiple ways
         results_table[temp_string] = results_df
@@ -709,13 +710,15 @@ def update_output(n_clicks,
         altered_phase[temp_string] = phase_frac_DF
         altered_ti[temp_string] = tis
         fit_points[temp_string] = fit_data
-
+        print("Finish results for file ",x)
     
     #have the option to run the interaction volume calcs for each dataset(assume they are the "same data"), default is no
+    print("Begin Interaction Volume")
     scattering_dict = {}
     atomic_masses = {}
     elem_fractions = {}
     for x in range(len(cif_fnames)):
+        print("Compute results for cif file ",x)
         cif_path = os.path.join(datadir, cif_fnames[x])
         instprm_path = os.path.join(datadir, instprm_fname)
         
@@ -723,6 +726,7 @@ def update_output(n_clicks,
         elems = []
         cell_volume = None
         crystal_density = None
+        print("Begin Open files")
         with open(cif_path) as f:
             lines = f.readlines()
             for line in lines:
@@ -736,6 +740,7 @@ def update_output(n_clicks,
                 if line == '   _atom_site_site_symmetry_multiplicity\n':
                     addon = True
         
+        print("Begin parameter files readin")
         wavelengths = []
         with open(instprm_path) as fi:
             lines = fi.readlines()
@@ -745,15 +750,19 @@ def update_output(n_clicks,
                     if line_split[0] == 'Lam1' or line_split[0] == 'Lam2':
                         wavelengths.append(float(line_split[1].strip('\n')))
         
+        print("Element Calculation")
         elems_for_phase = []
         elem_percentage = []
         atoms_per_cell = None
         for elem in elems:
+            print("running element ", elem)
             temp = elem.split()
             elems_for_phase.append(temp[1])
             elem_percentage.append(float(temp[5]))
             atoms_per_cell = int(temp[8])
+            print("Results: ", temp, elems_for_phase, elem_percentage,atoms_per_cell)
         
+        print("Cell Volumen Calculation")
         cell_mass = 0.0
         for elem in elems_for_phase:
             key = elem + '_'
@@ -763,6 +772,7 @@ def update_output(n_clicks,
             atomic_masses[elem] = elem_mass
             count += 1
         
+        print("Begin Cell Density")
         cell_density = cell_mass/cell_volume
         pack_fraction = crystal_density/cell_density
 
@@ -771,6 +781,7 @@ def update_output(n_clicks,
         for elem in elem_details:
             scattering_nums.append(interaction_vol.findMu(elem, wavelengths, pack_fraction, cell_volume)) #scattering nums has elem_sym, f', f'', and mu
         
+        print("Begin Cell Scattering")
         for elem in scattering_nums:
             elem[1] = elem[1][0]
             elem[2] = elem[2][0]
@@ -778,11 +789,14 @@ def update_output(n_clicks,
 
         scattering_dict[cif_fnames[x]] = scattering_nums
         elem_fractions[cif_fnames[x]] = elem_percentage
-   
+        
+    print("End Interaction Volume")
+    
     peaks_dict = {}
     for phase_name in cif_fnames:
         peaks_dict[phase_name] = []
-
+        
+    print("Begin Results Table")
     for row in results_table['Dataset: 1'].iterrows():
         current_peak = []
         current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
@@ -796,6 +810,8 @@ def update_output(n_clicks,
             count += 1
         current_peak.append(final_FF)
         peaks_dict[row[1]['Phase']].append(current_peak)
+
+    print("Before Summarized Phase Info")
 
     summarized_phase_info = {}
     for key, value in scattering_dict.items():
@@ -816,6 +832,8 @@ def update_output(n_clicks,
         #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
     # run MCMC using full results
     
+    print("Before Inference Method")
+    
     if inference_method_value == 1:
         stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
         pf_figure, pf_table, param_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases,results_table)
@@ -826,7 +844,9 @@ def update_output(n_clicks,
         stan_fit, unique_phases = None, None
         pf_figure = go.Figure()
         pf_uncert_table, pf_uncert_table_columns, param_table = None, None, None
-    
+
+    print("After Inference Method")
+
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
     
