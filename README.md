@@ -46,7 +46,7 @@ conda env create -f conda_gsas_env.yml
 ```
 To update your existing conda environment use:
 ```
-        conda env update --name myenv --file conda_gsas_env.yml
+conda env update --name myenv --file conda_gsas_env.yml
 ```
 
 Then, activate the environment with
