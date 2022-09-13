@@ -1185,6 +1185,17 @@ def update_peak_dropdown(data, value):
 
     peaks = data.get(value)
 
+    if peaks is None:
+
+        peak_dropdown = html.Div([
+            'Please select a peak to view',
+             dcc.Dropdown(options = ["Peak: 1"], 
+                          id = 'peak-dropdown',
+                          value="Peak: 1")
+        ])
+
+        return peak_dropdown
+
     peak_dropdown = html.Div([
         'Please select a peak to view',
         dcc.Dropdown(options = [str(i + 1) for i in range(len(peaks))], 
