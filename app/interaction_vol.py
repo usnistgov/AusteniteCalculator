@@ -216,6 +216,7 @@ def FPcalc(Orbs, KEv):
     return (FP, FPP, Mu)
 
 def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
+    #print("Find Mu", wavelengths, pack_fraction, cell_volume)
     fps = []
     fpps = []
     Es = []
@@ -231,7 +232,9 @@ def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
         fpps.append((res1[1]+res2[1])/2.0)
         Es.append(E)
         mu_list.append(res1[2])
+        #print(W, res1, res2)
     
+    #print("Mu list:", mu_list)
     mu_avg = sum(mu_list)/len(mu_list) #self.Pack*muT/self.Volume conversion for barns to cm
     mu_converted = (pack_fraction * mu_avg) / cell_volume
     return [singular_elem_details[0], fps, fpps, mu_converted]
