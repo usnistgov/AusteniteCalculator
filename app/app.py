@@ -747,7 +747,7 @@ def update_output(n_clicks,
             for line in lines:
                 if line != '#GSAS-II instrument parameter file; do not add/delete items!':
                     line_split = line.split(':')
-                    if line_split[0] == 'Lam1' or line_split[0] == 'Lam2':
+                    if line_split[0] == 'Lam1' or line_split[0] == 'Lam2' or line_split[0] == 'Lam':
                         wavelengths.append(float(line_split[1].strip('\n')))
         
         print("Element Calculation")
@@ -762,7 +762,7 @@ def update_output(n_clicks,
             atoms_per_cell = int(temp[8])
             print("Results: ", temp, elems_for_phase, elem_percentage,atoms_per_cell)
         
-        print("Cell Volumen Calculation")
+        print("Cell Volume Calculation")
         cell_mass = 0.0
         for elem in elems_for_phase:
             key = elem + '_'
@@ -775,11 +775,14 @@ def update_output(n_clicks,
         print("Begin Cell Density")
         cell_density = cell_mass/cell_volume
         pack_fraction = crystal_density/cell_density
-
+        #print(cell_density,pack_fraction)
         elem_details = interaction_vol.getFormFactors(elems_for_phase)
+        #print(elem_details)
         scattering_nums = []
         for elem in elem_details:
+            #print(elem)
             scattering_nums.append(interaction_vol.findMu(elem, wavelengths, pack_fraction, cell_volume)) #scattering nums has elem_sym, f', f'', and mu
+            #print(elem, scattering_nums)
         
         print("Begin Cell Scattering")
         for elem in scattering_nums:
@@ -940,6 +943,7 @@ def update_output(n_clicks,
                      value=' ')
     ])
 
+    print("Submission complete. Navigate the above tabs to view results.")
     conf = "Submission complete. Navigate the above tabs to view results."
 
     return (plot_dropdown,
