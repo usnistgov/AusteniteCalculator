@@ -185,6 +185,7 @@ def run_stan(results_table):
         
         
         model = CmdStanModel(stan_file='../stan_files/one_sample.stan')
+        #model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
             "N":mydf.shape[0],
@@ -232,7 +233,8 @@ def run_stan(results_table):
 
             mydf.loc[mydf['phase_sample'] == the_id,'phase_sample_id'] = ii + 1
 
-        model = CmdStanModel(stan_file = '../stan_files/multiple_samples.stan')#exe_file=exe_file)
+        model = CmdStanModel(stan_file = '../stan_files/multiple_samples.stan')
+        #model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
             "N":mydf.shape[0],
