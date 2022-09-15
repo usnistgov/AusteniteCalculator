@@ -251,7 +251,7 @@ def create_graph_data(peak_data, summarized_data):
     y_list=np.linspace(0,-t_max_um*np.sin(np.radians(peak_data[2])),num=steps)
     df_endpoints = pd.DataFrame(data={'x': x_list, 'y': y_list})
     df_endpoints['length']=np.sqrt(df_endpoints['x']**2+df_endpoints['y']**2)
-    df_endpoints['I']=I0 *  np.exp(-(summarized_data[2]/10000) * df_endpoints['length'])
+    df_endpoints['I']=I0 * np.exp(-(summarized_data[2]/10000) * df_endpoints['length'])
     x_mid=[]
     y_mid=[]
     delta_I=[]
@@ -280,46 +280,86 @@ def create_graph_data(peak_data, summarized_data):
     Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
     Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
 
-    return [df_endpoints, df_mid, Centroid_x, Centroid_y]
+    return [df_endpoints, df_mid, Centroid_x, Centroid_y, peak_data[2]]
 
-def create_centroid_plot():
+def create_centroid_plot(df_mid, Centroid_y):
+    #plt.barh( df_mid['y_mid'],df_mid['Escaped'],color='0.9')
+    #plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")
+    #plt.hlines(Centroid_y, 0, df_mid['Escaped'].iloc[0], color='0.3',linestyle="--")
 
-    #raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
+    #Swap X and Y for horizontal bar chart
+    trace1 = go.Bar(
+        x=df_mid['RelativeEscaped'],
+        y=df_mid['y_mid'],
+        orientation='h',
+        marker=dict(
+            color='rgb(200,200,200)'
+                )
+    )
 
-    plt.figure(figsize=(10,8))
-    plt.barh( df_mid['y_mid'],df_mid['Escaped'],color='0.9')
-    plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")
-    plt.hlines(Centroid_y, 0, df_mid['Escaped'].iloc[0], color='0.3',linestyle="--")
+# Don't know why the markers aren't working
+    trace2 = go.Scatter(
+        x=df_mid['RelativeEscaped'],
+        y=df_mid['y_mid'],
+        marker=dict(
+            color='rgb(0,0,0)', size=50,symbol='circle'
+                )
+    )
 
-    #plt.plot(theta, z1, label='75% Absorption')
-    #plt.plot(theta, z2, label='50% Absorption')
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(trace1)
+    fig.add_trace(trace2)
+    fig.add_hline(y=Centroid_y, line_dash="dot")
+    fig['layout'].update(height = 600, width = 800, title = "",xaxis=dict(
+                     tickangle=0),
+                     xaxis_title="Scattered x-rays (normalized by flux)",
+                     yaxis_title="Z-depth in Fe (microns)",
+                     font=dict(size=18),
+                     showlegend=False
+                    )
+    return fig
 
-    #plt.legend()
-
-    plt.ylabel('Z-depth in Fe (microns)', fontsize=18)
-    plt.xlabel('Scattered x-rays (counts)', fontsize=18)
-    #plt.title('Z-depth vs Theta for fractional intensities with a copper k-alpha source')
-
-def create_depth_plot():
-    plt.figure(figsize=(10,8))
-
+def create_depth_plot(x_list, y_list, theta_deg):
     #start x-ray height
     xray_start=50 
 
-    plt.hlines(0, -150, 150, color='k')
-    plt.plot([-xray_start/np.tan(np.radians(theta_deg)),0], [xray_start,0] , 'ko', linestyle="--")
-    plt.plot(x_list, y_list , 'bo', linestyle="--")
 
+    trace1 = go.Scatter(
+        x=x_list,
+        y=y_list,
+        orientation='h',
+        marker=dict(
+            color='rgb(0,0,0)'
+                )
+    )
 
-    #plt.plot(theta, z1, label='75% Absorption')
-    #plt.plot(theta, z2, label='50% Absorption')
+    # Don't know why the markers aren't working
+    trace2 = go.Scatter(
+        x=[-xray_start/np.tan(np.radians(theta_deg)),0],
+        y=[xray_start,0],
+        marker=dict(
+            color='rgb(0,0,255)'
+                )
+    )
 
-    #plt.legend()
+    #plt.xlim(-50,50)
+    #plt.ylim(-50,50)
+    #plt.gca().set_aspect('equal')
 
-    plt.xlabel('X position (microns)')
-    plt.ylabel('Z-depth in Fe (microns)')
-    #plt.title('Z-depth vs Theta for fractional intensities with a copper k-alpha source')
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(trace1)
+    fig.add_trace(trace2)
+    fig.add_hline(y=0)
+    fig['layout'].update(height = 800, width = 800, title = "",xaxis=dict(
+                     tickangle=0),
+                     xaxis_title="X position (microns)",
+                     yaxis_title="Z-depth in Fe (microns)",
+                     font=dict(size=18),
+                     showlegend=False
+                    )
 
-    plt.xlim(-50,50)
-    plt.ylim(-50,50)
-    plt.gca().set_aspect('equal')  
+    fig.update_xaxes(range=[-50, 50])
+    fig.update_yaxes(range=[-50, 50])
+
+    return fig
+
