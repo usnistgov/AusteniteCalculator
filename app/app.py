@@ -1220,14 +1220,16 @@ def update_peak_dropdown(data, value):
 def update_interaction_vol_plot(data, phase_value, peak_value):
 
     #return go.Figure(), go.Figure()
+    if data is not None:
+        current_peak = data.get(phase_value)[int(peak_value) - 1]
+        df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
+        df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
 
-    current_peak = data.get(phase_value)[int(peak_value) - 1]
-    df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
-    df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
-
-    centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, data.get(phase_value)[3])
-    depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
-    return centroid_plot, depth_plot
+        centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, data.get(phase_value)[3])
+        depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
+        return centroid_plot, depth_plot
+    else:
+        return go.Figure(), go.Figure()
 
 @app.callback(
     Output('download-full-report', 'data'),
