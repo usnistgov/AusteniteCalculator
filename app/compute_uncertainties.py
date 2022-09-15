@@ -155,6 +155,16 @@ def run_stan(results_table):
     mydf['IR'] = mydf.I / mydf.R
     mydf['sig_IR'] = mydf['sigma_I']/mydf.R
 
+    # compute prior scales
+    prior_sample_scale = np.mean(mydf.groupby(['sample_id','phase_id']).mean().IR.groupby('phase_id').std())
+    prior_exp_scale = np.mean(mydf.groupby(['sample_id','phase_id']).std().IR)
+    prior_location = np.array(mydf.groupby('phase_id').mean().IR)
+
+    print("Prior sample scale: {}".format(prior_sample_scale))
+    print("Prior exp scale: {}".format(prior_exp_scale))
+    print("Prior location: {}".format(prior_location))
+    print("Prior scale: {}".format(np.std(mydf.IR)))
+
     # sigle sample
     if len(results_table) == 1:
 
@@ -174,7 +184,8 @@ def run_stan(results_table):
             print("Not a recognized OS")
         
         
-        model = CmdStanModel(exe_file=exe_file)
+        model = CmdStanModel(stan_file='../stan_files/one_sample.stan')
+        #model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
             "N":mydf.shape[0],
@@ -182,15 +193,16 @@ def run_stan(results_table):
             "Y":mydf.IR,
             "phase":mydf.phase_id,
             "prior_scale":np.std(mydf.IR),
-            "prior_location":np.mean(mydf.IR),
+            "prior_exp_scale":prior_exp_scale,
+            "prior_location":prior_location,
             "u_int_fit":mydf.sigma_I/mydf.R,
             "u_int_count":mydf.u_int_count/mydf.R
         }
 
         fit = model.sample(data=stan_data,
                            chains=4,
-                           iter_warmup=2000, 
-                           iter_sampling=2000)
+                           iter_warmup=4000, 
+                           iter_sampling=4000)
 
     # multiple samples
     elif len(results_table) > 1:
@@ -200,34 +212,51 @@ def run_stan(results_table):
         if sys.platform.startswith('win'): #windows
             #Untested
             exe_file = '../stan_files/multiple_samples.exe'
+
         elif sys.platform.startswith('darwin'): # MacOS
             exe_file = '../stan_files/multiple_samples'
+
         elif sys.platform.startswith('linux'):
             # Untested.  If we include precompiled files, we may need to change the filename
             exe_file = '../stan_files/multiple_samples'
+
         else:
             print("Not a recognized OS")
         
-        
-        model = CmdStanModel(exe_file=exe_file)
+        # create numeric grouping variable for sample/group combo (stan needs ordered sequential numeric index)
+        mydf['phase_sample'] = mydf['phase_id'].astype("string") + mydf['sample_id'].astype("string")
+        mydf['phase_sample_id'] = 0
+
+        unique_phase_sample_ids = pd.unique(mydf['phase_sample'])
+
+        for ii,the_id in enumerate(unique_phase_sample_ids):
+
+            mydf.loc[mydf['phase_sample'] == the_id,'phase_sample_id'] = ii + 1
+
+        model = CmdStanModel(stan_file = '../stan_files/multiple_samples.stan')
+        #model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
             "N":mydf.shape[0],
             "N_samples":len(np.unique(mydf.sample_id)),
             "N_phases":len(np.unique(mydf.phases)),
+            "N_phase_samples":len(np.unique(mydf.phase_sample_id)),
             "Y":mydf.IR,
             "phase":mydf.phase_id,
             "group":mydf.sample_id,
+            "phase_sample_id":mydf.phase_sample_id,
             "prior_scale":np.std(mydf.IR),
-            "prior_location":np.mean(mydf.IR),
+            "prior_sample_scale":prior_sample_scale,
+            "prior_exp_scale":prior_exp_scale,
+            "prior_location":prior_location,
             "u_int_fit":mydf.sigma_I/mydf.R,
             "u_int_count":mydf.u_int_count/mydf.R
         }
 
         fit = model.sample(data=stan_data,
                            chains=4,
-                           iter_warmup=2000, 
-                           iter_sampling=2000)
+                           iter_warmup=4000, 
+                           iter_sampling=4000)
 
     return fit, unique_phases
 
@@ -358,12 +387,12 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
     })
 
     if multiple_samples:
-        param_table['sigma_samp']=[0]*n_phase
+        param_table['sigma_samp'] = [0]*n_phase
+        param_table['sigma_interaction'] = [0]*n_phase
 
     results_table = pd.concat(results_table,axis=0).reset_index()
     results_table = results_table.loc[results_table['Peak_Fit_Success'],:]
 
-    
 
     for ii,ph in enumerate(unique_phase_names):
 
@@ -384,7 +413,7 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
         # sigma_exp
         param_table.loc[param_table['Phase'] == ph, 'sigma_exp'] = np.mean(t_sigexp_samps)
 
-        # median 
+        # medians
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
         param_table.loc[param_table['Phase'] == ph, 'median_u_int_count'] = np.median(dummy)
 
@@ -393,6 +422,7 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
     
     if multiple_samples:
         param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
+        param_table.loc[:,'sigma_interaction'] = np.mean(mcmc_df['sigma_interaction'])
 
     out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
     
