@@ -1180,9 +1180,9 @@ def update_peak_dropdown(data, value):
 
         peak_dropdown = html.Div([
             'Please select a peak to view',
-             dcc.Dropdown(options = ["Peak: 1"], 
+             dcc.Dropdown(options = ['1'], 
                           id = 'peak-dropdown',
-                          value="Peak: 1")
+                          value='1')
         ])
 
         return peak_dropdown
@@ -1193,9 +1193,9 @@ def update_peak_dropdown(data, value):
 
         peak_dropdown = html.Div([
             'Please select a peak to view',
-             dcc.Dropdown(options = ["Peak: 1"], 
+             dcc.Dropdown(options = ['1'], 
                           id = 'peak-dropdown',
-                          value="Peak: 1")
+                          value='1')
         ])
 
         return peak_dropdown
