@@ -68,6 +68,9 @@ To fix the issue, users may need to compile cmdstanpy and any .stan files on the
 
 To recompile cmdstan with a specific compiler (Mac OS clang++):
 
+Also looks like you need to rebuild stan each time
+https://discourse.mc-stan.org/t/struggling-to-get-cmdstan-working-on-mac-os-big-sur/19774/5
+
 **Make sure you're in the conda environment for the Austenite Calculator**
 ```
 cd <cmdstan directory inside conda environment>   (/Users/creuzige/gsas2full/envs/stan-test/bin/cmdstan)
