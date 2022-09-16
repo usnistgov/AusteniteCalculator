@@ -553,6 +553,7 @@ def func(n_clicks):
     Output('table-placeholder', 'children'),
     Output('graph-placeholder', 'children'),
     Output('phase-placeholder', 'children'),
+    Output('norm-int-placeholder', 'children'),
     Output('dataset-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
@@ -915,11 +916,18 @@ def update_output(n_clicks,
                     value = 'Dataset: 1')
     ])
 
-    dataset_dropdown = html.Div([
+    norm_int_dropdown = html.Div([
         'Please select a dataset to view',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
                      id = 'norm-int-dropdown',
                      value="Dataset: 1")
+    ])
+
+    dataset_dropdown = html.Div([
+        'Please select a dataset to view',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+                     id = 'dataset-dropdown',
+                     value='Dataset: 1')
     ])
 
     table_dropdown = html.Div([
@@ -950,6 +958,7 @@ def update_output(n_clicks,
             table_dropdown,
             graph_dropdown,
             phase_dropdown,
+            norm_int_dropdown,
             dataset_dropdown,
             master_dict,
             conf,

@@ -282,6 +282,9 @@ def create_graph_data(peak_data, summarized_data):
 
     return [df_endpoints, df_mid, Centroid_x, Centroid_y, peak_data[2]]
 
+#def transmission_mode_data(peak_data, summarized_data):
+
+
 def create_centroid_plot(df_mid, Centroid_y):
     #plt.barh( df_mid['y_mid'],df_mid['Escaped'],color='0.9')
     #plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")
