@@ -295,12 +295,7 @@ app.layout = dbc.Container([
                     dcc.Dropdown(options = ['Dataset: 1'],
                                 id = 'dataset-dropdown',
                                 value='Dataset: 1')]),
-            html.Br(),
-            html.Div("Select peak:"),
-            html.Div(id='peak-placeholder',children=[ 
-                    dcc.Dropdown(options = ['1'], 
-                                id = 'peak-dropdown',
-                                value='1')]),
+
             html.Br(),
             html.Div("Select phase:"),
             html.Div(id='phase-placeholder',children=[ 
@@ -308,6 +303,11 @@ app.layout = dbc.Container([
                                 id = 'phase-dropdown',
                                 value='Phase: 1')]),
             html.Br(),
+            html.Div("Select peak:"),
+            html.Div(id='peak-placeholder',children=[
+                    dcc.Dropdown(options = ['1'],
+                                id = 'peak-dropdown',
+                                value='1')]),
             html.Br(),
             html.Div([
                 dcc.Graph(id='centroid-plot'),
@@ -1187,7 +1187,7 @@ def update_peak_dropdown(data, value):
 
         return peak_dropdown
 
-    peaks = data.get(value)
+    peaks = data.get('interaction_vol_data').get(value)
 
     peak_dropdown = html.Div([
         'Please select a peak to view',
@@ -1210,12 +1210,15 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
 
     #return go.Figure(), go.Figure()
     if data is not None:
-        current_peak = data.get(phase_value)[int(peak_value) - 1]
+        current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
 
-        centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, data.get(phase_value)[3])
+        #print(df_endpoint, df_midpoint)
+
+        centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
         depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
+        #return go.Figure(), depth_plot
         return centroid_plot, depth_plot
     else:
         return go.Figure(), go.Figure()

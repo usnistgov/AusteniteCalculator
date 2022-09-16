@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 # plotting
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.subplots as psub
 import pandas as pd
 import numpy as np
 import plotly.utils as pltu
@@ -287,6 +288,8 @@ def create_centroid_plot(df_mid, Centroid_y):
     #plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")
     #plt.hlines(Centroid_y, 0, df_mid['Escaped'].iloc[0], color='0.3',linestyle="--")
 
+    #print(df_mid,Centroid_y)
+    
     #Swap X and Y for horizontal bar chart
     trace1 = go.Bar(
         x=df_mid['RelativeEscaped'],
@@ -306,7 +309,7 @@ def create_centroid_plot(df_mid, Centroid_y):
                 )
     )
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig = psub.make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(trace1)
     fig.add_trace(trace2)
     fig.add_hline(y=Centroid_y, line_dash="dot")
@@ -346,7 +349,7 @@ def create_depth_plot(x_list, y_list, theta_deg):
     #plt.ylim(-50,50)
     #plt.gca().set_aspect('equal')
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig = psub.make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(trace1)
     fig.add_trace(trace2)
     fig.add_hline(y=0)
