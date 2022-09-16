@@ -298,9 +298,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.Div("Select peak:"),
             html.Div(id='peak-placeholder',children=[ 
-                    dcc.Dropdown(options = ['Peak: 1'], 
+                    dcc.Dropdown(options = ['1'], 
                                 id = 'peak-dropdown',
-                                value='Peak: 1')]),
+                                value='1')]),
             html.Br(),
             html.Div("Select phase:"),
             html.Div(id='phase-placeholder',children=[ 
@@ -1188,17 +1188,6 @@ def update_peak_dropdown(data, value):
         return peak_dropdown
 
     peaks = data.get(value)
-
-    if peaks is None:
-
-        peak_dropdown = html.Div([
-            'Please select a peak to view',
-             dcc.Dropdown(options = ['1'], 
-                          id = 'peak-dropdown',
-                          value='1')
-        ])
-
-        return peak_dropdown
 
     peak_dropdown = html.Div([
         'Please select a peak to view',
