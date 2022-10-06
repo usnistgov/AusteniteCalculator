@@ -100,15 +100,16 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
 
     # Find the ka1 wavelength in the file
     # works for some data files that have information encode, otherwise may need to prompt
-    try:
-        #Ka1_wavelength=float([s for s in hist.data['Comments'] if s.startswith('Ka1')][0].split('=')[1])
-        # pull from instrument parameters not comments
+    if 'Lam1' in hist.data['Instrument Parameters'][0]:
         Ka1_wavelength=hist.data['Instrument Parameters'][0]['Lam1'][0]
-    except:
-        # hardcoded in for now with Cu source.
-        #? Read from instrument parameter file? Prompt user?
+        print("using the Lam1 value, multiple wavelengths")
+    if 'Lam' in hist.data['Instrument Parameters'][0]:
+        Ka1_wavelength=hist.data['Instrument Parameters'][0]['Lam'][0]
+        print("using the Lam value, single wavelength")
+    else:
         Ka1_wavelength=1.5405
         DF_flags_for_user=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_flags_for_user)
+        print("No wavelength found, defaulting to Cu")
 
     ########################################
     # use the theoretical intensities for peak fit location
