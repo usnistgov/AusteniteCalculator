@@ -272,10 +272,22 @@ app.layout = dbc.Container([
                         Systematic deviation indicates the theoretical intensities may not be correct, or \n
                         errors in x-ray geometry."""),
             dcc.Graph(id='two_theta-plot'),
+            html.Div("""Figure expressing estimates and uncertainty regarding phase fraction."""),
             dcc.Graph(id='pf-uncert-fig'),
+            html.Br(),
+            html.Div("""Table giving estimates and uncertainty for phase fraction."""),
             dash_table.DataTable(id='pf-uncert-table'),
             html.Br(),
+            html.Div("""Table giving estimates for various sources of uncertainty."""),
             dash_table.DataTable(id='param-table'),
+            html.Br(),
+            html.Div("""Table giving uncertainties for fitting and counting statistics for each peak."""),
+            dash_table.DataTable(id='u-int-fit-count-table',
+                                 page_size=20,
+                                 page_current=0,
+                                 filter_action="native",
+                                 sort_action="native",
+                                 column_selectable="single"),
             html.Br()
             
             #Tab label
@@ -562,6 +574,8 @@ def func(n_clicks):
     Output('pf-uncert-table','columns'),
     Output('param-table','data'),
     Output('param-table','columns'),
+    Output('u-int-fit-count-table','data'),
+    Output('u-int-fit-count-table','columns'),
     Input('submit-button-state', 'n_clicks'),
     State('upload-data-xrdml','contents'),
     State('upload-data-xrdml','filename'),
@@ -699,6 +713,7 @@ def update_output(n_clicks,
         print("Compute results for file ",x)
         fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
+        results_df['sample_index'] = str(x + 1)
         
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
         #some are duplicated because they needed to be converted in multiple ways
@@ -712,6 +727,14 @@ def update_output(n_clicks,
         altered_ti[temp_string] = tis
         fit_points[temp_string] = fit_data
         print("Finish results for file ",x)
+
+    # full results table
+    full_results_table = pd.concat(results_table,axis=0,ignore_index=True)
+    full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
+    full_results_table['u_int_fit_norm'] = full_results_table['u_int_fit']/full_results_table['R_calc']
+    full_results_table['u_int_count_norm'] = full_results_table['u_int_fit']/full_results_table['R_calc']
+    full_results_table = full_results_table.loc[:,['sample_index','Phase','u_int_count_norm','u_int_fit_norm']]
+    u_int_fit_count_table_data, u_int_fit_count_table_columns = compute_results.df_to_dict(full_results_table.round(6))
     
     #have the option to run the interaction volume calcs for each dataset(assume they are the "same data"), default is no
     print("Begin Interaction Volume")
@@ -834,8 +857,8 @@ def update_output(n_clicks,
             data_list = interaction_vol.create_graph_data(peak, current_summarized_data)
             graph_data_dict[key].append(data_list)
         #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
+
     # run MCMC using full results
-    
     print("Before Inference Method")
     
     if inference_method_value == 1:
@@ -847,7 +870,7 @@ def update_output(n_clicks,
     elif inference_method_value == 2:
         stan_fit, unique_phases = None, None
         pf_figure = go.Figure()
-        pf_uncert_table, pf_uncert_table_columns, param_table = None, None, None
+        pf_uncert_table, pf_uncert_table_columns, param_table_data, param_table_columns, param_table  = None, None, None, None, None
 
     print("After Inference Method")
 
@@ -966,7 +989,9 @@ def update_output(n_clicks,
             pf_uncert_table,
             pf_uncert_table_columns,
             param_table_data,
-            param_table_columns)
+            param_table_columns,
+            u_int_fit_count_table_data,
+            u_int_fit_count_table_columns)
 
 @app.callback(
     Output('intensity-plot', 'figure'),
@@ -1218,7 +1243,7 @@ def update_peak_dropdown(data, value):
 def update_interaction_vol_plot(data, phase_value, peak_value):
 
     #return go.Figure(), go.Figure()
-    if data is not None:
+    if (data is not None): #and (data.get('interaction_vol_data').get(phase_value) is not None):
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
