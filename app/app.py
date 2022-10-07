@@ -272,16 +272,37 @@ app.layout = dbc.Container([
                         Systematic deviation indicates the theoretical intensities may not be correct, or \n
                         errors in x-ray geometry."""),
             dcc.Graph(id='two_theta-plot'),
-            html.Div("""Figure expressing estimates and uncertainty regarding phase fraction."""),
+            html.Br(),
+            html.Hr(),
+            html.Br(),
+            html.H3("""Figure for Phase Fraction Uncertainty"""),
+            html.Div("""The figure below displays probability distributions conveying the estimates and \n
+                     uncertainty for the phase fractions. Tall and narrow distributions indicate more confidence \n
+                     in the phase fraction, will wide and flat distributions indicate more uncertainty."""),
             dcc.Graph(id='pf-uncert-fig'),
             html.Br(),
-            html.Div("""Table giving estimates and uncertainty for phase fraction."""),
+            html.H3("""Table for Phase Fraction Uncertainty"""),
+            html.Div("""The table below gives summary statistics of the above figure, including estimates of the \n
+                     phase fractions as well as 95\% credible intervals."""),
+            html.Br(),
             dash_table.DataTable(id='pf-uncert-table'),
             html.Br(),
-            html.Div("""Table giving estimates for various sources of uncertainty."""),
+            html.Hr(),
+            html.Br(),
+            html.H3("Sources of Uncertainty"),
+            html.Div("""The table below gives estimates for various sources of uncertainty. \n
+                     'sigma_exp' estimates the experimental error, 'median_u_int_count' gives the median \n
+                     of the uncertainty due to counting statitics across all peaks for a phase fraction, and \n
+                     'median_u_int_fit' gives the median of the uncertainty from the fitting procedure for the \n
+                     given phase fraction. """),
+            html.Br(),
             dash_table.DataTable(id='param-table'),
             html.Br(),
-            html.Div("""Table giving uncertainties for fitting and counting statistics for each peak."""),
+            html.Hr(),
+            html.Br(),
+            html.H3("Uncertainty Due to Fit and Count for Each Peak"),
+            html.Div("""The following table gives uncertainties for fitting and counting statistics for all fitted peaks."""),
+            html.Br(),
             dash_table.DataTable(id='u-int-fit-count-table',
                                  page_size=20,
                                  page_current=0,
@@ -1210,7 +1231,7 @@ def update_norm_int(data, value):
 )
 def update_peak_dropdown(data, value):
 
-    if data is None:
+    if (data is None) and (data.get('interaction_vol_data').get(value)):
 
         peak_dropdown = html.Div([
             'Please select a peak to view',
@@ -1243,7 +1264,7 @@ def update_peak_dropdown(data, value):
 def update_interaction_vol_plot(data, phase_value, peak_value):
 
     #return go.Figure(), go.Figure()
-    if (data is not None): #and (data.get('interaction_vol_data').get(phase_value) is not None):
+    if (data is not None): and (data.get('interaction_vol_data').get(phase_value) is not None):
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
