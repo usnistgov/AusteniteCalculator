@@ -77,11 +77,34 @@ def clear_directory():
 scheduler = BackgroundScheduler()
 scheduler.add_job(clear_directory, 'interval', hours=24)
 scheduler.start()
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
+
+custom_index = """<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        <link rel="stylesheet" href="https://pages.nist.gov/nist-header-footer/css/nist-combined.css">
+         <script src="https://pages.nist.gov/nist-header-footer/js/jquery-1.9.0.min.js" type="text/javascript" defer="defer"></script>
+        <script src="https://pages.nist.gov/nist-header-footer/js/nist-header-footer.js" type="text/javascript" defer="defer"></script>
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>"""
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO],index_string = custom_index)
 server = app.server
 root_dir = os.getcwd()
 
 app.layout = dbc.Container([
+
         
     html.Br(),
     html.H1('Austenite Calculator'),
