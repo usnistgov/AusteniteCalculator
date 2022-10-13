@@ -1264,7 +1264,7 @@ def update_peak_dropdown(data, value):
 def update_interaction_vol_plot(data, phase_value, peak_value):
 
     #return go.Figure(), go.Figure()
-    if (data is not None): and (data.get('interaction_vol_data').get(phase_value) is not None):
+    if (data is not None) and (data.get('interaction_vol_data').get(phase_value) is not None):
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
