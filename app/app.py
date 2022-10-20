@@ -63,6 +63,9 @@ elif re.search('creuzige',os.getcwd()):
 elif re.search('schen',os.getcwd()):
     sys.path.insert(0, '/Users/schen/.conda/envs/conda_gsas_env/GSASII/')
 
+elif re.search('maxga', os.getcwd()):
+    sys.path.insert(0, '/Users/maxga/anaconda3/envs/conda_gsas_env/GSASII/')
+
 
 import GSASIIscriptable as G2sc
 
@@ -207,7 +210,7 @@ app.layout = dbc.Container([
             dbc.Button(id='report-button', children='Download Analysis Report'),
             Download(id='download-full-report'),
             html.Br(),
-            dcc.Store(id='store-calculations', storage_type='session'),
+            dcc.Store(id='store-calculations', storage_type='memory'),
             html.Br(),
             dcc.Loading(
                 id="loading",
@@ -256,6 +259,14 @@ app.layout = dbc.Container([
             html.Br(),
             html.Div("""Table of Phase Fractions"""),
             dash_table.DataTable(id='phase-frac-table'),
+            html.Br(),
+            html.Div(id='unit-placeholder',children=[ 
+                'Select units for Phase Fraction',
+                dcc.Dropdown(options = [{'label':'Number of Unit Cells', 'value':'Number of Unit Cells'}, 
+                                        {'label':'Volume of Unit Cells', 'value':'Volume of Unit Cells'}, 
+                                        {'label':'Mass of Unit Cells', 'value':'Mass of Unit Cells'}], 
+                            id = 'unit-dropdown')
+             ]),
             
             html.Br(),
             html.Div("""Flagged Notes to Users"""),
@@ -785,6 +796,8 @@ def update_output(n_clicks,
     scattering_dict = {}
     atomic_masses = {}
     elem_fractions = {}
+    cell_volumes = {}
+    cell_masses = {}
     for x in range(len(cif_fnames)):
         print("Compute results for cif file ",x)
         cif_path = os.path.join(datadir, cif_fnames[x])
@@ -792,7 +805,6 @@ def update_output(n_clicks,
         
         addon = False
         elems = []
-        cell_volume = None
         crystal_density = None
         print("Begin Open files")
         with open(cif_path) as f:
@@ -800,7 +812,7 @@ def update_output(n_clicks,
             for line in lines:
                 if len(line.split()) > 0:
                     if line.split()[0] == '_cell_volume':
-                        cell_volume = float(line.split()[1].split('(')[0])
+                        cell_volumes[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
                     if line.split()[0] == '_exptl_crystal_density_diffrn':
                         crystal_density = float(line.split()[1])
                 if addon == True:
@@ -828,20 +840,23 @@ def update_output(n_clicks,
             elems_for_phase.append(temp[1])
             elem_percentage.append(float(temp[5]))
             atoms_per_cell = int(temp[8])
-            print("Results: ", temp, elems_for_phase, elem_percentage,atoms_per_cell)
+            print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
         
         print("Cell Volume Calculation")
         cell_mass = 0.0
+        count = 0
         for elem in elems_for_phase:
             key = elem + '_'
-            count = 0
             elem_mass = atmdata.AtmBlens[key]['Mass']
             cell_mass += elem_mass * elem_percentage[count]
             atomic_masses[elem] = elem_mass
             count += 1
         
+        cell_masses[cif_fnames[x]] = cell_mass
+        print(cell_mass, ' ', cell_masses)
+
         print("Begin Cell Density")
-        cell_density = cell_mass/cell_volume
+        cell_density = cell_mass/cell_volumes[cif_fnames[x]]
         pack_fraction = crystal_density/cell_density
         #print(cell_density,pack_fraction)
         elem_details = interaction_vol.getFormFactors(elems_for_phase)
@@ -849,7 +864,7 @@ def update_output(n_clicks,
         scattering_nums = []
         for elem in elem_details:
             #print(elem)
-            scattering_nums.append(interaction_vol.findMu(elem, wavelengths, pack_fraction, cell_volume)) #scattering nums has elem_sym, f', f'', and mu
+            scattering_nums.append(interaction_vol.findMu(elem, wavelengths, pack_fraction, cell_volumes[cif_fnames[x]])) #scattering nums has elem_sym, f', f'', and mu
             #print(elem, scattering_nums)
         
         print("Begin Cell Scattering")
@@ -961,9 +976,22 @@ def update_output(n_clicks,
         ti_tbl = value.to_dict('dict')
         altered_ti[key] = (ti_tbl, ti_col)
         
+
+    #calculate alternate phase fraction units
+    mass_conversion = phase_frac
+    volume_conversion = phase_frac
+    
+    for dataset in mass_conversion:
+        mass_conversion[dataset][0][0]['Phase_Fraction'] = (mass_conversion[dataset][0][0]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][0]['Phase']]) / (mass_conversion[dataset][0][0]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][0]['Phase']] + mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']])
+        mass_conversion[dataset][0][1]['Phase_Fraction'] = (mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']]) / (mass_conversion[dataset][0][0]['Phase_Fraction'] + mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']])
+        volume_conversion[dataset][0][0]['Phase_Fraction'] = (volume_conversion[dataset][0][0]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][0]['Phase']]) / (volume_conversion[dataset][0][0]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][0]['Phase']] + volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']])
+        volume_conversion[dataset][0][1]['Phase_Fraction'] = (volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']]) / (volume_conversion[dataset][0][0]['Phase_Fraction'] + volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']])
+    
     master_dict = {
         'results_table':results_table,
         'phase_frac':phase_frac,
+        'volume_conversion':volume_conversion,
+        'mass_conversion':mass_conversion,
         'two_thetas':two_thetas,
         'ti_tables':ti_tables,
         'uncert':uncert,
@@ -972,7 +1000,8 @@ def update_output(n_clicks,
         'altered_ti':altered_ti,
         'fit_points':fit_points,
         'interaction_vol_data':graph_data_dict,
-        'atomic_masses':atomic_masses
+        'cell_masses':cell_masses,
+        'cell_volumes':cell_volumes
     }
     
     #create html components to replace the placeholders in the app
@@ -1114,9 +1143,10 @@ def update_figures(data, value):
     Output('uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('table-dropdown', 'value'),
+    Input('unit-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_tables(data, value):
+def update_tables(data, value, unit_value):
 
     if data is None:
         return [], [], [], [], [], []
@@ -1140,10 +1170,20 @@ def update_tables(data, value):
     """
     table = data.get('results_table').get(value)[0]
     cols = data.get('results_table').get(value)[1]
-    frac_table = data.get('phase_frac').get(value)[0]
-    frac_cols = data.get('phase_frac').get(value)[1]
     uncert_table = data.get('uncert').get(value)[0]
     uncert_cols = data.get('uncert').get(value)[1]
+
+    frac_table = None
+    frac_cols = None
+    if(unit_value == 'Number of Unit Cells'):
+        frac_table = data.get('phase_frac').get(value)[0]
+        frac_cols = data.get('phase_frac').get(value)[1]
+    elif(unit_value == 'Volume of Unit Cells'):
+        frac_table = data.get('volume_conversion').get(value)[0]
+        frac_cols = data.get('volume_conversion').get(value)[1]
+    elif(unit_value == 'Mass of Unit Cells'):
+        frac_table = data.get('mass_conversion').get(value)[0]
+        frac_cols = data.get('mass_conversion').get(value)[1]
 
     return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
 
@@ -1281,7 +1321,7 @@ def update_peak_dropdown(data, value):
     Output('interaction-depth-plot', 'figure'),
     Input('store-calculations', 'data'),
     Input('phase-dropdown', 'value'),
-    Input('peak-dropdown', 'value'),
+    Input('table-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_interaction_vol_plot(data, phase_value, peak_value):
@@ -1300,6 +1340,7 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
         return centroid_plot, depth_plot
     else:
         return go.Figure(), go.Figure()
+
 
 @app.callback(
     Output('download-full-report', 'data'),
