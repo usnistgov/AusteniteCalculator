@@ -681,8 +681,8 @@ def update_output(n_clicks,
     print(use_default_files)
 
     if use_default_files not in [None, []] and use_default_files[0] == 1:
-        datadir = '../server_default_datadir' 
-        #datadir = '../ExampleData/Example01'
+        #datadir = '../server_default_datadir'
+        datadir = '../ExampleData/Example01'
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
         xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
@@ -799,7 +799,8 @@ def update_output(n_clicks,
     cell_volumes = {}
     cell_masses = {}
     for x in range(len(cif_fnames)):
-        print("Compute results for cif file ",x)
+#        print("Compute results for cif file ",x)
+        print("Compute results for cif file ",cif_fnames[x])
         cif_path = os.path.join(datadir, cif_fnames[x])
         instprm_path = os.path.join(datadir, instprm_fname)
         
@@ -834,13 +835,15 @@ def update_output(n_clicks,
         elems_for_phase = []
         elem_percentage = []
         atoms_per_cell = None
+        
+        # Should throw an error message if the list is blank...
         for elem in elems:
             print("running element ", elem)
             temp = elem.split()
             elems_for_phase.append(temp[1])
             elem_percentage.append(float(temp[5]))
             atoms_per_cell = int(temp[8])
-            print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
+            #print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
         
         print("Cell Volume Calculation")
         cell_mass = 0.0
@@ -850,6 +853,7 @@ def update_output(n_clicks,
             elem_mass = atmdata.AtmBlens[key]['Mass']
             cell_mass += elem_mass * elem_percentage[count]
             atomic_masses[elem] = elem_mass
+            print("Element: ", elem,"\tMass: ",elem_mass)
             count += 1
         
         cell_masses[cif_fnames[x]] = cell_mass
