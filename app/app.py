@@ -818,7 +818,8 @@ def update_output(n_clicks,
                         crystal_density = float(line.split()[1])
                 if addon == True:
                     elems.append(line)
-                if line == '   _atom_site_site_symmetry_multiplicity\n' or '   _atom_site_symmetry_multiplicity\n':
+                #changed to string comparison as the syntax changed some
+                if 'symmetry_multiplicity' in line:
                     addon = True
         
         print("Begin parameter files readin")
