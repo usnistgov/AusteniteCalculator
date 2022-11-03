@@ -198,6 +198,18 @@ app.layout = dbc.Container([
                 value=1,
                 id="inference-method",
             ),
+            html.Br(),
+            html.Div("Number of MCMC Runs"),
+            dbc.Row(
+                dbc.Col(dbc.Select(
+                            id="number-mcmc-runs",
+                            options=[
+                                {"label": "4000", "value":4000},
+                                {"label": "8000", "value":8000},
+                                {"label": "800 (for testing only)", "value":800,},
+                            ]
+                        ), width=3)
+            ),
 
             # submit button
             html.Hr(),
@@ -642,13 +654,16 @@ def func(n_clicks):
     State('example05-files-check','value'),
     State('example06-files-check','value'),
     State('inference-method','value'),
+    State('number-mcmc-runs','value'),
     prevent_initial_call = True
 )
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fnames,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
-                  use_default_files, use_example05_files, use_example06_files,inference_method_value):
+                  use_default_files, use_example05_files, use_example06_files,
+                  inference_method_value,
+                  number_mcmc_runs):
     '''Callback for the "Begin Analysis" button, runs our expensive compute_results function
 
     Args:
@@ -926,7 +941,7 @@ def update_output(n_clicks,
     print("Before Inference Method")
     
     if inference_method_value == 1:
-        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
+        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
         pf_figure, pf_table, param_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases,results_table)
         pf_uncert_table, pf_uncert_table_columns = compute_results.df_to_dict(pf_table.round(4))
         param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))

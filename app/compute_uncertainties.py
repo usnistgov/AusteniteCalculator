@@ -123,7 +123,7 @@ def run_paul_mandel(results_table):
             'unique_phase_names':unique_phase_names,
             'summary_table':summary_table}
 
-def run_stan(results_table):
+def run_stan(results_table,number_mcmc_runs):
 
     intables = list(results_table.values())
 
@@ -156,7 +156,12 @@ def run_stan(results_table):
     mydf['sig_IR'] = mydf['sigma_I']/mydf.R
 
     # compute prior scales
-    prior_sample_scale = np.mean(mydf.groupby(['sample_id','phase_id']).mean().IR.groupby('phase_id').std())
+    if  len(results_table) > 1:
+        prior_sample_scale = np.mean(mydf.groupby(['sample_id','phase_id']).mean().IR.groupby('phase_id').std())
+
+    else:
+        prior_sample_scale = None
+
     prior_exp_scale = np.mean(mydf.groupby(['sample_id','phase_id']).std().IR)
     prior_location = np.array(mydf.groupby('phase_id').mean().IR)
 
@@ -201,8 +206,8 @@ def run_stan(results_table):
 
         fit = model.sample(data=stan_data,
                            chains=4,
-                           iter_warmup=4000, 
-                           iter_sampling=4000)
+                           iter_warmup=number_mcmc_runs, 
+                           iter_sampling=number_mcmc_runs)
 
     # multiple samples
     elif len(results_table) > 1:
