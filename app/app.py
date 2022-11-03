@@ -1299,7 +1299,7 @@ def update_norm_int(data, value):
 )
 def update_peak_dropdown(data, value):
 
-    if (data is None) and (data.get('interaction_vol_data').get(value)):
+    if (data is None) or (data.get('interaction_vol_data').get(value) is None):
 
         peak_dropdown = html.Div([
             'Please select a peak to view',
