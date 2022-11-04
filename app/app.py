@@ -111,7 +111,16 @@ app.layout = dbc.Container([
         
     html.Br(),
     html.H1('Austenite Calculator'),
-    html.Div('Calculating austenite since 2021.',style={'font-style':'italic'}),
+    html.Div(['Calculating ',
+        html.Span("Austenite",
+                  id="tooltip-target",
+                  style={"textDecoration": "underline", "cursor": "pointer"},
+                ),
+      ' since 2021.'],style={'font-style':'italic'}),
+    dbc.Tooltip(
+            "Austenite, also known as gamma-phase iron (γ-Fe), is a metallic, non-magnetic allotrope of iron or a solid solution of iron with an alloying element.",
+            target="tooltip-target",
+    ),
     html.Br(),
     
     dbc.Tabs([
