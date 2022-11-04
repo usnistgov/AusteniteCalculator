@@ -808,6 +808,7 @@ def update_output(n_clicks,
         elems = []
         crystal_density = None
         print("Begin Open files")
+        # Somewhat fragile to cif format and number of returns after line ending
         with open(cif_path) as f:
             lines = f.readlines()
             for line in lines:
@@ -816,8 +817,10 @@ def update_output(n_clicks,
                         cell_volumes[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
                     if line.split()[0] == '_exptl_crystal_density_diffrn':
                         crystal_density = float(line.split()[1])
-                if addon == True:
+                if addon == True and len(line) > 1:
                     elems.append(line)
+                if addon == True and len(line) <= 1:
+                    addon = False
                 #changed to string comparison as the syntax changed some
                 if 'symmetry_multiplicity' in line:
                     addon = True
@@ -983,14 +986,15 @@ def update_output(n_clicks,
         
 
     #calculate alternate phase fraction units
-    mass_conversion = phase_frac
-    volume_conversion = phase_frac
+    # pandas doesn't copy well
+    mass_conversion = phase_frac.copy()
+    volume_conversion = phase_frac.copy()
     
     for dataset in mass_conversion:
-        mass_conversion[dataset][0][0]['Phase_Fraction'] = (mass_conversion[dataset][0][0]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][0]['Phase']]) / (mass_conversion[dataset][0][0]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][0]['Phase']] + mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']])
-        mass_conversion[dataset][0][1]['Phase_Fraction'] = (mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']]) / (mass_conversion[dataset][0][0]['Phase_Fraction'] + mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']])
-        volume_conversion[dataset][0][0]['Phase_Fraction'] = (volume_conversion[dataset][0][0]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][0]['Phase']]) / (volume_conversion[dataset][0][0]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][0]['Phase']] + volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']])
-        volume_conversion[dataset][0][1]['Phase_Fraction'] = (volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']]) / (volume_conversion[dataset][0][0]['Phase_Fraction'] + volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']])
+        mass_conversion[dataset][0][0]['Phase_Fraction'] = (phase_frac[dataset][0][0]['Phase_Fraction'] * cell_masses[phase_frac[dataset][0][0]['Phase']]) / (phase_frac[dataset][0][0]['Phase_Fraction'] * cell_masses[phase_frac[dataset][0][0]['Phase']] + phase_frac[dataset][0][1]['Phase_Fraction'] * cell_masses[phase_frac[dataset][0][1]['Phase']])
+        mass_conversion[dataset][0][1]['Phase_Fraction'] = (phase_frac[dataset][0][1]['Phase_Fraction'] * cell_masses[phase_frac[dataset][0][1]['Phase']]) / (phase_frac[dataset][0][0]['Phase_Fraction'] * cell_masses[phase_frac[dataset][0][0]['Phase']] + phase_frac[dataset][0][1]['Phase_Fraction'] * cell_masses[phase_frac[dataset][0][1]['Phase']])
+        volume_conversion[dataset][0][0]['Phase_Fraction'] = (phase_frac[dataset][0][0]['Phase_Fraction'] * cell_volumes[phase_frac[dataset][0][0]['Phase']]) / (phase_frac[dataset][0][0]['Phase_Fraction'] * cell_volumes[phase_frac[dataset][0][0]['Phase']] + phase_frac[dataset][0][1]['Phase_Fraction'] * cell_volumes[phase_frac[dataset][0][1]['Phase']])
+        volume_conversion[dataset][0][1]['Phase_Fraction'] = (phase_frac[dataset][0][1]['Phase_Fraction'] * cell_volumes[phase_frac[dataset][0][1]['Phase']]) / (phase_frac[dataset][0][0]['Phase_Fraction'] * cell_volumes[phase_frac[dataset][0][0]['Phase']] + phase_frac[dataset][0][1]['Phase_Fraction'] * cell_volumes[phase_frac[dataset][0][1]['Phase']])
     
     master_dict = {
         'results_table':results_table,
