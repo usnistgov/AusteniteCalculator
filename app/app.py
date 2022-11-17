@@ -981,11 +981,16 @@ def update_output(n_clicks,
     mass_conversion = phase_frac
     volume_conversion = phase_frac
     
+    #this needs to work for more than 2 phases, change to for loop
+    #find denominator first(normalize at the same time)
     for dataset in mass_conversion:
-        mass_conversion[dataset][0][0]['Phase_Fraction'] = (mass_conversion[dataset][0][0]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][0]['Phase']]) / (mass_conversion[dataset][0][0]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][0]['Phase']] + mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']])
-        mass_conversion[dataset][0][1]['Phase_Fraction'] = (mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']]) / (mass_conversion[dataset][0][0]['Phase_Fraction'] + mass_conversion[dataset][0][1]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][1]['Phase']])
-        volume_conversion[dataset][0][0]['Phase_Fraction'] = (volume_conversion[dataset][0][0]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][0]['Phase']]) / (volume_conversion[dataset][0][0]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][0]['Phase']] + volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']])
-        volume_conversion[dataset][0][1]['Phase_Fraction'] = (volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']]) / (volume_conversion[dataset][0][0]['Phase_Fraction'] + volume_conversion[dataset][0][1]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][1]['Phase']])
+        for x in range(len(mass_conversion[dataset][0])):
+            mass_denominator += mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]
+            volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]
+
+        for x in range(len(mass_conversion[dataset][0]))
+        mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
+        volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
     
     master_dict = {
         'results_table':results_table,
