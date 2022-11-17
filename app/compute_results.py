@@ -570,7 +570,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_flags):
     #? Maybe pass based upon which phase is of interest
     #? or create one for each phase?
     #? Maybe move rounding to display only?
-    phase_fraction_DF = phase_fraction_DF.round(4)
+    phase_fraction_DF = phase_fraction_DF.round(6)
 
     print("Fraction Dictionary")
     #print(fraction_dict)

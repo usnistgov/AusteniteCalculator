@@ -111,7 +111,16 @@ app.layout = dbc.Container([
         
     html.Br(),
     html.H1('Austenite Calculator'),
-    html.Div('Calculating austenite since 2021.',style={'font-style':'italic'}),
+    html.Div(['Calculating ',
+        html.Span("Austenite",
+                  id="tooltip-target",
+                  style={"textDecoration": "underline", "cursor": "pointer"},
+                ),
+      ' since 2021.'],style={'font-style':'italic'}),
+    dbc.Tooltip(
+            "Austenite, also known as gamma-phase iron (γ-Fe), is a metallic, non-magnetic allotrope of iron or a solid solution of iron with an alloying element.",
+            target="tooltip-target",
+    ),
     html.Br(),
     
     dbc.Tabs([
@@ -197,6 +206,18 @@ app.layout = dbc.Container([
                 ],
                 value=1,
                 id="inference-method",
+            ),
+            html.Br(),
+            html.Div("Number of MCMC Runs"),
+            dbc.Row(
+                dbc.Col(dbc.Select(
+                            id="number-mcmc-runs",
+                            options=[
+                                {"label": "4000", "value":4000},
+                                {"label": "8000", "value":8000},
+                                {"label": "800 (for testing only)", "value":800,},
+                            ]
+                        ), width=3)
             ),
 
             # submit button
@@ -642,13 +663,16 @@ def func(n_clicks):
     State('example05-files-check','value'),
     State('example06-files-check','value'),
     State('inference-method','value'),
+    State('number-mcmc-runs','value'),
     prevent_initial_call = True
 )
 def update_output(n_clicks,
                   xrdml_contents,xrdml_fnames,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
-                  use_default_files, use_example05_files, use_example06_files,inference_method_value):
+                  use_default_files, use_example05_files, use_example06_files,
+                  inference_method_value,
+                  number_mcmc_runs):
     '''Callback for the "Begin Analysis" button, runs our expensive compute_results function
 
     Args:
@@ -681,8 +705,8 @@ def update_output(n_clicks,
     print(use_default_files)
 
     if use_default_files not in [None, []] and use_default_files[0] == 1:
-        datadir = '../server_default_datadir' 
-        #datadir = '../ExampleData/Example01'
+        #datadir = '../server_default_datadir'
+        datadir = '../ExampleData/Example01'
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
         xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
@@ -799,7 +823,8 @@ def update_output(n_clicks,
     cell_volumes = {}
     cell_masses = {}
     for x in range(len(cif_fnames)):
-        print("Compute results for cif file ",x)
+#        print("Compute results for cif file ",x)
+        print("Compute results for cif file ",cif_fnames[x])
         cif_path = os.path.join(datadir, cif_fnames[x])
         instprm_path = os.path.join(datadir, instprm_fname)
         
@@ -807,6 +832,7 @@ def update_output(n_clicks,
         elems = []
         crystal_density = None
         print("Begin Open files")
+        # Somewhat fragile to cif format and number of returns after line ending
         with open(cif_path) as f:
             lines = f.readlines()
             for line in lines:
@@ -815,9 +841,12 @@ def update_output(n_clicks,
                         cell_volumes[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
                     if line.split()[0] == '_exptl_crystal_density_diffrn':
                         crystal_density = float(line.split()[1])
-                if addon == True:
+                if addon == True and len(line) > 1:
                     elems.append(line)
-                if line == '   _atom_site_site_symmetry_multiplicity\n':
+                if addon == True and len(line) <= 1:
+                    addon = False
+                #changed to string comparison as the syntax changed some
+                if 'symmetry_multiplicity' in line:
                     addon = True
         
         print("Begin parameter files readin")
@@ -834,13 +863,15 @@ def update_output(n_clicks,
         elems_for_phase = []
         elem_percentage = []
         atoms_per_cell = None
+        
+        # Should throw an error message if the list is blank...
         for elem in elems:
             print("running element ", elem)
             temp = elem.split()
             elems_for_phase.append(temp[1])
             elem_percentage.append(float(temp[5]))
             atoms_per_cell = int(temp[8])
-            print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
+            #print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
         
         print("Cell Volume Calculation")
         cell_mass = 0.0
@@ -850,6 +881,7 @@ def update_output(n_clicks,
             elem_mass = atmdata.AtmBlens[key]['Mass']
             cell_mass += elem_mass * elem_percentage[count]
             atomic_masses[elem] = elem_mass
+            print("Element: ", elem,"\tMass: ",elem_mass)
             count += 1
         
         cell_masses[cif_fnames[x]] = cell_mass
@@ -921,7 +953,7 @@ def update_output(n_clicks,
     print("Before Inference Method")
     
     if inference_method_value == 1:
-        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table)
+        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
         pf_figure, pf_table, param_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases,results_table)
         pf_uncert_table, pf_uncert_table_columns = compute_results.df_to_dict(pf_table.round(4))
         param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
@@ -978,8 +1010,9 @@ def update_output(n_clicks,
         
 
     #calculate alternate phase fraction units
-    mass_conversion = phase_frac
-    volume_conversion = phase_frac
+    # pandas doesn't copy well
+    mass_conversion = phase_frac.copy()
+    volume_conversion = phase_frac.copy()
     
     #this needs to work for more than 2 phases, change to for loop
     #find denominator first(normalize at the same time)
@@ -1299,7 +1332,7 @@ def update_norm_int(data, value):
 )
 def update_peak_dropdown(data, value):
 
-    if (data is None) and (data.get('interaction_vol_data').get(value)):
+    if (data is None) or (data.get('interaction_vol_data').get(value) is None):
 
         peak_dropdown = html.Div([
             'Please select a peak to view',

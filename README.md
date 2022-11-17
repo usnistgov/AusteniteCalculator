@@ -119,6 +119,8 @@ To get the goodness of fit and other parameters saved with the histogram, it's n
 >        self.data['Peak Fit Rvals'] =result[3]
         return result
 ```
+Looks like that's been fixed in version 5358 if not before
+
 ## Licence
 See [license.md](license.md).
 
