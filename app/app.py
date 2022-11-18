@@ -68,6 +68,9 @@ elif re.search('maxga', os.getcwd()):
 
 
 import GSASIIscriptable as G2sc
+import GSASIIpath
+
+GSASIIpath.svnUpdateDir(version=5300,verbose=True)
 
 def clear_directory():
     dirs = glob.glob("calculator_report*/")
@@ -961,7 +964,7 @@ def update_output(n_clicks,
     elif inference_method_value == 2:
         stan_fit, unique_phases = None, None
         pf_figure = go.Figure()
-        pf_uncert_table, pf_uncert_table_columns, param_table_data, param_table_columns, param_table  = None, None, None, None, None
+        pf_uncert_table, pf_uncert_table_columns, param_table_data, param_table_columns, param_table = None, None, None, None, None
 
     print("After Inference Method")
 
@@ -1016,14 +1019,18 @@ def update_output(n_clicks,
     
     #this needs to work for more than 2 phases, change to for loop
     #find denominator first(normalize at the same time)
+
+    mass_denominator = 0
+    volume_denominator = 0
+
     for dataset in mass_conversion:
         for x in range(len(mass_conversion[dataset][0])):
             mass_denominator += mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]
-            volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]
+            volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']])
 
-        for x in range(len(mass_conversion[dataset][0]))
-        mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
-        volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
+        for x in range(len(mass_conversion[dataset][0])):
+            mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
+            volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
     
     master_dict = {
         'results_table':results_table,

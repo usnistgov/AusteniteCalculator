@@ -260,8 +260,8 @@ def run_stan(results_table,number_mcmc_runs):
 
         fit = model.sample(data=stan_data,
                            chains=4,
-                           iter_warmup=4000, 
-                           iter_sampling=4000)
+                           iter_warmup=number_mcmc_runs, 
+                           iter_sampling=number_mcmc_runs)
 
     return fit, unique_phases
 
@@ -428,15 +428,20 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
     if multiple_samples:
         param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
         param_table.loc[:,'sigma_interaction'] = np.mean(mcmc_df['sigma_interaction'])
+        param_table['SampleUncertainty'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
+        param_table = param_table.drop(columns=['sigma_samp','sigma_interaction'])
+
 
     out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
     
     quantiles = quantiles.flatten()
+
+    col_list = px.colors.qualitative.Plotly
     
     # figure
     fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75)
     
     for ii in range(len(quantiles)):
-        fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash')
+        fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])
 
     return fig, pf_table, param_table
