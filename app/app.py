@@ -164,6 +164,15 @@ app.layout = dbc.Container([
                     multiple=True),
             html.Div(id='f3-name'),
 
+            #csv upload for crystallites illuminated
+            dcc.Upload(
+                    id='upload-csv',
+                    children=html.Div([
+                            dbc.Button('Crystallites Illuminated CSV (.csv) - see \'File Creation\' Tab')
+                            ]),
+                    multiple=False),
+            html.Div(id='f4-name'),
+
             ## Checkbox to use the default files instead
             html.Hr(),
             dbc.Checklist(
@@ -409,7 +418,7 @@ app.layout = dbc.Container([
         ### --- start Instrument Parameter Creation --- ###
         dbc.Tab([
             html.Div([
-                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
+                'Please choose from a default .instprm file if you do not have one, upload your .cif and .xrdml files, and click the \'Download .instprm File\' Button',
                 dcc.Dropdown(id='default-dropdown',options=['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank']),
                 html.Div(id = 'default-name', style={'display':'none'}),
             ]),
@@ -431,10 +440,19 @@ app.layout = dbc.Container([
             html.Div(id='default-cif'),
             ## Button for uploading Instrument Parameter File
             html.Br(),
-            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
-            
+            html.Div([html.Button("Download .instprm File", id = "download-created-file"), Download(id = "download-instprm")]),
+            html.Br(),
+            html.Div([
+                'To create a .csv file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .csv File\' Button'
+                #need fields for:
+                #powder size
+                #beam shape and size
+                #raster in x and y
+                #crystallites per particle(guess with option to fill)
+                #L, W_F, H_F, H_R??
+            ]),
         ],
-        label="Instrument Parameter Creation"),
+        label="File Creation"),
         ### --- end Instrument Parameter Creation --- ###
 
         ### --- start About Tab --- ###
@@ -1019,7 +1037,7 @@ def update_output(n_clicks,
     for dataset in mass_conversion:
         for x in range(len(mass_conversion[dataset][0])):
             mass_denominator += mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]
-            volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]
+            volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']])
 
         for x in range(len(mass_conversion[dataset][0]))
         mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
