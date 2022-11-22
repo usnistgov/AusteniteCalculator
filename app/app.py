@@ -218,8 +218,9 @@ app.layout = dbc.Container([
                             options=[
                                 {"label": "4000", "value":4000},
                                 {"label": "8000", "value":8000},
-                                {"label": "800 (for testing only)", "value":800,},
-                            ]
+                                {"label": "800 (for testing only)", "value":800},
+                            ],
+                            value=800
                         ), width=3)
             ),
 
