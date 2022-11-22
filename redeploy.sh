@@ -2,8 +2,8 @@
 
 set -e
 
-rm AusteniteCalculator-master.zip
-rm -rf AusteniteCalculator-master
+rm master.zip
+rm -rf master
 
 wget https://github.com/usnistgov/AusteniteCalculator/archive/refs/heads/master.zip
 unzip master.zip
