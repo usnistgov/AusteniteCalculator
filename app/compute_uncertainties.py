@@ -386,7 +386,7 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
 
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
-        'sigma_exp':[0]*n_phase,
+        'Experimental Uncertainty':[0]*n_phase,
         'median_u_int_count':[0]*n_phase,
         'median_u_int_fit':[0]*n_phase
     })
@@ -416,7 +416,7 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
         pf_table.loc[pf_table['Phase'] == ph,'PF Upr95'] = np.quantile(mu_res_norm[:,ii],.975)
 
         # sigma_exp
-        param_table.loc[param_table['Phase'] == ph, 'sigma_exp'] = np.mean(t_sigexp_samps)
+        param_table.loc[param_table['Phase'] == ph, 'Experimental Uncertainty'] = np.mean(t_sigexp_samps)
 
         # medians
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
@@ -428,8 +428,9 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
     if multiple_samples:
         param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
         param_table.loc[:,'sigma_interaction'] = np.mean(mcmc_df['sigma_interaction'])
-        param_table['SampleUncertainty'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
+        param_table['Sample Uncertainty'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
         param_table = param_table.drop(columns=['sigma_samp','sigma_interaction'])
+
 
 
     out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
