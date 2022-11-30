@@ -70,7 +70,11 @@ elif re.search('maxga', os.getcwd()):
 import GSASIIscriptable as G2sc
 import GSASIIpath
 
-GSASIIpath.svnUpdateDir(version=5300,verbose=True)
+try:
+    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
+except Exception: #GSAS raises an execption if unable to connect to svn
+    print("Unable to update, using whichever version is installed")
+
 
 def clear_directory():
     dirs = glob.glob("calculator_report*/")
