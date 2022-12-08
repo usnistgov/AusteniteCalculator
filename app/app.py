@@ -38,6 +38,7 @@ import random
 import math
 from apscheduler.schedulers.background import BackgroundScheduler
 import atmdata
+from copy import deepcopy
 
 # Add example comment
 
@@ -1107,9 +1108,10 @@ def update_output(n_clicks,
         
 
     #calculate alternate phase fraction units
-    # pandas doesn't copy well
-    mass_conversion = phase_frac.copy()
-    volume_conversion = phase_frac.copy()
+
+    # deepcopy to prevent aliasing
+    mass_conversion = deepcopy(phase_frac)
+    volume_conversion = deepcopy(phase_frac)
     
     #this needs to work for more than 2 phases, change to for loop
     #find denominator first(normalize at the same time)
@@ -1126,6 +1128,10 @@ def update_output(n_clicks,
             mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
             volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
     
+    print(volume_conversion)
+    print(mass_conversion)
+    print(phase_frac)
+
     master_dict = {
         'results_table':results_table,
         'phase_frac':phase_frac,
