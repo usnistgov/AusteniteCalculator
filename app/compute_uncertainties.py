@@ -377,18 +377,18 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
     # table to store phase fraction estimates and 95% credible intervals
     pf_table = pd.DataFrame({
         'Phase':unique_phase_names,
-        'PF Est':0,
-        'PF Lwr95':0,
-        'PF Upr95':0
+        'Phase Fraction Estimate':0,
+        'Phase Fraction (Lower 95%)':0,
+        'Phase Fraction (Upper 95%)':0
     })
 
     # table to hold parameter estimates for sources of uncertainty
 
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
-        'Experimental Uncertainty':[0]*n_phase,
-        'median_u_int_count':[0]*n_phase,
-        'median_u_int_fit':[0]*n_phase
+        'Experimental Error Variability':[0]*n_phase,
+        'Particle Count Variability':[0]*n_phase,
+        'Parameter Fit Variability':[0]*n_phase
     })
 
     if multiple_samples:
@@ -411,24 +411,24 @@ def generate_pf_plot_and_table(fit,unique_phase_names,results_table):
         #t_mu_samps = mcmc_df['phase_mu[' + str(ii+1) + ']']
         t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
         
-        pf_table.loc[pf_table['Phase'] == ph,'PF Est'] = np.mean(mu_res_norm[:,ii])
-        pf_table.loc[pf_table['Phase'] == ph,'PF Lwr95'] = np.quantile(mu_res_norm[:,ii],.025)
-        pf_table.loc[pf_table['Phase'] == ph,'PF Upr95'] = np.quantile(mu_res_norm[:,ii],.975)
+        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction Estimate'] = np.mean(mu_res_norm[:,ii])
+        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Lower 95%)'] = np.quantile(mu_res_norm[:,ii],.025)
+        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Upper 95%)'] = np.quantile(mu_res_norm[:,ii],.975)
 
         # sigma_exp
-        param_table.loc[param_table['Phase'] == ph, 'Experimental Uncertainty'] = np.mean(t_sigexp_samps)
+        param_table.loc[param_table['Phase'] == ph, 'Experimental Error Variability'] = np.mean(t_sigexp_samps)
 
         # medians
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
-        param_table.loc[param_table['Phase'] == ph, 'median_u_int_count'] = np.median(dummy)
+        param_table.loc[param_table['Phase'] == ph, 'Particle Count Variability'] = np.median(dummy)
 
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
-        param_table.loc[param_table['Phase'] == ph, 'median_u_int_fit'] = np.median(dummy)
+        param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
     
     if multiple_samples:
         param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
         param_table.loc[:,'sigma_interaction'] = np.mean(mcmc_df['sigma_interaction'])
-        param_table['Sample Uncertainty'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
+        param_table['Sample Variability'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
         param_table = param_table.drop(columns=['sigma_samp','sigma_interaction'])
 
 

@@ -412,7 +412,21 @@ app.layout = dbc.Container([
             dcc.Graph(id='two_theta-plot'),
             html.Br(),
             html.Hr(),
+            html.Br()
+            
+            #Tab label
+            ],
+            label="Normalized intensities"),
+            
+            
+            
+        ### --- end Results Tables and Plots --- ###
+
+        ### --- start uncertainty analysis --- ###
+
+        dbc.Tab([
             html.Br(),
+           
             html.H3("""Figure for Phase Fraction Uncertainty"""),
             html.Div("""The figure below displays probability distributions conveying the estimates and \n
                      uncertainty for the phase fractions. Tall and narrow distributions indicate more confidence \n
@@ -421,7 +435,7 @@ app.layout = dbc.Container([
             html.Br(),
             html.H3("""Table for Phase Fraction Uncertainty"""),
             html.Div("""The table below gives summary statistics of the above figure, including estimates of the \n
-                     phase fractions as well as 95\% credible intervals."""),
+                     phase fractions as well as 95% credible intervals."""),
             html.Br(),
             dash_table.DataTable(id='pf-uncert-table'),
             html.Br(),
@@ -451,11 +465,9 @@ app.layout = dbc.Container([
             
             #Tab label
             ],
-            label="Normalized intensities"),
-            
-            
-            
-        ### --- end Results Tables and Plots --- ###
+            label="Uncertainty Analysis"),
+
+        ### --- end uncertainty analysis --- ###
         
         ### --- start Interaction Volume Tables and Plots --- ###
         
@@ -488,6 +500,8 @@ app.layout = dbc.Container([
         label='Interaction Volume'),
         
         ### --- end Interaction Volume Tables and Plots --- ###
+
+        
 
         ### --- start Instrument Parameter Creation --- ###
         dbc.Tab([
