@@ -1127,10 +1127,6 @@ def update_output(n_clicks,
         for x in range(len(mass_conversion[dataset][0])):
             mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
             volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
-    
-    print(volume_conversion)
-    print(mass_conversion)
-    print(phase_frac)
 
     master_dict = {
         'results_table':results_table,
