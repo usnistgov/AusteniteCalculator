@@ -38,6 +38,7 @@ import random
 import math
 from apscheduler.schedulers.background import BackgroundScheduler
 import atmdata
+from copy import deepcopy
 
 # Add example comment
 
@@ -68,6 +69,13 @@ elif re.search('maxga', os.getcwd()):
 
 
 import GSASIIscriptable as G2sc
+import GSASIIpath
+
+try:
+    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
+except Exception: #GSAS raises an execption if unable to connect to svn
+    print("Unable to update, using whichever version is installed")
+
 
 def clear_directory():
     dirs = glob.glob("calculator_report*/")
@@ -87,18 +95,93 @@ custom_index = """<!DOCTYPE html>
         {%metas%}
         <title>{%title%}</title>
         {%favicon%}
-        <link rel="stylesheet" href="https://pages.nist.gov/nist-header-footer/css/nist-combined.css">
-         <script src="https://pages.nist.gov/nist-header-footer/js/jquery-1.9.0.min.js" type="text/javascript" defer="defer"></script>
-        <script src="https://pages.nist.gov/nist-header-footer/js/nist-header-footer.js" type="text/javascript" defer="defer"></script>
+        <link rel="stylesheet" href="assets/nist-combined.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         {%css%}
     </head>
+
     <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
+    <header class="nist-header" id="nist-header" role="banner">
+    <a href="https://www.nist.gov/" title="National Institute of Standards and Technology" class="nist-header__logo-link" rel="home">
+        <svg aria-hidden="true" class="nist-header__logo-icon" version="1.1" xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
+        <path d="M20.911 5.375l-9.482 9.482 9.482 9.482c0.446 0.446 0.446 1.161 0 1.607l-2.964 2.964c-0.446 0.446-1.161 0.446-1.607 0l-13.25-13.25c-0.446-0.446-0.446-1.161 0-1.607l13.25-13.25c0.446-0.446 1.161-0.446 1.607 0l2.964 2.964c0.446 0.446 0.446 1.161 0 1.607z"></path>
+        </svg>
+        <svg class="nist-header__logo-image" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-237 385.7 109.7 29.3">
+        <title>National Institute of Standards and Technology</title>
+        <g>
+            <path class="st0" d="M-231,415h-6v-23.1c0,0,0-4.4,4.4-5.8c4-1.3,6.6,1.3,6.6,1.3l19.7,21.3c1,0.6,1.4,0,1.4-0.6v-22h6.1V409
+            c0,1.9-1.6,4.4-4,5.3c-2.4,0.9-4.9,0.9-7.9-1.7l-18.5-20c-0.5-0.5-1.8-0.6-1.8,0.4L-231,415L-231,415z"/>
+            <path class="st0" d="M-195,386.1h6.1v20.7c0,2.2,1.9,2.2,3.6,2.2h26.8c1.1,0,2.4-1.3,2.4-2.7c0-1.4-1.3-2.8-2.5-2.8H-176
+            c-3,0.1-9.2-2.7-9.2-8.5c0-7.1,5.9-8.8,8.6-9h49.4v6.1h-12.3V415h-6v-22.9h-30.2c-2.9-0.2-4.9,4.7-0.2,5.4h18.6
+            c2.8,0,7.4,2.4,7.5,8.4c0,6.1-3.6,9-7.5,9H-185c-4.5,0-6.2-1.1-7.8-2.5c-1.5-1.5-1.7-2.3-2.2-5.3L-195,386.1
+            C-194.9,386.1-195,386.1-195,386.1z"/>
+        </g>
+        </svg>
+    </a>
+    </header>
+        
+    {%app_entry%}
+    {%config%}
+    {%scripts%}
+    {%renderer%}
+      
+        <footer class="nist-footer">
+        
+        <div class="nist-footer__inner">
+            <div class="nist-footer__menu" role="navigation">
+            <ul>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/privacy-policy">Site Privacy</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/oism/accessibility">Accessibility</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/privacy">Privacy Program</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/oism/copyrights">Copyrights</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.commerce.gov/vulnerability-disclosure-policy">Vulnerability Disclosure</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/no-fear-act-policy">No Fear Act Policy</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/foia">FOIA</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.nist.gov/environmental-policy-statement">Environmental Policy</a>
+                </li>
+                <li class="nist-footer__menu-item ">
+                <a href="https://www.nist.gov/summary-report-scientific-integrity">Scientific Integrity</a>
+                </li>
+                <li class="nist-footer__menu-item ">
+                <a href="https://www.nist.gov/nist-information-quality-standards">Information Quality Standards</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.commerce.gov/">Commerce.gov</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.science.gov/">Science.gov</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://www.usa.gov/">USA.gov</a>
+                </li>
+                <li class="nist-footer__menu-item">
+                <a href="https://vote.gov/">Vote.gov</a>
+                </li>
+            </ul>
+            </div>
+        </div>
+        <div class="nist-footer__logo">
+            <a href="https://www.nist.gov/" title="National Institute of Standards and Technology" class="nist-footer__logo-link" rel="home">
+            <img src="assets/nist_logo_brand_white.svg" alt="National Institute of Standards and Technology logo" />
+            </a>
+        </div>
         </footer>
+
     </body>
 </html>"""
 
@@ -224,8 +307,9 @@ app.layout = dbc.Container([
                             options=[
                                 {"label": "4000", "value":4000},
                                 {"label": "8000", "value":8000},
-                                {"label": "800 (for testing only)", "value":800,},
-                            ]
+                                {"label": "800 (for testing only)", "value":800},
+                            ],
+                            value=800
                         ), width=3)
             ),
 
@@ -287,18 +371,6 @@ app.layout = dbc.Container([
                             value='Dataset: 1')
              ]),
             html.Br(),
-            html.Div("""Table of Phase Fractions"""),
-            dash_table.DataTable(id='phase-frac-table'),
-            html.Br(),
-            html.Div(id='unit-placeholder',children=[ 
-                'Select units for Phase Fraction',
-                dcc.Dropdown(options = [{'label':'Number of Unit Cells', 'value':'Number of Unit Cells'}, 
-                                        {'label':'Volume of Unit Cells', 'value':'Volume of Unit Cells'}, 
-                                        {'label':'Mass of Unit Cells', 'value':'Mass of Unit Cells'}], 
-                            id = 'unit-dropdown')
-             ]),
-            
-            html.Br(),
             html.Div("""Flagged Notes to Users"""),
             dash_table.DataTable(id='uncert-table'),
 
@@ -338,6 +410,28 @@ app.layout = dbc.Container([
             dcc.Graph(id='two_theta-plot'),
             html.Br(),
             html.Hr(),
+            html.Br()
+            
+            #Tab label
+            ],
+            label="Normalized intensities"),
+            
+            
+            
+        ### --- end Results Tables and Plots --- ###
+
+        ### --- start uncertainty analysis --- ###
+
+        dbc.Tab([
+            html.Br(),
+            html.Div(id='unit-placeholder',children=[ 
+                'Select units for Phase Fraction',
+                dcc.Dropdown(options = [{'label':'Number of Unit Cells', 'value':'Number of Unit Cells'}, 
+                                        {'label':'Volume of Unit Cells', 'value':'Volume of Unit Cells'}, 
+                                        {'label':'Mass of Unit Cells', 'value':'Mass of Unit Cells'}], 
+                            value = 'Number of Unit Cells',
+                            id = 'unit-dropdown')
+             ]),
             html.Br(),
             html.H3("""Figure for Phase Fraction Uncertainty"""),
             html.Div("""The figure below displays probability distributions conveying the estimates and \n
@@ -347,7 +441,7 @@ app.layout = dbc.Container([
             html.Br(),
             html.H3("""Table for Phase Fraction Uncertainty"""),
             html.Div("""The table below gives summary statistics of the above figure, including estimates of the \n
-                     phase fractions as well as 95\% credible intervals."""),
+                     phase fractions as well as 95% credible intervals."""),
             html.Br(),
             dash_table.DataTable(id='pf-uncert-table'),
             html.Br(),
@@ -373,15 +467,17 @@ app.layout = dbc.Container([
                                  filter_action="native",
                                  sort_action="native",
                                  column_selectable="single"),
-            html.Br()
+            html.Br(),
+            html.Div("""Table of Phase Fractions"""),
+            dash_table.DataTable(id='phase-frac-table'),
+            html.Br(),
+            html.Br(),
             
             #Tab label
             ],
-            label="Normalized intensities"),
-            
-            
-            
-        ### --- end Results Tables and Plots --- ###
+            label="Phase Fraction"),
+
+        ### --- end uncertainty analysis --- ###
         
         ### --- start Interaction Volume Tables and Plots --- ###
         
@@ -414,6 +510,8 @@ app.layout = dbc.Container([
         label='Interaction Volume'),
         
         ### --- end Interaction Volume Tables and Plots --- ###
+
+        
 
         ### --- start Instrument Parameter Creation --- ###
         dbc.Tab([
@@ -663,9 +761,6 @@ def func(n_clicks):
     Output('dataset-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
-    Output('pf-uncert-fig','figure'),
-    Output('pf-uncert-table','data'),
-    Output('pf-uncert-table','columns'),
     Output('param-table','data'),
     Output('param-table','columns'),
     Output('u-int-fit-count-table','data'),
@@ -971,15 +1066,17 @@ def update_output(n_clicks,
     print("Before Inference Method")
     
     if inference_method_value == 1:
-        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
-        pf_figure, pf_table, param_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases,results_table)
-        pf_uncert_table, pf_uncert_table_columns = compute_results.df_to_dict(pf_table.round(4))
+        results_table_df = pd.concat(results_table,axis=0).reset_index()
+        mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
+        unique_phases = np.unique(results_table_df.Phase)
+        param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
         param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
 
     elif inference_method_value == 2:
-        stan_fit, unique_phases = None, None
-        pf_figure = go.Figure()
-        pf_uncert_table, pf_uncert_table_columns, param_table_data, param_table_columns, param_table  = None, None, None, None, None
+        mcmc_df, unique_phases = None, None
+        param_table_data, param_table_columns, param_table = None, None, None
+
+    mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
 
     print("After Inference Method")
 
@@ -1039,10 +1136,32 @@ def update_output(n_clicks,
             mass_denominator += mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]
             volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']])
 
-        for x in range(len(mass_conversion[dataset][0]))
-        mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
-        volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
+    # deepcopy to prevent aliasing
+    mass_conversion = deepcopy(phase_frac)
+    volume_conversion = deepcopy(phase_frac)
     
+    #find denominator first(normalize at the same time)
+    n_phases = len(phase_frac["Dataset: 1"][0])
+
+    cell_mass_vecs = {}
+    cell_volume_vecs = {}
+    cell_number_vecs = {}
+
+    for dataset in phase_frac:
+
+        cell_mass_vecs[dataset] = np.zeros(n_phases)
+        cell_volume_vecs[dataset] = np.zeros(n_phases)
+        cell_number_vecs[dataset] = np.zeros(n_phases)
+
+        for ii in range(n_phases):
+            cell_mass_vecs[dataset][ii] = cell_masses[phase_frac[dataset][0][ii]['Phase']]
+            cell_volume_vecs[dataset][ii] = cell_volumes[phase_frac[dataset][0][ii]['Phase']]
+            cell_number_vecs[dataset][ii] = phase_frac[dataset][0][ii]['Phase_Fraction']
+
+        for ii in range(n_phases):
+            mass_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_mass_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_mass_vecs[dataset])
+            volume_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_volume_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_volume_vecs[dataset])
+
     master_dict = {
         'results_table':results_table,
         'phase_frac':phase_frac,
@@ -1057,7 +1176,8 @@ def update_output(n_clicks,
         'fit_points':fit_points,
         'interaction_vol_data':graph_data_dict,
         'cell_masses':cell_masses,
-        'cell_volumes':cell_volumes
+        'cell_volumes':cell_volumes,
+        'mu_samps':mcmc_df.to_dict(orient='list') # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
     }
     
     #create html components to replace the placeholders in the app
@@ -1114,9 +1234,6 @@ def update_output(n_clicks,
             dataset_dropdown,
             master_dict,
             conf,
-            pf_figure,
-            pf_uncert_table,
-            pf_uncert_table_columns,
             param_table_data,
             param_table_columns,
             u_int_fit_count_table_data,
@@ -1125,6 +1242,7 @@ def update_output(n_clicks,
 @app.callback(
     Output('intensity-plot', 'figure'),
     Output('fitted-intensity-plot', 'figure'),
+    Output('pf-uncert-fig','figure'),
     Input('store-calculations', 'data'),
     Input('plot-dropdown', 'value'),
     prevent_initial_call = True
@@ -1145,10 +1263,15 @@ def update_figures(data, value):
         
     '''
     if data is None:
-        return go.Figure(), go.Figure()
+        return go.Figure(), go.Figure(), go.Figure()
 
     fit_data = data.get('fit_points').get(value)
     current_two_theta = data.get('two_thetas').get(value)
+    mu_samps = pd.DataFrame(data.get('mu_samps'))
+
+    table = data.get('results_table').get(value)[0]
+    results_table = pd.DataFrame.from_records(table)
+    pf_uncert_fig = compute_uncertainties.generate_pf_plot(mu_samps,np.unique(results_table.Phase))
     
     #option to select all datasets
     if value == 'View all datasets':
@@ -1188,7 +1311,7 @@ def update_figures(data, value):
 
         fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, value)
 
-        return raw_fig, fig_fit_hist
+        return raw_fig, fig_fit_hist, pf_uncert_fig
 
 @app.callback(
     Output('intensity-table','data'),
@@ -1197,6 +1320,8 @@ def update_figures(data, value):
     Output('phase-frac-table','columns'),
     Output('uncert-table','data'),
     Output('uncert-table','columns'),
+    Output('pf-uncert-table','data'),
+    Output('pf-uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('table-dropdown', 'value'),
     Input('unit-dropdown', 'value'),
@@ -1205,7 +1330,7 @@ def update_figures(data, value):
 def update_tables(data, value, unit_value):
 
     if data is None:
-        return [], [], [], [], [], []
+        return [], [], [], [], [], [], [], []
 
     """shuffle through tables using created dropdown
 
@@ -1228,9 +1353,17 @@ def update_tables(data, value, unit_value):
     cols = data.get('results_table').get(value)[1]
     uncert_table = data.get('uncert').get(value)[0]
     uncert_cols = data.get('uncert').get(value)[1]
+    mu_samps = pd.DataFrame(data.get('mu_samps'))
+
+    results_table = pd.DataFrame.from_records(table)
+
+    pf_table = compute_uncertainties.generate_pf_table(mcmc_df=mu_samps,unique_phase_names=np.unique(results_table.Phase))
+
+    pf_uncert_data, pf_uncert_cols = compute_results.df_to_dict(pf_table)
 
     frac_table = None
     frac_cols = None
+
     if(unit_value == 'Number of Unit Cells'):
         frac_table = data.get('phase_frac').get(value)[0]
         frac_cols = data.get('phase_frac').get(value)[1]
@@ -1241,7 +1374,7 @@ def update_tables(data, value, unit_value):
         frac_table = data.get('mass_conversion').get(value)[0]
         frac_cols = data.get('mass_conversion').get(value)[1]
 
-    return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
+    return table, cols, frac_table, frac_cols, uncert_table, uncert_cols, pf_uncert_data, pf_uncert_cols
 
 @app.callback(
     Output('two_theta-plot','figure'),
