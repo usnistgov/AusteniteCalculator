@@ -291,16 +291,16 @@ app.layout = dbc.Container([
                 id="inference-method",
             ),
             html.Br(),
-            html.Div("Number of MCMC Runs"),
+            html.Div("Number of MCMC Warmup Runs"),
             dbc.Row(
                 dbc.Col(dbc.Select(
                             id="number-mcmc-runs",
                             options=[
                                 {"label": "4000", "value":4000},
                                 {"label": "8000", "value":8000},
-                                {"label": "800 (for testing only)", "value":800},
+                                {"label": "1000 (for testing only)", "value":1000},
                             ],
-                            value=800
+                            value=1000
                         ), width=3)
             ),
 
@@ -1054,11 +1054,15 @@ def update_output(n_clicks,
         param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
         param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
 
+        mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
+        print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
+        print(mcmc_df.info(memory_usage=True))
+
     elif inference_method_value == 2:
         mcmc_df, unique_phases = None, None
         param_table_data, param_table_columns, param_table = None, None, None
 
-    mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
+    
 
     print("After Inference Method")
 
@@ -1107,32 +1111,7 @@ def update_output(n_clicks,
         
 
     #calculate alternate phase fraction units
-
-    # deepcopy to prevent aliasing
-    mass_conversion = deepcopy(phase_frac)
-    volume_conversion = deepcopy(phase_frac)
-    
-    #find denominator first(normalize at the same time)
-    n_phases = len(phase_frac["Dataset: 1"][0])
-
-    cell_mass_vecs = {}
-    cell_volume_vecs = {}
-    cell_number_vecs = {}
-
-    for dataset in phase_frac:
-
-        cell_mass_vecs[dataset] = np.zeros(n_phases)
-        cell_volume_vecs[dataset] = np.zeros(n_phases)
-        cell_number_vecs[dataset] = np.zeros(n_phases)
-
-        for ii in range(n_phases):
-            cell_mass_vecs[dataset][ii] = cell_masses[phase_frac[dataset][0][ii]['Phase']]
-            cell_volume_vecs[dataset][ii] = cell_volumes[phase_frac[dataset][0][ii]['Phase']]
-            cell_number_vecs[dataset][ii] = phase_frac[dataset][0][ii]['Phase_Fraction']
-
-        for ii in range(n_phases):
-            mass_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_mass_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_mass_vecs[dataset])
-            volume_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_volume_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_volume_vecs[dataset])
+    mass_conversion, volume_conversion, cell_mass_vecs, cell_volume_vecs = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
 
     master_dict = {
         'results_table':results_table,
@@ -1211,17 +1190,43 @@ def update_output(n_clicks,
             u_int_fit_count_table_data,
             u_int_fit_count_table_columns)
 
+
+@app.callback(
+    Output('pf-uncert-fig','figure'),
+    Output('pf-uncert-table','data'),
+    Output('pf-uncert-table','columns'),
+    Input('store-calculations','data'),
+    Input('unit-dropdown','value'),
+    prevent_initial_call=True
+)
+def update_phase_fraction_plt_and_tbl(data,unit):
+
+    if data is None:
+        return go.Figure(), [], []
+
+    # phase fraction figure
+    mu_samps = pd.DataFrame(data.get('mu_samps'))
+    table = data.get('results_table')
+    results_table = compute_uncertainties.concat_results_tables(table,from_records=True)
+    #mu_samps = compute_uncertainties.convert_mu_samps(mu_samps,)
+    pf_uncert_fig = compute_uncertainties.generate_pf_plot(mu_samps,np.unique(results_table.Phase))
+
+    mu_samps = pd.DataFrame(data.get('mu_samps'))
+    pf_table = compute_uncertainties.generate_pf_table(mcmc_df=mu_samps,unique_phase_names=np.unique(results_table.Phase))
+    pf_uncert_data, pf_uncert_cols = compute_results.df_to_dict(pf_table)
+
+    return pf_uncert_fig, pf_uncert_data, pf_uncert_cols
+
+
+
 @app.callback(
     Output('intensity-plot', 'figure'),
     Output('fitted-intensity-plot', 'figure'),
-    Output('pf-uncert-fig','figure'),
     Input('store-calculations', 'data'),
     Input('plot-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_figures(data, value):
-    
-    
     '''
     Args:
         data: data saved in dcc.Store from running compute_results
@@ -1235,15 +1240,10 @@ def update_figures(data, value):
         
     '''
     if data is None:
-        return go.Figure(), go.Figure(), go.Figure()
+        return go.Figure(), go.Figure()
 
     fit_data = data.get('fit_points').get(value)
     current_two_theta = data.get('two_thetas').get(value)
-    mu_samps = pd.DataFrame(data.get('mu_samps'))
-
-    table = data.get('results_table').get(value)[0]
-    results_table = pd.DataFrame.from_records(table)
-    pf_uncert_fig = compute_uncertainties.generate_pf_plot(mu_samps,np.unique(results_table.Phase))
     
     #option to select all datasets
     if value == 'View all datasets':
@@ -1283,7 +1283,7 @@ def update_figures(data, value):
 
         fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, value)
 
-        return raw_fig, fig_fit_hist, pf_uncert_fig
+        return raw_fig, fig_fit_hist
 
 @app.callback(
     Output('intensity-table','data'),
@@ -1292,8 +1292,6 @@ def update_figures(data, value):
     Output('phase-frac-table','columns'),
     Output('uncert-table','data'),
     Output('uncert-table','columns'),
-    Output('pf-uncert-table','data'),
-    Output('pf-uncert-table','columns'),
     Input('store-calculations', 'data'),
     Input('table-dropdown', 'value'),
     Input('unit-dropdown', 'value'),
@@ -1325,13 +1323,6 @@ def update_tables(data, value, unit_value):
     cols = data.get('results_table').get(value)[1]
     uncert_table = data.get('uncert').get(value)[0]
     uncert_cols = data.get('uncert').get(value)[1]
-    mu_samps = pd.DataFrame(data.get('mu_samps'))
-
-    results_table = pd.DataFrame.from_records(table)
-
-    pf_table = compute_uncertainties.generate_pf_table(mcmc_df=mu_samps,unique_phase_names=np.unique(results_table.Phase))
-
-    pf_uncert_data, pf_uncert_cols = compute_results.df_to_dict(pf_table)
 
     frac_table = None
     frac_cols = None
@@ -1346,7 +1337,7 @@ def update_tables(data, value, unit_value):
         frac_table = data.get('mass_conversion').get(value)[0]
         frac_cols = data.get('mass_conversion').get(value)[1]
 
-    return table, cols, frac_table, frac_cols, uncert_table, uncert_cols, pf_uncert_data, pf_uncert_cols
+    return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
 
 @app.callback(
     Output('two_theta-plot','figure'),
