@@ -147,7 +147,7 @@ def concat_results_tables(results_table,from_records=False):
 
     return indata
 
-def run_stan(results_table,number_mcmc_runs):
+def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
     indata = concat_results_tables(results_table)
 
@@ -221,10 +221,16 @@ def run_stan(results_table,number_mcmc_runs):
             "u_int_count":mydf.u_int_count/mydf.R
         }
 
-        fit = model.sample(data=stan_data,
-                           chains=4,
-                           iter_warmup=number_mcmc_runs, 
-                           iter_sampling=2000)
+
+
+        if fit_variational:
+            fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
+
+        else: 
+            fit = model.sample(data=stan_data,
+                               chains=4,
+                               iter_warmup=number_mcmc_runs, 
+                               iter_sampling=2000)
 
         
 
@@ -277,13 +283,27 @@ def run_stan(results_table,number_mcmc_runs):
             "u_int_count":mydf.u_int_count/mydf.R
         }
 
-        fit = model.sample(data=stan_data,
-                           chains=4,
-                           iter_warmup=number_mcmc_runs, 
-                           iter_sampling=2000)
 
-    print(fit.summary())
-    mcmc_df = fit.draws_pd()
+
+        if fit_variational:
+            fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
+
+        else:
+            fit = model.sample(data=stan_data,
+                               chains=4,
+                               iter_warmup=number_mcmc_runs, 
+                               iter_sampling=2000)
+    
+    if fit_variational:
+    
+        mcmc_df = pd.DataFrame(fit.variational_sample)
+        mcmc_df.columns = fit.variational_params_pd.columns
+    
+
+    else:
+        mcmc_df = fit.draws_pd()
+        print(mcmc_df.info(memory_usage=True))
+
 
     mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
@@ -463,7 +483,7 @@ def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
     col_list = px.colors.qualitative.Plotly
     
     # figure
-    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75)
+    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,barmode="overlay")
     
     for ii in range(len(quantiles)):
         fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])
@@ -578,7 +598,7 @@ def generate_pf_plot(mcmc_df,unique_phase_names):
     col_list = px.colors.qualitative.Plotly
     
     # figure
-    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,labels={'mu_samps': "Phase Fraction",'phase':"Phase"},histnorm='probability',nbins=100,range_x=[0,1])
+    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,labels={'mu_samps': "Phase Fraction",'phase':"Phase"},histnorm='probability',nbins=100,range_x=[0,1],barmode='overlay')
     
     for ii in range(len(quantiles)):
         fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])

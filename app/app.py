@@ -284,14 +284,14 @@ app.layout = dbc.Container([
             html.Div("Statistical Inference Option:"),
             dbc.RadioItems(
                 options=[
-                    {"label": "Perform statistical inference (MCMC)", "value": 1},
-                    {"label": "Skip the inference for now", "value": 2}
+                    {"label": "MCMC (slower, but most accurate)", "value": 1},
+                    {"label": "Variational Inference (faster, but less accurate)", "value": 2}
                 ],
                 value=1,
                 id="inference-method",
             ),
             html.Br(),
-            html.Div("Number of MCMC Warmup Runs"),
+            html.Div("Number of MCMC Warmup Runs (only applicable if MCMC selected above)"),
             dbc.Row(
                 dbc.Col(dbc.Select(
                             id="number-mcmc-runs",
@@ -1048,19 +1048,22 @@ def update_output(n_clicks,
     print("Before Inference Method")
     
     if inference_method_value == 1:
-        results_table_df = pd.concat(results_table,axis=0).reset_index()
-        mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
-        unique_phases = np.unique(results_table_df.Phase)
-        param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
-        param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
+        fit_vi = False
+    
+    else:
+        fit_vi = True
 
-        mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
-        print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
-        print(mcmc_df.info(memory_usage=True))
+    results_table_df = pd.concat(results_table,axis=0).reset_index()
+    mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs),fit_vi)
+    unique_phases = np.unique(results_table_df.Phase)
+    param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
+    param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
 
-    elif inference_method_value == 2:
-        mcmc_df, unique_phases = None, None
-        param_table_data, param_table_columns, param_table = None, None, None
+    mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
+    print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
+    print(mcmc_df.info(memory_usage=True))
+
+
 
     
 
