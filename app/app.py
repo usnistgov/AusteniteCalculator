@@ -1114,7 +1114,7 @@ def update_output(n_clicks,
         
 
     #calculate alternate phase fraction units
-    mass_conversion, volume_conversion, cell_mass_vecs, cell_volume_vecs = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
+    mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
 
     master_dict = {
         'results_table':results_table,
@@ -1131,6 +1131,8 @@ def update_output(n_clicks,
         'interaction_vol_data':graph_data_dict,
         'cell_masses':cell_masses,
         'cell_volumes':cell_volumes,
+        'cell_mass_vec':cell_mass_vec.tolist(),
+        'cell_volume_vec':cell_volume_vec.tolist(),
         'mu_samps':mcmc_df.to_dict(orient='list') # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
     }
     
@@ -1202,19 +1204,30 @@ def update_output(n_clicks,
     Input('unit-dropdown','value'),
     prevent_initial_call=True
 )
-def update_phase_fraction_plt_and_tbl(data,unit):
+def update_phase_fraction_plt_and_tbl(data,unit_value):
 
     if data is None:
         return go.Figure(), [], []
 
     # phase fraction figure
     mu_samps = pd.DataFrame(data.get('mu_samps'))
+    m_vec = np.array(data.get('cell_mass_vec'))
+    v_vec = np.array(data.get('cell_volume_vec'))
+
+    if unit_value == 'Number of Unit Cells':
+        pass
+
+    elif unit_value == 'Volume of Unit Cells':
+        mu_samps = compute_results.convert_mu_samps(mu_samps,v_vec)
+
+    elif(unit_value == 'Mass of Unit Cells'):
+        mu_samps = compute_results.convert_mu_samps(mu_samps,m_vec)
+
     table = data.get('results_table')
     results_table = compute_uncertainties.concat_results_tables(table,from_records=True)
     #mu_samps = compute_uncertainties.convert_mu_samps(mu_samps,)
     pf_uncert_fig = compute_uncertainties.generate_pf_plot(mu_samps,np.unique(results_table.Phase))
 
-    mu_samps = pd.DataFrame(data.get('mu_samps'))
     pf_table = compute_uncertainties.generate_pf_table(mcmc_df=mu_samps,unique_phase_names=np.unique(results_table.Phase))
     pf_uncert_data, pf_uncert_cols = compute_results.df_to_dict(pf_table)
 
