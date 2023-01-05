@@ -130,16 +130,26 @@ def get_unique_phases(results_table):
 
     return np.unique(indata.Phase)
 
-def run_stan(results_table,number_mcmc_runs):
+def concat_results_tables(results_table,from_records=False):
 
     intables = list(results_table.values())
 
     # create numeric sample ids
     for ii, val in enumerate(intables): 
+
+        if from_records:
+            intables[ii] = pd.DataFrame.from_records(intables[ii][0])
+
         intables[ii] = intables[ii].loc[intables[ii]['Peak_Fit_Success'],:]
         intables[ii]['sample_id'] = ii+1
 
     indata = pd.concat(intables,axis=0).reset_index(drop=True)
+
+    return indata
+
+def run_stan(results_table,number_mcmc_runs,fit_variational=False):
+
+    indata = concat_results_tables(results_table)
 
     mydf = pd.DataFrame({
         'I':indata.int_fit,
@@ -211,10 +221,18 @@ def run_stan(results_table,number_mcmc_runs):
             "u_int_count":mydf.u_int_count/mydf.R
         }
 
-        fit = model.sample(data=stan_data,
-                           chains=4,
-                           iter_warmup=number_mcmc_runs, 
-                           iter_sampling=number_mcmc_runs)
+
+
+        if fit_variational:
+            fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
+
+        else: 
+            fit = model.sample(data=stan_data,
+                               chains=4,
+                               iter_warmup=number_mcmc_runs, 
+                               iter_sampling=2000)
+
+        
 
     # multiple samples
     elif len(results_table) > 1:
@@ -265,14 +283,29 @@ def run_stan(results_table,number_mcmc_runs):
             "u_int_count":mydf.u_int_count/mydf.R
         }
 
-        fit = model.sample(data=stan_data,
-                           chains=4,
-                           iter_warmup=number_mcmc_runs, 
-                           iter_sampling=number_mcmc_runs)
 
-    mcmc_df = fit.draws_pd()
 
-    mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("__",regex=False)])
+        if fit_variational:
+            fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
+
+        else:
+            fit = model.sample(data=stan_data,
+                               chains=4,
+                               iter_warmup=number_mcmc_runs, 
+                               iter_sampling=2000)
+    
+    if fit_variational:
+    
+        mcmc_df = pd.DataFrame(fit.variational_sample)
+        mcmc_df.columns = fit.variational_params_pd.columns
+    
+
+    else:
+        mcmc_df = fit.draws_pd()
+        print(mcmc_df.info(memory_usage=True))
+
+
+    mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
     return mcmc_df
 
@@ -450,7 +483,7 @@ def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
     col_list = px.colors.qualitative.Plotly
     
     # figure
-    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75)
+    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,barmode="overlay")
     
     for ii in range(len(quantiles)):
         fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])
@@ -510,8 +543,7 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
     })
 
     if multiple_samples:
-        param_table['sigma_samp'] = [0]*n_phase
-        param_table['sigma_interaction'] = [0]*n_phase
+        param_table['Sample Variability'] = [0]*n_phase
 
     results_table = results_table.loc[results_table['Peak_Fit_Success'],:]
 
@@ -530,10 +562,8 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
         param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
     
     if multiple_samples:
-        param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
-        param_table.loc[:,'sigma_interaction'] = np.mean(mcmc_df['sigma_interaction'])
-        param_table['Sample Variability'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
-        param_table = param_table.drop(columns=['sigma_samp','sigma_interaction'])
+        param_table.loc[:,'Sample Variability'] = np.mean(mcmc_df['sigma_sample'])
+
 
     return param_table
 
@@ -568,9 +598,26 @@ def generate_pf_plot(mcmc_df,unique_phase_names):
     col_list = px.colors.qualitative.Plotly
     
     # figure
-    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,labels={'mu_samps': "Phase Fraction",'phase':"Phase"},histnorm='probability density')
+    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,labels={'mu_samps': "Phase Fraction",'phase':"Phase"},histnorm='probability',nbins=100,range_x=[0,1],barmode='overlay')
     
     for ii in range(len(quantiles)):
         fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])
 
     return fig
+
+def convert_mu_samps(mu_samps_df,c_vec):
+    """
+    Convert posterior samples to mass or volume phase fraction.
+
+    Args:
+        mu_samps: pandas DataFrame of posterior samples of mu for each phase
+        c_vec: numpy array of weights by which to scale the posterior samples of mu_samps
+
+    Returns: 
+        **mu_samps_out** pandas DataFrame of posterior samples of mu that has been converted
+    """
+
+    mu_samps_out = mu_samps_df.copy()
+    mu_samps_out = mu_samps_out.apply(lambda x,c: x*c/np.sum(x*c),axis=1)
+
+    return mu_samps_out

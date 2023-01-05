@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import math
 import fit
+from copy import deepcopy
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
@@ -880,3 +881,36 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
 
     fit.fit_instprm_file(hist, peaks_list)
     hist.SaveProfile("created_instprm")
+
+def get_conversions(phase_frac,cell_masses,cell_volumes):
+    
+    # deepcopy to prevent aliasing
+    mass_conversion = deepcopy(phase_frac)
+    volume_conversion = deepcopy(phase_frac)
+    
+    #find denominator first(normalize at the same time)
+    n_phases = len(phase_frac["Dataset: 1"][0])
+
+    cell_mass_vec = np.zeros(n_phases)
+    cell_volume_vec = np.zeros(n_phases)
+    cell_number_vec = np.zeros(n_phases)
+
+    for ii in range(n_phases):
+        cell_mass_vec[ii] = cell_masses[phase_frac['Dataset: 1'][0][ii]['Phase']]
+        cell_volume_vec[ii] = cell_volumes[phase_frac['Dataset: 1'][0][ii]['Phase']]
+        cell_number_vec[ii] = phase_frac['Dataset: 1'][0][ii]['Phase_Fraction']
+
+    for dataset in phase_frac:
+
+        for ii in range(n_phases):
+            mass_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vec[ii]*cell_mass_vec[ii]/np.sum(cell_number_vec*cell_mass_vec)
+            volume_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vec[ii]*cell_volume_vec[ii]/np.sum(cell_number_vec*cell_volume_vec)
+
+    return mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec
+
+def convert_mu_samps(mu_samps,conversion_vec):
+
+    c = conversion_vec
+    mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
+
+    return mu_samps
