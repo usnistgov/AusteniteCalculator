@@ -391,7 +391,7 @@ def create_centroid_plot(df_mid, Centroid_y):
     return fig
 
 def create_depth_plot(x_list, y_list, theta_deg):
-     '''
+    '''
     Plots x-ray depth visually
     Args:
         x_list: list of data in x
@@ -448,7 +448,7 @@ def create_depth_plot(x_list, y_list, theta_deg):
     return fig
 
 def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg):
-     '''
+    '''
     Calculate crystallites illuminated data for a peak
     Args:
         crystal_data: dict of data about crystal

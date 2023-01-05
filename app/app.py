@@ -251,7 +251,7 @@ app.layout = dbc.Container([
             dcc.Upload(
                     id='upload-csv',
                     children=html.Div([
-                            dbc.Button('Crystallites Illuminated CSV (.csv) - see \'File Creation\' Tab')
+                            dbc.Button('Crystallites Illuminated JSON (.json) - see \'File Creation\' Tab')
                             ])),
             html.Div(id='f4-name'),
 
@@ -370,8 +370,7 @@ app.layout = dbc.Container([
                             value='Dataset: 1')
              ]),
             html.Br(),
-            html.Div("""Flagged Notes to Users"""),
-            dash_table.DataTable(id='uncert-table'),
+            
 
             html.Br(),
             html.Div("""Table of Fit and Theoretical Intensities"""),
@@ -470,6 +469,8 @@ app.layout = dbc.Container([
             html.Div("""Table of Phase Fractions"""),
             dash_table.DataTable(id='phase-frac-table'),
             html.Br(),
+            html.Div("""Flagged Notes to Users"""),
+            dash_table.DataTable(id='uncert-table'),
             html.Br(),
             
             #Tab label
@@ -542,7 +543,7 @@ app.layout = dbc.Container([
             html.Div([html.Button("Download .instprm File", id = "download-created-file"), Download(id = "download-instprm")]),
             html.Br(),
             html.Div([
-                'To create a .csv file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .csv File\' Button',
+                '***WIP*** To create a .json file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .csv File\' Button',
                 #need fields for:
                 
                 #beam shape and size
