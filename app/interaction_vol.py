@@ -22,6 +22,17 @@ from plotly.tools import mpl_to_plotly
 getElSym = lambda sym: sym.split('+')[0].split('-')[0].capitalize()
 
 def getFormFactors(Elems):
+    '''
+    This function is from GSAS
+    Args:
+        Elems: The elements that form factors are needed for
+
+    Returns:
+        elemInfo: Form factor information for each element in elems
+
+    Raises:
+        
+    '''
     elemInfo = []
     if Elems:
         for El in Elems:
@@ -40,7 +51,18 @@ def getFormFactors(Elems):
             elemInfo.append(Elem)
     return elemInfo
 
-def getFormFactorCoeff(El): #this may or may not be getting f_elem
+def getFormFactorCoeff(El): 
+    '''
+    This function is from GSAS, a helper function for GetFormFactors
+    Args:
+        El: The element that a form factor coefficient is needed for
+
+    Returns:
+        FormFactors: Returns form factor coefficients for an element
+
+    Raises:
+        
+    '''
     Els = El.capitalize().strip()
     valences = [ky for ky in atmdata.XrayFF.keys() if Els == getElSym(ky)]
     FormFactors = [atmdata.XrayFF[val] for val in valences]
@@ -217,12 +239,28 @@ def FPcalc(Orbs, KEv):
     return (FP, FPP, Mu)
 
 def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
+    '''
+    Args:
+        singular_elem_details: numbers about an element needed for the calculation
+        wavelengths: x-ray wavelengths
+        pack_fractions: Powder packing fraction for the material
+        cell_volume: Material cell volume
+
+    Returns:
+        ElemSymbol: this is singular_elem_details[0], the elemental symbol for this data
+        fps: f' for this element
+        fpps: f'' for this element
+        mu_converted: mu for this element, converted from barns/atom to cm 
+
+    Raises:
+        
+    '''
     #print("Find Mu", wavelengths, pack_fraction, cell_volume)
     fps = []
     fpps = []
     Es = []
     Eres = 1.5e-4
-    Kev = 12.397639 #idk if this is correct but imma try it
+    Kev = 12.397639 
     mu_list = []
     for W in wavelengths: #for each wavelength in the instprm files
         E = Kev/W              #maybe get this from instprm file(lam1 converted to energy: google it)
@@ -241,6 +279,21 @@ def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
     return [singular_elem_details[0], fps, fpps, mu_converted]
 
 def create_graph_data(peak_data, summarized_data):
+    '''
+    Args:
+       peak_data: Data for the current peak that is being graphed
+       summarized_data: A bit of a cheat, but data about the overall phase that the peak needs to know
+
+    Returns:
+        df_endpoints: endpoints of graph data created
+        df_midpoints: midpoints of graph data created
+        Centroid_x: centroid of depth data in x
+        Centroid_y: centroid of depth data in y
+
+
+    Raises:
+        
+    '''
     Max_intensity_drop=1/1000
     t_max_cm=(1/-summarized_data[2])*np.log(Max_intensity_drop) # change to mu_um?
     t_max_um=t_max_cm*10000 # this would go away
@@ -287,6 +340,18 @@ def create_graph_data(peak_data, summarized_data):
 
 
 def create_centroid_plot(df_mid, Centroid_y):
+    '''
+    Plots x-ray depth over material and centroid of data
+    Args:
+        df_mid: midpoints of graph data for current peak
+        Centroid_y: centroid in y
+
+    Returns:
+       fig: Plotly graph of centroid data
+
+    Raises:
+        
+    '''
     #plt.barh( df_mid['y_mid'],df_mid['Escaped'],color='0.9')
     #plt.plot( df_mid['Escaped'], df_mid['y_mid'], 'ko', linestyle="-")
     #plt.hlines(Centroid_y, 0, df_mid['Escaped'].iloc[0], color='0.3',linestyle="--")
@@ -326,6 +391,19 @@ def create_centroid_plot(df_mid, Centroid_y):
     return fig
 
 def create_depth_plot(x_list, y_list, theta_deg):
+     '''
+    Plots x-ray depth visually
+    Args:
+        x_list: list of data in x
+        y_list: list of data in y
+        theta_deg: theta of current peak
+
+    Returns:
+       fig: Plotly graph of depth data
+
+    Raises:
+        
+    '''
     #start x-ray height
     xray_start=50 
 
@@ -369,13 +447,31 @@ def create_depth_plot(x_list, y_list, theta_deg):
 
     return fig
 
-def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity):
+def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg):
+     '''
+    Calculate crystallites illuminated data for a peak
+    Args:
+        crystal_data: dict of data about crystal
+        phase_frac: phase fraction of phase that the peak belongs to
+        powder_size: Powder size of the phase that the peak belongs to
+        crystalites_per_particle: Crystallites per particle for the phase that the peak belongs to
+        multiplicity: peak multiplicity
+        theta_deg: Theta of current peak
+
+    Returns:
+       N_illuminated: Number of particles illuminated
+       diffracting_fraction: Diffracting Fraction
+       N_diffracted: number of particles diffracted, represented by N_illuminated*diffracting_fraction
+
+    Raises:
+        
+    '''
     D_bar = powder_size
     l_bar= D_bar/1.5
     A_bar = ((l_bar)**2)*(4/np.pi)
     N_bar_A = 1/A_bar
 
-    raster_area_mm=(raster_length_axis1_mm+beam_size_axis1_mm)*(raster_length_axis2_mm+beam_size_axis2_mm)
+    raster_area_mm=(crystal_data['raster_x']+crystal_data['beam_size'])*(crystal_data['raster_y']+crystal_data['beam_size'])
 
     phase_fraction = phase_frac
 
@@ -395,7 +491,7 @@ def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystal
     # gamma replaces H_R/L for 2D detector
     gamma = (15)*(np.pi/180)
 
-    diffracting_fraction=((multiplicity/4*np.pi)*(W_F/L+delta_theta_half)*
-                      (H_F/L+H_R/L)*(1/(2*(np.sin(theta_deg*np.pi/180)))))
+    diffracting_fraction=((multiplicity/4*np.pi)*(crystal_data['W_F']/crystal_data['L']+delta_theta_half)*
+                      (crystal_data['H_F']/crystal_data['L']+crystal_data['H_R']/crystal_data['L'])*(1/(2*(np.sin(theta_deg*np.pi/180)))))
 
     return N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction

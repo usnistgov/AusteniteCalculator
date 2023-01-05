@@ -505,6 +505,8 @@ app.layout = dbc.Container([
                 dcc.Graph(id='centroid-plot'),
                 dcc.Graph(id='interaction-depth-plot'),
             ]),
+            html.Br(),
+            dash_table.DataTable(id='crystallites-table'),
         ],
         label='Interaction Volume'),
         
@@ -898,6 +900,11 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
         instprm_fname = 'TestCalibration.instprm'
+        csv_fname = 'Example01.json'
+        f = open(datadir + '/' + csv_fname)
+        json_data = f.read()
+        csv_string = json.loads(json_data)
+        f.close()
         
     # Use Example05 data
     #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
@@ -909,6 +916,11 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
+        csv_fname = 'Example05.json'
+        f = open(datadir + '/' + csv_fname)
+        json_data = f.read()
+        csv_string = json.loads(json_data)
+        f.close()
 
     elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
         datadir = '../ExampleData/Example06'
@@ -917,6 +929,11 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fnames = ['Example06_simulation_generation_data.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
+        csv_fname = 'Example06.json'
+        f = open(datadir + '/' + csv_fname)
+        json_data = f.read()
+        csv_string = json.loads(json_data)
+        f.close()
 
     #Stores user files in a directory
     else:
@@ -943,6 +960,7 @@ def update_output(n_clicks,
         decoded = base64.b64decode(csv_string)
         f = open(datadir + '/' + csv_fname,'w')
         to_write = decoded.decode('utf-8')
+        csv_string = to_write
         if re.search('(csv$)',csv_fname) is not None:
             to_write = re.sub('\\r','',to_write)
         f.write(to_write)
@@ -1145,11 +1163,29 @@ def update_output(n_clicks,
             data_list = interaction_vol.create_graph_data(peak, current_summarized_data)
             graph_data_dict[key].append(data_list)
         #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
-    breakpoint()
-    #json_data = json.loads(csv_string)
-    #crystal_data = json_data[0]
-    #for key, value in phase_frac.items():
-        #num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, value, crystal_data[key][0], crystal_data[key][1], )
+    
+    #beginning of crystallites illuminated calculations
+    crystallites_dict = {}
+    crystal_data = json.loads(csv_string)
+    #need to convert strings to numbers in json dict
+    for key in crystal_data.keys():
+        if(key != 'beam_shape'):
+            if(crystal_data[key][0] == '['):
+                crystal_data[key] = crystal_data[key].strip('][').split(',')
+                for x in range(len(crystal_data[key])):
+                    crystal_data[key][x] = float(crystal_data[key][x])
+            else:
+                crystal_data[key] = float(crystal_data[key])
+
+    #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
+    for key, value in peaks_dict.items():
+        for x in range(len(value)):
+            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == key, 'Phase_Fraction'].values[0], crystal_data[key][0], crystal_data[key][1], value[x][1], value[x][2])
+            if key in crystallites_dict.keys():
+                crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
+            else:
+                crystallites_dict[key] = []
+                crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
     # run MCMC using full results
     print("Before Inference Method")
     
@@ -1275,7 +1311,8 @@ def update_output(n_clicks,
         'cell_volumes':cell_volumes,
         'cell_mass_vec':cell_mass_vec.tolist(),
         'cell_volume_vec':cell_volume_vec.tolist(),
-        'mu_samps':mcmc_df.to_dict(orient='list') # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
+        'mu_samps':mcmc_df.to_dict(orient='list'), # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
+        'crystallites':crystallites_dict
     }
     
     #create html components to replace the placeholders in the app
@@ -1603,7 +1640,16 @@ def update_norm_int(data, value):
     prevent_initial_call = True
 )
 def update_peak_dropdown(data, value):
+    '''
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        value: phase selected from dropdown
 
+    Returns:
+        peak_dropdown: the dropdown component to select each peak in the phase selected
+    Raises:
+        
+    '''
     if (data is None) or (data.get('interaction_vol_data').get(value) is None):
 
         peak_dropdown = html.Div([
@@ -1629,13 +1675,28 @@ def update_peak_dropdown(data, value):
 @app.callback(
     Output('centroid-plot', 'figure'),
     Output('interaction-depth-plot', 'figure'),
+    Output('crystallites-table', 'data'),
+    Output('crystallites-table', 'columns'),
     Input('store-calculations', 'data'),
     Input('phase-dropdown', 'value'),
     Input('table-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_interaction_vol_plot(data, phase_value, peak_value):
+    '''
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        phase_value: phase selected from dropdown
+        peak_value: peak selected of current phase
 
+    Returns:
+        centroid_plot: Plot of x-ray centroid into material
+        depth_plot: Plot of visual representation of x-ray penetration into material
+        placeholder_dict: Crystallites illuminated data for the current peak selected
+
+    Raises:
+        
+    '''
     #return go.Figure(), go.Figure()
     if (data is not None) and (data.get('interaction_vol_data').get(phase_value) is not None):
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
@@ -1646,10 +1707,16 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
 
         centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
         depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
+        crystal_info = data.get('crystallites')[phase_value][peak_value]
+        placeholder_dict = {
+            'Number Illuminated': crystal_info[0],
+            'Diffracting Fraction': crystal_info[1],
+            'Number Diffracted': crystal_info[2]
+        }
         #return go.Figure(), depth_plot
-        return centroid_plot, depth_plot
+        return centroid_plot, depth_plot, placeholder_dict
     else:
-        return go.Figure(), go.Figure()
+        return go.Figure(), go.Figure(), []
 
 
 @app.callback(
