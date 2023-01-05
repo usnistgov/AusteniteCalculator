@@ -124,7 +124,7 @@ loop_
    _atom_site_occupancy
    _atom_site_adp_type
    _atom_site_U_iso_or_equiv
-   _atom_site_symmetry_multiplicity
+   _atom_site_site_symmetry_multiplicity
 Fe1    Fe   0.00000     0.00000     0.00000     0.703      Uiso 0.004      2   
 Cr2    Cr   0.00000     0.00000     0.00000     0.207      Uiso 0.004      2  
 Mn3    Mn   0.00000     0.00000     0.00000     0.050      Uiso 0.004      2   

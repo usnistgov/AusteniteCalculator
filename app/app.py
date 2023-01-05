@@ -56,7 +56,7 @@ elif re.search('dtn1',os.getcwd()):
     sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/gsas-AustCalc/GSASII/')
 
 elif re.search('maxgarman',os.getcwd()):
-    sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/GSASII/') 
+    sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/envs/gsas-AustCalc/GSASII/') 
 
 elif re.search('creuzige',os.getcwd()):
     sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
@@ -246,14 +246,13 @@ app.layout = dbc.Container([
                             ]),
                     multiple=True),
             html.Div(id='f3-name'),
-
+            html.Br(),
             #csv upload for crystallites illuminated
             dcc.Upload(
                     id='upload-csv',
                     children=html.Div([
                             dbc.Button('Crystallites Illuminated CSV (.csv) - see \'File Creation\' Tab')
-                            ]),
-                    multiple=False),
+                            ])),
             html.Div(id='f4-name'),
 
             ## Checkbox to use the default files instead
@@ -513,7 +512,7 @@ app.layout = dbc.Container([
 
         
 
-        ### --- start Instrument Parameter Creation --- ###
+        ### --- start File Creation --- ###
         dbc.Tab([
             html.Div([
                 'Please choose from a default .instprm file if you do not have one, upload your .cif and .xrdml files, and click the \'Download .instprm File\' Button',
@@ -541,13 +540,72 @@ app.layout = dbc.Container([
             html.Div([html.Button("Download .instprm File", id = "download-created-file"), Download(id = "download-instprm")]),
             html.Br(),
             html.Div([
-                'To create a .csv file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .csv File\' Button'
+                'To create a .csv file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .csv File\' Button',
                 #need fields for:
-                #powder size
+                
                 #beam shape and size
+                dcc.Dropdown(
+                    id = 'beam-shape-id',
+                    options = ['Circle', 'Square']
+                ),
+                #powder size
+                dcc.Input(
+                    id = 'powder-size-in',
+                    type = 'number',
+                    placeholder = 'powder size(um)'
+                ),
+                dcc.Input(
+                    id = 'beam-size-in',
+                    type = 'number',
+                    placeholder = 'beam size(mm)'
+                ),
                 #raster in x and y
+                dcc.Input(
+                    id = 'raster-x-in',
+                    type = 'number',
+                    placeholder = 'raster length x(mm)'
+                ),
+                dcc.Input(
+                    id = 'raster-y-in',
+                    type = 'number',
+                    placeholder = 'raster length y(mm)'
+                ),
                 #crystallites per particle(guess with option to fill)
-                #L, W_F, H_F, H_R??
+                # Adam insert values here
+                dcc.Input(
+                    id = 'crytal-per-part-in',
+                    type = 'number',
+                    placeholder = 'crystallites per particle'
+                ),
+                #L, W_F, H_F, H_R?? - make inputs for these and then have Adam write a description
+                dcc.Input(
+                    id = 'L-in',
+                    type = 'number',
+                    placeholder = 'L(mm)'
+                ),
+
+                dcc.Input(
+                    id = 'W-F-in',
+                    type = 'number',
+                    placeholder = 'W_F'
+                ),
+
+                dcc.Input(
+                    id = 'H-F-in',
+                    type = 'number',
+                    placeholder = 'H_F'
+                ),
+
+                dcc.Input(
+                    id = 'H-R-in',
+                    type = 'number',
+                    placeholder = 'H_R'
+                ),
+                html.Br(),
+                html.Br(),
+                html.Div(
+                    [dbc.Button("Download .csv File", id = "download-created-csv"), 
+                    Download(id = "download-csv")]),
             ]),
         ],
         label="File Creation"),
@@ -620,6 +678,19 @@ def show_f_name2(filename):
     else:
         print(filename)
         return "Uploaded Files: " + ', '.join(filename)
+
+@app.callback(
+    Output('f4-name','children'),
+    Input('upload-csv','filename')
+)
+def show_f_name3(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        print(filename)
+        return "Uploaded File: " + filename
 
 @app.callback(
     Output('default-name', 'children'),
@@ -772,6 +843,8 @@ def func(n_clicks):
     State('upload-data-instprm','filename'),
     State('upload-cif','contents'),
     State('upload-cif','filename'),
+    State('upload-csv','contents'),
+    State('upload-csv','filename'),
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
@@ -783,6 +856,7 @@ def update_output(n_clicks,
                   xrdml_contents,xrdml_fnames,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
+                  csv_contents, csv_fname,
                   use_default_files, use_example05_files, use_example06_files,
                   inference_method_value,
                   number_mcmc_runs):
@@ -860,6 +934,16 @@ def update_output(n_clicks,
         f = open(datadir + '/' + instprm_fname,'w')
         to_write = decoded.decode('utf-8')
         if re.search('(instprm$)',instprm_fname) is not None:
+            to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+
+        csv_type, csv_string = csv_contents.split(',')
+
+        decoded = base64.b64decode(csv_string)
+        f = open(datadir + '/' + csv_fname,'w')
+        to_write = decoded.decode('utf-8')
+        if re.search('(csv$)',csv_fname) is not None:
             to_write = re.sub('\\r','',to_write)
         f.write(to_write)
         f.close()
@@ -1061,7 +1145,11 @@ def update_output(n_clicks,
             data_list = interaction_vol.create_graph_data(peak, current_summarized_data)
             graph_data_dict[key].append(data_list)
         #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
-
+    breakpoint()
+    #json_data = json.loads(csv_string)
+    #crystal_data = json_data[0]
+    #for key, value in phase_frac.items():
+        #num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, value, crystal_data[key][0], crystal_data[key][1], )
     # run MCMC using full results
     print("Before Inference Method")
     

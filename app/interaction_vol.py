@@ -369,3 +369,33 @@ def create_depth_plot(x_list, y_list, theta_deg):
 
     return fig
 
+def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity):
+    D_bar = powder_size
+    l_bar= D_bar/1.5
+    A_bar = ((l_bar)**2)*(4/np.pi)
+    N_bar_A = 1/A_bar
+
+    raster_area_mm=(raster_length_axis1_mm+beam_size_axis1_mm)*(raster_length_axis2_mm+beam_size_axis2_mm)
+
+    phase_fraction = phase_frac
+
+    N_illuminated=N_bar_A*raster_area_mm*phase_fraction*crystalites_per_particle
+
+    #For cases where more grains through the thickness are illuminated
+    #N_l_bar=1/l_bar
+    #print(N_l_bar)
+
+    #print(N_bar_A,N_l_bar,raster_area_mm,sample_thickness_mm,phase_fraction,crystalites_per_particle)
+
+    #N_illuminated=N_bar_A*N_l_bar*raster_area_mm*sample_thickness_mm*phase_fraction*crystalites_per_particle
+    #print(N_illuminated)
+
+    delta_theta_half=(0.5)*(np.pi/180)
+
+    # gamma replaces H_R/L for 2D detector
+    gamma = (15)*(np.pi/180)
+
+    diffracting_fraction=((multiplicity/4*np.pi)*(W_F/L+delta_theta_half)*
+                      (H_F/L+H_R/L)*(1/(2*(np.sin(theta_deg*np.pi/180)))))
+
+    return N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction
