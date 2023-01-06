@@ -1,3 +1,4 @@
+//first num in list is powder size, second is crystallites per particle
 {
     "austenite-Duplex.cif": "[50,10]",
     "ferrite-Duplex.cif": "[50,10]",
