@@ -548,14 +548,8 @@ app.layout = dbc.Container([
                 
                 #beam shape and size
                 dcc.Dropdown(
-                    id = 'beam-shape-id',
+                    id = 'beam-shape-in',
                     options = ['Circle', 'Square']
-                ),
-                #powder size
-                dcc.Input(
-                    id = 'powder-size-in',
-                    type = 'number',
-                    placeholder = 'powder size(um)'
                 ),
                 dcc.Input(
                     id = 'beam-size-in',
@@ -572,13 +566,6 @@ app.layout = dbc.Container([
                     id = 'raster-y-in',
                     type = 'number',
                     placeholder = 'raster length y(mm)'
-                ),
-                #crystallites per particle(guess with option to fill)
-                # Adam insert values here
-                dcc.Input(
-                    id = 'crytal-per-part-in',
-                    type = 'number',
-                    placeholder = 'crystallites per particle'
                 ),
                 #L, W_F, H_F, H_R?? - make inputs for these and then have Adam write a description
                 dcc.Input(
@@ -1719,6 +1706,22 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
     else:
         return go.Figure(), go.Figure(), []
 
+@app.callback(
+    Output('download-csv', 'data'),
+    Input('download-created-csv', 'n_clicks'),
+    Input('beam-shape-in', 'value'),
+    Input('beam-size-in', 'value'),
+    Input('raster-x-in', 'value'),
+    Input('raster-y-in', 'value'),
+    Input('L-in', 'value'),
+    Input('W-F-in', 'value'),
+    Input('H-F-in', 'value'),
+    Input('H-R-in', 'value'),
+    prevent_initial_call = True
+)
+def create_json(n_clicks, beam_shape, beam_size, raster_x, raster_y, L, WF, HF, HR):
+
+    return None
 
 @app.callback(
     Output('download-full-report', 'data'),
