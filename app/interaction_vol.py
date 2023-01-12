@@ -447,7 +447,7 @@ def create_depth_plot(x_list, y_list, theta_deg):
 
     return fig
 
-def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg):
+def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg, d_t_half):
     '''
     Calculate crystallites illuminated data for a peak
     Args:
@@ -486,7 +486,7 @@ def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystal
     #N_illuminated=N_bar_A*N_l_bar*raster_area_mm*sample_thickness_mm*phase_fraction*crystalites_per_particle
     #print(N_illuminated)
 
-    delta_theta_half=(0.5)*(np.pi/180)
+    delta_theta_half=(d_t_half)*(np.pi/180)
 
     # gamma replaces H_R/L for 2D detector
     gamma = (15)*(np.pi/180)
