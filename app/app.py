@@ -247,9 +247,9 @@ app.layout = dbc.Container([
                     multiple=True),
             html.Div(id='f3-name'),
             html.Br(),
-            #csv upload for crystallites illuminated
+            #json upload for crystallites illuminated
             dcc.Upload(
-                    id='upload-csv',
+                    id='upload-json',
                     children=html.Div([
                             dbc.Button('Crystallites Illuminated JSON (.json) - see \'File Creation\' Tab')
                             ])),
@@ -516,6 +516,7 @@ app.layout = dbc.Container([
         
 
         ### --- start File Creation --- ###
+        ## Section to create .instprm file
         dbc.Tab([
             html.Div([
                 'Please choose from a default .instprm file if you do not have one, upload your .cif and .xrdml files, and click the \'Download .instprm File\' Button',
@@ -542,8 +543,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.Div([html.Button("Download .instprm File", id = "download-created-file"), Download(id = "download-instprm")]),
             html.Br(),
+            ## Section to create .json file
             html.Div([
-                '***WIP*** To create a .json file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .csv File\' Button',
+                '***WIP*** To create a .json file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .json File\' Button',
                 #need fields for:
                 
                 #beam shape and size
@@ -594,8 +596,8 @@ app.layout = dbc.Container([
                 html.Br(),
                 html.Br(),
                 html.Div(
-                    [dbc.Button("Download .csv File", id = "download-created-csv"), 
-                    Download(id = "download-csv")]),
+                    [dbc.Button("Download .json File", id = "download-created-json"),
+                    Download(id = "download-json")]),
             ]),
         ],
         label="File Creation"),
@@ -671,7 +673,7 @@ def show_f_name2(filename):
 
 @app.callback(
     Output('f4-name','children'),
-    Input('upload-csv','filename')
+    Input('upload-json','filename')
 )
 def show_f_name3(filename):
     
@@ -846,7 +848,7 @@ def update_output(n_clicks,
                   xrdml_contents,xrdml_fnames,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
-                  csv_contents, csv_fname,
+                  csv_contents, json_fname,
                   use_default_files, use_example05_files, use_example06_files,
                   inference_method_value,
                   number_mcmc_runs):
@@ -888,10 +890,10 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
         instprm_fname = 'TestCalibration.instprm'
-        csv_fname = 'Example01.json'
-        f = open(datadir + '/' + csv_fname)
+        json_fname = 'Example01.json'
+        f = open(datadir + '/' + json_fname)
         json_data = f.read()
-        csv_string = json.loads(json_data)
+        json_string = json.loads(json_data)
         f.close()
         
     # Use Example05 data
@@ -904,10 +906,10 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
-        csv_fname = 'Example05.json'
-        f = open(datadir + '/' + csv_fname)
+        json_fname = 'Example05.json'
+        f = open(datadir + '/' + json_fname)
         json_data = f.read()
-        csv_string = json.loads(json_data)
+        json_string = json.loads(json_data)
         f.close()
 
     elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
@@ -917,10 +919,10 @@ def update_output(n_clicks,
         workdir = '../server_workdir'
         xrdml_fnames = ['Example06_simulation_generation_data.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
-        csv_fname = 'Example06.json'
-        f = open(datadir + '/' + csv_fname)
+        json_fname = 'Example06.json'
+        f = open(datadir + '/' + json_fname)
         json_data = f.read()
-        csv_string = json.loads(json_data)
+        json_string = json.loads(json_data)
         f.close()
 
     #Stores user files in a directory
@@ -943,13 +945,15 @@ def update_output(n_clicks,
         f.write(to_write)
         f.close()
 
+
+        ####FIX
         csv_type, csv_string = csv_contents.split(',')
 
         decoded = base64.b64decode(csv_string)
-        f = open(datadir + '/' + csv_fname,'w')
+        f = open(datadir + '/' + json_fname,'w')
         to_write = decoded.decode('utf-8')
         csv_string = to_write
-        if re.search('(csv$)',csv_fname) is not None:
+        if re.search('(csv$)',json_fname) is not None:
             to_write = re.sub('\\r','',to_write)
         f.write(to_write)
         f.close()
@@ -1154,7 +1158,7 @@ def update_output(n_clicks,
     
     #beginning of crystallites illuminated calculations
     crystallites_dict = {}
-    crystal_data = json.loads(csv_string)
+    crystal_data = json.loads(json_string)
     #need to convert strings to numbers in json dict
     for key in crystal_data.keys():
         if(key != 'beam_shape'):
@@ -1707,8 +1711,8 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
         return go.Figure(), go.Figure(), []
 
 @app.callback(
-    Output('download-csv', 'data'),
-    Input('download-created-csv', 'n_clicks'),
+    Output('download-json', 'data'),
+    Input('download-created-json', 'n_clicks'),
     Input('beam-shape-in', 'value'),
     Input('beam-size-in', 'value'),
     Input('raster-x-in', 'value'),
