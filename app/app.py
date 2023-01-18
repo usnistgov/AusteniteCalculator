@@ -85,10 +85,12 @@ def clear_directory():
     for zip in zips:
         os.remove(zip)
 
+# Clear the report directory every 24 hours
 scheduler = BackgroundScheduler()
 scheduler.add_job(clear_directory, 'interval', hours=24)
 scheduler.start()
 
+# Bottom banner and NIST formatting
 custom_index = """<!DOCTYPE html>
 <html>
     <head>
@@ -189,8 +191,8 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO],index_string =
 server = app.server
 root_dir = os.getcwd()
 
+# Top Banner
 app.layout = dbc.Container([
-
         
     html.Br(),
     html.H1('Austenite Calculator'),
@@ -320,11 +322,13 @@ app.layout = dbc.Container([
             dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'), 
             html.Br(),
             html.Br(),
+            # Download Button
             dbc.Button(id='report-button', children='Download Analysis Report'),
             Download(id='download-full-report'),
             html.Br(),
             dcc.Store(id='store-calculations', storage_type='memory'),
             html.Br(),
+            # Loading icons/animation
             dcc.Loading(
                 id="loading",
                 type="default",
@@ -794,6 +798,24 @@ def download_created_instprm(n_clicks,
     
     return send_file("created_instprm.instprm")
 
+# json upload dialog
+
+#    State('upload-json','contents'),
+#    State('upload-json','filename'),
+
+#@app.callback(
+#    Output('default-json','children'),
+#    Input('upload-json','filename')
+#)
+#def show_json_name(filename):
+#
+#    if filename is None:
+#        return ""
+#
+#    else:
+#        return "Uploaded Files: " + ', '.join(filename)
+
+
 ### --- end file upload messages --- ###
 
 ### download csvs ###
@@ -835,8 +857,8 @@ def func(n_clicks):
     State('upload-data-instprm','filename'),
     State('upload-cif','contents'),
     State('upload-cif','filename'),
-    State('upload-csv','contents'),
-    State('upload-csv','filename'),
+    State('upload-json','contents'),
+    State('upload-json','filename'),
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
@@ -907,10 +929,21 @@ def update_output(n_clicks,
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
         json_fname = 'Example05.json'
-        f = open(datadir + '/' + json_fname)
-        json_data = f.read()
-        json_string = json.loads(json_data)
+        
+        
+        
+        #f = open(datadir + '/' + json_fname)
+        with open(os.path.join(datadir, json_fname), 'r') as f:
+            json_data = json.loads(f.read())
         f.close()
+        
+        print("Json path: ",f)
+        print(json_data)
+        #json_data = f.read()
+        #json_string = json.loads(json_data)
+        #print(json_string)
+
+
 
     elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
         datadir = '../ExampleData/Example06'
@@ -947,6 +980,7 @@ def update_output(n_clicks,
 
 
         ####FIX
+        # Is this for the export data as csv, or illuminated json file?
         csv_type, csv_string = csv_contents.split(',')
 
         decoded = base64.b64decode(csv_string)
@@ -1158,7 +1192,12 @@ def update_output(n_clicks,
     
     #beginning of crystallites illuminated calculations
     crystallites_dict = {}
-    crystal_data = json.loads(json_string)
+    
+    with open(os.path.join(datadir, json_fname), 'r') as f:
+        crystal_data = json.loads(f.read())
+    f.close()
+    #crystal_data = json.loads(json_string)
+    
     #need to convert strings to numbers in json dict
     for key in crystal_data.keys():
         if(key != 'beam_shape'):
@@ -1170,9 +1209,12 @@ def update_output(n_clicks,
                 crystal_data[key] = float(crystal_data[key])
 
     #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
+    
+    # add a try/except here to confirm the filenames match
+    
     for key, value in peaks_dict.items():
         for x in range(len(value)):
-            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == key, 'Phase_Fraction'].values[0], crystal_data[key][0], crystal_data[key][1], value[x][1], value[x][2])
+            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == key, 'Phase_Fraction'].values[0], crystal_data[key][0], crystal_data[key][1], value[x][1], value[x][2], value[x][3])
             if key in crystallites_dict.keys():
                 crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
             else:
@@ -1254,6 +1296,8 @@ def update_output(n_clicks,
     
     #this needs to work for more than 2 phases, change to for loop
     #find denominator first(normalize at the same time)
+    mass_denominator=0
+    volume_denominator=0
     for dataset in mass_conversion:
         for x in range(len(mass_conversion[dataset][0])):
             mass_denominator += mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]
