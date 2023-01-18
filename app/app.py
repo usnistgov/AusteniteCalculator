@@ -698,6 +698,8 @@ def show_f4_name(filename):
         print(filename)
         return "Uploaded File: " + filename
 
+### --- File Creation tab --- ###
+### --- Choose default .instprm --- ###
 @app.callback(
     Output('default-name', 'children'),
     Input('default-dropdown', 'value')
@@ -716,6 +718,7 @@ def update_dropdown(value):
     elif value == '10m TOF 90deg bank':
         return 'DefaultInstprmFiles/10mTOF_default.instprm'
 
+### --- Choose calibration .cif --- ###
 @app.callback(
     Output('default-cif','children'),
     Input('upload-default-cif','filename')
@@ -728,6 +731,7 @@ def show_cif_names(filename):
     else:
         return "Uploaded Files: " + ', '.join(filename)
 
+### --- Choose calibration Xray File --- ###
 @app.callback(
     Output('default-xrdml','children'),
     Input('upload-default-xrdml','filename')
@@ -739,6 +743,8 @@ def show_xrdml_name(filename):
         
     else:
         return "Uploaded Files: " + ', '.join(filename)
+
+### --- Download Created .instprm File --- ###
 
 @app.callback(
     Output("download-instprm", "data"),
@@ -808,7 +814,9 @@ def download_created_instprm(n_clicks,
     
     return send_file("created_instprm.instprm")
 
-# json upload dialog
+# json upload dialog - moved to front panel
+
+# ADD DOWNLOAD .JSON
 
 #    State('upload-json','contents'),
 #    State('upload-json','filename'),
