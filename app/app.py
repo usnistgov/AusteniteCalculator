@@ -191,9 +191,9 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO],index_string =
 server = app.server
 root_dir = os.getcwd()
 
-# Top Banner
+
 app.layout = dbc.Container([
-        
+      ### ---  Top Banner --- ###
     html.Br(),
     html.H1('Austenite Calculator'),
     html.Div(['Calculating ',
@@ -225,7 +225,7 @@ app.layout = dbc.Container([
             dcc.Upload(
                     id='upload-data-xrdml',
                     children=html.Div([
-                            dbc.Button('X-Ray Diffraction File (.xrdml)')
+                            dbc.Button('X-Ray Diffraction File (.csv, .xrdml, etc.)')
                             ]),
                             multiple=True),
             html.Div(id='f1-name'),
@@ -310,7 +310,7 @@ app.layout = dbc.Container([
                                 {"label": "8000", "value":8000},
                                 {"label": "1000 (for testing only)", "value":1000},
                             ],
-                            value=1000
+                            value=1000 #default value on screen
                         ), width=3)
             ),
 
@@ -638,11 +638,17 @@ app.layout = dbc.Container([
 ])
 
 ### --- file upload messages --- ###
+# Pairs of app.callback and trailing function definitions
+# Text should appear under the button
+
+### --- data upload tab --- ###
+
+### --- X-Ray Diffraciton File --- ###
 @app.callback(
     Output('f1-name','children'),
     Input('upload-data-xrdml','filename')
 )
-def show_f_name(filename):
+def show_f1_name(filename):
     
     if filename is None:
         return ""
@@ -650,11 +656,12 @@ def show_f_name(filename):
     else:
         return "Uploaded Files: " + ', '.join(filename)
 
+### --- Instrument Parameter File --- ###
 @app.callback(
     Output('f2-name','children'),
     Input('upload-data-instprm','filename')
 )
-def show_f_name1(filename):
+def show_f2_name(filename):
     
     if filename is None:
         return ""
@@ -662,11 +669,13 @@ def show_f_name1(filename):
     else:
         return "Uploaded File: " + filename
 
+
+### --- Crystallographic Information Files --- ###
 @app.callback(
     Output('f3-name','children'),
     Input('upload-cif','filename')
 )
-def show_f_name2(filename):
+def show_f3_name(filename):
     
     if filename is None:
         return ""
@@ -674,12 +683,13 @@ def show_f_name2(filename):
     else:
         print(filename)
         return "Uploaded Files: " + ', '.join(filename)
-
+        
+### --- Crystallites Illuminated JSON --- ###
 @app.callback(
     Output('f4-name','children'),
     Input('upload-json','filename')
 )
-def show_f_name3(filename):
+def show_f4_name(filename):
     
     if filename is None:
         return ""
