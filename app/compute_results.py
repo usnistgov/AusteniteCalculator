@@ -17,7 +17,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     *ADD MORE ON WHAT IT DOES*
     
     
-    Args:
+    Parameters:
         datadir: Location data is stored
         workdir: Working directory for data
         xrdml_fname: Diffraction data (xrdml title legacy)

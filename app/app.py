@@ -1443,6 +1443,26 @@ def update_output(n_clicks,
     prevent_initial_call=True
 )
 def update_phase_fraction_plt_and_tbl(data,unit_value):
+    """
+
+    Creates Phase Fraction distribution plot and table with variable units
+    Parameters and Returns come from preceeding @app.callback statement
+    
+    Parameters:
+        data: ??? (maybe used with store-calculations)
+        unit_value: drop down menu for phase fraction unit
+    
+    Returns:
+        | the following items
+        | **pf_uncert_fig** plot "Figure for Phase Fraction Uncertainty"
+            on tab "Phase Fraction"
+        | **pf_uncert_data** data used in "Table for Phase Fraction Uncertainty"
+            on tab "Phase Fraction"
+        | **pf_uncert_cols** column names used in "Table for Phase Fraction
+            Uncertainty" on tab "Phase Fraction"
+
+
+    """
 
     if data is None:
         return go.Figure(), [], []
