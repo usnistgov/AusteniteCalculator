@@ -278,7 +278,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
             DF_merged_fit_theo,   
             DF_phase_fraction,
             two_theta,
-            tis, 
+            tis,
             DF_flags_for_user)
 
 #####################################
@@ -883,7 +883,8 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
     hist.SaveProfile("created_instprm")
 
 def get_conversions(phase_frac,cell_masses,cell_volumes):
-    
+    # Seems like there's some bits in the app that do this as well?
+
     # deepcopy to prevent aliasing
     mass_conversion = deepcopy(phase_frac)
     volume_conversion = deepcopy(phase_frac)

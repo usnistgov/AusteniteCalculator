@@ -1138,7 +1138,8 @@ def update_output(n_clicks,
         for elem in elems_for_phase:
             key = elem + '_'
             elem_mass = atmdata.AtmBlens[key]['Mass']
-            cell_mass += elem_mass * elem_percentage[count]
+            # included the atoms per cell here
+            cell_mass += elem_mass * elem_percentage[count] * atoms_per_cell
             atomic_masses[elem] = elem_mass
             print("Element: ", elem,"\tMass: ",elem_mass)
             count += 1
@@ -1342,6 +1343,10 @@ def update_output(n_clicks,
             cell_mass_vecs[dataset][ii] = cell_masses[phase_frac[dataset][0][ii]['Phase']]
             cell_volume_vecs[dataset][ii] = cell_volumes[phase_frac[dataset][0][ii]['Phase']]
             cell_number_vecs[dataset][ii] = phase_frac[dataset][0][ii]['Phase_Fraction']
+
+            # To get the number of atoms, open the phases data, 'Atoms' key
+            # Any row (so [0]) should be fine, and then column [8]
+            # print(phases["austenite-SRM487.cif"].data['Atoms'][0][8])
 
         for ii in range(n_phases):
             mass_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_mass_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_mass_vecs[dataset])
