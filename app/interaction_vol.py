@@ -448,6 +448,9 @@ def create_depth_plot(x_list, y_list, theta_deg):
     return fig
 
 def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg, d_t_half):
+
+    #CHECK-WHAT PHASE FRACITON SHOULD BE USED?  I THINK VOLUME, NOT NUMBER OF CELLS
+
     '''
     Calculate crystallites illuminated data for a peak
     Args:
@@ -466,18 +469,23 @@ def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystal
     Raises:
         
     '''
-    D_bar = powder_size
+    #print("passed")
+    #print(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg, d_t_half)
+    
+    D_bar = powder_size/1000 # convert from micrometers to millimeters
     l_bar= D_bar/1.5
     A_bar = ((l_bar)**2)*(4/np.pi)
     N_bar_A = 1/A_bar
-
+    
+    #print(D_bar,l_bar,A_bar, N_bar_A)
     raster_area_mm=(crystal_data['raster_x']+crystal_data['beam_size'])*(crystal_data['raster_y']+crystal_data['beam_size'])
-
+    #print(raster_area_mm)
     phase_fraction = phase_frac
 
     N_illuminated=N_bar_A*raster_area_mm*phase_fraction*crystalites_per_particle
 
     #For cases where more grains through the thickness are illuminated
+    #sample_thickness_mm=30
     #N_l_bar=1/l_bar
     #print(N_l_bar)
 
@@ -487,11 +495,23 @@ def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystal
     #print(N_illuminated)
 
     delta_theta_half=(d_t_half)*(np.pi/180)
-
+    # print(d_t_half, delta_theta_half)
     # gamma replaces H_R/L for 2D detector
     gamma = (15)*(np.pi/180)
+    
 
-    diffracting_fraction=((multiplicity/4*np.pi)*(crystal_data['W_F']/crystal_data['L']+delta_theta_half)*
-                      (crystal_data['H_F']/crystal_data['L']+crystal_data['H_R']/crystal_data['L'])*(1/(2*(np.sin(theta_deg*np.pi/180)))))
+    diffracting_fraction=((multiplicity/4*np.pi)*
+                          (crystal_data['W_F']/crystal_data['L']+
+                           delta_theta_half)*
+                      (crystal_data['H_F']/crystal_data['L']+
+                      crystal_data['H_R']/crystal_data['L'])*
+                      (1/(2*(np.sin(theta_deg*np.pi/180)))))
+
+#    print("Crystallites Illuminated Values")
+#    print("Crystal Data")
+#    print(crystal_data)
+#    print("Two theta, Multiplicity, Phase Fraction, N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction")
+#    print(2*theta_deg, multiplicity,phase_fraction, N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction)
+#    print("\n")
 
     return N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction

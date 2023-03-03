@@ -355,10 +355,14 @@ app.layout = dbc.Container([
                             value='Dataset: 1')
              ]),
             html.Br(),
-            html.Div("""Plot of the raw data."""),
+            html.Div("""Plot of the raw data, plotted as a continuous line.
+                        Hovering a cursor over the plot will bring up a
+                        menu to save, zoom, and other features."""),
             dcc.Graph(id='intensity-plot'),
             html.Br(),
-            html.Div("""Plot of the raw data and fit.  The fit value should overlap the raw data"""),
+            html.Div("""Plot of the raw data and fit. Raw data is plotted as
+                        points, fitted data as lines. The fit value should nominally
+                        overlap the raw data. Inspect the data to confirm."""),
             dcc.Graph(id='fitted-intensity-plot')
             ],
             label="Intensity Plots"),
@@ -506,12 +510,13 @@ app.layout = dbc.Container([
                                 id = 'peak-dropdown',
                                 value='1')]),
             html.Br(),
+            dash_table.DataTable(id='crystallites-table'),
+            html.Br(),
             html.Div([
                 dcc.Graph(id='centroid-plot'),
                 dcc.Graph(id='interaction-depth-plot'),
             ]),
-            html.Br(),
-            dash_table.DataTable(id='crystallites-table'),
+
         ],
         label='Interaction Volume'),
         
@@ -1175,6 +1180,8 @@ def update_output(n_clicks,
         peaks_dict[phase_name] = []
         
     print("Begin Results Table")
+    # Peak dictionary includes F value, multiplicity, theta position, F_squared value
+    # doesn't seem like the values are quite right... AC 3 Mar 2023
     for row in results_table['Dataset: 1'].iterrows():
         current_peak = []
         current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
@@ -1231,14 +1238,24 @@ def update_output(n_clicks,
     
     # add a try/except here to confirm the filenames match
     
-    for key, value in peaks_dict.items():
-        for x in range(len(value)):
-            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == key, 'Phase_Fraction'].values[0], crystal_data[key][0], crystal_data[key][1], value[x][1], value[x][2], value[x][3])
-            if key in crystallites_dict.keys():
-                crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
+    print("Peaks dictionary")
+    print(peaks_dict)
+    
+    for cif_name, peak_data in peaks_dict.items():
+        print("Phase: ", cif_name)
+        for x in range(len(peak_data)):
+            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,
+                phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
+                crystal_data[cif_name][0],
+                crystal_data[cif_name][1],
+                peak_data[x][1],
+                peak_data[x][2],
+                crystal_data[cif_name][2])
+            if cif_name in crystallites_dict.keys():
+                crystallites_dict[cif_name].append([num_ill, frac_difrac, num_difrac])
             else:
-                crystallites_dict[key] = []
-                crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
+                crystallites_dict[cif_name] = []
+                crystallites_dict[cif_name].append([num_ill, frac_difrac, num_difrac])
     # run MCMC using full results
     print("Before Inference Method")
     
@@ -1498,15 +1515,15 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
 @app.callback(
     Output('intensity-plot', 'figure'),
     Output('fitted-intensity-plot', 'figure'),
-    Input('store-calculations', 'data'),
+    Input('store-calculations', 'data'),  ## AC 3 Mar 2023- I don't see where this is
     Input('intensity-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_figures(data, value):
+def update_intensity_plots(data, dataset_value):
     '''
     Args:
         data: data saved in dcc.Store from running compute_results
-        value: dataset selected from dropdown
+        dataset_value: dataset selected from dropdown
 
     Returns:
         raw_fig: raw data figure dynamically created in callback
@@ -1515,14 +1532,16 @@ def update_figures(data, value):
     Raises:
         
     '''
+    # Create empty plot if no data is provided
     if data is None:
         return go.Figure(), go.Figure()
 
-    fit_data = data.get('fit_points').get(value)
-    current_two_theta = data.get('two_thetas').get(value)
+    # Otherwise collect the data and extract it for plotting
+    fit_data = data.get('fit_points').get(dataset_value)
+    current_two_theta = data.get('two_thetas').get(dataset_value)
     
-    #option to select all datasets
-    if value == 'View all datasets':
+    # Option 1: to view all datasets
+    if dataset_value == 'View all datasets':
         created_raw = []
         created_fit = []
         for key, data_value in data.get('fit_points').items():
@@ -1545,19 +1564,22 @@ def update_figures(data, value):
         big_raw = go.Figure(raw_graph_data)
         big_fit = go.Figure(fit_graph_data)
         return big_raw, big_fit
+        
+    #Option 2: select a specific dataset from the dropdown
     else:
-        #select a specific dataset from the dropdown
-        fit_data = data.get('fit_points').get(value)
-        current_two_theta = data.get('two_thetas').get(value)
+        fit_data = data.get('fit_points').get(dataset_value)
+        current_two_theta = data.get('two_thetas').get(dataset_value)
 
         df = pd.DataFrame({
             "two_theta":current_two_theta,
             "intensity":fit_data[0]
         })
-
-        raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-
-        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, value)
+        
+        # Plot of the raw data as a line profile
+        raw_fig = px.line(df,x='two_theta',y='intensity')
+        
+        # Plot of the fitted data as a line, raw data as points
+        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, dataset_value)
 
         return raw_fig, fig_fit_hist
 
@@ -1614,6 +1636,8 @@ def update_tables(data, value, unit_value):
         frac_cols = data.get('mass_conversion').get(value)[1]
 
     return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
+
+
 
 @app.callback(
     Output('two_theta-plot','figure'),
@@ -1759,11 +1783,12 @@ def update_peak_dropdown(data, value):
     Output('crystallites-table', 'data'),
     Output('crystallites-table', 'columns'),
     Input('store-calculations', 'data'),
+    Input('interaction-vol-plot-dropdown', 'value'),
     Input('interaction-vol-plot-phase-dropdown', 'value'),
-    Input('fit-theo-table-dropdown', 'value'),
+    Input('peak-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_interaction_vol_plot(data, phase_value, peak_value):
+def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
     '''
     Args:
         data: data saved in dcc.Store from running compute_results
@@ -1783,7 +1808,14 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
         
     '''
     #return go.Figure(), go.Figure()
+    
+    #print("Interaction Volume Plot Update")
+    #print("Passed Parameters: ", dataset_value, phase_value, peak_value)
+    
+    #need to pick dataset
+    
     if (data is not None) and (data.get('interaction_vol_data').get(phase_value) is not None):
+        #print("In if loop")
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
@@ -1792,19 +1824,26 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
 
         centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
         depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
-        crystal_info = data.get('crystallites')[phase_value][peak_value]
+        #breakpoint()
+        crystal_info = data.get('crystallites').get(phase_value)[int(peak_value)]
+        # check the order
         placeholder_dict = {
-            'Number Illuminated': crystal_info[0],
-            'Diffracting Fraction': crystal_info[1],
-            'Number Diffracted': crystal_info[2]
+            'Number Illuminated': [crystal_info[0]],
+            'Diffracting Fraction': [crystal_info[1]],
+            'Number Diffracting': [crystal_info[2]]
         }
         #return go.Figure(), depth_plot
-        cryst_illuminated_data, cryst_illuminated_cols = compute_results.df_to_dict(placeholder_dict)
         
-        breakpoint()
         
+        # I don't know why making this into a dataframe works better...
+        placeholder_df=pd.DataFrame.from_dict(placeholder_dict)
+        cryst_illuminated_data, cryst_illuminated_cols=compute_results.df_to_dict(placeholder_df)
+        #breakpoint()
+
         return centroid_plot, depth_plot, cryst_illuminated_data, cryst_illuminated_cols
+        #return go.Figure(), go.Figure(), cryst_illuminated_data, cryst_illuminated_cols
     else:
+        #print("Returning empty plot")
         return go.Figure(), go.Figure(), [], []
 
 @app.callback(
