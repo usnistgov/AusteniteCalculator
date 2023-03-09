@@ -1241,10 +1241,12 @@ def update_output(n_clicks,
     print("Peaks dictionary")
     print(peaks_dict)
     
+    
+    # Same dataset ok since the material is nominally the same?
     for cif_name, peak_data in peaks_dict.items():
         print("Phase: ", cif_name)
         for x in range(len(peak_data)):
-            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,
+            num_layer, num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,
                 phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
                 crystal_data[cif_name][0],
                 crystal_data[cif_name][1],
@@ -1252,10 +1254,10 @@ def update_output(n_clicks,
                 peak_data[x][2],
                 crystal_data[cif_name][2])
             if cif_name in crystallites_dict.keys():
-                crystallites_dict[cif_name].append([num_ill, frac_difrac, num_difrac])
+                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
             else:
                 crystallites_dict[cif_name] = []
-                crystallites_dict[cif_name].append([num_ill, frac_difrac, num_difrac])
+                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
     # run MCMC using full results
     print("Before Inference Method")
     
@@ -1768,9 +1770,10 @@ def update_peak_dropdown(data, value):
 
     peaks = data.get('interaction_vol_data').get(value)
 
+
     peak_dropdown = html.Div([
         'Please select a peak to view',
-        dcc.Dropdown(options = [str(i + 1) for i in range(len(peaks))], 
+        dcc.Dropdown(options = [str(i+1) for i in range(len(peaks))],
                      id = 'peak-dropdown',
                      value='1')
     ])
@@ -1821,16 +1824,21 @@ def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
 
         #print(df_endpoint, df_midpoint)
-
+        
+        
+        
+        #ADD Particle size not hardcode 40
         centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
         depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
         #breakpoint()
         crystal_info = data.get('crystallites').get(phase_value)[int(peak_value)]
         # check the order
         placeholder_dict = {
-            'Number Illuminated': [crystal_info[0]],
-            'Diffracting Fraction': [crystal_info[1]],
-            'Number Diffracting': [crystal_info[2]]
+            'Number of Layers': [crystal_info[0]],
+            'Number Illuminated': [crystal_info[1]],
+            'Diffracting Fraction': [crystal_info[2]],
+            'Number Diffracting': [crystal_info[3]],
+            'Centroid of Z depth': current_peak[3]
         }
         #return go.Figure(), depth_plot
         

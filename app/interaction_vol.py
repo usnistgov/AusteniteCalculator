@@ -280,6 +280,9 @@ def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
 
 def create_graph_data(peak_data, summarized_data):
     '''
+    FIX - needs aggregate data for absorption, not just one phase.
+    CHECK - SRM example should have similar centriods for first peaks
+    
     Args:
        peak_data: Data for the current peak that is being graphed
        summarized_data: A bit of a cheat, but data about the overall phase that the peak needs to know
@@ -376,11 +379,24 @@ def create_centroid_plot(df_mid, Centroid_y):
             color='rgb(0,0,0)', size=50,symbol='circle'
                 )
     )
+    
 
     fig = psub.make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(trace1)
     fig.add_trace(trace2)
     fig.add_hline(y=Centroid_y, line_dash="dot")
+
+# Need a better way of passing the shape parameters
+#    # Add a shape
+#    fig.add_shape(type="circle",
+#        xref="paper", yref="y",
+#        layer="below",
+#        opacity=0.5,
+#        fillcolor="PaleTurquoise",
+#        x0=0, y0=0, x1=.9, y1=-40,
+#        line_color="PaleTurquoise",
+#)
+
     fig['layout'].update(height = 600, width = 800, title = "",xaxis=dict(
                      tickangle=0),
                      xaxis_title="Scattered x-rays (normalized by flux)",
@@ -449,7 +465,7 @@ def create_depth_plot(x_list, y_list, theta_deg):
 
 def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg, d_t_half):
 
-    #CHECK-WHAT PHASE FRACITON SHOULD BE USED?  I THINK VOLUME, NOT NUMBER OF CELLS
+    #CHECK-WHAT PHASE FRACTION SHOULD BE USED?  I THINK VOLUME, NOT NUMBER OF CELLS
 
     '''
     Calculate crystallites illuminated data for a peak
@@ -462,27 +478,37 @@ def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystal
         theta_deg: Theta of current peak
 
     Returns:
+       N_layers: number of layers of particles illuminated
        N_illuminated: Number of particles illuminated
        diffracting_fraction: Diffracting Fraction
        N_diffracted: number of particles diffracted, represented by N_illuminated*diffracting_fraction
-
     Raises:
         
     '''
+    
+    #Follows nomenclature of ASTM E112
+    
     #print("passed")
     #print(crystal_data, phase_frac, powder_size, crystalites_per_particle, multiplicity, theta_deg, d_t_half)
     
     D_bar = powder_size/1000 # convert from micrometers to millimeters
-    l_bar= D_bar/1.5
-    A_bar = ((l_bar)**2)*(4/np.pi)
-    N_bar_A = 1/A_bar
-    
+    l_bar= D_bar/1.5 #Inverse of ASTM E112 A2.9; mean lineal intercept length
+    A_bar = ((l_bar)**2)*(4/np.pi) # Inverse of ASTM E112 A2.8; average grain cross sectional area
+    N_bar_A = 1/A_bar # Inverse of ASTM E112 A2.7; number of grains per unit area
+
+    # if the penetration depth is less than particle size, set layers=1
+    if l_bar<D_bar:
+        N_layers=1
+    # else find the number of layers illuminated
+    else:
+        N_layers=D_bar/l_bar
+
     #print(D_bar,l_bar,A_bar, N_bar_A)
     raster_area_mm=(crystal_data['raster_x']+crystal_data['beam_size'])*(crystal_data['raster_y']+crystal_data['beam_size'])
     #print(raster_area_mm)
     phase_fraction = phase_frac
 
-    N_illuminated=N_bar_A*raster_area_mm*phase_fraction*crystalites_per_particle
+    N_illuminated=N_bar_A*raster_area_mm*phase_fraction*crystalites_per_particle*N_layers
 
     #For cases where more grains through the thickness are illuminated
     #sample_thickness_mm=30
@@ -514,4 +540,4 @@ def crystallites_illuminated_calc(crystal_data, phase_frac, powder_size, crystal
 #    print(2*theta_deg, multiplicity,phase_fraction, N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction)
 #    print("\n")
 
-    return N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction
+    return N_layers, N_illuminated, diffracting_fraction, N_illuminated * diffracting_fraction
