@@ -917,7 +917,7 @@ def update_output(n_clicks,
         fit_theo_table_dropdown: dropdown created for the norm_int table and phase_frac table
         two_theta_diff_plot_dropdown: dropdown created for the difference in theo_int graph and phase_frac variation graph
         norm_int_plot_dropdown: dropdown for the variation in normalized intensity graph
-        master_dict: dictionary created to store data from compute_results
+        main_dict: dictionary created to store data from compute_results
         conf: return to show that app is done loading
 
     Raises:
@@ -1372,7 +1372,7 @@ def update_output(n_clicks,
             volume_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_volume_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_volume_vecs[dataset])
     mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
 
-    master_dict = {
+    main_dict = {
         'results_table':results_table,
         'phase_frac':phase_frac,
         'volume_conversion':volume_conversion,
@@ -1441,13 +1441,15 @@ def update_output(n_clicks,
     print("Submission complete. Navigate the above tabs to view results.")
     conf = "Submission complete. Navigate the above tabs to view results."
 
+    breakpoint()
+
     return (intensity_plot_dropdown,
             fit_theo_table_dropdown,
             two_theta_diff_plot_dropdown,
             interaction_vol_plot_phase_dropdown,
             norm_int_plot_dropdown,
             interaction_vol_plot_dropdown,
-            master_dict,
+            main_dict,
             conf,
             param_table_data,
             param_table_columns,

@@ -387,7 +387,7 @@ def create_centroid_plot(df_mid, Centroid_y):
     fig.add_hline(y=Centroid_y, line_dash="dot")
 
 # Need a better way of passing the shape parameters
-#    # Add a shape
+# Add a shape
 #    fig.add_shape(type="circle",
 #        xref="paper", yref="y",
 #        layer="below",
