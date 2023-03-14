@@ -1441,7 +1441,7 @@ def update_output(n_clicks,
     print("Submission complete. Navigate the above tabs to view results.")
     conf = "Submission complete. Navigate the above tabs to view results."
 
-    breakpoint()
+    #breakpoint()
 
     return (intensity_plot_dropdown,
             fit_theo_table_dropdown,
