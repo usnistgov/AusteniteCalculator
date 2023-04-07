@@ -1,7 +1,7 @@
 {
     "austenite-SRM487.cif": "[50,10,1]",
-    "ferrite-SRM487.cif": "[50,10,1]",
-    "beam_shape": "square",
+    "ferrite-SRM487.cif": "[40,10,1]",
+    "beam_shape": "circle",
     "beam_size": "1",
     "raster_x": "4",
     "raster_y": "4",

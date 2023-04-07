@@ -210,7 +210,7 @@ app.layout = dbc.Container([
     
     dbc.Tabs([
 
-        ### --- start data upload tab --- ###
+        ### --- start Data Upload tab --- ###
 
         dbc.Tab([
             
@@ -343,34 +343,38 @@ app.layout = dbc.Container([
             label="Data Upload",
             id='Data Upload'),
             
-        ### --- end data upload tab --- ###
+        ### --- end Data Upload tab --- ###
 
 
-        ### --- start I-2theta Plots --- ###
+        ### --- start Intensity Plots tab --- ###
         dbc.Tab([
             html.Br(),
-            html.Div(id='plot-placeholder',children=[ 
+            html.Div(id='intensity-plot-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'plot-dropdown',
+                            id = 'intensity-plot-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
-            html.Div("""Plot of the raw data."""),
+            html.Div("""Plot of the raw data, plotted as a continuous line.
+                        Hovering a cursor over the plot will bring up a
+                        menu to save, zoom, and other features."""),
             dcc.Graph(id='intensity-plot'),
             html.Br(),
-            html.Div("""Plot of the raw data and fit.  The fit value should overlap the raw data"""),
+            html.Div("""Plot of the raw data and fit. Raw data is plotted as
+                        points, fitted data as lines. The fit value should nominally
+                        overlap the raw data. Inspect the data to confirm."""),
             dcc.Graph(id='fitted-intensity-plot')
             ],
             label="Intensity Plots"),
         
-        ### --- end I-2theta Plots --- ###
+        ### --- end Intensity Plots tab --- ###
         
-        ### --- start Results Tables and Plots --- ###
+        ### --- start Normalized Intensities Tab --- ###
         dbc.Tab([
             html.Br(),
-            html.Div(id='table-placeholder',children=[ 
+            html.Div(id='fit-theo-table-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'table-dropdown',
+                            id = 'fit-theo-table-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -385,9 +389,9 @@ app.layout = dbc.Container([
             #
             html.Br(),
             html.Br(),
-            html.Div(id='norm-int-placeholder',children=[ 
+            html.Div(id='norm-int-plot-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'norm-int-dropdown',
+                            id = 'norm-int-plot-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -396,9 +400,9 @@ app.layout = dbc.Container([
                         such as texture, instrument calibration, and/or microstructure effects"""),
             dcc.Graph(id='normalized-intensity-plot'),
             html.Br(),
-            html.Div(id='graph-placeholder',children=[ 
+            html.Div(id='two-theta-diff-plot-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'graph-dropdown',
+                            id = 'two-theta-diff-plot-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -420,9 +424,9 @@ app.layout = dbc.Container([
             
             
             
-        ### --- end Results Tables and Plots --- ###
+        ### --- end Normalized Intensities Tab --- ###
 
-        ### --- start uncertainty analysis --- ###
+        ### --- start Phase Fraction Tab --- ###
 
         dbc.Tab([
             html.Br(),
@@ -488,16 +492,16 @@ app.layout = dbc.Container([
         dbc.Tab([
             html.Br(),
             html.Div("Select dataset:"),
-            html.Div(id='dataset-placeholder',children=[
+            html.Div(id='interaction-vol-plot-placeholder',children=[
                     dcc.Dropdown(options = ['Dataset: 1'],
-                                id = 'dataset-dropdown',
+                                id = 'interaction-vol-plot-dropdown',
                                 value='Dataset: 1')]),
 
             html.Br(),
             html.Div("Select phase:"),
-            html.Div(id='phase-placeholder',children=[ 
+            html.Div(id='interaction-vol-plot-phase-placeholder',children=[
                     dcc.Dropdown(options = ['Phase: 1'], 
-                                id = 'phase-dropdown',
+                                id = 'interaction-vol-plot-phase-dropdown',
                                 value='Phase: 1')]),
             html.Br(),
             html.Div("Select peak:"),
@@ -506,12 +510,13 @@ app.layout = dbc.Container([
                                 id = 'peak-dropdown',
                                 value='1')]),
             html.Br(),
+            dash_table.DataTable(id='crystallites-table'),
+            html.Br(),
             html.Div([
                 dcc.Graph(id='centroid-plot'),
                 dcc.Graph(id='interaction-depth-plot'),
             ]),
-            html.Br(),
-            dash_table.DataTable(id='crystallites-table'),
+
         ],
         label='Interaction Volume'),
         
@@ -856,12 +861,12 @@ def func(n_clicks):
 
 ### --- all other outputs --- ###
 @app.callback(
-    Output('plot-placeholder', 'children'),
-    Output('table-placeholder', 'children'),
-    Output('graph-placeholder', 'children'),
-    Output('phase-placeholder', 'children'),
-    Output('norm-int-placeholder', 'children'),
-    Output('dataset-placeholder', 'children'),
+    Output('intensity-plot-placeholder', 'children'),
+    Output('fit-theo-table-placeholder', 'children'),
+    Output('two-theta-diff-plot-placeholder', 'children'),
+    Output('interaction-vol-plot-phase-placeholder', 'children'),
+    Output('norm-int-plot-placeholder', 'children'),
+    Output('interaction-vol-plot-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
     Output('param-table','data'),
@@ -908,11 +913,11 @@ def update_output(n_clicks,
        inference_method_value: selection for statistical inference method
 
     Returns:
-        plot_dropdown: dropdown created for the raw and fit data graphs
-        table_dropdown: dropdown created for the norm_int table and phase_frac table
-        graph_dropdown: dropdown created for the difference in theo_int graph and phase_frac variation graph
-        norm_int_dropdown: dropdown for the variation in normalized intensity graph
-        master_dict: dictionary created to store data from compute_results
+        intensity_plot_dropdown: dropdown created for the raw and fit data graphs
+        fit_theo_table_dropdown: dropdown created for the norm_int table and phase_frac table
+        two_theta_diff_plot_dropdown: dropdown created for the difference in theo_int graph and phase_frac variation graph
+        norm_int_plot_dropdown: dropdown for the variation in normalized intensity graph
+        main_dict: dictionary created to store data from compute_results
         conf: return to show that app is done loading
 
     Raises:
@@ -1138,7 +1143,8 @@ def update_output(n_clicks,
         for elem in elems_for_phase:
             key = elem + '_'
             elem_mass = atmdata.AtmBlens[key]['Mass']
-            cell_mass += elem_mass * elem_percentage[count]
+            # included the atoms per cell here
+            cell_mass += elem_mass * elem_percentage[count] * atoms_per_cell
             atomic_masses[elem] = elem_mass
             print("Element: ", elem,"\tMass: ",elem_mass)
             count += 1
@@ -1174,6 +1180,8 @@ def update_output(n_clicks,
         peaks_dict[phase_name] = []
         
     print("Begin Results Table")
+    # Peak dictionary includes F value, multiplicity, theta position, F_squared value
+    # doesn't seem like the values are quite right... AC 3 Mar 2023
     for row in results_table['Dataset: 1'].iterrows():
         current_peak = []
         current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
@@ -1230,14 +1238,26 @@ def update_output(n_clicks,
     
     # add a try/except here to confirm the filenames match
     
-    for key, value in peaks_dict.items():
-        for x in range(len(value)):
-            num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data, phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == key, 'Phase_Fraction'].values[0], crystal_data[key][0], crystal_data[key][1], value[x][1], value[x][2], value[x][3])
-            if key in crystallites_dict.keys():
-                crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
+    print("Peaks dictionary")
+    print(peaks_dict)
+    
+    
+    # Same dataset ok since the material is nominally the same?
+    for cif_name, peak_data in peaks_dict.items():
+        print("Phase: ", cif_name)
+        for x in range(len(peak_data)):
+            num_layer, num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,
+                phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
+                crystal_data[cif_name][0],
+                crystal_data[cif_name][1],
+                peak_data[x][1],
+                peak_data[x][2],
+                crystal_data[cif_name][2])
+            if cif_name in crystallites_dict.keys():
+                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
             else:
-                crystallites_dict[key] = []
-                crystallites_dict[key].append([num_ill, frac_difrac, num_difrac])
+                crystallites_dict[cif_name] = []
+                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
     # run MCMC using full results
     print("Before Inference Method")
     
@@ -1343,12 +1363,16 @@ def update_output(n_clicks,
             cell_volume_vecs[dataset][ii] = cell_volumes[phase_frac[dataset][0][ii]['Phase']]
             cell_number_vecs[dataset][ii] = phase_frac[dataset][0][ii]['Phase_Fraction']
 
+            # To get the number of atoms, open the phases data, 'Atoms' key
+            # Any row (so [0]) should be fine, and then column [8]
+            # print(phases["austenite-SRM487.cif"].data['Atoms'][0][8])
+
         for ii in range(n_phases):
             mass_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_mass_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_mass_vecs[dataset])
             volume_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vecs[dataset][ii]*cell_volume_vecs[dataset][ii]/np.sum(cell_number_vecs[dataset]*cell_volume_vecs[dataset])
     mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
 
-    master_dict = {
+    main_dict = {
         'results_table':results_table,
         'phase_frac':phase_frac,
         'volume_conversion':volume_conversion,
@@ -1370,58 +1394,62 @@ def update_output(n_clicks,
     }
     
     #create html components to replace the placeholders in the app
-    plot_dropdown = html.Div([
-        'Please select a dataset to view',
+    #ORDER NEEDS TO MATCH ABOVE
+    
+    intensity_plot_dropdown = html.Div([
+        'Please select a dataset to view the intensity plot',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
-                    id = 'plot-dropdown',
+                    id = 'intensity-plot-dropdown',
                     value = 'Dataset: 1')
     ])
 
-    norm_int_dropdown = html.Div([
-        'Please select a dataset to view',
+    norm_int_plot_dropdown = html.Div([
+        'Please select a dataset to view the normailzed intensities plot',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
-                     id = 'norm-int-dropdown',
-                     value="Dataset: 1")
-    ])
-
-    dataset_dropdown = html.Div([
-        'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'dataset-dropdown',
+                     id = 'norm-int-plot-dropdown',
                      value='Dataset: 1')
     ])
 
-    table_dropdown = html.Div([
-        'Please select a dataset to view',
+    interaction_vol_plot_dropdown = html.Div([
+        'Please select a dataset to view the interaction volume',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'table-dropdown',
+                     id = 'interaction-vol-plot-dropdown',
                      value='Dataset: 1')
     ])
 
-    graph_dropdown = html.Div([
-        'Please select a dataset to view',
+    fit_theo_table_dropdown = html.Div([
+        'Please select a dataset to view the fit and theoretical intensities table',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'graph-dropdown',
+                     id = 'fit-theo-table-dropdown',
                      value='Dataset: 1')
     ])
 
-    phase_dropdown = html.Div([
-        'Please select a phase to view',
+    two_theta_diff_plot_dropdown = html.Div([
+        'Please select a dataset to view the difference between fit and theoretical two theta values',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+                     id = 'two-theta-diff-plot-dropdown',
+                     value='Dataset: 1')
+    ])
+
+    interaction_vol_plot_phase_dropdown = html.Div([
+        'Please select a phase to view the interaction volume',
         dcc.Dropdown(options = [phase for phase in cif_fnames], 
-                     id = 'phase-dropdown',
+                     id = 'interaction-vol-plot-phase-dropdown',
                      value=' ')
     ])
 
     print("Submission complete. Navigate the above tabs to view results.")
     conf = "Submission complete. Navigate the above tabs to view results."
 
-    return (plot_dropdown,
-            table_dropdown,
-            graph_dropdown,
-            phase_dropdown,
-            norm_int_dropdown,
-            dataset_dropdown,
-            master_dict,
+    #breakpoint()
+
+    return (intensity_plot_dropdown,
+            fit_theo_table_dropdown,
+            two_theta_diff_plot_dropdown,
+            interaction_vol_plot_phase_dropdown,
+            norm_int_plot_dropdown,
+            interaction_vol_plot_dropdown,
+            main_dict,
             conf,
             param_table_data,
             param_table_columns,
@@ -1438,6 +1466,26 @@ def update_output(n_clicks,
     prevent_initial_call=True
 )
 def update_phase_fraction_plt_and_tbl(data,unit_value):
+    """
+
+    Creates Phase Fraction distribution plot and table with variable units
+    Parameters and Returns come from preceeding @app.callback statement
+    
+    Parameters:
+        data: data saved in dcc.Store from running compute_results
+        unit_value: drop down menu for phase fraction unit
+    
+    Returns:
+        | the following items
+        | **pf_uncert_fig** plot "Figure for Phase Fraction Uncertainty"
+            on tab "Phase Fraction"
+        | **pf_uncert_data** data used in "Table for Phase Fraction Uncertainty"
+            on tab "Phase Fraction"
+        | **pf_uncert_cols** column names used in "Table for Phase Fraction
+            Uncertainty" on tab "Phase Fraction"
+
+
+    """
 
     if data is None:
         return go.Figure(), [], []
@@ -1471,15 +1519,15 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
 @app.callback(
     Output('intensity-plot', 'figure'),
     Output('fitted-intensity-plot', 'figure'),
-    Input('store-calculations', 'data'),
-    Input('plot-dropdown', 'value'),
+    Input('store-calculations', 'data'),  ## AC 3 Mar 2023- I don't see where this is
+    Input('intensity-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_figures(data, value):
+def update_intensity_plots(data, dataset_value):
     '''
     Args:
         data: data saved in dcc.Store from running compute_results
-        value: dataset selected from dropdown
+        dataset_value: dataset selected from dropdown
 
     Returns:
         raw_fig: raw data figure dynamically created in callback
@@ -1488,14 +1536,16 @@ def update_figures(data, value):
     Raises:
         
     '''
+    # Create empty plot if no data is provided
     if data is None:
         return go.Figure(), go.Figure()
 
-    fit_data = data.get('fit_points').get(value)
-    current_two_theta = data.get('two_thetas').get(value)
+    # Otherwise collect the data and extract it for plotting
+    fit_data = data.get('fit_points').get(dataset_value)
+    current_two_theta = data.get('two_thetas').get(dataset_value)
     
-    #option to select all datasets
-    if value == 'View all datasets':
+    # Option 1: to view all datasets
+    if dataset_value == 'View all datasets':
         created_raw = []
         created_fit = []
         for key, data_value in data.get('fit_points').items():
@@ -1518,19 +1568,22 @@ def update_figures(data, value):
         big_raw = go.Figure(raw_graph_data)
         big_fit = go.Figure(fit_graph_data)
         return big_raw, big_fit
+        
+    #Option 2: select a specific dataset from the dropdown
     else:
-        #select a specific dataset from the dropdown
-        fit_data = data.get('fit_points').get(value)
-        current_two_theta = data.get('two_thetas').get(value)
+        fit_data = data.get('fit_points').get(dataset_value)
+        current_two_theta = data.get('two_thetas').get(dataset_value)
 
         df = pd.DataFrame({
             "two_theta":current_two_theta,
             "intensity":fit_data[0]
         })
-
-        raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-
-        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, value)
+        
+        # Plot of the raw data as a line profile
+        raw_fig = px.line(df,x='two_theta',y='intensity')
+        
+        # Plot of the fitted data as a line, raw data as points
+        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, dataset_value)
 
         return raw_fig, fig_fit_hist
 
@@ -1542,7 +1595,7 @@ def update_figures(data, value):
     Output('uncert-table','data'),
     Output('uncert-table','columns'),
     Input('store-calculations', 'data'),
-    Input('table-dropdown', 'value'),
+    Input('fit-theo-table-dropdown', 'value'),
     Input('unit-dropdown', 'value'),
     prevent_initial_call = True
 )
@@ -1588,10 +1641,12 @@ def update_tables(data, value, unit_value):
 
     return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
 
+
+
 @app.callback(
     Output('two_theta-plot','figure'),
     Input('store-calculations', 'data'),
-    Input('graph-dropdown', 'value'),
+    Input('two-theta-diff-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_graphs(data, value):
@@ -1627,7 +1682,7 @@ def update_graphs(data, value):
 @app.callback(
     Output('normalized-intensity-plot','figure'),
     Input('store-calculations', 'data'),
-    Input('norm-int-dropdown', 'value'),
+    Input('norm-int-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_norm_int(data, value):
@@ -1690,7 +1745,7 @@ def update_norm_int(data, value):
 @app.callback(
     Output('peak-placeholder', 'children'),
     Input('store-calculations', 'data'),
-    Input('phase-dropdown', 'value'),
+    Input('interaction-vol-plot-phase-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_peak_dropdown(data, value):
@@ -1717,9 +1772,10 @@ def update_peak_dropdown(data, value):
 
     peaks = data.get('interaction_vol_data').get(value)
 
+
     peak_dropdown = html.Div([
         'Please select a peak to view',
-        dcc.Dropdown(options = [str(i + 1) for i in range(len(peaks))], 
+        dcc.Dropdown(options = [str(i+1) for i in range(len(peaks))],
                      id = 'peak-dropdown',
                      value='1')
     ])
@@ -1732,11 +1788,12 @@ def update_peak_dropdown(data, value):
     Output('crystallites-table', 'data'),
     Output('crystallites-table', 'columns'),
     Input('store-calculations', 'data'),
-    Input('phase-dropdown', 'value'),
-    Input('table-dropdown', 'value'),
+    Input('interaction-vol-plot-dropdown', 'value'),
+    Input('interaction-vol-plot-phase-dropdown', 'value'),
+    Input('peak-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_interaction_vol_plot(data, phase_value, peak_value):
+def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
     '''
     Args:
         data: data saved in dcc.Store from running compute_results
@@ -1744,33 +1801,60 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
         peak_value: peak selected of current phase
 
     Returns:
-        centroid_plot: Plot of x-ray centroid into material
-        depth_plot: Plot of visual representation of x-ray penetration into material
-        placeholder_dict: Crystallites illuminated data for the current peak selected
+        | the following items
+        | **centroid_plot** plot ""
+            on tab "Interaction Volume"  Plot of x-ray centroid into material
+        | **depth_plot** plot ""
+            on tab "Interaction Volume"
+        | **cryst_illuminated_data** data used in "" on tab "Interaction Volume"
+        | **cryst_illuminated_cols** column names used in "" on tab "Interaction Volume"
 
     Raises:
         
     '''
     #return go.Figure(), go.Figure()
+    
+    #print("Interaction Volume Plot Update")
+    #print("Passed Parameters: ", dataset_value, phase_value, peak_value)
+    
+    #need to pick dataset
+    
     if (data is not None) and (data.get('interaction_vol_data').get(phase_value) is not None):
+        #print("In if loop")
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
 
         #print(df_endpoint, df_midpoint)
-
+        
+        
+        
+        #ADD Particle size not hardcode 40
         centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
         depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
-        crystal_info = data.get('crystallites')[phase_value][peak_value]
+        #breakpoint()
+        crystal_info = data.get('crystallites').get(phase_value)[int(peak_value)]
+        # check the order
         placeholder_dict = {
-            'Number Illuminated': crystal_info[0],
-            'Diffracting Fraction': crystal_info[1],
-            'Number Diffracted': crystal_info[2]
+            'Number of Layers': [crystal_info[0]],
+            'Number Illuminated': [crystal_info[1]],
+            'Diffracting Fraction': [crystal_info[2]],
+            'Number Diffracting': [crystal_info[3]],
+            'Centroid of Z depth': current_peak[3]
         }
         #return go.Figure(), depth_plot
-        return centroid_plot, depth_plot, placeholder_dict
+        
+        
+        # I don't know why making this into a dataframe works better...
+        placeholder_df=pd.DataFrame.from_dict(placeholder_dict)
+        cryst_illuminated_data, cryst_illuminated_cols=compute_results.df_to_dict(placeholder_df)
+        #breakpoint()
+
+        return centroid_plot, depth_plot, cryst_illuminated_data, cryst_illuminated_cols
+        #return go.Figure(), go.Figure(), cryst_illuminated_data, cryst_illuminated_cols
     else:
-        return go.Figure(), go.Figure(), []
+        #print("Returning empty plot")
+        return go.Figure(), go.Figure(), [], []
 
 @app.callback(
     Output('download-json', 'data'),

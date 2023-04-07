@@ -430,7 +430,7 @@ def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
         'Experimental Error Variability':[0]*n_phase,
-        'Particle Count Variability':[0]*n_phase,
+        'X-ray Count Variability':[0]*n_phase,
         'Parameter Fit Variability':[0]*n_phase
     })
 
@@ -463,7 +463,7 @@ def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
 
         # medians
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
-        param_table.loc[param_table['Phase'] == ph, 'Particle Count Variability'] = np.median(dummy)
+        param_table.loc[param_table['Phase'] == ph, 'X-ray Count Variability'] = np.median(dummy)
 
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
         param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
@@ -538,7 +538,7 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
         'Experimental Error Variability':[0]*n_phase,
-        'Particle Count Variability':[0]*n_phase,
+        'X-ray Count Variability':[0]*n_phase,
         'Parameter Fit Variability':[0]*n_phase
     })
 
@@ -556,7 +556,7 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
 
         # medians
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
-        param_table.loc[param_table['Phase'] == ph, 'Particle Count Variability'] = np.median(dummy)
+        param_table.loc[param_table['Phase'] == ph, 'X-ray Count Variability'] = np.median(dummy)
 
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
         param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
