@@ -8,52 +8,48 @@ using namespace stan::math;
 
 
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 45> locations_array__ = 
+static constexpr std::array<const char*, 41> locations_array__ = 
 {" (found before start of program)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 19, column 4 to column 31)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 20, column 4 to column 36)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 21, column 4 to column 40)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 22, column 4 to column 39)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 23, column 4 to column 36)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 24, column 4 to column 47)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 30, column 4 to column 53)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 31, column 4 to column 58)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 32, column 4 to column 47)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 33, column 4 to column 52)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 37, column 8 to column 51)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 36, column 28 to line 38, column 5)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 36, column 4 to line 38, column 5)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 41, column 8 to column 61)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 40, column 34 to line 42, column 5)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 40, column 4 to line 42, column 5)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 46, column 8 to line 47, column 92)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 45, column 20 to line 48, column 5)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 45, column 4 to line 48, column 5)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 2, column 4 to column 19)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 3, column 4 to column 27)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 4, column 4 to column 26)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 5, column 4 to column 33)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 6, column 20 to column 21)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 6, column 4 to column 25)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 7, column 10 to column 11)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 7, column 4 to column 23)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 8, column 10 to column 11)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 8, column 4 to column 23)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 9, column 10 to column 11)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 9, column 4 to column 33)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 10, column 4 to column 30)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 11, column 4 to column 37)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 12, column 4 to column 34)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 13, column 20 to column 28)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 13, column 4 to column 45)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 14, column 20 to column 21)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 14, column 4 to column 33)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 15, column 20 to column 21)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 15, column 4 to column 35)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 21, column 20 to column 28)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 22, column 20 to column 28)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 23, column 11 to column 20)",
- " (in 'C:/Users/dtn1/Documents/AusteniteCalc/austenitecalculator/stan_files/multiple_samples.stan', line 24, column 11 to column 26)"};
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 19, column 4 to column 31)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 20, column 4 to column 40)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 21, column 4 to column 39)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 22, column 4 to column 53)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 30, column 4 to column 53)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 31, column 4 to column 47)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 32, column 4 to column 52)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 39, column 12 to column 58)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 38, column 31 to line 40, column 9)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 38, column 8 to line 40, column 9)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 37, column 28 to line 41, column 5)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 37, column 4 to line 41, column 5)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 45, column 8 to line 46, column 92)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 44, column 20 to line 47, column 5)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 44, column 4 to line 47, column 5)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 2, column 4 to column 19)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 3, column 4 to column 27)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 4, column 4 to column 26)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 5, column 4 to column 33)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 6, column 20 to column 21)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 6, column 4 to column 25)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 7, column 10 to column 11)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 7, column 4 to column 23)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 8, column 10 to column 11)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 8, column 4 to column 23)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 9, column 10 to column 11)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 9, column 4 to column 33)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 10, column 4 to column 30)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 11, column 4 to column 37)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 12, column 4 to column 34)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 13, column 20 to column 28)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 13, column 4 to column 45)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 14, column 20 to column 21)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 14, column 4 to column 33)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 15, column 20 to column 21)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 15, column 4 to column 35)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 20, column 20 to column 28)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 21, column 20 to column 28)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 22, column 32 to column 41)",
+ " (in 'C:/Users/dtn1/Documents/ByScientist/AdamCreuziger/austenitecalculator/stan_files/multiple_samples.stan', line 22, column 43 to column 51)"};
 
 
 
@@ -105,51 +101,51 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
     try {
       int pos__ = std::numeric_limits<int>::min();
       pos__ = 1;
-      current_statement__ = 20;
+      current_statement__ = 16;
       context__.validate_dims("data initialization","N","int",
            std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
       
       
-      current_statement__ = 20;
+      current_statement__ = 16;
       N = context__.vals_i("N")[(1 - 1)];
-      current_statement__ = 20;
+      current_statement__ = 16;
       stan::math::check_greater_or_equal(function__, "N", N, 0);
-      current_statement__ = 21;
+      current_statement__ = 17;
       context__.validate_dims("data initialization","N_samples","int",
            std::vector<size_t>{});
       N_samples = std::numeric_limits<int>::min();
       
       
-      current_statement__ = 21;
+      current_statement__ = 17;
       N_samples = context__.vals_i("N_samples")[(1 - 1)];
-      current_statement__ = 21;
+      current_statement__ = 17;
       stan::math::check_greater_or_equal(function__, "N_samples", N_samples,
                                             0);
-      current_statement__ = 22;
+      current_statement__ = 18;
       context__.validate_dims("data initialization","N_phases","int",
            std::vector<size_t>{});
       N_phases = std::numeric_limits<int>::min();
       
       
-      current_statement__ = 22;
+      current_statement__ = 18;
       N_phases = context__.vals_i("N_phases")[(1 - 1)];
-      current_statement__ = 22;
+      current_statement__ = 18;
       stan::math::check_greater_or_equal(function__, "N_phases", N_phases, 0);
-      current_statement__ = 23;
+      current_statement__ = 19;
       context__.validate_dims("data initialization","N_phase_samples","int",
            std::vector<size_t>{});
       N_phase_samples = std::numeric_limits<int>::min();
       
       
-      current_statement__ = 23;
+      current_statement__ = 19;
       N_phase_samples = context__.vals_i("N_phase_samples")[(1 - 1)];
-      current_statement__ = 23;
+      current_statement__ = 19;
       stan::math::check_greater_or_equal(function__, "N_phase_samples",
                                             N_phase_samples, 0);
-      current_statement__ = 24;
+      current_statement__ = 20;
       stan::math::validate_non_negative_index("Y", "N", N);
-      current_statement__ = 25;
+      current_statement__ = 21;
       context__.validate_dims("data initialization","Y","double",
            std::vector<size_t>{static_cast<size_t>(N)});
       Y_data__ = 
@@ -159,88 +155,88 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       
       {
         std::vector<local_scalar_t__> Y_flat__;
-        current_statement__ = 25;
+        current_statement__ = 21;
         Y_flat__ = context__.vals_r("Y");
-        current_statement__ = 25;
+        current_statement__ = 21;
         pos__ = 1;
-        current_statement__ = 25;
+        current_statement__ = 21;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 25;
+          current_statement__ = 21;
           stan::model::assign(Y, Y_flat__[(pos__ - 1)],
             "assigning variable Y", stan::model::index_uni(sym1__));
-          current_statement__ = 25;
+          current_statement__ = 21;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 25;
+      current_statement__ = 21;
       stan::math::check_greater_or_equal(function__, "Y", Y, 0);
-      current_statement__ = 26;
+      current_statement__ = 22;
       stan::math::validate_non_negative_index("phase", "N", N);
-      current_statement__ = 27;
+      current_statement__ = 23;
       context__.validate_dims("data initialization","phase","int",
            std::vector<size_t>{static_cast<size_t>(N)});
       phase = std::vector<int>(N, std::numeric_limits<int>::min());
       
       
-      current_statement__ = 27;
+      current_statement__ = 23;
       phase = context__.vals_i("phase");
-      current_statement__ = 28;
+      current_statement__ = 24;
       stan::math::validate_non_negative_index("group", "N", N);
-      current_statement__ = 29;
+      current_statement__ = 25;
       context__.validate_dims("data initialization","group","int",
            std::vector<size_t>{static_cast<size_t>(N)});
       group = std::vector<int>(N, std::numeric_limits<int>::min());
       
       
-      current_statement__ = 29;
+      current_statement__ = 25;
       group = context__.vals_i("group");
-      current_statement__ = 30;
+      current_statement__ = 26;
       stan::math::validate_non_negative_index("phase_sample_id", "N", N);
-      current_statement__ = 31;
+      current_statement__ = 27;
       context__.validate_dims("data initialization","phase_sample_id","int",
            std::vector<size_t>{static_cast<size_t>(N)});
       phase_sample_id = std::vector<int>(N, std::numeric_limits<int>::min());
       
       
-      current_statement__ = 31;
+      current_statement__ = 27;
       phase_sample_id = context__.vals_i("phase_sample_id");
-      current_statement__ = 32;
+      current_statement__ = 28;
       context__.validate_dims("data initialization","prior_scale","double",
            std::vector<size_t>{});
       prior_scale = std::numeric_limits<double>::quiet_NaN();
       
       
-      current_statement__ = 32;
+      current_statement__ = 28;
       prior_scale = context__.vals_r("prior_scale")[(1 - 1)];
-      current_statement__ = 32;
+      current_statement__ = 28;
       stan::math::check_greater_or_equal(function__, "prior_scale",
                                             prior_scale, 0);
-      current_statement__ = 33;
+      current_statement__ = 29;
       context__.validate_dims("data initialization","prior_sample_scale",
           "double", std::vector<size_t>{});
       prior_sample_scale = std::numeric_limits<double>::quiet_NaN();
       
       
-      current_statement__ = 33;
+      current_statement__ = 29;
       prior_sample_scale = context__.vals_r("prior_sample_scale")[(1 - 1)];
-      current_statement__ = 33;
+      current_statement__ = 29;
       stan::math::check_greater_or_equal(function__, "prior_sample_scale",
                                             prior_sample_scale, 0);
-      current_statement__ = 34;
+      current_statement__ = 30;
       context__.validate_dims("data initialization","prior_exp_scale",
           "double", std::vector<size_t>{});
       prior_exp_scale = std::numeric_limits<double>::quiet_NaN();
       
       
-      current_statement__ = 34;
+      current_statement__ = 30;
       prior_exp_scale = context__.vals_r("prior_exp_scale")[(1 - 1)];
-      current_statement__ = 34;
+      current_statement__ = 30;
       stan::math::check_greater_or_equal(function__, "prior_exp_scale",
                                             prior_exp_scale, 0);
-      current_statement__ = 35;
+      current_statement__ = 31;
       stan::math::validate_non_negative_index("prior_location", "N_phases",
                                               N_phases);
-      current_statement__ = 36;
+      current_statement__ = 32;
       context__.validate_dims("data initialization","prior_location",
           "double", std::vector<size_t>{static_cast<size_t>(N_phases)});
       prior_location_data__ = 
@@ -251,26 +247,26 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       
       {
         std::vector<local_scalar_t__> prior_location_flat__;
-        current_statement__ = 36;
+        current_statement__ = 32;
         prior_location_flat__ = context__.vals_r("prior_location");
-        current_statement__ = 36;
+        current_statement__ = 32;
         pos__ = 1;
-        current_statement__ = 36;
+        current_statement__ = 32;
         for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
-          current_statement__ = 36;
+          current_statement__ = 32;
           stan::model::assign(prior_location,
             prior_location_flat__[(pos__ - 1)],
             "assigning variable prior_location", stan::model::index_uni(sym1__));
-          current_statement__ = 36;
+          current_statement__ = 32;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 36;
+      current_statement__ = 32;
       stan::math::check_greater_or_equal(function__, "prior_location",
                                             prior_location, 0);
-      current_statement__ = 37;
+      current_statement__ = 33;
       stan::math::validate_non_negative_index("u_int_fit", "N", N);
-      current_statement__ = 38;
+      current_statement__ = 34;
       context__.validate_dims("data initialization","u_int_fit","double",
            std::vector<size_t>{static_cast<size_t>(N)});
       u_int_fit_data__ = 
@@ -281,25 +277,25 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       
       {
         std::vector<local_scalar_t__> u_int_fit_flat__;
-        current_statement__ = 38;
+        current_statement__ = 34;
         u_int_fit_flat__ = context__.vals_r("u_int_fit");
-        current_statement__ = 38;
+        current_statement__ = 34;
         pos__ = 1;
-        current_statement__ = 38;
+        current_statement__ = 34;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 38;
+          current_statement__ = 34;
           stan::model::assign(u_int_fit, u_int_fit_flat__[(pos__ - 1)],
             "assigning variable u_int_fit", stan::model::index_uni(sym1__));
-          current_statement__ = 38;
+          current_statement__ = 34;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 38;
+      current_statement__ = 34;
       stan::math::check_greater_or_equal(function__, "u_int_fit", u_int_fit,
                                             0);
-      current_statement__ = 39;
+      current_statement__ = 35;
       stan::math::validate_non_negative_index("u_int_count", "N", N);
-      current_statement__ = 40;
+      current_statement__ = 36;
       context__.validate_dims("data initialization","u_int_count","double",
            std::vector<size_t>{static_cast<size_t>(N)});
       u_int_count_data__ = 
@@ -310,40 +306,38 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       
       {
         std::vector<local_scalar_t__> u_int_count_flat__;
-        current_statement__ = 40;
+        current_statement__ = 36;
         u_int_count_flat__ = context__.vals_r("u_int_count");
-        current_statement__ = 40;
+        current_statement__ = 36;
         pos__ = 1;
-        current_statement__ = 40;
+        current_statement__ = 36;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 40;
+          current_statement__ = 36;
           stan::model::assign(u_int_count, u_int_count_flat__[(pos__ - 1)],
             "assigning variable u_int_count", stan::model::index_uni(sym1__));
-          current_statement__ = 40;
+          current_statement__ = 36;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 40;
+      current_statement__ = 36;
       stan::math::check_greater_or_equal(function__, "u_int_count",
                                             u_int_count, 0);
-      current_statement__ = 41;
+      current_statement__ = 37;
       stan::math::validate_non_negative_index("sigma_exp", "N_phases",
                                               N_phases);
-      current_statement__ = 42;
+      current_statement__ = 38;
       stan::math::validate_non_negative_index("phase_mu", "N_phases",
                                               N_phases);
-      current_statement__ = 43;
+      current_statement__ = 39;
       stan::math::validate_non_negative_index("sample_effect", "N_samples",
                                               N_samples);
-      current_statement__ = 44;
-      stan::math::validate_non_negative_index("interaction_effect",
-                                              "N_phase_samples",
-                                              N_phase_samples);
+      current_statement__ = 40;
+      stan::math::validate_non_negative_index("sample_effect", "N_phases",
+                                              N_phases);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
-    num_params_r__ = 1 + 1 + N_phases + N_phases + N_samples
-       + N_phase_samples;
+    num_params_r__ = 1 + N_phases + N_phases + (N_samples * N_phases);
     
   }
   
@@ -369,86 +363,67 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       current_statement__ = 1;
       sigma_sample = in__.template read_constrain_lb<local_scalar_t__, 
                        jacobian__>(0, lp__);
-      local_scalar_t__ sigma_interaction = DUMMY_VAR__;
-      current_statement__ = 2;
-      sigma_interaction = in__.template read_constrain_lb<local_scalar_t__, 
-                            jacobian__>(0, lp__);
       Eigen::Matrix<local_scalar_t__, -1, 1> sigma_exp =
          Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_phases,
            DUMMY_VAR__);
-      current_statement__ = 3;
+      current_statement__ = 2;
       sigma_exp = in__.template read_constrain_lb<
                     Eigen::Matrix<local_scalar_t__, -1, 1>, jacobian__>(0,
                     lp__, N_phases);
       Eigen::Matrix<local_scalar_t__, -1, 1> phase_mu =
          Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_phases,
            DUMMY_VAR__);
-      current_statement__ = 4;
+      current_statement__ = 3;
       phase_mu = in__.template read_constrain_lb<
                    Eigen::Matrix<local_scalar_t__, -1, 1>, jacobian__>(0,
                    lp__, N_phases);
-      Eigen::Matrix<local_scalar_t__, -1, 1> sample_effect =
-         Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_samples,
-           DUMMY_VAR__);
-      current_statement__ = 5;
-      sample_effect = in__.template read<
-                        Eigen::Matrix<local_scalar_t__, -1, 1>>(N_samples);
-      Eigen::Matrix<local_scalar_t__, -1, 1> interaction_effect =
-         Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_phase_samples,
-           DUMMY_VAR__);
-      current_statement__ = 6;
-      interaction_effect = in__.template read<
-                             Eigen::Matrix<local_scalar_t__, -1, 1>>(
-                             N_phase_samples);
+      std::vector<std::vector<local_scalar_t__>> sample_effect =
+         std::vector<std::vector<local_scalar_t__>>(N_samples, 
+           std::vector<local_scalar_t__>(N_phases, DUMMY_VAR__));
+      current_statement__ = 4;
+      sample_effect = in__.template read_constrain_lb<
+                        std::vector<std::vector<local_scalar_t__>>, 
+                        jacobian__>(0, lp__, N_samples, N_phases);
       {
-        current_statement__ = 7;
+        current_statement__ = 5;
         lp_accum__.add(
           stan::math::student_t_lpdf<propto__>(sigma_sample, 4, 0,
             prior_sample_scale));
-        current_statement__ = 8;
-        lp_accum__.add(
-          stan::math::student_t_lpdf<propto__>(sigma_interaction, 4, 0,
-            prior_sample_scale));
-        current_statement__ = 9;
+        current_statement__ = 6;
         lp_accum__.add(
           stan::math::student_t_lpdf<propto__>(sigma_exp, 4, 0,
             prior_exp_scale));
-        current_statement__ = 10;
+        current_statement__ = 7;
         lp_accum__.add(
           stan::math::normal_lpdf<propto__>(phase_mu, prior_location,
             (prior_scale * 2)));
-        current_statement__ = 13;
+        current_statement__ = 12;
         for (int ii = 1; ii <= N_samples; ++ii) {
-          current_statement__ = 11;
-          lp_accum__.add(
-            stan::math::normal_lpdf<propto__>(
-              stan::model::rvalue(sample_effect, "sample_effect",
-                stan::model::index_uni(ii)), 0, sigma_sample));
+          current_statement__ = 10;
+          for (int jj = 1; jj <= N_phases; ++jj) {
+            current_statement__ = 8;
+            lp_accum__.add(
+              stan::math::normal_lpdf<propto__>(
+                stan::model::rvalue(sample_effect, "sample_effect",
+                  stan::model::index_uni(ii), stan::model::index_uni(jj)), 0,
+                sigma_sample));
+          }
         }
-        current_statement__ = 16;
-        for (int ii = 1; ii <= N_phase_samples; ++ii) {
-          current_statement__ = 14;
-          lp_accum__.add(
-            stan::math::normal_lpdf<propto__>(
-              stan::model::rvalue(interaction_effect, "interaction_effect",
-                stan::model::index_uni(ii)), 0, sigma_interaction));
-        }
-        current_statement__ = 19;
+        current_statement__ = 15;
         for (int ii = 1; ii <= N; ++ii) {
-          current_statement__ = 17;
+          current_statement__ = 13;
           lp_accum__.add(
             stan::math::normal_lpdf<propto__>(
               stan::model::rvalue(Y, "Y", stan::model::index_uni(ii)),
-              ((stan::model::rvalue(phase_mu, "phase_mu",
-                  stan::model::index_uni(stan::model::rvalue(phase, "phase",
-                                           stan::model::index_uni(ii)))) +
-                 stan::model::rvalue(sample_effect, "sample_effect",
-                   stan::model::index_uni(stan::model::rvalue(group, "group",
-                                            stan::model::index_uni(ii))))) +
-                stan::model::rvalue(interaction_effect, "interaction_effect",
-                  stan::model::index_uni(stan::model::rvalue(phase_sample_id,
-                                           "phase_sample_id",
-                                           stan::model::index_uni(ii))))),
+              (stan::model::rvalue(phase_mu, "phase_mu",
+                 stan::model::index_uni(stan::model::rvalue(phase, "phase",
+                                          stan::model::index_uni(ii)))) +
+                stan::model::rvalue(sample_effect, "sample_effect",
+                  stan::model::index_uni(stan::model::rvalue(group, "group",
+                                           stan::model::index_uni(ii))),
+                    stan::model::index_uni(stan::model::rvalue(phase,
+                                             "phase",
+                                             stan::model::index_uni(ii))))),
               stan::math::sqrt(
                 ((stan::math::pow(
                     stan::model::rvalue(sigma_exp, "sigma_exp",
@@ -500,43 +475,36 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       current_statement__ = 1;
       sigma_sample = in__.template read_constrain_lb<local_scalar_t__, 
                        jacobian__>(0, lp__);
-      double sigma_interaction = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 2;
-      sigma_interaction = in__.template read_constrain_lb<local_scalar_t__, 
-                            jacobian__>(0, lp__);
       Eigen::Matrix<double, -1, 1> sigma_exp =
          Eigen::Matrix<double, -1, 1>::Constant(N_phases,
            std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 3;
+      current_statement__ = 2;
       sigma_exp = in__.template read_constrain_lb<
                     Eigen::Matrix<local_scalar_t__, -1, 1>, jacobian__>(0,
                     lp__, N_phases);
       Eigen::Matrix<double, -1, 1> phase_mu =
          Eigen::Matrix<double, -1, 1>::Constant(N_phases,
            std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 4;
+      current_statement__ = 3;
       phase_mu = in__.template read_constrain_lb<
                    Eigen::Matrix<local_scalar_t__, -1, 1>, jacobian__>(0,
                    lp__, N_phases);
-      Eigen::Matrix<double, -1, 1> sample_effect =
-         Eigen::Matrix<double, -1, 1>::Constant(N_samples,
-           std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 5;
-      sample_effect = in__.template read<
-                        Eigen::Matrix<local_scalar_t__, -1, 1>>(N_samples);
-      Eigen::Matrix<double, -1, 1> interaction_effect =
-         Eigen::Matrix<double, -1, 1>::Constant(N_phase_samples,
-           std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 6;
-      interaction_effect = in__.template read<
-                             Eigen::Matrix<local_scalar_t__, -1, 1>>(
-                             N_phase_samples);
+      std::vector<std::vector<double>> sample_effect =
+         std::vector<std::vector<double>>(N_samples, 
+           std::vector<double>(N_phases, 
+             std::numeric_limits<double>::quiet_NaN()));
+      current_statement__ = 4;
+      sample_effect = in__.template read_constrain_lb<
+                        std::vector<std::vector<local_scalar_t__>>, 
+                        jacobian__>(0, lp__, N_samples, N_phases);
       out__.write(sigma_sample);
-      out__.write(sigma_interaction);
       out__.write(sigma_exp);
       out__.write(phase_mu);
-      out__.write(sample_effect);
-      out__.write(interaction_effect);
+      for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
+        for (int sym2__ = 1; sym2__ <= N_samples; ++sym2__) {
+          out__.write(sample_effect[(sym2__ - 1)][(sym1__ - 1)]);
+        }
+      }
       if (stan::math::logical_negation((stan::math::primitive_value(
             emit_transformed_parameters__) || stan::math::primitive_value(
             emit_generated_quantities__)))) {
@@ -568,9 +536,6 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
       local_scalar_t__ sigma_sample = DUMMY_VAR__;
       sigma_sample = in__.read<local_scalar_t__>();
       out__.write_free_lb(0, sigma_sample);
-      local_scalar_t__ sigma_interaction = DUMMY_VAR__;
-      sigma_interaction = in__.read<local_scalar_t__>();
-      out__.write_free_lb(0, sigma_interaction);
       Eigen::Matrix<local_scalar_t__, -1, 1> sigma_exp =
          Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_phases,
            DUMMY_VAR__);
@@ -587,23 +552,16 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
           "assigning variable phase_mu", stan::model::index_uni(sym1__));
       }
       out__.write_free_lb(0, phase_mu);
-      Eigen::Matrix<local_scalar_t__, -1, 1> sample_effect =
-         Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_samples,
-           DUMMY_VAR__);
-      for (int sym1__ = 1; sym1__ <= N_samples; ++sym1__) {
-        stan::model::assign(sample_effect, in__.read<local_scalar_t__>(),
-          "assigning variable sample_effect", stan::model::index_uni(sym1__));
+      std::vector<std::vector<local_scalar_t__>> sample_effect =
+         std::vector<std::vector<local_scalar_t__>>(N_samples, 
+           std::vector<local_scalar_t__>(N_phases, DUMMY_VAR__));
+      for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
+        for (int sym2__ = 1; sym2__ <= N_samples; ++sym2__) {
+          sample_effect[(sym2__ - 1)][(sym1__ - 1)] = in__.read<
+                                                        local_scalar_t__>();
+        }
       }
-      out__.write(sample_effect);
-      Eigen::Matrix<local_scalar_t__, -1, 1> interaction_effect =
-         Eigen::Matrix<local_scalar_t__, -1, 1>::Constant(N_phase_samples,
-           DUMMY_VAR__);
-      for (int sym1__ = 1; sym1__ <= N_phase_samples; ++sym1__) {
-        stan::model::assign(interaction_effect,
-          in__.read<local_scalar_t__>(),
-          "assigning variable interaction_effect", stan::model::index_uni(sym1__));
-      }
-      out__.write(interaction_effect);
+      out__.write_free_lb(0, sample_effect);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -611,19 +569,18 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
     
   inline void get_param_names(std::vector<std::string>& names__) const {
     
-    names__ = std::vector<std::string>{"sigma_sample", "sigma_interaction",
-      "sigma_exp", "phase_mu", "sample_effect", "interaction_effect"};
+    names__ = std::vector<std::string>{"sigma_sample", "sigma_exp",
+      "phase_mu", "sample_effect"};
     
     } // get_param_names() 
     
   inline void get_dims(std::vector<std::vector<size_t>>& dimss__) const {
     
     dimss__ = std::vector<std::vector<size_t>>{std::vector<size_t>{},
-      std::vector<size_t>{},
       std::vector<size_t>{static_cast<size_t>(N_phases)},
       std::vector<size_t>{static_cast<size_t>(N_phases)},
-      std::vector<size_t>{static_cast<size_t>(N_samples)},
-      std::vector<size_t>{static_cast<size_t>(N_phase_samples)}};
+      std::vector<size_t>{static_cast<size_t>(N_samples),
+                          static_cast<size_t>(N_phases)}};
     
     } // get_dims() 
     
@@ -634,7 +591,6 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
     final {
     
     param_names__.emplace_back(std::string() + "sigma_sample");
-    param_names__.emplace_back(std::string() + "sigma_interaction");
     for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
       {
         param_names__.emplace_back(std::string() + "sigma_exp" + '.' + std::to_string(sym1__));
@@ -645,14 +601,13 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
         param_names__.emplace_back(std::string() + "phase_mu" + '.' + std::to_string(sym1__));
       } 
     }
-    for (int sym1__ = 1; sym1__ <= N_samples; ++sym1__) {
+    for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
       {
-        param_names__.emplace_back(std::string() + "sample_effect" + '.' + std::to_string(sym1__));
-      } 
-    }
-    for (int sym1__ = 1; sym1__ <= N_phase_samples; ++sym1__) {
-      {
-        param_names__.emplace_back(std::string() + "interaction_effect" + '.' + std::to_string(sym1__));
+        for (int sym2__ = 1; sym2__ <= N_samples; ++sym2__) {
+          {
+            param_names__.emplace_back(std::string() + "sample_effect" + '.' + std::to_string(sym2__) + '.' + std::to_string(sym1__));
+          } 
+        }
       } 
     }
     if (emit_transformed_parameters__) {
@@ -672,7 +627,6 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
     final {
     
     param_names__.emplace_back(std::string() + "sigma_sample");
-    param_names__.emplace_back(std::string() + "sigma_interaction");
     for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
       {
         param_names__.emplace_back(std::string() + "sigma_exp" + '.' + std::to_string(sym1__));
@@ -683,14 +637,13 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
         param_names__.emplace_back(std::string() + "phase_mu" + '.' + std::to_string(sym1__));
       } 
     }
-    for (int sym1__ = 1; sym1__ <= N_samples; ++sym1__) {
+    for (int sym1__ = 1; sym1__ <= N_phases; ++sym1__) {
       {
-        param_names__.emplace_back(std::string() + "sample_effect" + '.' + std::to_string(sym1__));
-      } 
-    }
-    for (int sym1__ = 1; sym1__ <= N_phase_samples; ++sym1__) {
-      {
-        param_names__.emplace_back(std::string() + "interaction_effect" + '.' + std::to_string(sym1__));
+        for (int sym2__ = 1; sym2__ <= N_samples; ++sym2__) {
+          {
+            param_names__.emplace_back(std::string() + "sample_effect" + '.' + std::to_string(sym2__) + '.' + std::to_string(sym1__));
+          } 
+        }
       } 
     }
     if (emit_transformed_parameters__) {
@@ -705,13 +658,13 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
     
   inline std::string get_constrained_sizedtypes() const {
     
-    return std::string("[{\"name\":\"sigma_sample\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"sigma_interaction\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"sigma_exp\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"phase_mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"sample_effect\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_samples) + "},\"block\":\"parameters\"},{\"name\":\"interaction_effect\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phase_samples) + "},\"block\":\"parameters\"}]");
+    return std::string("[{\"name\":\"sigma_sample\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"sigma_exp\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"phase_mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"sample_effect\",\"type\":{\"name\":\"array\",\"length\":" + std::to_string(N_samples) + ",\"element_type\":{\"name\":\"array\",\"length\":" + std::to_string(N_phases) + ",\"element_type\":{\"name\":\"real\"}}},\"block\":\"parameters\"}]");
     
     } // get_constrained_sizedtypes() 
     
   inline std::string get_unconstrained_sizedtypes() const {
     
-    return std::string("[{\"name\":\"sigma_sample\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"sigma_interaction\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"sigma_exp\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"phase_mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"sample_effect\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_samples) + "},\"block\":\"parameters\"},{\"name\":\"interaction_effect\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phase_samples) + "},\"block\":\"parameters\"}]");
+    return std::string("[{\"name\":\"sigma_sample\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"sigma_exp\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"phase_mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N_phases) + "},\"block\":\"parameters\"},{\"name\":\"sample_effect\",\"type\":{\"name\":\"array\",\"length\":" + std::to_string(N_samples) + ",\"element_type\":{\"name\":\"array\",\"length\":" + std::to_string(N_phases) + ",\"element_type\":{\"name\":\"real\"}}},\"block\":\"parameters\"}]");
     
     } // get_unconstrained_sizedtypes() 
     
@@ -725,7 +678,7 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
                             const bool emit_generated_quantities = true,
                             std::ostream* pstream = nullptr) const {
       const size_t num_params__ = 
-  (((((1 + 1) + N_phases) + N_phases) + N_samples) + N_phase_samples);
+  (((1 + N_phases) + N_phases) + (N_samples * N_phases));
       const size_t num_transformed = emit_transformed_parameters * 0;
       const size_t num_gen_quantities = emit_generated_quantities * 0;
       const size_t num_to_write = num_params__ + num_transformed +
@@ -745,7 +698,7 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
                             bool emit_generated_quantities = true,
                             std::ostream* pstream = nullptr) const {
       const size_t num_params__ = 
-  (((((1 + 1) + N_phases) + N_phases) + N_samples) + N_phase_samples);
+  (((1 + N_phases) + N_phases) + (N_samples * N_phases));
       const size_t num_transformed = emit_transformed_parameters * 0;
       const size_t num_gen_quantities = emit_generated_quantities * 0;
       const size_t num_to_write = num_params__ + num_transformed +
@@ -785,11 +738,10 @@ class multiple_samples_model final : public model_base_crtp<multiple_samples_mod
                               std::vector<int>& params_i,
                               std::vector<double>& vars,
                               std::ostream* pstream__ = nullptr) const {
-     constexpr std::array<const char*, 6> names__{"sigma_sample",
-      "sigma_interaction", "sigma_exp", "phase_mu", "sample_effect",
-      "interaction_effect"};
-      const std::array<Eigen::Index, 6> constrain_param_sizes__{1, 1,
-       N_phases, N_phases, N_samples, N_phase_samples};
+     constexpr std::array<const char*, 4> names__{"sigma_sample",
+      "sigma_exp", "phase_mu", "sample_effect"};
+      const std::array<Eigen::Index, 4> constrain_param_sizes__{1, N_phases,
+       N_phases, (N_samples * N_phases)};
       const auto num_constrained_params__ = std::accumulate(
         constrain_param_sizes__.begin(), constrain_param_sizes__.end(), 0);
     
