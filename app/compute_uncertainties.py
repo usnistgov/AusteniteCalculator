@@ -605,19 +605,3 @@ def generate_pf_plot(mcmc_df,unique_phase_names):
 
     return fig
 
-def convert_mu_samps(mu_samps_df,c_vec):
-    """
-    Convert posterior samples to mass or volume phase fraction.
-
-    Args:
-        mu_samps: pandas DataFrame of posterior samples of mu for each phase
-        c_vec: numpy array of weights by which to scale the posterior samples of mu_samps
-
-    Returns: 
-        **mu_samps_out** pandas DataFrame of posterior samples of mu that has been converted
-    """
-
-    mu_samps_out = mu_samps_df.copy()
-    mu_samps_out = mu_samps_out.apply(lambda x,c: x*c/np.sum(x*c),axis=1)
-
-    return mu_samps_out

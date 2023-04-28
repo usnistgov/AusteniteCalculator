@@ -869,8 +869,6 @@ def func(n_clicks):
     Output('interaction-vol-plot-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
-    Output('param-table','data'),
-    Output('param-table','columns'),
     Output('u-int-fit-count-table','data'),
     Output('u-int-fit-count-table','columns'),
     Input('submit-button-state', 'n_clicks'),
@@ -1271,15 +1269,10 @@ def update_output(n_clicks,
     mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs),fit_vi)
     unique_phases = np.unique(results_table_df.Phase)
     param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
-    param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
 
     mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
     print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
     print(mcmc_df.info(memory_usage=True))
-
-
-
-    
 
     print("After Inference Method")
 
@@ -1327,7 +1320,7 @@ def update_output(n_clicks,
         altered_ti[key] = (ti_tbl, ti_col)
         
 
-    #calculate alternate phase fraction units
+    # calculate alternate phase fraction units
     # pandas doesn't copy well
     mass_conversion = phase_frac.copy()
     volume_conversion = phase_frac.copy()
@@ -1390,6 +1383,7 @@ def update_output(n_clicks,
         'cell_mass_vec':cell_mass_vec.tolist(),
         'cell_volume_vec':cell_volume_vec.tolist(),
         'mu_samps':mcmc_df.to_dict(orient='list'), # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
+        'param_table':param_table.to_dict(orient='list'),
         'crystallites':crystallites_dict
     }
     
@@ -1451,8 +1445,6 @@ def update_output(n_clicks,
             interaction_vol_plot_dropdown,
             main_dict,
             conf,
-            param_table_data,
-            param_table_columns,
             u_int_fit_count_table_data,
             u_int_fit_count_table_columns)
 
@@ -1461,6 +1453,8 @@ def update_output(n_clicks,
     Output('pf-uncert-fig','figure'),
     Output('pf-uncert-table','data'),
     Output('pf-uncert-table','columns'),
+    Output('param-table','data'),
+    Output('param-table','columns'),
     Input('store-calculations','data'),
     Input('unit-dropdown','value'),
     prevent_initial_call=True
@@ -1495,24 +1489,32 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
     m_vec = np.array(data.get('cell_mass_vec'))
     v_vec = np.array(data.get('cell_volume_vec'))
 
+    print(m_vec)
+    print(v_vec)
+
+    param_table = pd.DataFrame(data.get('param_table'))
+
     if unit_value == 'Number of Unit Cells':
         pass
 
     elif unit_value == 'Volume of Unit Cells':
         mu_samps = compute_results.convert_mu_samps(mu_samps,v_vec)
+        param_table.iloc[:,1:3] = param_table.iloc[:,1:3].apply(lambda x: x*v_vec)
 
     elif(unit_value == 'Mass of Unit Cells'):
         mu_samps = compute_results.convert_mu_samps(mu_samps,m_vec)
+        param_table.iloc[:,1:3] = param_table.iloc[:,1:3].apply(lambda x: x*m_vec)
 
     table = data.get('results_table')
     results_table = compute_uncertainties.concat_results_tables(table,from_records=True)
-    #mu_samps = compute_uncertainties.convert_mu_samps(mu_samps,)
     pf_uncert_fig = compute_uncertainties.generate_pf_plot(mu_samps,np.unique(results_table.Phase))
 
     pf_table = compute_uncertainties.generate_pf_table(mcmc_df=mu_samps,unique_phase_names=np.unique(results_table.Phase))
     pf_uncert_data, pf_uncert_cols = compute_results.df_to_dict(pf_table)
 
-    return pf_uncert_fig, pf_uncert_data, pf_uncert_cols
+    param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
+
+    return pf_uncert_fig, pf_uncert_data, pf_uncert_cols, param_table_data, param_table_columns
 
 
 
