@@ -284,6 +284,15 @@ app.layout = dbc.Container([
                 id="example06-files-check",
             ),
 
+            ## Checkbox to use Example 08A files instead
+            html.Hr(),
+            dbc.Checklist(
+                options=[
+                    {"label": "Co Source Q&P (Example 08A Files)", "value": 1},
+                ],
+                id="example08A-files-check",
+            ),
+
             #start of interaction volume inputs
             #atoms per cell-.cif file
             #f-prime and f-doubleprime-each element in .cif
@@ -885,6 +894,7 @@ def func(n_clicks):
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
+    State('example08A-files-check','value'),
     State('inference-method','value'),
     State('number-mcmc-runs','value'),
     prevent_initial_call = True
@@ -895,6 +905,7 @@ def update_output(n_clicks,
                   cif_contents,cif_fnames,
                   csv_contents, json_fname,
                   use_default_files, use_example05_files, use_example06_files,
+                  use_example08A_files,
                   inference_method_value,
                   number_mcmc_runs):
     '''Callback for the "Begin Analysis" button, runs our expensive compute_results function
@@ -910,6 +921,7 @@ def update_output(n_clicks,
        use_default_files: checkbox to use example data 1
        use_example05_files: checkbox to use example data 5
        use_example06_files: checkbox to use example data 6
+       use_example08A_files: checkbox to use example data 8A
        inference_method_value: selection for statistical inference method
 
     Returns:
@@ -980,6 +992,20 @@ def update_output(n_clicks,
         json_data = f.read()
         json_string = json.loads(json_data)
         f.close()
+
+    elif use_example08A_files not in [None, []] and use_example08A_files[0] == 1:
+        datadir = '../ExampleData/Example08A'
+        #datadir = '../ExampleData/Example01'
+        cif_fnames = ['austenite-FeOnly.cif','ferrite-FeOnly.cif']
+        workdir = '../server_workdir'
+        xrdml_fnames = ['QP980_AR_th-tthscan_AR0p5.csv']
+        instprm_fname = 'ThomasXRD-Co-Cal.instprm'
+        json_fname = 'QP_A.json'
+        f = open(datadir + '/' + json_fname)
+        json_data = f.read()
+        json_string = json.loads(json_data)
+        f.close()
+
 
     #Stores user files in a directory
     else:
@@ -1886,13 +1912,16 @@ def create_json(n_clicks, beam_shape, beam_size, raster_x, raster_y, L, WF, HF, 
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
+    State('example08A-files-check','value'),
+    
     prevent_initial_call=True
 )
 def create_zip_report(data, n_clicks, 
                     xrdml_contents,xrdml_fnames,
                     instprm_contents,instprm_fname,
                     cif_contents,cif_fnames,
-                    use_default_files, use_example05_files, use_example06_files):
+                    use_default_files, use_example05_files,
+                    use_example06_files, use_example08A_files):
     """create and send a .zip file of a report with the calculated data 
     Args:
         data: data saved in dcc.Store from running compute_results
@@ -1919,6 +1948,8 @@ def create_zip_report(data, n_clicks,
     elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
         send_input=False
     elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
+        send_input=False
+    elif use_example08A_files not in [None, []] and use_example08A_files[0] == 1:
         send_input=False
     #make directory for each dataset
     for creation_key, dataset_value in data.get('results_table').items():
