@@ -104,7 +104,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     if 'Lam1' in hist.data['Instrument Parameters'][0]:
         Ka1_wavelength=hist.data['Instrument Parameters'][0]['Lam1'][0]
         print("using the Lam1 value, multiple wavelengths")
-    if 'Lam' in hist.data['Instrument Parameters'][0]:
+    elif 'Lam' in hist.data['Instrument Parameters'][0]:
         Ka1_wavelength=hist.data['Instrument Parameters'][0]['Lam'][0]
         print("using the Lam value, single wavelength")
     else:
@@ -112,6 +112,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         DF_flags_for_user=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_flags_for_user)
         print("No wavelength found, defaulting to Cu")
 
+    #breakpoint()
+    
     ########################################
     # use the theoretical intensities for peak fit location
     ########################################
