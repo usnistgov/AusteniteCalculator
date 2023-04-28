@@ -430,8 +430,8 @@ def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
         'Experimental Error Variability':[0]*n_phase,
-        'X-ray Count Variability':[0]*n_phase,
-        'Parameter Fit Variability':[0]*n_phase
+        'X-ray Count Median Variability':[0]*n_phase,
+        'Parameter Fit Median Variability':[0]*n_phase
     })
 
     if multiple_samples:

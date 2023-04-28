@@ -996,7 +996,7 @@ def update_output(n_clicks,
         #datadir = '../ExampleData/Example01'
         cif_fnames = ['austenite-FeOnly.cif','ferrite-FeOnly.cif']
         workdir = '../server_workdir'
-        xrdml_fnames = ['QP980_AR_th-tthscan_AR0p5.csv']
+        xrdml_fnames = ['QP980_AR_th-tthscan_AR0p5_trunc.csv']
         instprm_fname = 'ThomasXRD-Co-Cal.instprm'
         json_fname = 'QP_A.json'
         f = open(datadir + '/' + json_fname)
