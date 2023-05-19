@@ -1525,11 +1525,11 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
 
     elif unit_value == 'Volume of Unit Cells':
         mu_samps = compute_results.convert_mu_samps(mu_samps,v_vec)
-        param_table.iloc[:,1:3] = param_table.iloc[:,1:3].apply(lambda x: x*v_vec)
+        param_table.iloc[:,1:3] = param_table.iloc[:,1:3].apply(lambda x: x*v_vec/sum(v_vec),axis=0)
 
     elif(unit_value == 'Mass of Unit Cells'):
         mu_samps = compute_results.convert_mu_samps(mu_samps,m_vec)
-        param_table.iloc[:,1:3] = param_table.iloc[:,1:3].apply(lambda x: x*m_vec)
+        param_table.iloc[:,1:3] = param_table.iloc[:,1:3].apply(lambda x: x*m_vec/sum(m_vec),axis=0)
 
     table = data.get('results_table')
     results_table = compute_uncertainties.concat_results_tables(table,from_records=True)
