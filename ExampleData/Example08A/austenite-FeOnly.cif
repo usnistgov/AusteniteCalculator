@@ -4,9 +4,9 @@ data_austenite-FeOnly
 
 # phase info for austenite-FeOnly follows
 _pd_phase_name  austenite-FeOnly
-_cell_length_a  3.59300(10)
-_cell_length_b  3.59300(10)
-_cell_length_c  3.59300(10)
+_cell_length_a  3.59844(10)
+_cell_length_b  3.59844(10)
+_cell_length_c  3.59844(10)
 _cell_angle_alpha  90
 _cell_angle_beta   90
 _cell_angle_gamma  90
@@ -221,5 +221,7 @@ loop_
    _atom_site_adp_type
    _atom_site_U_iso_or_equiv
    _atom_site_site_symmetry_multiplicity
-Fe1    Fe   0.00000     0.00000     0.00000     1.000      Uiso 0.007      4   
-
+Fe1    Fe   0.00000     0.00000     0.00000     0.9485     Uiso 0.007      4
+Mn2    Mn   0.00000     0.00000     0.00000     0.0250     Uiso 0.007      4
+Si3    Si   0.00000     0.00000     0.00000     0.0196     Uiso 0.007      4
+C4     C    0.00000     0.00000     0.00000     0.0069     Uiso 0.007      4   
