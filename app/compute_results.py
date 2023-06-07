@@ -10,7 +10,7 @@ import math
 import fit
 from copy import deepcopy
 
-def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
+def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc):
     """
 
     Main computation function for phase calculations
@@ -23,6 +23,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
         xrdml_fname: Diffraction data (xrdml title legacy)
         instprm_fname: Instrument Parameter File
         cif_fnames: Crystollographic Info File
+        xtal_data: crystal data from json file
         G2sc: GSAS-II Scripting Toolkit location
     
     Returns:
@@ -71,14 +72,16 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
 
     for i in range(len(cif_fnames)):
-        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
-                                                         material=cif_fnames[i],
-                                                         cif_file=cif_fnames[i],
-                                                         instrument_calibration_file=instprm_fname,
-                                                         G2sc=G2sc,
-                                                         x_range=[min_two_theta,max_two_theta],
-                                                         DataPathWrap=data_path_wrap,
-                                                         SaveWrap=save_wrap)
+        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
+                                                         material=cif_fnames[i], \
+                                                         cif_file=cif_fnames[i], \
+                                                         instrument_calibration_file=instprm_fname, \
+                                                         xtal_data=xtal_data, \
+                                                         G2sc=G2sc, \
+                                                         x_range=[min_two_theta,max_two_theta], \
+                                                         DataPathWrap=data_path_wrap, \
+                                                         SaveWrap=save_wrap, \
+                                                         DF_flags_for_user=DF_flags_for_user)
 
     # Merge and sort the theoretical intensities
     #? Sort seems a kind of fragile way to align the data 
@@ -261,7 +264,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     print("\n\n Concatenating Dataframes\n")
     DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
-    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int_fit']/DF_merged_fit_theo['R_calc'])
+    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int_fit']/ \
+                                   (DF_merged_fit_theo['Texture Correction']* \
+                                   DF_merged_fit_theo['R_calc']))
 
     DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['two_theta']
 
@@ -441,7 +446,9 @@ def find_two_theta_in_range(sin_theta, hist):
 #####################################
 
 #####################################
-def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calibration_file,x_range,G2sc,DataPathWrap,SaveWrap):
+def get_theoretical_intensities(gpx_file_name,material,cif_file, \
+        instrument_calibration_file,xtal_data, \
+        x_range,G2sc,DataPathWrap,SaveWrap, DF_flags_for_user):
     """
     Function to calculate the theoretical intensities.
     Simulated diffraction profile calculated based on the .cif file and instrument parameter file
@@ -451,6 +458,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
         material: Short name for the material (phase) for the dataframe e.g., 'Austenite', 'Ferrite'
         cif_file: Crystallographic Information Format file for the phase to be simulated
         instrument_calibration_file: instrument parameter file
+        xtal_data: crystal data from json file
         x_range: two_theta range to calculate over (x-axis). List of length 2
         G2sc: GSAS-II scriptable module.  Passed to resolve the pathway
         DataPathWrap: Path prefix to the location of the datafiles to read
@@ -489,6 +497,20 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file,instrument_calib
     
     ti_table['R_calc']=ti_table['I_corr']*ti_table['F_calc_sq']
     ti_table[['Phase']] = material
+    
+    # Add column for texture corrections
+    
+    # Read in from file if there's a 4th column
+    if len(xtal_data[material])==4:
+        ti_table['Texture Correction'] =xtal_data[material][3]
+    # Else, assume no texture
+    else:
+        ti_table['Texture Correction'] =1
+        DF_flags_for_user=flag_phase_fraction(np.nan,"Theoretical Intensities", \
+         "No Texture Correction Applied", "Check normalized intensities" ,\
+          DF_flags_for_user)
+    # Import json file with values
+    
     
     # Remove any peaks that have zero theoretical intensity
     # Ran into this for Example 06

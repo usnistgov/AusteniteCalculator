@@ -1013,7 +1013,7 @@ def update_output(n_clicks,
         # For each uploaded file, save (on the server)
         # ensuring that the format matches what GSAS expects.
 
-        # first, read non-cif files
+        # first, read instrument parameter file
 
         instprm_type, instprm_string = instprm_contents.split(',')
 
@@ -1028,6 +1028,7 @@ def update_output(n_clicks,
 
         ####FIX
         # Is this for the export data as csv, or illuminated json file?
+        # AC 7 June 2023 - I think this is for the json file but what?
         csv_type, csv_string = csv_contents.split(',')
 
         decoded = base64.b64decode(csv_string)
@@ -1065,7 +1066,32 @@ def update_output(n_clicks,
             to_write = re.sub('\\r','',to_write)
             f.write(to_write)
             f.close()
+
+    ### Read in JSON File
+    # Needed earlier for some of the theoretical intensity data
+    # AC 2023 June 07 - why here?
     
+    with open(os.path.join(datadir, json_fname), 'r') as f:
+        crystal_data = json.loads(f.read())
+    f.close()
+    #crystal_data = json.loads(json_string)
+    
+    #need to convert strings to numbers in json dict
+    
+    # May need to adjust for multi array
+    #AC - Why use strings? Try without
+#        for key in crystal_data.keys():
+#            if(key != 'beam_shape'):
+#                if(crystal_data[key][0] == '['):
+#                    crystal_data[key] = crystal_data[key].strip('][').split(',')
+#                    for x in range(len(crystal_data[key])):
+#                        crystal_data[key][x] = float(crystal_data[key][x])
+#                else:
+#                    crystal_data[key] = float(crystal_data[key])
+#
+
+
+
     results_table = {}
     phase_frac = {}
     two_thetas = {}
@@ -1078,7 +1104,8 @@ def update_output(n_clicks,
     #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fnames[x], \
+                                    instprm_fname,cif_fnames,crystal_data, G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
         results_df['sample_index'] = str(x + 1)
         
@@ -1240,31 +1267,17 @@ def update_output(n_clicks,
             graph_data_dict[key].append(data_list)
         #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
     
+    ####################################################
     #beginning of crystallites illuminated calculations
+    ####################################################
+    
     crystallites_dict = {}
-    
-    with open(os.path.join(datadir, json_fname), 'r') as f:
-        crystal_data = json.loads(f.read())
-    f.close()
-    #crystal_data = json.loads(json_string)
-    
-    #need to convert strings to numbers in json dict
-    for key in crystal_data.keys():
-        if(key != 'beam_shape'):
-            if(crystal_data[key][0] == '['):
-                crystal_data[key] = crystal_data[key].strip('][').split(',')
-                for x in range(len(crystal_data[key])):
-                    crystal_data[key][x] = float(crystal_data[key][x])
-            else:
-                crystal_data[key] = float(crystal_data[key])
-
     #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
     
     # add a try/except here to confirm the filenames match
     
     print("Peaks dictionary")
     print(peaks_dict)
-    
     
     # Same dataset ok since the material is nominally the same?
     for cif_name, peak_data in peaks_dict.items():
