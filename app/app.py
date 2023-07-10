@@ -463,18 +463,17 @@ app.layout = dbc.Container([
             html.Hr(),
             html.Br(),
             html.H3("Sources of Uncertainty"),
-            html.Div("""The table below gives estimates for various sources of uncertainty. \n
-                     'sigma_exp' estimates the experimental error, 'median_u_int_count' gives the median \n
-                     of the uncertainty due to counting statitics across all peaks for a phase fraction, and \n
-                     'median_u_int_fit' gives the median of the uncertainty from the fitting procedure for the \n
-                     given phase fraction. """),
+            html.Div("""The table below gives estimates for various sources of uncertainty, 
+                     including the experimental error, sample-to-sample error (if multiple samples are uploaded), 
+                     the median (across all peaks) of the X-ray count uncertainties, and the median (across all peaks) 
+                     of the uncertainties for parameter fit. """),
             html.Br(),
             dash_table.DataTable(id='param-table'),
             html.Br(),
             html.Hr(),
             html.Br(),
             html.H3("Uncertainty Due to Fit and Count for Each Peak"),
-            html.Div("""The following table gives uncertainties for fitting and counting statistics for all fitted peaks."""),
+            html.Div("""The following table gives uncertainties for counting and fitting statistics for all fitted peaks."""),
             html.Br(),
             dash_table.DataTable(id='u-int-fit-count-table',
                                  page_size=20,
@@ -1125,9 +1124,9 @@ def update_output(n_clicks,
     # full results table
     full_results_table = pd.concat(results_table,axis=0,ignore_index=True)
     full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
-    full_results_table['u_int_fit_norm'] = full_results_table['u_int_fit']/full_results_table['R_calc']
-    full_results_table['u_int_count_norm'] = full_results_table['u_int_fit']/full_results_table['R_calc']
-    full_results_table = full_results_table.loc[:,['sample_index','Phase','u_int_count_norm','u_int_fit_norm']]
+    full_results_table['Uncertainties due to Fitting'] = full_results_table['u_int_fit']/full_results_table['R_calc']
+    full_results_table['Uncertainties due to Counts'] = full_results_table['u_int_count']/full_results_table['R_calc']
+    full_results_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
     u_int_fit_count_table_data, u_int_fit_count_table_columns = compute_results.df_to_dict(full_results_table.round(6))
     
     #have the option to run the interaction volume calcs for each dataset(assume they are the "same data"), default is no
