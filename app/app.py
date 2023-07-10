@@ -1283,7 +1283,8 @@ def update_output(n_clicks,
     for cif_name, peak_data in peaks_dict.items():
         print("Phase: ", cif_name)
         for x in range(len(peak_data)):
-
+            
+            # this calculation is redundant, so we can potentially move outside the loop, but overhead is minimal in the meantime
             crystal_data = compute_results.format_crystal_data(crystal_data,cif_name)
 
             num_layer, num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,

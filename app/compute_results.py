@@ -942,6 +942,17 @@ def convert_mu_samps(mu_samps,conversion_vec):
 
 
 def format_crystal_data(crystal_data,cif_name):
+    """
+    Reformats the crystal data objects from json to expected types.
+    
+    Args:
+        crystal_data: crystal_data object loaded from json file
+        cif_name: the cif name
+    
+    Returns:
+        **crystal_data** correctly formatted crystal_data object
+
+    """
 
     # convert eg, '[1,2,3]' to [1,2,3]
     if type(crystal_data[cif_name]) is not list:
