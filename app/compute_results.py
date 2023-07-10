@@ -939,3 +939,18 @@ def convert_mu_samps(mu_samps,conversion_vec):
     mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
 
     return mu_samps
+
+
+def format_crystal_data(crystal_data,cif_name):
+
+    # convert eg, '[1,2,3]' to [1,2,3]
+    if type(crystal_data[cif_name]) is not list:
+        crystal_data[cif_name] = crystal_data[cif_name][1:(len(crystal_data[cif_name])-1)].split(",")
+        crystal_data[cif_name] = [float(x) for x in crystal_data[cif_name]]
+
+    for name in ['beam_size','raster_x','raster_y','L','W_F','H_F','H_R']:
+
+        if name in crystal_data.keys():
+            crystal_data[name] = float(crystal_data[name])
+
+    return crystal_data

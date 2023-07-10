@@ -1283,6 +1283,9 @@ def update_output(n_clicks,
     for cif_name, peak_data in peaks_dict.items():
         print("Phase: ", cif_name)
         for x in range(len(peak_data)):
+
+            crystal_data = compute_results.format_crystal_data(crystal_data,cif_name)
+
             num_layer, num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,
                 phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
                 crystal_data[cif_name][0],
