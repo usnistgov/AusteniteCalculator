@@ -47,9 +47,12 @@ import compute_results
 import compute_uncertainties
 import interaction_vol
 
+inside_docker = False
+
 # Gsas
 if platform.system() == 'Linux':
     sys.path.insert(0,'/root/g2full/GSASII/') # <- for Docker (assuming none of us use a Linux OS)
+    inside_docker = True
 
 # David's local development (add your own line to work on the project locally)
 elif re.search('dtn1',os.getcwd()):
@@ -187,7 +190,18 @@ custom_index = """<!DOCTYPE html>
     </body>
 </html>"""
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO],index_string = custom_index)
+if inside_docker:
+    app = dash.Dash(__name__,
+                    requests_pathname_prefix=os.environ['SHINYPROXY_PUBLIC_PATH'],
+                    routes_pathname_prefix=os.environ['SHINYPROXY_PUBLIC_PATH'], 
+                    external_stylesheets=[dbc.themes.COSMO],
+                    index_string = custom_index)
+    
+else:
+    app = dash.Dash(__name__,
+                    external_stylesheets=[dbc.themes.COSMO],
+                    index_string = custom_index)
+
 server = app.server
 root_dir = os.getcwd()
 
@@ -1284,7 +1298,7 @@ def update_output(n_clicks,
         for x in range(len(peak_data)):
             
             # this calculation is redundant, so we can potentially move outside the loop, but overhead is minimal in the meantime
-            crystal_data = compute_results.format_crystal_data(crystal_data,cif_name)
+            crystal_data = compute_results.format_crystal_data(crystal_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
 
             num_layer, num_ill, frac_difrac, num_difrac = interaction_vol.crystallites_illuminated_calc(crystal_data,
                 phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
