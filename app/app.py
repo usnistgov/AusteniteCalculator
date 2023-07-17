@@ -190,17 +190,10 @@ custom_index = """<!DOCTYPE html>
     </body>
 </html>"""
 
-if inside_docker:
-    app = dash.Dash(__name__,
-                    requests_pathname_prefix=os.environ['SHINYPROXY_PUBLIC_PATH'],
-                    routes_pathname_prefix=os.environ['SHINYPROXY_PUBLIC_PATH'], 
-                    external_stylesheets=[dbc.themes.COSMO],
-                    index_string = custom_index)
-    
-else:
-    app = dash.Dash(__name__,
-                    external_stylesheets=[dbc.themes.COSMO],
-                    index_string = custom_index)
+
+app = dash.Dash(__name__,
+                external_stylesheets=[dbc.themes.COSMO],
+                index_string = custom_index)
 
 server = app.server
 root_dir = os.getcwd()
