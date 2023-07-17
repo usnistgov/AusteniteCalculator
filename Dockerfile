@@ -17,7 +17,7 @@ RUN bash /tmp/gsas2full-Latest-Linux-x86_64.sh -b -p ~/g2full
 
 # project folder
 RUN mkdir /root/AustCalc
-COPY ./requirements.txt /root/Austcalc/
+COPY ./requirements.txt /root/AustCalc/requirements.txt
 RUN /root/g2full/bin/pip install -r /root/AustCalc/requirements.txt
 RUN ~/g2full/bin/python3 -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 COPY ./ /root/AustCalc/
