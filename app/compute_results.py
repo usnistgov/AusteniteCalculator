@@ -665,19 +665,47 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
                 if row['Phase'] == phase_list[i]:
                     temp_df = temp_df.append([row])
 
+            uncert_y = np.array(np.sqrt(temp_df['u_pos_fit']**2 + temp_df['u_int_fit']**2)/temp_df['R_calc'])
+
+            for j in range(len(uncert_y)):
+                uncert_y[j] = np.min( (uncert_y[j],temp_df['n_int'].iloc[j]*3) )  # to prevent absurd uncertainties from the fitting, eg. mean = 32, uncert = 10^6
+
             fig_norm_intensity.add_trace(go.Scatter(x=temp_df['pos_fit'],
                                                     y=temp_df['n_int'],
                                                     mode='markers',
+                                                    error_y=dict(type='data',array=uncert_y,visible=True),
                                                     name=phase_list[i] + '(' + str(dataset) + ')'))
 
         # I'd like to have the color be the same, but haven't figured out how.
         for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
+            
             fig_norm_intensity.add_trace(
                         go.Scatter(
                             x=two_theta,
                             y=[value]*len(two_theta),
                             mode='lines',
+                            line=dict(color='dimgray',width=1),
                             name="Mean "+DF_phase_fraction["Phase"][i] + '(' + str(dataset) + ')')
+                        )
+            
+            upr = value + DF_phase_fraction['StDev_nint'].iloc[i]
+            lwr = value - DF_phase_fraction['StDev_nint'].iloc[i]
+            fig_norm_intensity.add_trace(
+                        go.Scatter(
+                            x=two_theta,
+                            y=[upr]*len(two_theta),
+                            mode='lines',
+                            showlegend=False,
+                            line=dict(dash='dash',color='dimgray',width=1))
+                        )
+            
+            fig_norm_intensity.add_trace(
+                        go.Scatter(
+                            x=two_theta,
+                            y=[lwr]*len(two_theta),
+                            mode='lines',
+                            showlegend=False,
+                            line=dict(dash='dash',color='dimgray',width=1))
                         )
         
         ## Add crosses to indicate values that didn't work

@@ -8,6 +8,7 @@ data {
     vector<lower=0>[N_phases] prior_location;
     vector<lower=0>[N] u_int_fit;
     vector<lower=0>[N] u_int_count;
+    #vector<lower=0>[N] u_cryst_diffract;
 }
 
 parameters {
@@ -18,5 +19,5 @@ parameters {
 model {
     sigma_exp ~ student_t(4,0,prior_exp_scale); // half-t4
     phase_mu ~ normal(prior_location,prior_scale*2); // diffuse half-normal
-    Y ~ normal(phase_mu[phase],sqrt(sigma_exp[phase]^2 + u_int_count^2 + u_int_fit^2) );
+    Y ~ normal(phase_mu[phase],sqrt(sigma_exp[phase]^2 + u_int_count^2 + u_int_fit^2)); #+ u_cryst_diffract^2) );
 }

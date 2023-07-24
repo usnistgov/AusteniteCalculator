@@ -1305,6 +1305,9 @@ def update_output(n_clicks,
             else:
                 crystallites_dict[cif_name] = []
                 crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
+
+    # number of difracting for cif_name is np.sqrt(crystallites_dict[cif_name][0][3])
+
     # run MCMC using full results
     print("Before Inference Method")
     
