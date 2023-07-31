@@ -1287,6 +1287,10 @@ def update_output(n_clicks,
     
     crystallites_uncertainties = {}
 
+    # initialize crystiallites diffracted counts to 0
+    for dname in results_table.keys():
+        results_table[dname]['u_cryst_diff'] = 0
+
     # Same dataset ok since the material is nominally the same?
     for cif_name, peak_data in peaks_dict.items():
         print("Phase: ", cif_name)
@@ -1307,17 +1311,12 @@ def update_output(n_clicks,
             else:
                 crystallites_dict[cif_name] = []
                 crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
-
-        crystallites_uncertainties[cif_name] = np.sqrt(crystallites_dict[cif_name][0][3])
-
-    # add uncertainties for crystallites diffracted to the main dataframe (results table)
-    for dname in results_table.keys():
-        results_table[dname]['u_cryst_diff'] = 0
-
-        for cname in crystallites_uncertainties.keys(): 
-            results_table[dname].u_cryst_diff.loc[results_table[dname].Phase == cname] = crystallites_uncertainties[cname]
-
-
+            
+            # add in uncertainties due to number crystallites diffracted
+            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
+            row_bool = (results_table['Dataset: 1'].Phase == cif_name) & (np.abs(results_table['Dataset: 1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
+            results_table['Dataset: 1'].u_cryst_diff.loc[row_bool] = cd_uncert
+           
     # run MCMC using full results
     print("Before Inference Method")
     

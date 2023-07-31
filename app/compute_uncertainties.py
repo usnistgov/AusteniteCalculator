@@ -156,6 +156,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         'R':indata.R_calc,
         'sigma_I':indata.u_int_fit,
         'u_int_count':indata.u_int_count,
+        'u_cryst_diff':indata.u_cryst_diff,
         'phases':indata.Phase,
         'two_th':indata.two_theta,
         'sample_id':indata.sample_id
@@ -218,7 +219,8 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
             "prior_exp_scale":prior_exp_scale,
             "prior_location":prior_location,
             "u_int_fit":mydf.sigma_I/mydf.R,
-            "u_int_count":mydf.u_int_count/mydf.R
+            "u_int_count":mydf.u_int_count/mydf.R,
+            "u_cryst_diff":mydf.u_cryst_diff/mydf.R
         }
 
 
@@ -280,7 +282,8 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
             "prior_exp_scale":prior_exp_scale,
             "prior_location":prior_location,
             "u_int_fit":mydf.sigma_I/mydf.R,
-            "u_int_count":mydf.u_int_count/mydf.R
+            "u_int_count":mydf.u_int_count/mydf.R,
+            "u_cryst_diff":mydf.u_cryst_diff/mydf.R
         }
 
 
