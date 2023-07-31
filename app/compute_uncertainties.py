@@ -539,7 +539,8 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
         'Phase':unique_phase_names,
         'Experimental Error Variability':[0]*n_phase,
         'X-ray Count Variability':[0]*n_phase,
-        'Parameter Fit Variability':[0]*n_phase
+        'Parameter Fit Variability':[0]*n_phase,
+        'Crystallites Diffracted Variability':[0]*n_phase
     })
 
     if multiple_samples:
@@ -560,6 +561,10 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
 
         dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
         param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
+
+        # crystallites diffracted
+        dummy = results_table.loc[results_table['Phase'] == ph,'u_cryst_diff']/results_table.loc[results_table['Phase'] == ph,'R_calc']
+        param_table.loc[param_table['Phase'] == ph, 'Crystallites Diffracted Variability'] = np.median(dummy)
     
     if multiple_samples:
         param_table.loc[:,'Sample Variability'] = np.mean(mcmc_df['sigma_sample'])

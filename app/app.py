@@ -1285,6 +1285,8 @@ def update_output(n_clicks,
     print("Peaks dictionary")
     print(peaks_dict)
     
+    crystallites_uncertainties = {}
+
     # Same dataset ok since the material is nominally the same?
     for cif_name, peak_data in peaks_dict.items():
         print("Phase: ", cif_name)
@@ -1306,7 +1308,15 @@ def update_output(n_clicks,
                 crystallites_dict[cif_name] = []
                 crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
 
-    # number of difracting for cif_name is np.sqrt(crystallites_dict[cif_name][0][3])
+        crystallites_uncertainties[cif_name] = np.sqrt(crystallites_dict[cif_name][0][3])
+
+    # add uncertainties for crystallites diffracted to the main dataframe (results table)
+    for dname in results_table.keys():
+        results_table[dname]['u_cryst_diff'] = 0
+
+        for cname in crystallites_uncertainties.keys(): 
+            results_table[dname].u_cryst_diff.loc[results_table[dname].Phase == cname] = crystallites_uncertainties[cname]
+
 
     # run MCMC using full results
     print("Before Inference Method")
@@ -1318,6 +1328,8 @@ def update_output(n_clicks,
         fit_vi = True
 
     results_table_df = pd.concat(results_table,axis=0).reset_index()
+    
+
     mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs),fit_vi)
     unique_phases = np.unique(results_table_df.Phase)
     param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
