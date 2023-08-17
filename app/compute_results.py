@@ -665,7 +665,7 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
                 if row['Phase'] == phase_list[i]:
                     temp_df = temp_df.append([row])
 
-            uncert_y = np.array(np.sqrt(temp_df['u_pos_fit']**2 + temp_df['u_int_fit']**2)/temp_df['R_calc'])
+            uncert_y = np.array(np.sqrt(temp_df['u_pos_fit']**2 + temp_df['u_int_fit']**2 + temp_df['u_cryst_diff']**2)/temp_df['R_calc'])
 
             for j in range(len(uncert_y)):
                 uncert_y[j] = np.min( (uncert_y[j],temp_df['n_int'].iloc[j]*3) )  # to prevent absurd uncertainties from the fitting, eg. mean = 32, uncert = 10^6
