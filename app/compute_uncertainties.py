@@ -9,6 +9,23 @@ import sys
 
 def gen_mu_sigma(x,n_draws):
     
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
+    
     # p(mu,simga) \prop_to 1/sigma OR uniform prior on mu, log(sigma)
     # BDA pg: 66
 
@@ -27,6 +44,23 @@ def gen_mu_sigma(x,n_draws):
     
 def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
 
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
+
     I = np.array(I)
     R = np.array(R)
     sigma_I = np.array(sigma_I)
@@ -44,6 +78,23 @@ def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
     return res_dict
 
 def run_paul_mandel(results_table):
+
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
 
     intables = list(results_table.values())
 
@@ -124,6 +175,23 @@ def run_paul_mandel(results_table):
 
 def get_unique_phases(results_table):
 
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
+
     intables = list(results_table.values())
 
     indata = pd.concat(intables,axis=0).reset_index(drop=True)
@@ -132,6 +200,22 @@ def get_unique_phases(results_table):
 
 def concat_results_tables(results_table,from_records=False):
 
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     intables = list(results_table.values())
 
     # create numeric sample ids
@@ -148,7 +232,22 @@ def concat_results_tables(results_table,from_records=False):
     return indata
 
 def run_stan(results_table,number_mcmc_runs,fit_variational=False):
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
 
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     indata = concat_results_tables(results_table)
 
     mydf = pd.DataFrame({
@@ -313,6 +412,22 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     return mcmc_df
 
 def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     # uses pymc3
 
     I = np.array(I)[pfs]
@@ -405,7 +520,22 @@ def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
             'summary_table':summary_table}
 
 def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
 
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
     n_phase = mu_res.shape[1]
     multiple_samples = 'sigma_sample' in mcmc_df.columns
@@ -494,7 +624,22 @@ def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
     return fig, pf_table, param_table
 
 def generate_pf_table(mcmc_df,unique_phase_names):
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
 
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
     n_phase = mu_res.shape[1]
     
@@ -532,7 +677,22 @@ def generate_pf_table(mcmc_df,unique_phase_names):
     return pf_table
 
 def generate_param_table(mcmc_df,unique_phase_names,results_table):
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
 
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
     n_phase = mu_res.shape[1]
     multiple_samples = 'sigma_sample' in mcmc_df.columns
@@ -576,7 +736,22 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
     return param_table
 
 def generate_pf_plot(mcmc_df,unique_phase_names):
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
 
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
     n_phase = mu_res.shape[1]
     

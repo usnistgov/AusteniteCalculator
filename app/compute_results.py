@@ -933,6 +933,24 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
     hist.SaveProfile("created_instprm")
 
 def get_conversions(phase_frac,cell_masses,cell_volumes):
+
+    """
+    *ADD*
+    
+    Parameters:
+        phase_frac: *ADD*
+        cell_masses: *ADD*
+        cell_volumes: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
     # Seems like there's some bits in the app that do this as well?
 
     # deepcopy to prevent aliasing
@@ -960,6 +978,23 @@ def get_conversions(phase_frac,cell_masses,cell_volumes):
     return mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec
 
 def convert_mu_samps(mu_samps,conversion_vec):
+
+    """
+    *ADD*
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
 
     c = conversion_vec
     mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
