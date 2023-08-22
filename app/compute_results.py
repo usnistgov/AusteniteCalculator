@@ -634,7 +634,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     #print("Before appending")
     # append if other dataframe is included
     if DF_to_append is not None:
-        flags_DF=DF_to_append.append(flags_DF, ignore_index=True)
+        flags_DF=pd.concat((DF_to_append,flags_DF), axis=0, ignore_index=True)
     
     #flags_DF.sort_values(by=["Value"],inplace=True)
     
@@ -656,15 +656,13 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
     Raises:
 
     """
+    breakpoint()
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
         fig_norm_intensity = go.Figure()
         phase_list = DF_merged_fit_theo['Phase'].unique().tolist()
         for i in range(len(phase_list)):
-            temp_df = DF_merged_fit_theo.iloc[:0,:].copy()
-            for index, row in DF_merged_fit_theo.iterrows():
-                if row['Phase'] == phase_list[i]:
-                    temp_df = temp_df.append([row])
-
+        
+            temp_df = DF_merged_fit_theo.loc[DF_merged_fit_theo.Phase == phase_list[i],:]
             uncert_y = np.array(np.sqrt(temp_df['u_pos_fit']**2 + temp_df['u_int_fit']**2 + temp_df['u_cryst_diff']**2)/temp_df['R_calc'])
 
             for j in range(len(uncert_y)):

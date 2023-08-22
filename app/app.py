@@ -51,25 +51,14 @@ inside_docker = False
 
 # Gsas
 if platform.system() == 'Linux':
-    sys.path.insert(0,'/root/g2full/GSASII/') # <- for Docker (assuming none of us use a Linux OS)
+    sys.path.insert(0,'/root/g2full/GSASII/') 
     inside_docker = True
-
-# David's local development (add your own line to work on the project locally)
-elif re.search('dtn1',os.getcwd()):
-    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/gsas-AustCalc/GSASII/')
-
-elif re.search('maxgarman',os.getcwd()):
-    sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/envs/gsas-AustCalc/GSASII/') 
 
 elif re.search('creuzige',os.getcwd()):
     sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
 
-elif re.search('schen',os.getcwd()):
-    sys.path.insert(0, '/Users/schen/.conda/envs/conda_gsas_env/GSASII/')
-
-elif re.search('maxga', os.getcwd()):
-    sys.path.insert(0, '/Users/maxga/anaconda3/envs/conda_gsas_env/GSASII/')
-
+#elif re.search('dtn',os.getcwd()):
+#    sys.path.insert(0, '/Users/dtn1/AppData/Local/gsas2full/GSASII/')
 
 import GSASIIscriptable as G2sc
 import GSASIIpath

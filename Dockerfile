@@ -26,8 +26,8 @@ WORKDIR /root/AustCalc/app/
 
 EXPOSE 8050
 
-# if using shinyproxy, can use built in flask server
+# flask (for dev)
 # CMD ["/root/g2full/bin/python3","app.py"]
 
-# if not running with shinyproxy, use gunicorn
-CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"] 
+# gunicorn (for prod)
+# CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"] 

@@ -175,13 +175,13 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
     # compute prior scales
     if  len(results_table) > 1:
-        prior_sample_scale = np.mean(mydf.groupby(['sample_id','phase_id']).mean().IR.groupby('phase_id').std())
+        prior_sample_scale = np.std(mydf.IR)
 
     else:
         prior_sample_scale = None
 
-    prior_exp_scale = np.mean(mydf.groupby(['sample_id','phase_id']).std().IR)
-    prior_location = np.array(mydf.groupby('phase_id').mean().IR)
+    prior_exp_scale = np.mean(mydf.groupby(['sample_id','phase_id']).IR.std())
+    prior_location = np.array(mydf.groupby('phase_id').IR.mean())
 
     print("Prior sample scale: {}".format(prior_sample_scale))
     print("Prior exp scale: {}".format(prior_exp_scale))
