@@ -107,7 +107,7 @@ If you wish to run the container again, note that you do not need to run `docker
 
 Alternatively, you can run, stop, and remove the container using the Docker Desktop application. For more instructions on using Docker, see the official guide [here](https://docs.docker.com/get-started/).
 
-#### Development With Flask Server Running Inside Docker Container
+#### Development Environment Inside Docker Container
 
 Developing in an environment that mimics the production environment has a number of advantages, namely ensuring the OS, Python package versions, and GSAS installation are identical to those in the production environment. Consequently, moving from local development to the production environment will be seemless, and we can avoid the "but it works on my machine" problem. To do this, one can use the following steps:
 
