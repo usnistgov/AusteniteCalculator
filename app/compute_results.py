@@ -656,7 +656,6 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
     Raises:
 
     """
-    breakpoint()
     if DF_merged_fit_theo.shape[0] == tis.shape[0]:
         fig_norm_intensity = go.Figure()
         phase_list = DF_merged_fit_theo['Phase'].unique().tolist()
