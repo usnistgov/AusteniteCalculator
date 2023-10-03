@@ -27,7 +27,7 @@ WORKDIR /root/AustCalc/app/
 EXPOSE 8050
 
 # flask (for dev)
-CMD ["/root/g2full/bin/python3","app.py"]
+# CMD ["/root/g2full/bin/python3","app.py"]
 
 # gunicorn (for prod)
 # CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"] 

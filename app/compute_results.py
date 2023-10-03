@@ -8,7 +8,15 @@ import pandas as pd
 import numpy as np
 import math
 import fit
+import os
+import atmdata
 from copy import deepcopy
+import json
+import base64
+import re
+
+from interaction_vol import crystallites_illuminated_calc, findMu, getFormFactors, create_graph_data
+from compute_uncertainties import run_stan, generate_param_table
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc):
     """
@@ -950,8 +958,7 @@ def get_conversions(phase_frac,cell_masses,cell_volumes):
 
     
     """
-    # Seems like there's some bits in the app that do this as well?
-
+    
     # deepcopy to prevent aliasing
     mass_conversion = deepcopy(phase_frac)
     volume_conversion = deepcopy(phase_frac)
@@ -1000,6 +1007,223 @@ def convert_mu_samps(mu_samps,conversion_vec):
 
     return mu_samps
 
+def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc):
+    print("Running peak fitting...")
+    results_table = {}
+    phase_frac = {}
+    two_thetas = {}
+    uncert = {}
+    ti_tables = {}
+    altered_results = {}
+    altered_phase = {}
+    altered_ti = {}
+    fit_points = {}
+    #create the above dicts to store data returned from compute_results
+    for x in range(len(xrdml_fnames)):
+        print("Compute results for file ",x)
+        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
+                                    instprm_fname,cif_fnames,crystal_data, G2sc)
+        temp_string = 'Dataset: ' + str(x + 1)
+        results_df['sample_index'] = str(x + 1)
+        
+        #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
+        #some are duplicated because they needed to be converted in multiple ways
+        results_table[temp_string] = results_df
+        phase_frac[temp_string] = phase_frac_DF
+        two_thetas[temp_string] = two_theta.tolist()
+        ti_tables[temp_string] = tis
+        uncert[temp_string] = uncert_DF
+        altered_results[temp_string] = results_df
+        altered_phase[temp_string] = phase_frac_DF
+        altered_ti[temp_string] = tis
+        fit_points[temp_string] = fit_data
+        print("Finish results for file ",x)
+
+    # full results table
+    full_results_table = pd.concat(results_table,axis=0,ignore_index=True)
+    full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
+    full_results_table['Uncertainties due to Fitting'] = full_results_table['u_int_fit']/full_results_table['R_calc']
+    full_results_table['Uncertainties due to Counts'] = full_results_table['u_int_count']/full_results_table['R_calc']
+    full_results_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
+    u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(full_results_table.round(6))
+    print("Peak fitting complete")
+
+    return {
+        'results_table':results_table,
+        'phase_frac':phase_frac,
+        'two_thetas':two_thetas, 
+        'uncert':uncert, 
+        'ti_tables':ti_tables,
+        'altered_results':altered_results, 
+        'altered_phase':altered_phase, 
+        'altered_ti':altered_ti, 
+        'fit_points':fit_points, 
+        'u_int_fit_count_table_data':u_int_fit_count_table_data,
+        'u_int_fit_count_table_columns':u_int_fit_count_table_columns
+    }
+
+def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
+
+    print("Begin Interaction Volume")
+    scattering_dict = {}
+    atomic_masses = {}
+    elem_fractions = {}
+    cell_volumes = {}
+    cell_masses = {}
+    for x in range(len(cif_fnames)):
+        #print("Compute results for cif file ",x)
+        print("Compute results for cif file ",cif_fnames[x])
+        cif_path = os.path.join(datadir, cif_fnames[x])
+        instprm_path = os.path.join(datadir, instprm_fname)
+        
+        addon = False
+        elems = []
+        crystal_density = None
+        print("Begin Open files")
+        # Somewhat fragile to cif format and number of returns after line ending
+        with open(cif_path) as f:
+            lines = f.readlines()
+            for line in lines:
+                if len(line.split()) > 0:
+                    if line.split()[0] == '_cell_volume':
+                        cell_volumes[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
+                    if line.split()[0] == '_exptl_crystal_density_diffrn':
+                        crystal_density = float(line.split()[1])
+                if addon == True and len(line) > 1:
+                    elems.append(line)
+                if addon == True and len(line) <= 1:
+                    addon = False
+                #changed to string comparison as the syntax changed some
+                if 'symmetry_multiplicity' in line:
+                    addon = True
+        
+        print("Begin parameter files readin")
+        wavelengths = []
+        with open(instprm_path) as fi:
+            lines = fi.readlines()
+            for line in lines:
+                if line != '#GSAS-II instrument parameter file; do not add/delete items!':
+                    line_split = line.split(':')
+                    if line_split[0] == 'Lam1' or line_split[0] == 'Lam2' or line_split[0] == 'Lam':
+                        wavelengths.append(float(line_split[1].strip('\n')))
+        
+        print("Element Calculation")
+        elems_for_phase = []
+        elem_percentage = []
+        atoms_per_cell = None
+        
+        # Should throw an error message if the list is blank...
+        for elem in elems:
+            print("running element ", elem)
+            temp = elem.split()
+            elems_for_phase.append(temp[1])
+            elem_percentage.append(float(temp[5]))
+            atoms_per_cell = int(temp[8])
+            #print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
+        
+        print("Cell Volume Calculation")
+        cell_mass = 0.0
+        count = 0
+        for elem in elems_for_phase:
+            key = elem + '_'
+            elem_mass = atmdata.AtmBlens[key]['Mass']
+            # included the atoms per cell here
+            cell_mass += elem_mass * elem_percentage[count] * atoms_per_cell
+            atomic_masses[elem] = elem_mass
+            print("Element: ", elem,"\tMass: ",elem_mass)
+            count += 1
+        
+        cell_masses[cif_fnames[x]] = cell_mass
+        print(cell_mass, ' ', cell_masses)
+
+        print("Begin Cell Density")
+        cell_density = cell_mass/cell_volumes[cif_fnames[x]]
+        pack_fraction = crystal_density/cell_density
+        #print(cell_density,pack_fraction)
+        elem_details = getFormFactors(elems_for_phase)
+        #print(elem_details)
+        scattering_nums = []
+        for elem in elem_details:
+            #print(elem)
+            scattering_nums.append(findMu(elem, wavelengths, pack_fraction, cell_volumes[cif_fnames[x]])) #scattering nums has elem_sym, f', f'', and mu
+            #print(elem, scattering_nums)
+        
+        print("Begin Cell Scattering")
+        for elem in scattering_nums:
+            elem[1] = elem[1][0]
+            elem[2] = elem[2][0]
+            elem.append(atoms_per_cell)
+
+        scattering_dict[cif_fnames[x]] = scattering_nums
+        elem_fractions[cif_fnames[x]] = elem_percentage
+        
+    print("Interaction Volume Computation Complete")
+
+    return {
+        'scattering_dict':scattering_dict,
+        'atomic_masses':atomic_masses,
+        'elem_fractions':elem_fractions,
+        'cell_volumes':cell_volumes,
+        'cell_masses':cell_masses
+    }
+
+def run_mcmc(results_table,fit_vi,number_mcmc_runs):
+
+    results_table_df = pd.concat(results_table,axis=0).reset_index()
+    mcmc_df = run_stan(results_table,int(number_mcmc_runs),fit_vi)
+    unique_phases = np.unique(results_table_df.Phase)
+    param_table = generate_param_table(mcmc_df,unique_phases,results_table_df)
+
+    mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
+    print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
+    print(mcmc_df.info(memory_usage=True))
+
+    return {'mcmc_df':mcmc_df, 'param_table':param_table}
+
+def compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase_frac):
+    
+    crystallites_dict = {}
+    #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
+    
+    # add a try/except here to confirm the filenames match
+    
+    print("Peaks dictionary")
+    print(peaks_dict)
+    
+    crystallites_uncertainties = {}
+
+    # initialize crystiallites diffracted counts to 0
+    for dname in results_table.keys():
+        results_table[dname]['u_cryst_diff'] = 0
+
+    # Same dataset ok since the material is nominally the same?
+    for cif_name, peak_data in peaks_dict.items():
+        print("Phase: ", cif_name)
+        for x in range(len(peak_data)):
+            
+            # this calculation is redundant, so we can potentially move outside the loop, but overhead is minimal in the meantime
+            crystal_data = format_crystal_data(crystal_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
+
+            num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(crystal_data,
+                phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
+                crystal_data[cif_name][0],
+                crystal_data[cif_name][1],
+                peak_data[x][1],
+                peak_data[x][2],
+                crystal_data[cif_name][2])
+            if cif_name in crystallites_dict.keys():
+                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
+            else:
+                crystallites_dict[cif_name] = []
+                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
+            
+            # add in uncertainties due to number crystallites diffracted
+            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
+            row_bool = (results_table['Dataset: 1'].Phase == cif_name) & (np.abs(results_table['Dataset: 1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
+            results_table['Dataset: 1'].u_cryst_diff.loc[row_bool] = cd_uncert
+
+    return {'crystallites_dict':crystallites_dict, 
+            'results_table':results_table}
 
 def format_crystal_data(crystal_data,cif_name):
     """
@@ -1025,3 +1249,220 @@ def format_crystal_data(crystal_data,cif_name):
             crystal_data[name] = float(crystal_data[name])
 
     return crystal_data
+
+def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions):
+    peaks_dict = {}
+    for phase_name in cif_fnames:
+        peaks_dict[phase_name] = []
+        
+    # Peak dictionary includes F value, multiplicity, theta position, F_squared value
+    # doesn't seem like the values are quite right... AC 3 Mar 2023
+    for row in results_table['Dataset: 1'].iterrows():
+        current_peak = []
+        current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
+        current_peak.append(row[1]['mul'])
+        current_peak.append(row[1]['pos_fit']/2)
+        final_FF = 0.0
+        for elem in scattering_dict[row[1]['Phase']]:
+            count = 0
+            FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
+            final_FF += FF * elem_fractions[row[1]['Phase']][count]
+            count += 1
+        current_peak.append(final_FF)
+        peaks_dict[row[1]['Phase']].append(current_peak)
+    
+    return peaks_dict
+
+def compute_summarized_phase_info(scattering_dict,elem_fractions,peaks_dict):
+    summarized_phase_info = {}
+    for key, value in scattering_dict.items():
+        summarized_phase_info[key] = [0.0,0.0, 0.0]
+        current_fracs = elem_fractions[key]
+        for i in range(len(value)):
+            summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
+            summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
+            summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
+    
+    graph_data_dict = {}
+    for key, value in peaks_dict.items():
+        current_summarized_data = summarized_phase_info[key]
+        graph_data_dict[key] = []
+        for peak in value:
+            data_list = create_graph_data(peak, current_summarized_data)
+            graph_data_dict[key].append(data_list)
+        #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
+
+    return graph_data_dict
+
+def gather_example(example_name):
+
+    if example_name == 'Example01':
+        datadir = '../ExampleData/Example01'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+        workdir = '../server_workdir'
+        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
+        instprm_fname = 'TestCalibration.instprm'
+        json_fname = 'Example01.json'
+
+    elif example_name == 'Example05':
+        datadir = '../ExampleData/Example05'
+        cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
+        workdir = '../server_workdir'
+        xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
+        instprm_fname = 'BrukerD8_E211110.instprm'
+        json_fname = 'Example05.json'
+
+    elif example_name == "Example06":
+        datadir = '../ExampleData/Example06'
+        cif_fnames = ['alpha-prime-martensite-SRI.cif','epsilon-martensite-SRI.cif','austenite-SRI.cif']
+        workdir = '../server_workdir'
+        xrdml_fnames = ['Example06_simulation_generation_data.csv']
+        instprm_fname = 'BrukerD8_E211110.instprm'
+        json_fname = 'Example06.json'
+
+    elif example_name == "Example08A":
+        datadir = '../ExampleData/Example08A'
+        cif_fnames = ['austenite-FeOnly.cif','ferrite-FeOnly.cif']
+        workdir = '../server_workdir'
+        xrdml_fnames = ['QP980_AR_th-tthscan_AR0p5_trunc.csv']
+        instprm_fname = 'ThomasXRD-Co-Cal.instprm'
+        json_fname = 'QP_A.json'
+
+    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
+
+def process_uploaded_data(xrdml_contents,
+                          xrdml_fnames,
+                          instprm_contents,
+                          instprm_fname,
+                          cif_contents,
+                          cif_fnames,
+                          csv_contents,
+                          json_fname):
+    
+    datadir = '../server_datadir'
+    workdir = '../server_workdir'
+
+    # For each uploaded file, save (on the server)
+    # ensuring that the format matches what GSAS expects.
+
+    # first, read instrument parameter file
+
+    instprm_type, instprm_string = instprm_contents.split(',')
+
+    decoded = base64.b64decode(instprm_string)
+    f = open(datadir + '/' + instprm_fname,'w')
+    to_write = decoded.decode('utf-8')
+    if re.search('(instprm$)',instprm_fname) is not None:
+        to_write = re.sub('\\r','',to_write)
+    f.write(to_write)
+    f.close()
+
+
+    ####FIX
+    # Is this for the export data as csv, or illuminated json file?
+    # AC 7 June 2023 - I think this is for the json file but what?
+    csv_type, csv_string = csv_contents.split(',')
+
+    decoded = base64.b64decode(csv_string)
+    f = open(datadir + '/' + json_fname,'w')
+    to_write = decoded.decode('utf-8')
+    csv_string = to_write
+    if re.search('(csv$)',json_fname) is not None:
+        to_write = re.sub('\\r','',to_write)
+    f.write(to_write)
+    f.close()
+    
+    # next, read the cif files
+    for i in range(len(cif_contents)):
+        contents = cif_contents[i]
+        fname = cif_fnames[i]
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        f = open(datadir + '/' + fname,'w')
+        to_write = decoded.decode('utf-8')
+        to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+    
+    for i in range(len(xrdml_contents)):
+        contents = xrdml_contents[i]
+        fname = xrdml_fnames[i]
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        f = open(datadir + '/' + fname,'w')
+        to_write = decoded.decode('utf-8')
+        to_write = re.sub('\\r','',to_write)
+        f.write(to_write)
+        f.close()
+
+def process_data_input(use_default_files,
+                       use_example05_files,
+                       use_example06_files,
+                       use_example08A_files,
+                       xrdml_contents,
+                       xrdml_fnames,
+                       instprm_contents,
+                       instprm_fname,
+                       cif_contents,
+                       cif_fnames,
+                       csv_contents,
+                       json_fname):
+
+     ### Gather inputs, either one of the example files, or user upload
+    
+    if use_default_files not in [None, []] and use_default_files[0] == 1:
+        using_example_file = True
+        example_name = "Example01"
+    # Use Example05 data
+    #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
+    #? Maybe pass like the xrdml_fnames?
+    elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
+        using_example_file = True
+        example_name = "Example05"
+        
+    elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
+        using_example_file = True
+        example_name = "Example06"
+
+    elif use_example08A_files not in [None, []] and use_example08A_files[0] == 1:
+        using_example_file = True
+        example_name = "Example08A"
+
+    # User uploaded data
+    else:
+        using_example_file = False
+
+    if using_example_file:
+        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = gather_example(example_name)
+    else:
+        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = process_uploaded_data(xrdml_contents,
+                                                                                                      xrdml_fnames,
+                                                                                                      instprm_contents,
+                                                                                                      instprm_fname,
+                                                                                                      cif_contents,
+                                                                                                      cif_fnames,
+                                                                                                      csv_contents,
+                                                                                                      json_fname)
+
+    ### Read in JSON File
+    # Needed earlier for some of the theoretical intensity data
+    # AC 2023 June 07 - why here?
+        #crystal_data = json.loads(json_string)
+    
+    #need to convert strings to numbers in json dict
+    
+    # May need to adjust for multi array
+    #AC - Why use strings? Try without
+#        for key in crystal_data.keys():
+#            if(key != 'beam_shape'):
+#                if(crystal_data[key][0] == '['):
+#                    crystal_data[key] = crystal_data[key].strip('][').split(',')
+#                    for x in range(len(crystal_data[key])):
+#                        crystal_data[key][x] = float(crystal_data[key][x])
+#                else:
+#                    crystal_data[key] = float(crystal_data[key])
+    
+    with open(os.path.join(datadir, json_fname), 'r') as f:
+        crystal_data = json.loads(f.read())
+
+    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, crystal_data

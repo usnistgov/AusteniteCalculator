@@ -411,7 +411,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
     return mcmc_df
 
-def run_mcmc(I,R,sigma_I,phases,pfs,plot=False):
+def run_pymc(I,R,sigma_I,phases,pfs,plot=False):
     """
     *ADD*
     
