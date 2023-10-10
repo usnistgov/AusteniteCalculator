@@ -222,4 +222,3 @@ loop_
    _atom_site_U_iso_or_equiv
    _atom_site_site_symmetry_multiplicity
 Fe1    Fe   0.00000     0.00000     0.00000     1.000      Uiso 0.007      4   
-
