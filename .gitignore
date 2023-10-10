@@ -12,7 +12,6 @@ ExampleData/Example05/Diagnostic/*
 ExampleData/Example07A/Diagnostic/*
 ExampleData/Example08A/TextureCorrection/
 ExampleScripts/.ipynb_*
-ExampleScripts/*.ipynb
 ExampleScripts/cif_composition_simulations.ipynb
 MiscScripts/
 SaveData/*
