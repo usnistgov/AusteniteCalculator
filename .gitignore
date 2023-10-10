@@ -18,5 +18,3 @@ app/GenerateJson.py
 app/sample.json
 app/sample2.json
 ExampleData/Example08A/TextureCorrection/
-stan_files/.*exe
-stan_files/.*hpp
