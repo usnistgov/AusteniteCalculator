@@ -440,14 +440,51 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
     
     ## Load .cif files
     print("Print phases")
-    print("Initial Phases: ", GSAS_projfile.histograms())
+    print("Initial Phases: ", GSAS_projfile.histograms)
     print("Stop print phases")
     
+    print("Print cif files")
     print(cif_files)
 #    for i in range(len(cif_files)):
 #        hist.add_phase((cif_files[i] + '.gpx'),proj.histograms())
 #
     print("Phases Added: ", GSAS_projfile.phases())
+    
+    
+    #### STILL NOT WORKING #### PHASES NOT ADDED TO HISTOGRAM
+    ## MAYBE HAP RELATED?
+    # https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#sequential-refinement
+    
+    pardict = {'set': {'Background': {"no. coeffs": Chebyschev_coeffiecients,
+                                     'type': 'chebyschev-1', 'refine': True
+                                  }}}
+    GSAS_projfile.set_refinement(pardict)
+    
+    
+    
+#    for p in GSAS_projfile.phases():
+#        p.set_refinements({"Cell": False})
+#    GSAS_projfile.phase(0).set_HAP_refinements(
+#        {'Scale': False,
+#        "Size": {'type':'isotropic', 'refine': False},
+#        "Mustrain": {'type':'uniaxial', 'refine': False},
+#        "HStrain":True,})
+#    GSAS_projfile.phase(1).set_HAP_refinements({'Scale': False})
+#    GSAS_projfile.histogram(0).clear_refinements({'Background':False,
+#                 'Sample Parameters':['DisplaceX'],})
+#    GSAS_projfile.histogram(0).ref_back_peak(0,[])
+#    GSAS_projfile.phase(1).set_HAP_refinements({"HStrain":(1,1,1,0)})
+#    for fil in sorted(glob.glob(PathWrap('*.fxye'))): # load in remaining fxye files
+#        if '00' in fil: continue
+#        GSAS_projfile.add_powder_histogram(fil, PathWrap('OH_00.prm'), fmthint="GSAS powder",phases='all')
+#    # copy HAP values, background, instrument params. & limits, not sample params.
+#    GSAS_projfile.copyHistParms(0,'all',['b','i','l'])
+#    for p in GSAS_projfile.phases(): p.copyHAPvalues(0,'all')
+#    # setup and launch sequential fit
+#    GSAS_projfile.set_Controls('sequential',GSAS_projfile.histograms())
+#    GSAS_projfile.set_Controls('cycles',10)
+#    GSAS_projfile.set_Controls('seqCopy',True)
+    GSAS_projfile.refine()
     
     ## Refine steps listed above
     ## https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#refinement-recipe
@@ -505,3 +542,5 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
 #    # Still tends to be unstable since sig and gam are highly correlate...
 #    #hist.set_peakFlags(pos=True,area=True,sig=True, gam=True)
 #    #hist.refine_peaks()
+
+    print(" \n\n End of Rowles \n\n")

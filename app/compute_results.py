@@ -128,7 +128,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     ########################################
     # use the theoretical intensities for peak fit location
     ########################################
-    print("\n\n Peak Fit (LeBail) of Experimental Data \n")
+    print("\n\n Series of Individual Peak Fits of Experimental Data \n")
 
     # use the theoretical intensities for peak fit location
     peaks_list=tis['two_theta']
@@ -141,7 +141,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
 
     peaks_ok = False
     fit_attempts = 0
-    fit_attempt_limit = 3
+    fit_attempt_limit = 0
     peak_verify = []
     t_peaks = 0
     t_sigma = 0
@@ -152,8 +152,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     while not (peaks_ok):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
-            fit.fit_peaks(hist, peaks_list)
-            #fit.fit_peaks_Rowles(gpx, cif_fnames, Chebyschev_coeffiecients=5)
+            #fit.fit_peaks(hist, peaks_list)
+            fit.fit_peaks_Rowles(gpx, cif_fnames, Chebyschev_coeffiecients=5)
         # Currently the fit processes are a little different...
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
@@ -508,6 +508,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
     ti_table[['Phase']] = material
     
     # Add column for texture corrections
+    
     
     # Read in from file if there's a 4th column
     if len(xtal_data[material])==4:
