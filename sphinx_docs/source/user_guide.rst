@@ -1,3 +1,5 @@
+user_guide
+
 Welcome to the user guide
 =========================
 
@@ -66,6 +68,12 @@ Usage
 =========================
 (add demo or instructions here?  Or elsewhere?)
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+
+   CrystallitesIlluminatedFileCreation
+   InstrumentFileCreation
 
 =========================
 Examples

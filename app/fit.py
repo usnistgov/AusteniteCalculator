@@ -34,6 +34,8 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
     #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
     
+    #breakpoint()
+    
     # First fit only the area
     hist.set_peakFlags(area=True)
     hist.refine_peaks()

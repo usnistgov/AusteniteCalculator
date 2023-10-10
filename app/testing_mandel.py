@@ -30,22 +30,13 @@ import platform
 import re
 import sys
 import flask
+
 # Gsas
 if platform.system() == 'Linux':
-    sys.path.insert(0,'/root/g2full/GSASII/') # <- for Docker (assuming none of us use a Linux OS)
-
-# David's local development (add your own line to work on the project locally)
-elif re.search('dtn1',os.getcwd()):
-    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/G2_2/GSASII/')
-
-elif re.search('maxgarman',os.getcwd()):
-    sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/GSASII/') 
+    sys.path.insert(0,'/root/g2full/GSASII/') 
 
 elif re.search('creuzige',os.getcwd()):
     sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
-
-elif re.search('schen',os.getcwd()):
-    sys.path.insert(0, '/Users/schen/.conda/envs/conda_gsas_env/GSASII/')
 
 import GSASIIscriptable as G2sc
 dataGrabber = None

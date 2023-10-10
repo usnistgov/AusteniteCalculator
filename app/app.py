@@ -37,7 +37,7 @@ import glob
 import random
 import math
 from apscheduler.schedulers.background import BackgroundScheduler
-import atmdata
+from copy import deepcopy
 
 # Add example comment
 
@@ -46,26 +46,18 @@ import compute_results
 import compute_uncertainties
 import interaction_vol
 
+inside_docker = False
+
 # Gsas
 if platform.system() == 'Linux':
-    sys.path.insert(0,'/root/g2full/GSASII/') # <- for Docker (assuming none of us use a Linux OS)
-
-# David's local development (add your own line to work on the project locally)
-elif re.search('dtn1',os.getcwd()):
-    sys.path.insert(0,'/Users/dtn1/Anaconda3/envs/gsas-AustCalc/GSASII/')
-
-elif re.search('maxgarman',os.getcwd()):
-    sys.path.insert(0,'/Users/maxgarman/opt/anaconda3/GSASII/') 
+    sys.path.insert(0,'/root/g2full/GSASII/') 
+    inside_docker = True
 
 elif re.search('creuzige',os.getcwd()):
     sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
 
-elif re.search('schen',os.getcwd()):
-    sys.path.insert(0, '/Users/schen/.conda/envs/conda_gsas_env/GSASII/')
-
-elif re.search('maxga', os.getcwd()):
-    sys.path.insert(0, '/Users/maxga/anaconda3/envs/conda_gsas_env/GSASII/')
-
+#elif re.search('dtn',os.getcwd()):
+#    sys.path.insert(0, '/Users/dtn1/AppData/Local/gsas2full/GSASII/')
 
 import GSASIIscriptable as G2sc
 import GSASIIpath
@@ -84,10 +76,12 @@ def clear_directory():
     for zip in zips:
         os.remove(zip)
 
+# Clear the report directory every 24 hours
 scheduler = BackgroundScheduler()
 scheduler.add_job(clear_directory, 'interval', hours=24)
 scheduler.start()
 
+# Bottom banner and NIST formatting
 custom_index = """<!DOCTYPE html>
 <html>
     <head>
@@ -184,13 +178,18 @@ custom_index = """<!DOCTYPE html>
     </body>
 </html>"""
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO],index_string = custom_index)
+
+app = dash.Dash(__name__,
+                external_stylesheets=[dbc.themes.COSMO],
+                index_string = custom_index)
+                #requests_pathname_prefix = '/austenite-calculator/') # <- need this line uncommented for production!
+
 server = app.server
 root_dir = os.getcwd()
 
-app.layout = dbc.Container([
 
-        
+app.layout = dbc.Container([
+      ### ---  Top Banner --- ###
     html.Br(),
     html.H1('Austenite Calculator'),
     html.Div(['Calculating ',
@@ -207,7 +206,7 @@ app.layout = dbc.Container([
     
     dbc.Tabs([
 
-        ### --- start data upload tab --- ###
+        ### --- start Data Upload tab --- ###
 
         dbc.Tab([
             
@@ -222,7 +221,7 @@ app.layout = dbc.Container([
             dcc.Upload(
                     id='upload-data-xrdml',
                     children=html.Div([
-                            dbc.Button('X-Ray Diffraction File (.xrdml)')
+                            dbc.Button('X-Ray Diffraction File (.csv, .xrdml, etc.)')
                             ]),
                             multiple=True),
             html.Div(id='f1-name'),
@@ -245,6 +244,14 @@ app.layout = dbc.Container([
                             ]),
                     multiple=True),
             html.Div(id='f3-name'),
+            html.Br(),
+            #json upload for crystallites illuminated
+            dcc.Upload(
+                    id='upload-json',
+                    children=html.Div([
+                            dbc.Button('Crystallites Illuminated JSON (.json) - see \'File Creation\' Tab')
+                            ])),
+            html.Div(id='f4-name'),
 
             ## Checkbox to use the default files instead
             html.Hr(),
@@ -273,6 +280,15 @@ app.layout = dbc.Container([
                 id="example06-files-check",
             ),
 
+            ## Checkbox to use Example 08A files instead
+            html.Hr(),
+            dbc.Checklist(
+                options=[
+                    {"label": "Co Source Q&P (Example 08A Files)", "value": 1},
+                ],
+                id="example08A-files-check",
+            ),
+
             #start of interaction volume inputs
             #atoms per cell-.cif file
             #f-prime and f-doubleprime-each element in .cif
@@ -283,23 +299,23 @@ app.layout = dbc.Container([
             html.Div("Statistical Inference Option:"),
             dbc.RadioItems(
                 options=[
-                    {"label": "Perform statistical inference (MCMC)", "value": 1},
-                    {"label": "Skip the inference for now", "value": 2}
+                    {"label": "MCMC (slower, but most accurate)", "value": 1},
+                    {"label": "Variational Inference (faster, but less accurate)", "value": 2}
                 ],
                 value=1,
                 id="inference-method",
             ),
             html.Br(),
-            html.Div("Number of MCMC Runs"),
+            html.Div("Number of MCMC Warmup Runs (only applicable if MCMC selected above)"),
             dbc.Row(
                 dbc.Col(dbc.Select(
                             id="number-mcmc-runs",
                             options=[
                                 {"label": "4000", "value":4000},
                                 {"label": "8000", "value":8000},
-                                {"label": "800 (for testing only)", "value":800},
+                                {"label": "1000 (for testing only)", "value":1000},
                             ],
-                            value=800
+                            value=1000 #default value on screen
                         ), width=3)
             ),
 
@@ -311,11 +327,13 @@ app.layout = dbc.Container([
             dbc.Button(id='submit-button-state', n_clicks=0, children='Begin Analysis'), 
             html.Br(),
             html.Br(),
+            # Download Button
             dbc.Button(id='report-button', children='Download Analysis Report'),
             Download(id='download-full-report'),
             html.Br(),
             dcc.Store(id='store-calculations', storage_type='memory'),
             html.Br(),
+            # Loading icons/animation
             dcc.Loading(
                 id="loading",
                 type="default",
@@ -330,51 +348,42 @@ app.layout = dbc.Container([
             label="Data Upload",
             id='Data Upload'),
             
-        ### --- end data upload tab --- ###
+        ### --- end Data Upload tab --- ###
 
 
-        ### --- start I-2theta Plots --- ###
+        ### --- start Intensity Plots tab --- ###
         dbc.Tab([
             html.Br(),
-            html.Div(id='plot-placeholder',children=[ 
+            html.Div(id='intensity-plot-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'plot-dropdown',
+                            id = 'intensity-plot-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
-            html.Div("""Plot of the raw data."""),
+            html.Div("""Plot of the raw data, plotted as a continuous line.
+                        Hovering a cursor over the plot will bring up a
+                        menu to save, zoom, and other features."""),
             dcc.Graph(id='intensity-plot'),
             html.Br(),
-            html.Div("""Plot of the raw data and fit.  The fit value should overlap the raw data"""),
+            html.Div("""Plot of the raw data and fit. Raw data is plotted as
+                        points, fitted data as lines. The fit value should nominally
+                        overlap the raw data. Inspect the data to confirm."""),
             dcc.Graph(id='fitted-intensity-plot')
             ],
             label="Intensity Plots"),
         
-        ### --- end I-2theta Plots --- ###
+        ### --- end Intensity Plots tab --- ###
         
-        ### --- start Results Tables and Plots --- ###
+        ### --- start Normalized Intensities Tab --- ###
         dbc.Tab([
             html.Br(),
-            html.Div(id='table-placeholder',children=[ 
+            html.Div(id='fit-theo-table-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'table-dropdown',
+                            id = 'fit-theo-table-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
-            html.Div("""Table of Phase Fractions"""),
-            dash_table.DataTable(id='phase-frac-table'),
-            html.Br(),
-            html.Div(id='unit-placeholder',children=[ 
-                'Select units for Phase Fraction',
-                dcc.Dropdown(options = [{'label':'Number of Unit Cells', 'value':'Number of Unit Cells'}, 
-                                        {'label':'Volume of Unit Cells', 'value':'Volume of Unit Cells'}, 
-                                        {'label':'Mass of Unit Cells', 'value':'Mass of Unit Cells'}], 
-                            id = 'unit-dropdown')
-             ]),
             
-            html.Br(),
-            html.Div("""Flagged Notes to Users"""),
-            dash_table.DataTable(id='uncert-table'),
 
             html.Br(),
             html.Div("""Table of Fit and Theoretical Intensities"""),
@@ -385,9 +394,9 @@ app.layout = dbc.Container([
             #
             html.Br(),
             html.Br(),
-            html.Div(id='norm-int-placeholder',children=[ 
+            html.Div(id='norm-int-plot-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'norm-int-dropdown',
+                            id = 'norm-int-plot-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -396,9 +405,9 @@ app.layout = dbc.Container([
                         such as texture, instrument calibration, and/or microstructure effects"""),
             dcc.Graph(id='normalized-intensity-plot'),
             html.Br(),
-            html.Div(id='graph-placeholder',children=[ 
+            html.Div(id='two-theta-diff-plot-placeholder',children=[
                 dcc.Dropdown(options = ['Dataset: 1'], 
-                            id = 'graph-dropdown',
+                            id = 'two-theta-diff-plot-dropdown',
                             value='Dataset: 1')
              ]),
             html.Br(),
@@ -412,6 +421,28 @@ app.layout = dbc.Container([
             dcc.Graph(id='two_theta-plot'),
             html.Br(),
             html.Hr(),
+            html.Br()
+            
+            #Tab label
+            ],
+            label="Normalized intensities"),
+            
+            
+            
+        ### --- end Normalized Intensities Tab --- ###
+
+        ### --- start Phase Fraction Tab --- ###
+
+        dbc.Tab([
+            html.Br(),
+            html.Div(id='unit-placeholder',children=[ 
+                'Select units for Phase Fraction',
+                dcc.Dropdown(options = [{'label':'Number of Unit Cells', 'value':'Number of Unit Cells'}, 
+                                        {'label':'Volume of Unit Cells', 'value':'Volume of Unit Cells'}, 
+                                        {'label':'Mass of Unit Cells', 'value':'Mass of Unit Cells'}], 
+                            value = 'Number of Unit Cells',
+                            id = 'unit-dropdown')
+             ]),
             html.Br(),
             html.H3("""Figure for Phase Fraction Uncertainty"""),
             html.Div("""The figure below displays probability distributions conveying the estimates and \n
@@ -421,25 +452,24 @@ app.layout = dbc.Container([
             html.Br(),
             html.H3("""Table for Phase Fraction Uncertainty"""),
             html.Div("""The table below gives summary statistics of the above figure, including estimates of the \n
-                     phase fractions as well as 95\% credible intervals."""),
+                     phase fractions as well as 95% credible intervals."""),
             html.Br(),
             dash_table.DataTable(id='pf-uncert-table'),
             html.Br(),
             html.Hr(),
             html.Br(),
             html.H3("Sources of Uncertainty"),
-            html.Div("""The table below gives estimates for various sources of uncertainty. \n
-                     'sigma_exp' estimates the experimental error, 'median_u_int_count' gives the median \n
-                     of the uncertainty due to counting statitics across all peaks for a phase fraction, and \n
-                     'median_u_int_fit' gives the median of the uncertainty from the fitting procedure for the \n
-                     given phase fraction. """),
+            html.Div("""The table below gives estimates for various sources of uncertainty, 
+                     including the experimental error, sample-to-sample error (if multiple samples are uploaded), 
+                     the median (across all peaks) of the X-ray count uncertainties, and the median (across all peaks) 
+                     of the uncertainties for parameter fit. """),
             html.Br(),
             dash_table.DataTable(id='param-table'),
             html.Br(),
             html.Hr(),
             html.Br(),
             html.H3("Uncertainty Due to Fit and Count for Each Peak"),
-            html.Div("""The following table gives uncertainties for fitting and counting statistics for all fitted peaks."""),
+            html.Div("""The following table gives uncertainties for counting and fitting statistics for all fitted peaks."""),
             html.Br(),
             dash_table.DataTable(id='u-int-fit-count-table',
                                  page_size=20,
@@ -447,31 +477,35 @@ app.layout = dbc.Container([
                                  filter_action="native",
                                  sort_action="native",
                                  column_selectable="single"),
-            html.Br()
+            html.Br(),
+            html.Div("""Table of Phase Fractions"""),
+            dash_table.DataTable(id='phase-frac-table'),
+            html.Br(),
+            html.Div("""Flagged Notes to Users"""),
+            dash_table.DataTable(id='uncert-table'),
+            html.Br(),
             
             #Tab label
             ],
-            label="Normalized intensities"),
-            
-            
-            
-        ### --- end Results Tables and Plots --- ###
+            label="Phase Fraction"),
+
+        ### --- end uncertainty analysis --- ###
         
         ### --- start Interaction Volume Tables and Plots --- ###
         
         dbc.Tab([
             html.Br(),
             html.Div("Select dataset:"),
-            html.Div(id='dataset-placeholder',children=[
+            html.Div(id='interaction-vol-plot-placeholder',children=[
                     dcc.Dropdown(options = ['Dataset: 1'],
-                                id = 'dataset-dropdown',
+                                id = 'interaction-vol-plot-dropdown',
                                 value='Dataset: 1')]),
 
             html.Br(),
             html.Div("Select phase:"),
-            html.Div(id='phase-placeholder',children=[ 
+            html.Div(id='interaction-vol-plot-phase-placeholder',children=[
                     dcc.Dropdown(options = ['Phase: 1'], 
-                                id = 'phase-dropdown',
+                                id = 'interaction-vol-plot-phase-dropdown',
                                 value='Phase: 1')]),
             html.Br(),
             html.Div("Select peak:"),
@@ -480,19 +514,25 @@ app.layout = dbc.Container([
                                 id = 'peak-dropdown',
                                 value='1')]),
             html.Br(),
+            dash_table.DataTable(id='crystallites-table'),
+            html.Br(),
             html.Div([
                 dcc.Graph(id='centroid-plot'),
                 dcc.Graph(id='interaction-depth-plot'),
             ]),
+
         ],
         label='Interaction Volume'),
         
         ### --- end Interaction Volume Tables and Plots --- ###
 
-        ### --- start Instrument Parameter Creation --- ###
+        
+
+        ### --- start File Creation --- ###
+        ## Section to create .instprm file
         dbc.Tab([
             html.Div([
-                'Please choose from a default .instprm file if you do not have one, and the app will create a file for you',
+                'Please choose from a default .instprm file if you do not have one, upload your .cif and .xrdml files, and click the \'Download .instprm File\' Button',
                 dcc.Dropdown(id='default-dropdown',options=['CuKa', 'APS 30keV 11BM', '0.7A synchrotron', '1.9A ILL D1A CW', '9m HIPD 151 deg bank TOF', '10m TOF 90deg bank']),
                 html.Div(id = 'default-name', style={'display':'none'}),
             ]),
@@ -514,10 +554,66 @@ app.layout = dbc.Container([
             html.Div(id='default-cif'),
             ## Button for uploading Instrument Parameter File
             html.Br(),
-            html.Div([html.Button("Download Created File", id = "download-created-file"), Download(id = "download-instprm")])
-            
+            html.Div([html.Button("Download .instprm File", id = "download-created-file"), Download(id = "download-instprm")]),
+            html.Br(),
+            ## Section to create .json file
+            html.Div([
+                '***WIP*** To create a .json file for the crystallites illuminated calculation, please fill the following fields and click the \'Download .json File\' Button',
+                #need fields for:
+                
+                #beam shape and size
+                dcc.Dropdown(
+                    id = 'beam-shape-in',
+                    options = ['Circle', 'Square']
+                ),
+                dcc.Input(
+                    id = 'beam-size-in',
+                    type = 'number',
+                    placeholder = 'beam size(mm)'
+                ),
+                #raster in x and y
+                dcc.Input(
+                    id = 'raster-x-in',
+                    type = 'number',
+                    placeholder = 'raster length x(mm)'
+                ),
+                dcc.Input(
+                    id = 'raster-y-in',
+                    type = 'number',
+                    placeholder = 'raster length y(mm)'
+                ),
+                #L, W_F, H_F, H_R?? - make inputs for these and then have Adam write a description
+                dcc.Input(
+                    id = 'L-in',
+                    type = 'number',
+                    placeholder = 'L(mm)'
+                ),
+
+                dcc.Input(
+                    id = 'W-F-in',
+                    type = 'number',
+                    placeholder = 'W_F'
+                ),
+
+                dcc.Input(
+                    id = 'H-F-in',
+                    type = 'number',
+                    placeholder = 'H_F'
+                ),
+
+                dcc.Input(
+                    id = 'H-R-in',
+                    type = 'number',
+                    placeholder = 'H_R'
+                ),
+                html.Br(),
+                html.Br(),
+                html.Div(
+                    [dbc.Button("Download .json File", id = "download-created-json"),
+                    Download(id = "download-json")]),
+            ]),
         ],
-        label="Instrument Parameter Creation"),
+        label="File Creation"),
         ### --- end Instrument Parameter Creation --- ###
 
         ### --- start About Tab --- ###
@@ -551,11 +647,17 @@ app.layout = dbc.Container([
 ])
 
 ### --- file upload messages --- ###
+# Pairs of app.callback and trailing function definitions
+# Text should appear under the button
+
+### --- data upload tab --- ###
+
+### --- X-Ray Diffraciton File --- ###
 @app.callback(
     Output('f1-name','children'),
     Input('upload-data-xrdml','filename')
 )
-def show_f_name(filename):
+def show_f1_name(filename):
     
     if filename is None:
         return ""
@@ -563,11 +665,12 @@ def show_f_name(filename):
     else:
         return "Uploaded Files: " + ', '.join(filename)
 
+### --- Instrument Parameter File --- ###
 @app.callback(
     Output('f2-name','children'),
     Input('upload-data-instprm','filename')
 )
-def show_f_name1(filename):
+def show_f2_name(filename):
     
     if filename is None:
         return ""
@@ -575,11 +678,13 @@ def show_f_name1(filename):
     else:
         return "Uploaded File: " + filename
 
+
+### --- Crystallographic Information Files --- ###
 @app.callback(
     Output('f3-name','children'),
     Input('upload-cif','filename')
 )
-def show_f_name2(filename):
+def show_f3_name(filename):
     
     if filename is None:
         return ""
@@ -587,7 +692,23 @@ def show_f_name2(filename):
     else:
         print(filename)
         return "Uploaded Files: " + ', '.join(filename)
+        
+### --- Crystallites Illuminated JSON --- ###
+@app.callback(
+    Output('f4-name','children'),
+    Input('upload-json','filename')
+)
+def show_f4_name(filename):
+    
+    if filename is None:
+        return ""
+        
+    else:
+        print(filename)
+        return "Uploaded File: " + filename
 
+### --- File Creation tab --- ###
+### --- Choose default .instprm --- ###
 @app.callback(
     Output('default-name', 'children'),
     Input('default-dropdown', 'value')
@@ -606,6 +727,7 @@ def update_dropdown(value):
     elif value == '10m TOF 90deg bank':
         return 'DefaultInstprmFiles/10mTOF_default.instprm'
 
+### --- Choose calibration .cif --- ###
 @app.callback(
     Output('default-cif','children'),
     Input('upload-default-cif','filename')
@@ -618,6 +740,7 @@ def show_cif_names(filename):
     else:
         return "Uploaded Files: " + ', '.join(filename)
 
+### --- Choose calibration Xray File --- ###
 @app.callback(
     Output('default-xrdml','children'),
     Input('upload-default-xrdml','filename')
@@ -629,6 +752,8 @@ def show_xrdml_name(filename):
         
     else:
         return "Uploaded Files: " + ', '.join(filename)
+
+### --- Download Created .instprm File --- ###
 
 @app.callback(
     Output("download-instprm", "data"),
@@ -698,6 +823,26 @@ def download_created_instprm(n_clicks,
     
     return send_file("created_instprm.instprm")
 
+# json upload dialog - moved to front panel
+
+# ADD DOWNLOAD .JSON
+
+#    State('upload-json','contents'),
+#    State('upload-json','filename'),
+
+#@app.callback(
+#    Output('default-json','children'),
+#    Input('upload-json','filename')
+#)
+#def show_json_name(filename):
+#
+#    if filename is None:
+#        return ""
+#
+#    else:
+#        return "Uploaded Files: " + ', '.join(filename)
+
+
 ### --- end file upload messages --- ###
 
 ### download csvs ###
@@ -720,19 +865,14 @@ def func(n_clicks):
 
 ### --- all other outputs --- ###
 @app.callback(
-    Output('plot-placeholder', 'children'),
-    Output('table-placeholder', 'children'),
-    Output('graph-placeholder', 'children'),
-    Output('phase-placeholder', 'children'),
-    Output('norm-int-placeholder', 'children'),
-    Output('dataset-placeholder', 'children'),
+    Output('intensity-plot-placeholder', 'children'),
+    Output('fit-theo-table-placeholder', 'children'),
+    Output('two-theta-diff-plot-placeholder', 'children'),
+    Output('interaction-vol-plot-phase-placeholder', 'children'),
+    Output('norm-int-plot-placeholder', 'children'),
+    Output('interaction-vol-plot-placeholder', 'children'),
     Output('store-calculations', 'data'),
     Output('submit-confirmation','children'),
-    Output('pf-uncert-fig','figure'),
-    Output('pf-uncert-table','data'),
-    Output('pf-uncert-table','columns'),
-    Output('param-table','data'),
-    Output('param-table','columns'),
     Output('u-int-fit-count-table','data'),
     Output('u-int-fit-count-table','columns'),
     Input('submit-button-state', 'n_clicks'),
@@ -742,9 +882,12 @@ def func(n_clicks):
     State('upload-data-instprm','filename'),
     State('upload-cif','contents'),
     State('upload-cif','filename'),
+    State('upload-json','contents'),
+    State('upload-json','filename'),
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
+    State('example08A-files-check','value'),
     State('inference-method','value'),
     State('number-mcmc-runs','value'),
     prevent_initial_call = True
@@ -753,7 +896,9 @@ def update_output(n_clicks,
                   xrdml_contents,xrdml_fnames,
                   instprm_contents,instprm_fname,
                   cif_contents,cif_fnames,
+                  csv_contents, json_fname,
                   use_default_files, use_example05_files, use_example06_files,
+                  use_example08A_files,
                   inference_method_value,
                   number_mcmc_runs):
     '''Callback for the "Begin Analysis" button, runs our expensive compute_results function
@@ -769,288 +914,91 @@ def update_output(n_clicks,
        use_default_files: checkbox to use example data 1
        use_example05_files: checkbox to use example data 5
        use_example06_files: checkbox to use example data 6
+       use_example08A_files: checkbox to use example data 8A
        inference_method_value: selection for statistical inference method
 
     Returns:
-        plot_dropdown: dropdown created for the raw and fit data graphs
-        table_dropdown: dropdown created for the norm_int table and phase_frac table
-        graph_dropdown: dropdown created for the difference in theo_int graph and phase_frac variation graph
-        norm_int_dropdown: dropdown for the variation in normalized intensity graph
-        master_dict: dictionary created to store data from compute_results
+        intensity_plot_dropdown: dropdown created for the raw and fit data graphs
+        fit_theo_table_dropdown: dropdown created for the norm_int table and phase_frac table
+        two_theta_diff_plot_dropdown: dropdown created for the difference in theo_int graph and phase_frac variation graph
+        norm_int_plot_dropdown: dropdown for the variation in normalized intensity graph
+        main_dict: dictionary created to store data from compute_results
         conf: return to show that app is done loading
 
     Raises:
        
     '''
+    pdi_res = compute_results.process_data_input(use_default_files,
+                                                 use_example05_files,
+                                                 use_example06_files,
+                                                 use_example08A_files,
+                                                 xrdml_contents,
+                                                 xrdml_fnames,
+                                                 instprm_contents,
+                                                 instprm_fname,
+                                                 cif_contents,
+                                                 cif_fnames,
+                                                 csv_contents,
+                                                 json_fname)
     
-    # point towards directory and upload data using GSASII
-    # Default data location
-    print(use_default_files)
+    datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, crystal_data = pdi_res
+    del(pdi_res)
 
-    if use_default_files not in [None, []] and use_default_files[0] == 1:
-        #datadir = '../server_default_datadir'
-        datadir = '../ExampleData/Example01'
-        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
-        workdir = '../server_workdir'
-        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
-        instprm_fname = 'TestCalibration.instprm'
-        
-    # Use Example05 data
-    #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
-    #? Maybe pass like the xrdml_fnames?
-    elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
-        datadir = '../ExampleData/Example05'
-        #datadir = '../ExampleData/Example01'
-        cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
-        workdir = '../server_workdir'
-        xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
-        instprm_fname = 'BrukerD8_E211110.instprm'
-
-    elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
-        datadir = '../ExampleData/Example06'
-        #datadir = '../ExampleData/Example01'
-        cif_fnames = ['alpha-prime-martensite-SRI.cif','epsilon-martensite-SRI.cif','austenite-SRI.cif']
-        workdir = '../server_workdir'
-        xrdml_fnames = ['Example06_simulation_generation_data.csv']
-        instprm_fname = 'BrukerD8_E211110.instprm'
-
-    #Stores user files in a directory
-    else:
-        datadir = '../server_datadir'
-        workdir = '../server_workdir'
-
-        # For each uploaded file, save (on the server)
-        # ensuring that the format matches what GSAS expects.
-
-        # first, read non-cif files
-
-        instprm_type, instprm_string = instprm_contents.split(',')
-
-        decoded = base64.b64decode(instprm_string)
-        f = open(datadir + '/' + instprm_fname,'w')
-        to_write = decoded.decode('utf-8')
-        if re.search('(instprm$)',instprm_fname) is not None:
-            to_write = re.sub('\\r','',to_write)
-        f.write(to_write)
-        f.close()
-        
-        # next, read the cif files
-        for i in range(len(cif_contents)):
-            contents = cif_contents[i]
-            fname = cif_fnames[i]
-
-            content_type, content_string = contents.split(',')
-
-            decoded = base64.b64decode(content_string)
-            f = open(datadir + '/' + fname,'w')
-            to_write = decoded.decode('utf-8')
-            to_write = re.sub('\\r','',to_write)
-            f.write(to_write)
-            f.close()
-        
-        for i in range(len(xrdml_contents)):
-            contents = xrdml_contents[i]
-            fname = xrdml_fnames[i]
-            
-            content_type, content_string = contents.split(',')
-
-            decoded = base64.b64decode(content_string)
-            f = open(datadir + '/' + fname,'w')
-            to_write = decoded.decode('utf-8')
-            to_write = re.sub('\\r','',to_write)
-            f.write(to_write)
-            f.close()
+    civ_res = compute_results.compute_interaction_volume(cif_fnames,datadir,instprm_fname)
+    scattering_dict = civ_res['scattering_dict']
+    atomic_masses = civ_res['atomic_masses']
+    elem_fractions = civ_res['elem_fractions']
+    cell_volumes = civ_res['cell_volumes']
+    cell_masses = civ_res['cell_masses']
+    del(civ_res)
     
-    results_table = {}
-    phase_frac = {}
-    two_thetas = {}
-    uncert = {}
-    ti_tables = {}
-    altered_results = {}
-    altered_phase = {}
-    altered_ti = {}
-    fit_points = {}
-    #create the above dicts to store data returned from compute_results
-    for x in range(len(xrdml_fnames)):
-        print("Compute results for file ",x)
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute_results.compute(datadir,workdir,xrdml_fnames[x],instprm_fname,cif_fnames,G2sc)
-        temp_string = 'Dataset: ' + str(x + 1)
-        results_df['sample_index'] = str(x + 1)
-        
-        #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
-        #some are duplicated because they needed to be converted in multiple ways
-        results_table[temp_string] = results_df
-        phase_frac[temp_string] = phase_frac_DF
-        two_thetas[temp_string] = two_theta.tolist()
-        ti_tables[temp_string] = tis
-        uncert[temp_string] = uncert_DF
-        altered_results[temp_string] = results_df
-        altered_phase[temp_string] = phase_frac_DF
-        altered_ti[temp_string] = tis
-        fit_points[temp_string] = fit_data
-        print("Finish results for file ",x)
-
-    # full results table
-    full_results_table = pd.concat(results_table,axis=0,ignore_index=True)
-    full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
-    full_results_table['u_int_fit_norm'] = full_results_table['u_int_fit']/full_results_table['R_calc']
-    full_results_table['u_int_count_norm'] = full_results_table['u_int_fit']/full_results_table['R_calc']
-    full_results_table = full_results_table.loc[:,['sample_index','Phase','u_int_count_norm','u_int_fit_norm']]
-    u_int_fit_count_table_data, u_int_fit_count_table_columns = compute_results.df_to_dict(full_results_table.round(6))
     
-    #have the option to run the interaction volume calcs for each dataset(assume they are the "same data"), default is no
-    print("Begin Interaction Volume")
-    scattering_dict = {}
-    atomic_masses = {}
-    elem_fractions = {}
-    cell_volumes = {}
-    cell_masses = {}
-    for x in range(len(cif_fnames)):
-#        print("Compute results for cif file ",x)
-        print("Compute results for cif file ",cif_fnames[x])
-        cif_path = os.path.join(datadir, cif_fnames[x])
-        instprm_path = os.path.join(datadir, instprm_fname)
-        
-        addon = False
-        elems = []
-        crystal_density = None
-        print("Begin Open files")
-        # Somewhat fragile to cif format and number of returns after line ending
-        with open(cif_path) as f:
-            lines = f.readlines()
-            for line in lines:
-                if len(line.split()) > 0:
-                    if line.split()[0] == '_cell_volume':
-                        cell_volumes[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
-                    if line.split()[0] == '_exptl_crystal_density_diffrn':
-                        crystal_density = float(line.split()[1])
-                if addon == True and len(line) > 1:
-                    elems.append(line)
-                if addon == True and len(line) <= 1:
-                    addon = False
-                #changed to string comparison as the syntax changed some
-                if 'symmetry_multiplicity' in line:
-                    addon = True
-        
-        print("Begin parameter files readin")
-        wavelengths = []
-        with open(instprm_path) as fi:
-            lines = fi.readlines()
-            for line in lines:
-                if line != '#GSAS-II instrument parameter file; do not add/delete items!':
-                    line_split = line.split(':')
-                    if line_split[0] == 'Lam1' or line_split[0] == 'Lam2' or line_split[0] == 'Lam':
-                        wavelengths.append(float(line_split[1].strip('\n')))
-        
-        print("Element Calculation")
-        elems_for_phase = []
-        elem_percentage = []
-        atoms_per_cell = None
-        
-        # Should throw an error message if the list is blank...
-        for elem in elems:
-            print("running element ", elem)
-            temp = elem.split()
-            elems_for_phase.append(temp[1])
-            elem_percentage.append(float(temp[5]))
-            atoms_per_cell = int(temp[8])
-            #print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
-        
-        print("Cell Volume Calculation")
-        cell_mass = 0.0
-        count = 0
-        for elem in elems_for_phase:
-            key = elem + '_'
-            elem_mass = atmdata.AtmBlens[key]['Mass']
-            cell_mass += elem_mass * elem_percentage[count]
-            atomic_masses[elem] = elem_mass
-            print("Element: ", elem,"\tMass: ",elem_mass)
-            count += 1
-        
-        cell_masses[cif_fnames[x]] = cell_mass
-        print(cell_mass, ' ', cell_masses)
-
-        print("Begin Cell Density")
-        cell_density = cell_mass/cell_volumes[cif_fnames[x]]
-        pack_fraction = crystal_density/cell_density
-        #print(cell_density,pack_fraction)
-        elem_details = interaction_vol.getFormFactors(elems_for_phase)
-        #print(elem_details)
-        scattering_nums = []
-        for elem in elem_details:
-            #print(elem)
-            scattering_nums.append(interaction_vol.findMu(elem, wavelengths, pack_fraction, cell_volumes[cif_fnames[x]])) #scattering nums has elem_sym, f', f'', and mu
-            #print(elem, scattering_nums)
-        
-        print("Begin Cell Scattering")
-        for elem in scattering_nums:
-            elem[1] = elem[1][0]
-            elem[2] = elem[2][0]
-            elem.append(atoms_per_cell)
-
-        scattering_dict[cif_fnames[x]] = scattering_nums
-        elem_fractions[cif_fnames[x]] = elem_percentage
-        
-    print("End Interaction Volume")
+    cpf_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
+    results_table = cpf_res['results_table']
+    phase_frac = cpf_res['phase_frac']
+    two_thetas = cpf_res['two_thetas']
+    uncert = cpf_res['uncert']
+    ti_tables = cpf_res['ti_tables']
+    altered_results = cpf_res['altered_results']
+    altered_phase = cpf_res['altered_phase']
+    altered_ti = cpf_res['altered_ti']
+    fit_points  = cpf_res['fit_points']
+    u_int_fit_count_table_data  = cpf_res['u_int_fit_count_table_data']
+    u_int_fit_count_table_columns  = cpf_res['u_int_fit_count_table_columns']
+    del(cpf_res)
     
-    peaks_dict = {}
-    for phase_name in cif_fnames:
-        peaks_dict[phase_name] = []
-        
-    print("Begin Results Table")
-    for row in results_table['Dataset: 1'].iterrows():
-        current_peak = []
-        current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
-        current_peak.append(row[1]['mul'])
-        current_peak.append(row[1]['pos_fit']/2)
-        final_FF = 0.0
-        for elem in scattering_dict[row[1]['Phase']]:
-            count = 0
-            FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
-            final_FF += FF * elem_fractions[row[1]['Phase']][count]
-            count += 1
-        current_peak.append(final_FF)
-        peaks_dict[row[1]['Phase']].append(current_peak)
+    
+    print("Begin Computing peaks_dict")
+    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions)
+    print("peaks_dict completed.")
 
     print("Before Summarized Phase Info")
+    graph_data_dict = compute_results.compute_summarized_phase_info(scattering_dict,elem_fractions,peaks_dict)
+    print("Summarized Phase Info Complete.")
 
-    summarized_phase_info = {}
-    for key, value in scattering_dict.items():
-        summarized_phase_info[key] = [0.0,0.0, 0.0]
-        current_fracs = elem_fractions[key]
-        for i in range(len(value)):
-            summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
-            summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
-            summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
-    
-    graph_data_dict = {}
-    for key, value in peaks_dict.items():
-        current_summarized_data = summarized_phase_info[key]
-        graph_data_dict[key] = []
-        for peak in value:
-            data_list = interaction_vol.create_graph_data(peak, current_summarized_data)
-            graph_data_dict[key].append(data_list)
-        #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
+    print("Computing crystallites illuminated...")
+    cci_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase_frac)
+    crystallites_dict = cci_res['crystallites_dict']
+    results_table = cci_res['results_table']
+    del(cci_res)
+    print("Computing crystallites illuminated complete.")
 
-    # run MCMC using full results
-    print("Before Inference Method")
-    
+    print("Running Inference...")
     if inference_method_value == 1:
-        stan_fit, unique_phases = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
-        pf_figure, pf_table, param_table = compute_uncertainties.generate_pf_plot_and_table(stan_fit,unique_phases,results_table)
-        pf_uncert_table, pf_uncert_table_columns = compute_results.df_to_dict(pf_table.round(4))
-        param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
+        fit_vi = False
+    
+    else:
+        fit_vi = True
 
-    elif inference_method_value == 2:
-        stan_fit, unique_phases = None, None
-        pf_figure = go.Figure()
-        pf_uncert_table, pf_uncert_table_columns, param_table_data, param_table_columns, param_table = None, None, None, None, None
-
-    print("After Inference Method")
+    mcmc_res = compute_results.run_mcmc(results_table,fit_vi,number_mcmc_runs)
+    mcmc_df = mcmc_res['mcmc_df']
+    param_table = mcmc_res['param_table']
+    del(mcmc_res)
+    print("Inference complete")
 
     with open('export_file.txt', 'w') as writer:
         writer.write('Phase Fraction Goes here')
-    
+
     # convert Dataframes to dictionaries, and save the table and cols in a tuple
     for key, value in results_table.items():
         intensity_tbl, tbl_columns = compute_results.df_to_dict(value.round(3))
@@ -1091,28 +1039,11 @@ def update_output(n_clicks,
         ti_tbl = value.to_dict('dict')
         altered_ti[key] = (ti_tbl, ti_col)
         
+    print("Getting mass and volume conversions...")
+    mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
+    print("Mass and volume conversions complete")
 
-    #calculate alternate phase fraction units
-    # pandas doesn't copy well
-    mass_conversion = phase_frac.copy()
-    volume_conversion = phase_frac.copy()
-    
-    #this needs to work for more than 2 phases, change to for loop
-    #find denominator first(normalize at the same time)
-
-    mass_denominator = 0
-    volume_denominator = 0
-
-    for dataset in mass_conversion:
-        for x in range(len(mass_conversion[dataset][0])):
-            mass_denominator += mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]
-            volume_denominator += (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']])
-
-        for x in range(len(mass_conversion[dataset][0])):
-            mass_conversion[dataset][0][x]['Phase_Fraction'] = (mass_conversion[dataset][0][x]['Phase_Fraction'] * cell_masses[mass_conversion[dataset][0][x]['Phase']]) / mass_denominator
-            volume_conversion[dataset][0][x]['Phase_Fraction'] = (volume_conversion[dataset][0][x]['Phase_Fraction'] * cell_volumes[volume_conversion[dataset][0][x]['Phase']]) / volume_denominator
-    
-    master_dict = {
+    main_dict = {
         'results_table':results_table,
         'phase_frac':phase_frac,
         'volume_conversion':volume_conversion,
@@ -1126,85 +1057,156 @@ def update_output(n_clicks,
         'fit_points':fit_points,
         'interaction_vol_data':graph_data_dict,
         'cell_masses':cell_masses,
-        'cell_volumes':cell_volumes
+        'cell_volumes':cell_volumes,
+        'cell_mass_vec':cell_mass_vec.tolist(),
+        'cell_volume_vec':cell_volume_vec.tolist(),
+        'mu_samps':mcmc_df.to_dict(orient='list'), # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
+        'param_table':param_table.to_dict(orient='list'),
+        'crystallites':crystallites_dict
     }
     
     #create html components to replace the placeholders in the app
-    plot_dropdown = html.Div([
-        'Please select a dataset to view',
+    #ORDER NEEDS TO MATCH ABOVE
+    
+    intensity_plot_dropdown = html.Div([
+        'Please select a dataset to view the intensity plot',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
-                    id = 'plot-dropdown',
+                    id = 'intensity-plot-dropdown',
                     value = 'Dataset: 1')
     ])
 
-    norm_int_dropdown = html.Div([
-        'Please select a dataset to view',
+    norm_int_plot_dropdown = html.Div([
+        'Please select a dataset to view the normailzed intensities plot',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
-                     id = 'norm-int-dropdown',
-                     value="Dataset: 1")
-    ])
-
-    dataset_dropdown = html.Div([
-        'Please select a dataset to view',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'dataset-dropdown',
+                     id = 'norm-int-plot-dropdown',
                      value='Dataset: 1')
     ])
 
-    table_dropdown = html.Div([
-        'Please select a dataset to view',
+    interaction_vol_plot_dropdown = html.Div([
+        'Please select a dataset to view the interaction volume',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'table-dropdown',
+                     id = 'interaction-vol-plot-dropdown',
                      value='Dataset: 1')
     ])
 
-    graph_dropdown = html.Div([
-        'Please select a dataset to view',
+    fit_theo_table_dropdown = html.Div([
+        'Please select a dataset to view the fit and theoretical intensities table',
         dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
-                     id = 'graph-dropdown',
+                     id = 'fit-theo-table-dropdown',
                      value='Dataset: 1')
     ])
 
-    phase_dropdown = html.Div([
-        'Please select a phase to view',
+    two_theta_diff_plot_dropdown = html.Div([
+        'Please select a dataset to view the difference between fit and theoretical two theta values',
+        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+                     id = 'two-theta-diff-plot-dropdown',
+                     value='Dataset: 1')
+    ])
+
+    interaction_vol_plot_phase_dropdown = html.Div([
+        'Please select a phase to view the interaction volume',
         dcc.Dropdown(options = [phase for phase in cif_fnames], 
-                     id = 'phase-dropdown',
+                     id = 'interaction-vol-plot-phase-dropdown',
                      value=' ')
     ])
 
     print("Submission complete. Navigate the above tabs to view results.")
     conf = "Submission complete. Navigate the above tabs to view results."
 
-    return (plot_dropdown,
-            table_dropdown,
-            graph_dropdown,
-            phase_dropdown,
-            norm_int_dropdown,
-            dataset_dropdown,
-            master_dict,
+    return (intensity_plot_dropdown,
+            fit_theo_table_dropdown,
+            two_theta_diff_plot_dropdown,
+            interaction_vol_plot_phase_dropdown,
+            norm_int_plot_dropdown,
+            interaction_vol_plot_dropdown,
+            main_dict,
             conf,
-            pf_figure,
-            pf_uncert_table,
-            pf_uncert_table_columns,
-            param_table_data,
-            param_table_columns,
             u_int_fit_count_table_data,
             u_int_fit_count_table_columns)
+
+
+@app.callback(
+    Output('pf-uncert-fig','figure'),
+    Output('pf-uncert-table','data'),
+    Output('pf-uncert-table','columns'),
+    Output('param-table','data'),
+    Output('param-table','columns'),
+    Input('store-calculations','data'),
+    Input('unit-dropdown','value'),
+    prevent_initial_call=True
+)
+def update_phase_fraction_plt_and_tbl(data,unit_value):
+    """
+
+    Creates Phase Fraction distribution plot and table with variable units
+    Parameters and Returns come from preceeding @app.callback statement
+    
+    Parameters:
+        data: data saved in dcc.Store from running compute_results
+        unit_value: drop down menu for phase fraction unit
+    
+    Returns:
+        | the following items
+        | **pf_uncert_fig** plot "Figure for Phase Fraction Uncertainty"
+            on tab "Phase Fraction"
+        | **pf_uncert_data** data used in "Table for Phase Fraction Uncertainty"
+            on tab "Phase Fraction"
+        | **pf_uncert_cols** column names used in "Table for Phase Fraction
+            Uncertainty" on tab "Phase Fraction"
+
+
+    """
+
+    if data is None:
+        return go.Figure(), [], []
+
+    # phase fraction figure
+    mu_samps = pd.DataFrame(data.get('mu_samps'))
+    m_vec = np.array(data.get('cell_mass_vec'))
+    v_vec = np.array(data.get('cell_volume_vec'))
+
+    print(m_vec)
+    print(v_vec)
+
+    param_table = pd.DataFrame(data.get('param_table'))
+    ncol = param_table.shape[1]
+
+    if unit_value == 'Number of Unit Cells':
+        pass
+
+    elif unit_value == 'Volume of Unit Cells':
+        mu_samps = compute_results.convert_mu_samps(mu_samps,v_vec)
+        param_table.iloc[:,1:3] = param_table.iloc[:,1:(ncol+1)].apply(lambda x: x*v_vec/sum(v_vec),axis=0)
+
+    elif(unit_value == 'Mass of Unit Cells'):
+        mu_samps = compute_results.convert_mu_samps(mu_samps,m_vec)
+        param_table.iloc[:,1:3] = param_table.iloc[:,1:(ncol + 1)].apply(lambda x: x*m_vec/sum(m_vec),axis=0)
+
+    table = data.get('results_table')
+    results_table = compute_uncertainties.concat_results_tables(table,from_records=True)
+    pf_uncert_fig = compute_uncertainties.generate_pf_plot(mu_samps,np.unique(results_table.Phase))
+
+    pf_table = compute_uncertainties.generate_pf_table(mcmc_df=mu_samps,unique_phase_names=np.unique(results_table.Phase))
+    pf_uncert_data, pf_uncert_cols = compute_results.df_to_dict(pf_table)
+
+    param_table_data, param_table_columns = compute_results.df_to_dict(param_table.round(5))
+
+    return pf_uncert_fig, pf_uncert_data, pf_uncert_cols, param_table_data, param_table_columns
+
+
 
 @app.callback(
     Output('intensity-plot', 'figure'),
     Output('fitted-intensity-plot', 'figure'),
-    Input('store-calculations', 'data'),
-    Input('plot-dropdown', 'value'),
+    Input('store-calculations', 'data'),  ## AC 3 Mar 2023- I don't see where this is
+    Input('intensity-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_figures(data, value):
-    
-    
+def update_intensity_plots(data, dataset_value):
     '''
     Args:
         data: data saved in dcc.Store from running compute_results
-        value: dataset selected from dropdown
+        dataset_value: dataset selected from dropdown
 
     Returns:
         raw_fig: raw data figure dynamically created in callback
@@ -1213,14 +1215,16 @@ def update_figures(data, value):
     Raises:
         
     '''
+    # Create empty plot if no data is provided
     if data is None:
         return go.Figure(), go.Figure()
 
-    fit_data = data.get('fit_points').get(value)
-    current_two_theta = data.get('two_thetas').get(value)
+    # Otherwise collect the data and extract it for plotting
+    fit_data = data.get('fit_points').get(dataset_value)
+    current_two_theta = data.get('two_thetas').get(dataset_value)
     
-    #option to select all datasets
-    if value == 'View all datasets':
+    # Option 1: to view all datasets
+    if dataset_value == 'View all datasets':
         created_raw = []
         created_fit = []
         for key, data_value in data.get('fit_points').items():
@@ -1243,19 +1247,22 @@ def update_figures(data, value):
         big_raw = go.Figure(raw_graph_data)
         big_fit = go.Figure(fit_graph_data)
         return big_raw, big_fit
+        
+    #Option 2: select a specific dataset from the dropdown
     else:
-        #select a specific dataset from the dropdown
-        fit_data = data.get('fit_points').get(value)
-        current_two_theta = data.get('two_thetas').get(value)
+        fit_data = data.get('fit_points').get(dataset_value)
+        current_two_theta = data.get('two_thetas').get(dataset_value)
 
         df = pd.DataFrame({
             "two_theta":current_two_theta,
             "intensity":fit_data[0]
         })
-
-        raw_fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-
-        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, value)
+        
+        # Plot of the raw data as a line profile
+        raw_fig = px.line(df,x='two_theta',y='intensity')
+        
+        # Plot of the fitted data as a line, raw data as points
+        fig_fit_hist = compute_results.create_fit_fig(current_two_theta, fit_data, dataset_value)
 
         return raw_fig, fig_fit_hist
 
@@ -1267,14 +1274,14 @@ def update_figures(data, value):
     Output('uncert-table','data'),
     Output('uncert-table','columns'),
     Input('store-calculations', 'data'),
-    Input('table-dropdown', 'value'),
+    Input('fit-theo-table-dropdown', 'value'),
     Input('unit-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_tables(data, value, unit_value):
 
     if data is None:
-        return [], [], [], [], [], []
+        return [], [], [], [], [], [], [], []
 
     """shuffle through tables using created dropdown
 
@@ -1300,6 +1307,7 @@ def update_tables(data, value, unit_value):
 
     frac_table = None
     frac_cols = None
+
     if(unit_value == 'Number of Unit Cells'):
         frac_table = data.get('phase_frac').get(value)[0]
         frac_cols = data.get('phase_frac').get(value)[1]
@@ -1312,10 +1320,12 @@ def update_tables(data, value, unit_value):
 
     return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
 
+
+
 @app.callback(
     Output('two_theta-plot','figure'),
     Input('store-calculations', 'data'),
-    Input('graph-dropdown', 'value'),
+    Input('two-theta-diff-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_graphs(data, value):
@@ -1351,7 +1361,7 @@ def update_graphs(data, value):
 @app.callback(
     Output('normalized-intensity-plot','figure'),
     Input('store-calculations', 'data'),
-    Input('norm-int-dropdown', 'value'),
+    Input('norm-int-plot-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_norm_int(data, value):
@@ -1414,11 +1424,20 @@ def update_norm_int(data, value):
 @app.callback(
     Output('peak-placeholder', 'children'),
     Input('store-calculations', 'data'),
-    Input('phase-dropdown', 'value'),
+    Input('interaction-vol-plot-phase-dropdown', 'value'),
     prevent_initial_call = True
 )
 def update_peak_dropdown(data, value):
+    '''
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        value: phase selected from dropdown
 
+    Returns:
+        peak_dropdown: the dropdown component to select each peak in the phase selected
+    Raises:
+        
+    '''
     if (data is None) or (data.get('interaction_vol_data').get(value) is None):
 
         peak_dropdown = html.Div([
@@ -1432,9 +1451,10 @@ def update_peak_dropdown(data, value):
 
     peaks = data.get('interaction_vol_data').get(value)
 
+
     peak_dropdown = html.Div([
         'Please select a peak to view',
-        dcc.Dropdown(options = [str(i + 1) for i in range(len(peaks))], 
+        dcc.Dropdown(options = [str(i+1) for i in range(len(peaks))],
                      id = 'peak-dropdown',
                      value='1')
     ])
@@ -1444,28 +1464,93 @@ def update_peak_dropdown(data, value):
 @app.callback(
     Output('centroid-plot', 'figure'),
     Output('interaction-depth-plot', 'figure'),
+    Output('crystallites-table', 'data'),
+    Output('crystallites-table', 'columns'),
     Input('store-calculations', 'data'),
-    Input('phase-dropdown', 'value'),
-    Input('table-dropdown', 'value'),
+    Input('interaction-vol-plot-dropdown', 'value'),
+    Input('interaction-vol-plot-phase-dropdown', 'value'),
+    Input('peak-dropdown', 'value'),
     prevent_initial_call = True
 )
-def update_interaction_vol_plot(data, phase_value, peak_value):
+def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
+    '''
+    Args:
+        data: data saved in dcc.Store from running compute_results
+        phase_value: phase selected from dropdown
+        peak_value: peak selected of current phase
 
+    Returns:
+        | the following items
+        | **centroid_plot** plot ""
+            on tab "Interaction Volume"  Plot of x-ray centroid into material
+        | **depth_plot** plot ""
+            on tab "Interaction Volume"
+        | **cryst_illuminated_data** data used in "" on tab "Interaction Volume"
+        | **cryst_illuminated_cols** column names used in "" on tab "Interaction Volume"
+
+    Raises:
+        
+    '''
     #return go.Figure(), go.Figure()
+    
+    #print("Interaction Volume Plot Update")
+    #print("Passed Parameters: ", dataset_value, phase_value, peak_value)
+    
+    #need to pick dataset
+    
     if (data is not None) and (data.get('interaction_vol_data').get(phase_value) is not None):
+        #print("In if loop")
         current_peak = data.get('interaction_vol_data').get(phase_value)[int(peak_value) - 1]
         df_endpoint = pd.DataFrame.from_dict(current_peak[0][0])
         df_midpoint = pd.DataFrame.from_dict(current_peak[1][0])
 
         #print(df_endpoint, df_midpoint)
-
+        
+        
+        
+        #ADD Particle size not hardcode 40
         centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
         depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
+        #breakpoint()
+        crystal_info = data.get('crystallites').get(phase_value)[int(peak_value)]
+        # check the order
+        placeholder_dict = {
+            'Number of Layers': [crystal_info[0]],
+            'Number Illuminated': [crystal_info[1]],
+            'Diffracting Fraction': [crystal_info[2]],
+            'Number Diffracting': [crystal_info[3]],
+            'Centroid of Z depth': current_peak[3]
+        }
         #return go.Figure(), depth_plot
-        return centroid_plot, depth_plot
-    else:
-        return go.Figure(), go.Figure()
+        
+        
+        # I don't know why making this into a dataframe works better...
+        placeholder_df=pd.DataFrame.from_dict(placeholder_dict)
+        cryst_illuminated_data, cryst_illuminated_cols=compute_results.df_to_dict(placeholder_df)
+        #breakpoint()
 
+        return centroid_plot, depth_plot, cryst_illuminated_data, cryst_illuminated_cols
+        #return go.Figure(), go.Figure(), cryst_illuminated_data, cryst_illuminated_cols
+    else:
+        #print("Returning empty plot")
+        return go.Figure(), go.Figure(), [], []
+
+@app.callback(
+    Output('download-json', 'data'),
+    Input('download-created-json', 'n_clicks'),
+    Input('beam-shape-in', 'value'),
+    Input('beam-size-in', 'value'),
+    Input('raster-x-in', 'value'),
+    Input('raster-y-in', 'value'),
+    Input('L-in', 'value'),
+    Input('W-F-in', 'value'),
+    Input('H-F-in', 'value'),
+    Input('H-R-in', 'value'),
+    prevent_initial_call = True
+)
+def create_json(n_clicks, beam_shape, beam_size, raster_x, raster_y, L, WF, HF, HR):
+
+    return None
 
 @app.callback(
     Output('download-full-report', 'data'),
@@ -1480,13 +1565,16 @@ def update_interaction_vol_plot(data, phase_value, peak_value):
     State('default-files-check','value'),
     State('example05-files-check','value'),
     State('example06-files-check','value'),
+    State('example08A-files-check','value'),
+    
     prevent_initial_call=True
 )
 def create_zip_report(data, n_clicks, 
                     xrdml_contents,xrdml_fnames,
                     instprm_contents,instprm_fname,
                     cif_contents,cif_fnames,
-                    use_default_files, use_example05_files, use_example06_files):
+                    use_default_files, use_example05_files,
+                    use_example06_files, use_example08A_files):
     """create and send a .zip file of a report with the calculated data 
     Args:
         data: data saved in dcc.Store from running compute_results
@@ -1513,6 +1601,8 @@ def create_zip_report(data, n_clicks,
     elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
         send_input=False
     elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
+        send_input=False
+    elif use_example08A_files not in [None, []] and use_example08A_files[0] == 1:
         send_input=False
     #make directory for each dataset
     for creation_key, dataset_value in data.get('results_table').items():

@@ -17,13 +17,17 @@ RUN bash /tmp/gsas2full-Latest-Linux-x86_64.sh -b -p ~/g2full
 
 # project folder
 RUN mkdir /root/AustCalc
-COPY ./ /root/AustCalc/
+COPY ./requirements.txt /root/AustCalc/requirements.txt
 RUN /root/g2full/bin/pip install -r /root/AustCalc/requirements.txt
-RUN ~/g2full/bin/python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
-
+RUN ~/g2full/bin/python3 -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+COPY ./ /root/AustCalc/
 
 WORKDIR /root/AustCalc/app/
 
 EXPOSE 8050
 
-CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"]
+# flask (for dev)
+# CMD ["/root/g2full/bin/python3","app.py"]
+
+# gunicorn (for prod)
+# CMD ["/root/g2full/bin/gunicorn","-w","1","-b", "0.0.0.0:8050","app:server"] 

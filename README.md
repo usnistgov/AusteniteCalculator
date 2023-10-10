@@ -84,6 +84,10 @@ CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/Aust
 CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/AusteniteCalculator/stan_files/multiple_samples
 ```
 
+#### 10 Oct 2023
+After MacOS update to Ventura, running `make build`, `make ... /one_sample`,
+ `make ... /multiplie_samples` completed successfully without `CXX` definitions.
+
 
 ### From a Docker Container
 
@@ -91,7 +95,7 @@ To run the application using Docker you will first need to install Docker (insta
 ```
 docker build -t austenite_calculator .
 ```
-This installs all necessary software (GSAS-II, python libraries, etc.) into a Unix environment.
+This installs all necessary software (GSAS-II, python libraries, etc.) into a containerized Unix environment.
 
 To run the container, run the following command:
 ```
@@ -107,7 +111,24 @@ If you wish to run the container again, note that you do not need to run `docker
 
 Alternatively, you can run, stop, and remove the container using the Docker Desktop application. For more instructions on using Docker, see the official guide [here](https://docs.docker.com/get-started/).
 
-Note that the port number is different between the local installation and the docker container
+#### Development Environment Inside Docker Container
+
+Developing in an environment that mimics the production environment has a number of advantages, namely ensuring the OS, Python package versions, and GSAS installation are identical to those in the production environment. Consequently, moving from local development to the production environment will be seemless, and we can avoid the "but it works on my machine" problem. To do this, one can use the following steps:
+
+1. Be sure that all `CMD` commands are commented out in the Dockerfile (we will run these manually so that we have access to the process and can read outputs from the Flask server).
+2. Spin up a container using the austenite calculator image with a bind mount to the local (outside of the running container) project directory (e.g., `~/projects/AusteniteCalculator`), using a command like the following:
+
+```
+docker run -p 8080:8050 -v ${pwd}:/root/AustCalc -it austenite_calculator /bin/bash
+```
+
+In addition to mapping the local files into the container, this comman gives the user a root access to a bash shell inside the Docker container. At this point, one can develop as if they were working locally, only the Python process is running in the container, in the production-like environment, instead of on the host OS. Changes made to files outside the container will be changed inside the container (and vice versa). To start the Flask (dev) server inside the container, run the following:
+
+```
+/root/g2full/bin/python3 app.py
+```
+
+This will start the Flask server, and the application should be visible at localhost:8080 (or whichever external port was chosen).
 
 #### GSAS-II Modification
 To get the goodness of fit and other parameters saved with the histogram, it's necessary to add additional result parameters to the **refine_peaks** subroutine in the GSASIIscriptable.py file.  Lines to add have the `>` symbol below.
