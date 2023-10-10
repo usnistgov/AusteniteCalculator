@@ -153,6 +153,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
             fit.fit_peaks(hist, peaks_list)
+            #fit.fit_peaks_Rowles(gpx, cif_fnames, Chebyschev_coeffiecients=5)
         # Currently the fit processes are a little different...
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
