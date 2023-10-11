@@ -435,31 +435,62 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
     """
     print("Fitting entire pattern\n")
     
-    ## Set background function
-    #gpx_R = G2sc.G2Project(newgpx=save_wrap('Rowlesfit.gpx'))
+    # Set for up to 10 refinement cycles
+    GSAS_projfile.set_Controls('cycles',10)
     
-    ## Load .cif files
+    #Read original lattice parameters
+
+    print("Histograms List: ")
+    for i in GSAS_projfile.histograms():
+        print("Histogram Name: ", i.name)
+
     print("Print phases")
-    print("Initial Phases: ", GSAS_projfile.histograms)
-    print("Stop print phases")
+    for i in GSAS_projfile.phases():
+        print("Phase Name: ", i.name)
     
-    print("Print cif files")
-    print(cif_files)
-#    for i in range(len(cif_files)):
-#        hist.add_phase((cif_files[i] + '.gpx'),proj.histograms())
-#
-    print("Phases Added: ", GSAS_projfile.phases())
+    print("Link phases")
+    for histogram in GSAS_projfile.histograms():
+        for phase in GSAS_projfile.phases():
+            GSAS_projfile.link_histogram_phase(histogram, phase)
+
+    # Tried to do these
     
+    background_refine={'set': {"Background": {"no. coeffs": Chebyschev_coeffiecients,
+                                     'type': 'chebyschev-1', 'refine': True}}}
+                                  
+    cellscale_refine={'set': {"Background": {'refine': False}},
+                      'set': { "LeBail": True,"Cell": True, "Instrument Parameters": ["Zero"] }}
+ 
+    strain_refine={'set': { "LeBail": False,"Cell": False, "Instrument Parameters": ["Zero"] },
+                      'set':{ "Mustrain": { "type": "isotropic", "refine": True}} }
     
-    #### STILL NOT WORKING #### PHASES NOT ADDED TO HISTOGRAM
-    ## MAYBE HAP RELATED?
-    # https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#sequential-refinement
+    # size refinement still has strain active, and these are highly correlated
+    size_refine={'set':{ "Mustrain": { "type": "isotropic", "refine": False}},
+                 'set': { "Size": { "type": "isotropic","refine": True}} }
+ 
+
+##       Sample Parameters don't seem the same in GUI and script...
+##       Try adjusting zero error instead
+##        {'set': { "Sample Parameters": ["DisplaceY"]}},
+#        {'set': { "Instrument Parameters": ["Zero"]}},
+##        {"set": { "Instrument Parameters": ["U", "V", "W", "X", "Y"]}},
+#        {"set": { "Mustrain": { "type": "isotropic",
+#                                "refine": True,}}},
+#        {"set": { "Size": { "type": "isotropic",
+#                                "refine": True,}}},
+#        # Should also set thermal paramters ('U', but need to do for each atom)
+#                                ]
+#        
+    GSAS_projfile.do_refinements([background_refine,cellscale_refine,
+                                strain_refine ])
     
-    pardict = {'set': {'Background': {"no. coeffs": Chebyschev_coeffiecients,
-                                     'type': 'chebyschev-1', 'refine': True
-                                  }}}
-    GSAS_projfile.set_refinement(pardict)
-    
+    print("Histograms data: ")
+    for i in GSAS_projfile.histograms():
+        print("Histogram data: ", i.data)
+        
+    print("Phase data: ")
+    for i in GSAS_projfile.phases():
+        print("Phase data: ", i.data)
     
     
 #    for p in GSAS_projfile.phases():
@@ -484,7 +515,6 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
 #    GSAS_projfile.set_Controls('sequential',GSAS_projfile.histograms())
 #    GSAS_projfile.set_Controls('cycles',10)
 #    GSAS_projfile.set_Controls('seqCopy',True)
-    GSAS_projfile.refine()
     
     ## Refine steps listed above
     ## https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#refinement-recipe
@@ -498,49 +528,7 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
     
     ## Save new peak_list
     
-#    print("Fitting individual peaks\n")
-#    # Set up background refinement
-#    #? Also maybe belongs in a function
-#    #? How to adjust the number of background parameters (currently 5)
-#    hist.set_refinements({'Background': {"no. coeffs": Chebyschev_coeffiecients,'type': 'chebyschev-1', 'refine': True}})
-#    hist.refine_peaks()
-#
-#    # Fit all of the peaks in the peak list
-#    for peak in peaks_list:
-#        hist.add_peak(1, ttheta=peak)
-#
-#    # Use this order (based on Vulcan process)
-#    #? otherwise fitting gets unstable
-#    #? How to make the fitting more stable?
-#    #? Often get fits in the wrong location.  Use fit data to estimate a0 and recycle?
-#    #? What to do when signal to noise is poor?  Ways to use good fits to bound parameters for poor fits?
-#
-#    # First fit only the area
-#    hist.set_peakFlags(area=True)
-#    hist.refine_peaks()
-#
-#    # Second, fit the area and position
-#    hist.set_peakFlags(pos=True,area=True)
-#    hist.refine_peaks()
-#
-#    # Third, fit the area, position, and gaussian (sig) component of the width
-#    hist.set_peakFlags(pos=True,area=True,sig=True)
-#    hist.refine_peaks()
-#
-#    # Fourth, fit the area, position, and lortenzian (gam) component of the width, while holding the prior sigma value
-#    hist.set_peakFlags(pos=True,area=True,sig=False,gam=True)
-#    hist.refine_peaks(mode = 'hold')
-#
-#    # Fifth, fit the area, position, and gaussian (sig) component of the width again, while holding the prior gam value
-#    # otherwise large peaks are missing intensity...
-#    hist.set_peakFlags(pos=True,area=True,sig=True,gam=False)
-#    hist.refine_peaks(mode = 'hold')
-#
-#    # Additional cycles seem to just bounce between values. Ending with a sig fit seems to help get the larger peaks.
-#
-#    # Fit the area, position, gaussian (sig) and lortenzian (gam) component simultaneously
-#    # Still tends to be unstable since sig and gam are highly correlate...
-#    #hist.set_peakFlags(pos=True,area=True,sig=True, gam=True)
-#    #hist.refine_peaks()
+    # Just like in Theoretical Intensities, use Fcsq*Icorr for R
+
 
     print(" \n\n End of Rowles \n\n")
