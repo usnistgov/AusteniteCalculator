@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import math
+from compute_results import flag_phase_fraction
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     """Subroutine to fit data using LeBail fitting
@@ -400,7 +401,7 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     return verify_list
 
 
-def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
+def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecients=5):
     """Subroutine to fit data using LeBail fitting
     Uses suggested order from Matthew Rowles (model 3), arXiv:2008.11046v4
     Also uses full pattern fitting for lattice parameters
@@ -427,7 +428,7 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
         GSAS_projfile: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
+        DF_flags: notes to the users
     Returns:
 
     Raises:
@@ -440,21 +441,32 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
     
     #Read original lattice parameters
 
-    print("Histograms List: ")
-    for i in GSAS_projfile.histograms():
-        print("Histogram Name: ", i.name)
+#    print("Histograms List: ")
+#    for i in GSAS_projfile.histograms():
+#        print("Histogram Name: ", i.name)
 
-    print("Print phases")
+    original_lattice=[]
+    #print("Print phases")
     for i in GSAS_projfile.phases():
-        print("Phase Name: ", i.name)
+        #print("Phase Name: ", i.name)
+        #print("Unit Cell: ", i.data.keys())
+        #print("Unit Cell: ", i.data["General"]["Cell"][1])
+        original_lattice.append(i.data["General"]["Cell"][1])
+        #print("Unit Cell Volume: ", i.data["General"]["Cell"][7])
     
-    print("Link phases")
+    #print("Link phases")
     for histogram in GSAS_projfile.histograms():
         for phase in GSAS_projfile.phases():
             GSAS_projfile.link_histogram_phase(histogram, phase)
-
-    # Tried to do these
     
+    ## Refine steps listed above
+    ## https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#refinement-recipe
+    ## REMEMBER to turn the refinement off between steps!
+    # Tried to do these as individual refinements, but didn't work as well.
+
+##       Sample Parameters don't seem the same in GUI and script...
+##       Try adjusting zero error instead
+
     background_refine={'set': {"Background": {"no. coeffs": Chebyschev_coeffiecients,
                                      'type': 'chebyschev-1', 'refine': True}}}
                                   
@@ -469,62 +481,34 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
                  'set': { "Size": { "type": "isotropic","refine": True}} }
  
 
-##       Sample Parameters don't seem the same in GUI and script...
-##       Try adjusting zero error instead
-##        {'set': { "Sample Parameters": ["DisplaceY"]}},
-#        {'set': { "Instrument Parameters": ["Zero"]}},
-##        {"set": { "Instrument Parameters": ["U", "V", "W", "X", "Y"]}},
-#        {"set": { "Mustrain": { "type": "isotropic",
-#                                "refine": True,}}},
-#        {"set": { "Size": { "type": "isotropic",
-#                                "refine": True,}}},
-#        # Should also set thermal paramters ('U', but need to do for each atom)
-#                                ]
-#        
+
+
     GSAS_projfile.do_refinements([background_refine,cellscale_refine,
                                 strain_refine ])
     
     print("Histograms data: ")
     for i in GSAS_projfile.histograms():
         print("Histogram data: ", i.data)
-        
-    print("Phase data: ")
+        print("Reflection List data: ", i.data.keys())
+        for phase in GSAS_projfile.phases():
+            print("\n\nReflection List data: ", i.data["Reflection Lists"][phase.name]["RefList"])
+
+    fit_lattice=[]
+
+    #print("Phase data: ")
     for i in GSAS_projfile.phases():
-        print("Phase data: ", i.data)
+        #print("Phase data: ", i.data)
+         #print("Unit Cell: ", i.data.keys())
+        fit_lattice.append(i.data["General"]["Cell"][1])
+        #print("Unit Cell: ", i.data["General"]["Cell"][1])
+        #print("Unit Cell Volume: ", i.data["General"]["Cell"][7])
     
-    
-#    for p in GSAS_projfile.phases():
-#        p.set_refinements({"Cell": False})
-#    GSAS_projfile.phase(0).set_HAP_refinements(
-#        {'Scale': False,
-#        "Size": {'type':'isotropic', 'refine': False},
-#        "Mustrain": {'type':'uniaxial', 'refine': False},
-#        "HStrain":True,})
-#    GSAS_projfile.phase(1).set_HAP_refinements({'Scale': False})
-#    GSAS_projfile.histogram(0).clear_refinements({'Background':False,
-#                 'Sample Parameters':['DisplaceX'],})
-#    GSAS_projfile.histogram(0).ref_back_peak(0,[])
-#    GSAS_projfile.phase(1).set_HAP_refinements({"HStrain":(1,1,1,0)})
-#    for fil in sorted(glob.glob(PathWrap('*.fxye'))): # load in remaining fxye files
-#        if '00' in fil: continue
-#        GSAS_projfile.add_powder_histogram(fil, PathWrap('OH_00.prm'), fmthint="GSAS powder",phases='all')
-#    # copy HAP values, background, instrument params. & limits, not sample params.
-#    GSAS_projfile.copyHistParms(0,'all',['b','i','l'])
-#    for p in GSAS_projfile.phases(): p.copyHAPvalues(0,'all')
-#    # setup and launch sequential fit
-#    GSAS_projfile.set_Controls('sequential',GSAS_projfile.histograms())
-#    GSAS_projfile.set_Controls('cycles',10)
-#    GSAS_projfile.set_Controls('seqCopy',True)
-    
-    ## Refine steps listed above
-    ## https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#refinement-recipe
-    ## REMEMBER to turn the refinement off between steps!
-    
-#    pardict =   {'once': {'Background': {"no. coeffs": Chebyschev_coeffiecients,'type': 'chebyschev-1', 'refine': True}},
-#                'once': { 'Sample Parameters': ["DisplaceX"]}},
-                   
-#           }
-#    gpx.set_refinement(pardict)
+    # Flags
+    print("Change in lattice parameters")
+    print(original_lattice,fit_lattice)
+    for n, phase in enumerate(GSAS_projfile.phases()):
+        DF_flags=flag_phase_fraction(np.nan,"Lattice Spacing","Original Lattice Value: "+"{:.7f}".format(original_lattice[n])+"\t Fitted Lattice Value: "+"{:.7f}".format(fit_lattice[n])+" for phase: "+phase.name, "Check lattice spacing in .cif files", DF_to_append=DF_flags)
+
     
     ## Save new peak_list
     
@@ -532,3 +516,4 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, Chebyschev_coeffiecients=5):
 
 
     print(" \n\n End of Rowles \n\n")
+    return(GSAS_projfile)

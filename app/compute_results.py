@@ -149,19 +149,26 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     t_int = 0
     t_pos = 0
 
+    # Currently the fit processes are a little different...
     while not (peaks_ok):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
             #fit.fit_peaks(hist, peaks_list)
-            fit.fit_peaks_Rowles(gpx, cif_fnames, Chebyschev_coeffiecients=5)
-        # Currently the fit processes are a little different...
-        elif(fit_attempts == 1):
-            fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            # Probably should be outside the "Series of Individual Peaks" title?
+            Rowles_proj=fit.fit_peaks_Rowles(gpx, cif_fnames, DF_flags_for_user, Chebyschev_coeffiecients=5)
+            fit_type="LeBail"
+        if(fit_attempts == 1):
+            fit.fit_peaks(hist, peaks_list)
+            fit_type="PeakFit"
         elif(fit_attempts == 2):
-            fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
+            fit_type="PeakFit"
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
         elif(fit_attempts == 3):
+            fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
+            fit_type="PeakFit"
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+        elif(fit_attempts == 4):
             holding_sig = False
             holding_gam = True
             for x in range(6):
@@ -174,6 +181,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
                         fit.fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify)
                         holding_sig = False
                         holding_gam = True
+                    fit_type="PeakFit"
             t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
             t_sigma = t_peaks.iloc[:,4]
             t_gamma = t_peaks.iloc[:,6]
@@ -181,11 +189,43 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
             t_pos = t_peaks.iloc[:,0]
             peak_verify = fit.create_verify_list(t_pos, t_int, t_sigma, t_gamma)
 
-        t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
-        t_sigma = t_peaks.iloc[:,4]
-        t_gamma = t_peaks.iloc[:,6]
-        t_int = t_peaks.iloc[:,2]
-        t_pos = t_peaks.iloc[:,0]
+        if fit_type=="LeBail":
+            t_peaks = {}
+            #hist=Rowles_proj.histograms()[0]
+            for histogram in Rowles_proj.histograms():
+                for n, phase in enumerate(Rowles_proj.phases()):
+                    #print("\n\nReflection List data: ", histogram.data["Reflection Lists"][phase.name]["RefList"])
+                    #print(n)
+                    t_peaks[phase.name] = pd.DataFrame(histogram.data["Reflection Lists"][phase.name]["RefList"])
+
+            t_peaks = pd.concat(list(t_peaks.values()),axis=0,ignore_index=True)
+            # Need to convert to strings to use the column to sort by
+
+            t_peaks.columns = t_peaks.columns.values.astype(str)
+            t_peaks = t_peaks.sort_values(by='5')
+            t_peaks = t_peaks.reset_index(drop=True)
+            
+            # Intensity in Reflections lists is similar to theoretical intensities
+            # column 5 - position
+            # column 6 - sigma
+            # column 7 - gamma
+            # column 9 - Fcsq
+            # column 11 - Icorr
+            t_peaks["intensity"]= t_peaks['9']*t_peaks['11']
+            print(t_peaks)
+            t_sigma = t_peaks['6']
+            t_gamma = t_peaks['7']
+            t_int = t_peaks["intensity"]
+            t_pos = t_peaks['5']
+        elif fit_type=="PeakFit":
+            t_peaks = pd.DataFrame(hist.data['RefList']['peaks'])
+            t_sigma = t_peaks.iloc[:,4]
+            t_gamma = t_peaks.iloc[:,6]
+            t_int = t_peaks.iloc[:,2]
+            t_pos = t_peaks.iloc[:,0]
+        else:
+            # Add error message
+            print("fit_type Error")
 
         peak_verify = fit.create_verify_list(t_pos, t_int, t_sigma, t_gamma)
 
