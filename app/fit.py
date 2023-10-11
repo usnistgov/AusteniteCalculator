@@ -3,7 +3,8 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import math
-from compute_results import flag_phase_fraction
+#from compute_results import flag_phase_fraction
+import compute_results
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     """Subroutine to fit data using LeBail fitting
@@ -507,7 +508,7 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecient
     print("Change in lattice parameters")
     print(original_lattice,fit_lattice)
     for n, phase in enumerate(GSAS_projfile.phases()):
-        DF_flags=flag_phase_fraction(np.nan,"Lattice Spacing","Original Lattice Value: "+"{:.7f}".format(original_lattice[n])+"\t Fitted Lattice Value: "+"{:.7f}".format(fit_lattice[n])+" for phase: "+phase.name, "Check lattice spacing in .cif files", DF_to_append=DF_flags)
+        DF_flags=compute_results.flag_phase_fraction(np.nan,"Lattice Spacing","Original Lattice Value: "+"{:.7f}".format(original_lattice[n])+"\t Fitted Lattice Value: "+"{:.7f}".format(fit_lattice[n])+" for phase: "+phase.name, "Check lattice spacing in .cif files", DF_to_append=DF_flags)
 
     
     ## Save new peak_list
@@ -516,4 +517,4 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecient
 
 
     print(" \n\n End of Rowles \n\n")
-    return(GSAS_projfile)
+    return(GSAS_projfile, DF_flags)

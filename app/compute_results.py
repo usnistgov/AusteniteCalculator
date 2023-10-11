@@ -155,7 +155,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         if(fit_attempts == 0):
             #fit.fit_peaks(hist, peaks_list)
             # Probably should be outside the "Series of Individual Peaks" title?
-            Rowles_proj=fit.fit_peaks_Rowles(gpx, cif_fnames, DF_flags_for_user, Chebyschev_coeffiecients=5)
+            Rowles_proj, DF_flags_for_user=fit.fit_peaks_Rowles(gpx, cif_fnames, DF_flags_for_user, Chebyschev_coeffiecients=5)
             fit_type="LeBail"
         if(fit_attempts == 1):
             fit.fit_peaks(hist, peaks_list)
@@ -218,7 +218,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
             t_int = t_peaks["intensity"]
             t_pos = t_peaks['5']
         elif fit_type=="PeakFit":
-            t_peaks = pd.DataFrame(hist.data['RefList']['peaks'])
+            t_peaks = pd.DataFrame(hist.data['Peak List']['peaks'])
             t_sigma = t_peaks.iloc[:,4]
             t_gamma = t_peaks.iloc[:,6]
             t_int = t_peaks.iloc[:,2]
@@ -273,9 +273,22 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
 
     # Extract information from the peak fits.
     #? Similarly, sort here seems like a fragile way to align the data.
-    DF_merged_fit_theo = pd.DataFrame(hist.data['Peak List']['peaks'])
-    DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
-    DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
+    
+    #Puzzled why we had recopied things before...
+    DF_merged_fit_theo = t_peaks.copy(deep=True)
+
+    if fit_type=="LeBail":
+
+        DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[5,15,6,7]]
+        DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
+    
+    elif fit_type=="PeakFit":
+        DF_merged_fit_theo = DF_merged_fit_theo.iloc[:,[0,2,4,6]]
+        DF_merged_fit_theo.columns = ['pos_fit','int_fit','sig_fit','gam_fit']
+    else:
+        # Add error message
+        print("fit_type Error")
+
     
     DF_merged_fit_theo["Peak_Fit_Success"]= peak_verify
     DF_merged_fit_theo["Peak_Fit_Success"] = DF_merged_fit_theo["Peak_Fit_Success"].astype('bool')
@@ -283,18 +296,38 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     ##### Extract uncertainties from the fitting process
     u_pos_fit_list=[]
     u_int_fit_list=[]
-    for i in list(range(len(DF_merged_fit_theo.index))):
-        u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
-        u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
 
-    DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
-    DF_merged_fit_theo['u_int_fit']=u_int_fit_list
+    # Not as clear where uncertainties can be pulled from for LeBail fitting
+    if fit_type=="LeBail":
+        DF_merged_fit_theo['u_int_fit']=(DF_merged_fit_theo['int_fit'])**0.5
+        #Set to zero for now.  Maybe should use the lattice uncertinty?
+        DF_merged_fit_theo['u_pos_fit']=0
+        
+    elif fit_type=="PeakFit":
+        for i in list(range(len(DF_merged_fit_theo.index))):
+            u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
+            u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
+            DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
+            DF_merged_fit_theo['u_int_fit']=u_int_fit_list
+    else:
+        # Add error message
+        print("fit_type Error")
+
+
 
     ##### calculate uncertainty based on counting statistics (square root of counts for Poisson process)
-    DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
+
+    if fit_type=="LeBail":
+        #Set to zero for now.  Maybe should use the lattice uncertinty?
+        DF_merged_fit_theo['u_int_count']=0
+    elif fit_type=="PeakFit":
+        DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
+        # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
+        DF_merged_fit_theo['u_int_count']=(DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])
+    else:
+        # Add error message
+        print("fit_type Error")    
     
-    # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
-    DF_merged_fit_theo['u_int_count']=(DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])**0.5
     
     #DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
 
