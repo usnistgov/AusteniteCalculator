@@ -1395,6 +1395,8 @@ def process_uploaded_data(xrdml_contents,
         f.write(to_write)
         f.close()
 
+    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
+
 def process_data_input(use_default_files,
                        use_example05_files,
                        use_example06_files,
