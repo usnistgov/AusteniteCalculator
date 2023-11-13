@@ -84,6 +84,10 @@ CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/Aust
 CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/AusteniteCalculator/stan_files/multiple_samples
 ```
 
+#### 10 Oct 2023
+After MacOS update to Ventura, running `make build`, `make ... /one_sample`,
+ `make ... /multiplie_samples` completed successfully without `CXX` definitions.
+
 
 ### From a Docker Container
 

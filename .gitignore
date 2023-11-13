@@ -13,7 +13,6 @@ ExampleScripts/cif_composition_simulations.ipynb
 *.pyc
 *.bak*
 *.lst
-*.hpp
 app/GenerateJson.py
 app/sample.json
 app/sample2.json
