@@ -25,3 +25,5 @@ ExampleData/Example05/Diagnostic/*
 ExampleData/Example07A/Diagnostic/*
 stan_files/.*exe
 stan_files/.*hpp
+stan_files/multiple_samples-*
+stan_files/one_sample-*
