@@ -94,6 +94,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         'u_cryst_diff':indata.u_cryst_diff,
         'phases':indata.Phase,
         'two_th':indata.two_theta,
+        'IR':indata.n_int,
         'sample_id':indata.sample_id
     })
 
@@ -105,7 +106,8 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
 
     # compute normalized intensities
-    mydf['IR'] = mydf.I / mydf.R
+    #mydf['IR'] = mydf.I / mydf.R
+    # not sure if we should use texture corrected values or not
     mydf['sig_IR'] = mydf['sigma_I']/mydf.R
 
     # compute prior scales
