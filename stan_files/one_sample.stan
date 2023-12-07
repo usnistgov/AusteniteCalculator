@@ -2,7 +2,7 @@ data {
     int<lower=0> N;
     int<lower=0> N_phases;
     vector<lower=0>[N] Y;
-    int phase[N];
+    array[N] int phase;
     real<lower=0> prior_scale;
     real<lower=0> prior_exp_scale;
     vector<lower=0>[N_phases] prior_location;

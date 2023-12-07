@@ -6,172 +6,8 @@ import plotly.express as px
 from scipy.stats import truncnorm
 from cmdstanpy import CmdStanModel
 import sys
-
-def gen_mu_sigma(x,n_draws):
     
-    """
-    *ADD*
     
-    Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
-    
-    Returns:
-        | *ADD*
-        |
-        
-    Raises:
-
-    
-    """
-    
-    # p(mu,simga) \prop_to 1/sigma OR uniform prior on mu, log(sigma)
-    # BDA pg: 66
-
-    # input: x is a 1d array object
-    # returns: posterior samples of mu and sigma in a dictionary
-    
-    x_var = np.var(x)
-    n_x = x.shape[0]
-    v = n_x-1
-    tau2 = x_var
-    
-    sigma2 = invgamma.rvs(a=v/2,scale=v*tau2/2,size=n_draws)
-    mu = t.rvs(df=n_x-1, loc=np.mean(x), scale=np.sqrt(x_var/n_x), size=n_draws)
-    
-    return {'mu':mu, 'sigma2':sigma2}
-    
-def get_posterior_samples_cp(I,R,sigma_I,phases,n_draws):
-
-    """
-    *ADD*
-    
-    Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
-    
-    Returns:
-        | *ADD*
-        |
-        
-    Raises:
-
-    
-    """
-
-    I = np.array(I)
-    R = np.array(R)
-    sigma_I = np.array(sigma_I)
-    phases = np.array(phases)
-
-    Z = I/R
-    unique_phase_names = np.unique(phases)
-
-    res_dict = {}
-
-    for ii in range(len(unique_phase_names)):
-
-        res_dict[unique_phase_names[ii]] = gen_mu_sigma(Z[phases==unique_phase_names[ii]],n_draws)
-
-    return res_dict
-
-def run_paul_mandel(results_table):
-
-    """
-    *ADD*
-    
-    Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
-    
-    Returns:
-        | *ADD*
-        |
-        
-    Raises:
-
-    
-    """
-
-    intables = list(results_table.values())
-
-    # create numeric sample ids
-    for ii, val in enumerate(intables): 
-        intables[ii] = intables[ii].loc[intables[ii]['Peak_Fit_Success'],:]
-        intables[ii]['sample_id'] = ii+1
-
-    indata = pd.concat(intables,axis=0).reset_index(drop=True)
-
-    mydf = pd.DataFrame({
-        'I':indata.int_fit,
-        'R':indata.R_calc,
-        'sigma_I':indata.u_int_fit,
-        'phases':indata.Phase,
-        'two_th':indata.two_theta,
-        'sample_id':indata.sample_id
-    })
-
-
-    # create numeric phase id's
-    mydf['phase_id'] = 0
-    unique_phases = np.unique(mydf.phases)
-
-    for ii, pn in enumerate(unique_phases):
-        mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
-
-    # compute normalized intensities
-    mydf['IR'] = mydf.I / mydf.R
-    mydf['sig_IR'] = mydf['sigma_I']/mydf.R
-    # unceratinty from fitting and from poisson noise
-    # the sqrt(x)**2 is redundant but shows thought process
-    sigma_Z = np.sqrt(sigma_I**2 + np.sqrt(I)**2)/R 
-    unique_phase_names = np.unique(phase_names)
-
-    summary_table = pd.DataFrame({
-        'phase':unique_phase_names,
-        'PF_Est':np.zeros(len(unique_phase_names)),
-        'PF_L95':np.zeros(len(unique_phase_names)),
-        'PF_U95':np.zeros(len(unique_phase_names)),
-        'tau_est':np.zeros(len(unique_phase_names)),
-        'med_sigma_Z_fit':np.zeros(len(unique_phase_names)),
-        'med_sigma_Z_count':np.zeros(len(unique_phase_names))
-    })
-
-    tau_ests = np.zeros(len(unique_phase_names))
-
-    mu_dfs = [None]*len(unique_phase_names) # list of dataframes 
-    mu_samps_acc = np.zeros(n_draws) # accumulating sum for later normalization
-
-    for ii in range(len(unique_phase_names)):
-
-        inds = phases==unique_phase_names[ii]
-        res = combine_effects(Z[inds],sigma_Z[inds]**2,method_re='iterated').summary_frame()
-        # simulate samples from approximate 'posterior'
-        mu_samps = truncnorm.rvs(0, np.Inf,loc=res.loc['random effect','eff'],scale=res.loc['random effect','sd_eff'], size=n_draws)
-        mu_dfs[ii] = pd.DataFrame({
-            'which_phase':unique_phase_names[ii],
-            'value':mu_samps
-        })
-        mu_samps_acc = mu_samps_acc + mu_samps
-
-        tau_ests[ii], c = _fit_tau_iterative(Z[inds],sigma_Z[inds]**2)
-        summary_table.loc[summary_table.phase == unique_phase_names[ii],'tau_est'] = np.sqrt(tau_ests[ii])
-        summary_table.loc[summary_table.phase == unique_phase_names[ii],'med_sigma_Z_fit'] = np.median(sigma_I[inds]/R[inds])
-        summary_table.loc[summary_table.phase == unique_phase_names[ii],'med_sigma_Z_count'] = np.median(np.sqrt(I[inds])/R[inds])
-
-    for ii in range(len(unique_phase_names)):
-        mu_dfs[ii]['value'] = mu_dfs[ii]['value'] / mu_samps_acc
-        quantiles = np.quantile(mu_dfs[ii]['value'],[.5,.025,.975])
-        summary_table.loc[summary_table['phase'] == unique_phase_names[ii],['PF_Est','PF_L95','PF_U95']] = quantiles
-
-    summary_table = pd.DataFrame(summary_table)
-    
-    return {'mu_df':mu_dfs,
-            'unique_phase_names':unique_phase_names,
-            'summary_table':summary_table}
 
 def get_unique_phases(results_table):
 
@@ -656,9 +492,9 @@ def generate_pf_table(mcmc_df,unique_phase_names):
     # table to store phase fraction estimates and 95% credible intervals
     pf_table = pd.DataFrame({
         'Phase':unique_phase_names,
-        'Phase Fraction Estimate':0,
-        'Phase Fraction (Lower 95%)':0,
-        'Phase Fraction (Upper 95%)':0
+        'Phase Fraction Estimate':0.0,
+        'Phase Fraction (Lower 95%)':0.0,
+        'Phase Fraction (Upper 95%)':0.0
     })
 
     for ii,ph in enumerate(unique_phase_names):
@@ -700,14 +536,14 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
     # table to hold parameter estimates for sources of uncertainty
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
-        'Experimental Error Variability':[0]*n_phase,
-        'X-ray Count Variability':[0]*n_phase,
-        'Parameter Fit Variability':[0]*n_phase,
-        'Crystallites Diffracted Variability':[0]*n_phase
+        'Experimental Error Variability':np.zeros(n_phase),
+        'X-ray Count Variability':np.zeros(n_phase),
+        'Parameter Fit Variability':np.zeros(n_phase),
+        'Crystallites Diffracted Variability':np.zeros(n_phase)
     })
 
     if multiple_samples:
-        param_table['Sample Variability'] = [0]*n_phase
+        param_table['Sample Variability'] = np.zeros(n_phase)
 
     results_table = results_table.loc[results_table['Peak_Fit_Success'],:]
 
