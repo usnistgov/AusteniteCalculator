@@ -63,6 +63,7 @@ elif re.search('creuzige',os.getcwd()):
 import GSASIIscriptable as G2sc
 import GSASIIpath
 
+# Use a specific version of GSAS-II for consistency
 try:
     GSASIIpath.svnUpdateDir(version=5300,verbose=True)
 except Exception: #GSAS raises an execption if unable to connect to svn
@@ -859,10 +860,10 @@ def update_output(n_clicks,
 
     civ_res = compute_results.compute_interaction_volume(cif_fnames,datadir,instprm_fname)
     scattering_dict = civ_res['scattering_dict']
-    atomic_masses = civ_res['atomic_masses']
-    elem_fractions = civ_res['elem_fractions']
-    cell_volumes = civ_res['cell_volumes']
-    cell_masses = civ_res['cell_masses']
+    atomic_masses_dict = civ_res['atomic_masses_dict']
+    elem_fractions_dict = civ_res['elem_fractions_dict']
+    cell_volumes_dict = civ_res['cell_volumes_dict']
+    cell_masses_dict = civ_res['cell_masses_dict']
     del(civ_res)
     
     
@@ -882,11 +883,11 @@ def update_output(n_clicks,
     
     
     print("Begin Computing peaks_dict")
-    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions)
+    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict)
     print("peaks_dict completed.")
 
     print("Before Summarized Phase Info")
-    graph_data_dict = compute_results.compute_summarized_phase_info(scattering_dict,elem_fractions,peaks_dict)
+    graph_data_dict = compute_results.compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict)
     print("Summarized Phase Info Complete.")
 
     print("Computing crystallites illuminated...")
@@ -953,7 +954,7 @@ def update_output(n_clicks,
         altered_ti[key] = (ti_tbl, ti_col)
         
     print("Getting mass and volume conversions...")
-    mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
+    mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict)
     print("Mass and volume conversions complete")
 
     main_dict = {
@@ -969,8 +970,8 @@ def update_output(n_clicks,
         'altered_ti':altered_ti,
         'fit_points':fit_points,
         'interaction_vol_data':graph_data_dict,
-        'cell_masses':cell_masses,
-        'cell_volumes':cell_volumes,
+        'cell_masses_dict':cell_masses_dict,
+        'cell_volumes_dict':cell_volumes_dict,
         'cell_mass_vec':cell_mass_vec.tolist(),
         'cell_volume_vec':cell_volume_vec.tolist(),
         'mu_samps':mcmc_df.to_dict(orient='list'), # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})

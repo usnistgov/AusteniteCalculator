@@ -40,8 +40,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         | **DF_merged_fit_theo** a pandas DataFrame with collected fit and theoretical intensities ;
         | **DF_phase_fraction** a pandas DataFrame with phase fraction ;
         | **two_theta** a python list (?) with the two_theta data from the GSAS-II histogram ;
-        | **tis** a pandas DataFrame with the theoretical intensities;
-        | **DF_flags_for_user** a pandas DataFrame with the flags and notes to the user
+        | **theo_intensity_dict** a pandas DataFrame with the theoretical intensities;
+        | **flags_for_user_DF** a pandas DataFrame with the flags and notes to the user
     
     """
     
@@ -53,7 +53,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
     #initialize Uncertainty DataFrame
-    DF_flags_for_user=flag_phase_fraction(np.nan, " ", "Initialize", " ")
+    flags_for_user_DF=flag_phase_fraction(np.nan, " ", "Initialize", " ")
 
     #############################
     # Read in diffraction data
@@ -77,10 +77,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     ########################################
     print("\n\n Calculate Theoretical Intensities\n")
 
-    tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
+    theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
 
     for i in range(len(cif_fnames)):
-        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
+        theo_intensity_dict[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
                                                          material=cif_fnames[i], \
                                                          cif_file=cif_fnames[i], \
                                                          instrument_calibration_file=instprm_fname, \
@@ -89,15 +89,15 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
                                                          x_range=[min_two_theta,max_two_theta], \
                                                          DataPathWrap=data_path_wrap, \
                                                          SaveWrap=save_wrap, \
-                                                         DF_flags_for_user=DF_flags_for_user)
+                                                         flags_for_user_DF=flags_for_user_DF)
 
     # Merge and sort the theoretical intensities
     #? Sort seems a kind of fragile way to align the data 
-    tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
-    tis = tis.sort_values(by='two_theta')
-    tis = tis.reset_index(drop=True)
+    theo_intensity_dict = pd.concat(list(theo_intensity_dict.values()),axis=0,ignore_index=True)
+    theo_intensity_dict = theo_intensity_dict.sort_values(by='two_theta')
+    theo_intensity_dict = theo_intensity_dict.reset_index(drop=True)
     print("\n\n Theoretical Intensity Dataframe")
-    print(tis)
+    print(theo_intensity_dict)
 
     ########################################
     # Read in phase data
@@ -120,7 +120,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         print("using the Lam value, single wavelength")
     else:
         Ka1_wavelength=1.5405
-        DF_flags_for_user=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_flags_for_user)
+        flags_for_user_DF=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=flags_for_user_DF)
         print("No wavelength found, defaulting to Cu")
 
     #breakpoint()
@@ -131,13 +131,13 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     print("\n\n Peak Fit (LeBail) of Experimental Data \n")
 
     # use the theoretical intensities for peak fit location
-    peaks_list=tis['two_theta']
+    peaks_list=theo_intensity_dict['two_theta']
     
     # Add to the two_theta values to move the peak location for debugging
     # 0.2 on example 5 is enough to throw off the last two peaks
     # 0.5 on example 5 will result in negative intensities being fit
-    # tis['two_theta']+= 0.5
-    #peaks_list=tis['two_theta']+0.5
+    # theo_intensity_dict['two_theta']+= 0.5
+    #peaks_list=theo_intensity_dict['two_theta']+0.5
 
     peaks_ok = False
     fit_attempts = 0
@@ -156,10 +156,10 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         # Currently the fit processes are a little different...
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
         elif(fit_attempts == 2):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
         elif(fit_attempts == 3):
             holding_sig = False
             holding_gam = True
@@ -196,25 +196,25 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
             # Print out some of the goodness of fit data
             try:
                 print("\n\n Goodness of fit value: ", hist.data['Peak Fit Rvals']['GOF'])
-                DF_flags_for_user=flag_phase_fraction(hist.data['Peak Fit Rvals']['GOF'],"Fitting", "Fitting Goodness of Fit (GOF)", "--ADD Guidance--", DF_to_append=DF_flags_for_user)
+                flags_for_user_DF=flag_phase_fraction(hist.data['Peak Fit Rvals']['GOF'],"Fitting", "Fitting Goodness of Fit (GOF)", "--ADD Guidance--", DF_to_append=flags_for_user_DF)
             except:
                 print("Error creating Goodness of fit")
-                DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Missing Goodness of Fit (GOF) Value", "Missing bits of code in GSAS-II", DF_to_append=DF_flags_for_user)                
+                flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Missing Goodness of Fit (GOF) Value", "Missing bits of code in GSAS-II", DF_to_append=flags_for_user_DF)                
             peaks_ok = True
         
         elif(fit_attempts >= fit_attempt_limit):
             print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
             peaks_ok = True
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
             
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
             peaks_ok = False
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=flags_for_user_DF)
             # reset the peak list in the histogram to avoid appending during successive attempts
             hist.data['Peak List']['peaks']=[]
             # reset and repopulate the peak list
-            peaks_list=tis['two_theta']
+            peaks_list=theo_intensity_dict['two_theta']
 
 
     two_theta = hist.data['data'][1][0]
@@ -270,7 +270,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
     print("\n\n Concatenating Dataframes\n")
-    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,tis),axis=1)
+    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,theo_intensity_dict),axis=1)
     DF_merged_fit_theo = DF_merged_fit_theo
     DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int_fit']/ \
                                    (DF_merged_fit_theo['Texture Correction']* \
@@ -282,7 +282,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     # Calculate the phase fraction
     ########################################
     print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction,  DF_flags_for_user = calculate_phase_fraction(DF_merged_fit_theo, DF_flags_for_user)
+    DF_phase_fraction,  flags_for_user_DF = calculate_phase_fraction(DF_merged_fit_theo, flags_for_user_DF)
 
     print("\n\n Before fit data\n")
     fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
@@ -293,8 +293,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
             DF_merged_fit_theo,   
             DF_phase_fraction,
             two_theta,
-            tis,
-            DF_flags_for_user)
+            theo_intensity_dict,
+            flags_for_user_DF)
 
 #####################################
 ######### Plotting Fuctions #########
@@ -360,19 +360,19 @@ def get_pf_uncertainty_fig(pf_uncertainties):
     return pf_uncertainty_fig
 
 #####################################
-def two_theta_compare_figure(Merged_DataFrame):
+def two_theta_compare_figure(Merged_DF):
     """
     Plot the difference between fitted vs. theoretical two_theta data
     Nominally this difference should be near zero, outlier values may indicate poor fit.  Trends may indicatate errors in theoretical values
     
     Args:
-        Merged_DataFrame: Dataframe after merging with fitted and theoretical intensities
+        Merged_DF: Dataframe after merging with fitted and theoretical intensities
     
     Returns:
         **fig** Plotly Express Figure
     """
     
-    fig = px.scatter(Merged_DataFrame, x="two_theta", y="pos_diff", color="Phase",
+    fig = px.scatter(Merged_DF, x="two_theta", y="pos_diff", color="Phase",
                     labels = {
                         'pos_fit':'Diffference between fit and theoretical 2-theta',
                         'two_theta':'two theta value'
@@ -456,7 +456,7 @@ def find_two_theta_in_range(sin_theta, hist):
 #####################################
 def get_theoretical_intensities(gpx_file_name,material,cif_file, \
         instrument_calibration_file,xtal_data, \
-        x_range,G2sc,DataPathWrap,SaveWrap, DF_flags_for_user):
+        x_range,G2sc,DataPathWrap,SaveWrap, flags_for_user_DF):
     """
     Function to calculate the theoretical intensities.
     Simulated diffraction profile calculated based on the .cif file and instrument parameter file
@@ -471,9 +471,10 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
         G2sc: GSAS-II scriptable module.  Passed to resolve the pathway
         DataPathWrap: Path prefix to the location of the datafiles to read
         SaveWrap: Path prefix to the location where new data should be saved
+        flags_for_user_DF: Pandas dataframe with message flags to the user
     
     Returns:
-        **ti_table** Pandas dataframe with theoretical intensities
+        **theo_intensity_DF** Pandas dataframe with theoretical intensities
         
     Raises:
     
@@ -501,50 +502,49 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
     # Extract some of the columns for the reflection list generated by the simulated histogram
     # The description of the reflection list by column
     # https://gsas-ii.readthedocs.io/en/latest/GSASIIobj.html#powderrefl-table
-    ti_table = pd.DataFrame(hist1.data['Reflection Lists'][material]['RefList'][:,(0,1,2,3,5,9,11)],columns=['h','k','l','mul','two_theta','F_calc_sq','I_corr'])
+    theo_intensity_DF = pd.DataFrame(hist1.data['Reflection Lists'][material]['RefList'][:,(0,1,2,3,5,9,11)],columns=['h','k','l','mul','two_theta','F_calc_sq','I_corr'])
     
-    ti_table['R_calc']=ti_table['I_corr']*ti_table['F_calc_sq']
-    ti_table[['Phase']] = material
+    theo_intensity_DF['R_calc']=theo_intensity_DF['I_corr']*theo_intensity_DF['F_calc_sq']
+    theo_intensity_DF[['Phase']] = material
     
     # Add column for texture corrections
     
     # Read in from file if there's a 4th column
     if len(xtal_data[material])==4:
-        ti_table['Texture Correction'] =xtal_data[material][3]
+        theo_intensity_DF['Texture Correction'] =xtal_data[material][3]
     # Else, assume no texture
     else:
-        ti_table['Texture Correction'] =1
-        DF_flags_for_user=flag_phase_fraction(np.nan,"Theoretical Intensities", \
+        theo_intensity_DF['Texture Correction'] =1
+        flags_for_user_DF=flag_phase_fraction(np.nan,"Theoretical Intensities", \
          "No Texture Correction Applied", "Check normalized intensities" ,\
-          DF_flags_for_user)
-    # Import json file with values
+          flags_for_user_DF)
     
     
     # Remove any peaks that have zero theoretical intensity
     # Ran into this for Example 06
-    ti_table= ti_table.loc[(ti_table["R_calc"]>0)]
+    theo_intensity_DF= theo_intensity_DF.loc[(theo_intensity_DF["R_calc"]>0)]
     
-    return ti_table
+    return theo_intensity_DF
 
 #####################################
-def calculate_phase_fraction(Merged_DataFrame, DF_flags):
+def calculate_phase_fraction(Merged_DF, flags_DF):
     """
     **To Be Depricated?**
     Use conventional mean and standard deviation caculations to determine phase fraction. Also includes rounding for display
     
     Args:
-        Merged_DataFrame: Pandas DataFrame with combined theoretical and fit data
-        DF_flags: Pandas DataFrame that includes flags to the user
+        Merged_DF: Pandas DataFrame with combined theoretical and fit data
+        flags_DF: Pandas DataFrame that includes flags to the user
     
     Returns:
         | Two items are returned
         | **phase_dict** python dictionary with phase fraction values
-        | **DF_flags** Pandas DataFrame that includes flags to the user
+        | **flags_DF** Pandas DataFrame that includes flags to the user
     Raises:
     """
     
     # Extract all phases listed
-    phase_list=Merged_DataFrame['Phase'].unique()
+    phase_list=Merged_DF['Phase'].unique()
     n_phases = len(phase_list)
     
     phase_fraction_DF = pd.DataFrame({
@@ -563,7 +563,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_flags):
     for ii, phase in enumerate(phase_list):
         #print(phase)
         
-        Phase_DF=Merged_DataFrame.loc[Merged_DataFrame['Phase'] == phase][['h','k','l','n_int','Peak_Fit_Success']]
+        Phase_DF=Merged_DF.loc[Merged_DF['Phase'] == phase][['h','k','l','n_int','Peak_Fit_Success']]
         print(Phase_DF)
         #print(Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean())
 
@@ -585,8 +585,8 @@ def calculate_phase_fraction(Merged_DataFrame, DF_flags):
         fraction_dict[phase]=phase_fraction_DF
 
         if (phase_fraction_DF.loc[ii,"Number_hkls"] != len(Phase_DF['n_int'])):
-            DF_flags=flag_phase_fraction(np.nan,"Phase Fraction", ("Peaks that failed to fit in phase "+phase+" were removed"),
-             "Improve signal to noise, request assistance on fitting" , DF_to_append=DF_flags)
+            flags_DF=flag_phase_fraction(np.nan,"Phase Fraction", ("Peaks that failed to fit in phase "+phase+" were removed"),
+             "Improve signal to noise, request assistance on fitting" , DF_to_append=flags_DF)
 
     # now, compute phase fraction
     phase_fraction_DF["Phase_Fraction"]=phase_fraction_DF["Mean_nint"]/(phase_fraction_DF["Mean_nint"].sum())
@@ -609,7 +609,7 @@ def calculate_phase_fraction(Merged_DataFrame, DF_flags):
     #print(fraction_dict)
     print(phase_fraction_DF)
     
-    return phase_fraction_DF, DF_flags
+    return phase_fraction_DF, flags_DF
 
 
 #####################################
@@ -625,7 +625,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
         DF_to_append: pandas DataFrame to append flags and notes
 
     Returns:
-        **DF_flags** Pandas DataFrame that includes flags to the user
+        **flags_DF** Pandas DataFrame that includes flags to the user
 
     Raises:
     """
@@ -648,13 +648,13 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     
     return flags_DF
 
-def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_theta, dataset):
+def create_norm_intensity_graph(DF_merged_fit_theo, theo_intensity_dict, DF_phase_fraction, two_theta, dataset):
     """
     Creates plot of variation in normalized intensities.  The visualization can offer the user feedback on the sources of variation.
 
     Args:
         DF_merged_fit_theo: dataframe of fit values(Dataframe)
-        tis: Dataframe of theoretical intensities (Dataframe)
+        theo_intensity_dict: Dataframe of theoretical intensities (Dataframe)
         DF_phase_fraction: Dataframe of phase fraction values (Dataframe)
         two_theta: List of two thetas(List)
         
@@ -664,7 +664,7 @@ def create_norm_intensity_graph(DF_merged_fit_theo, tis, DF_phase_fraction, two_
     Raises:
 
     """
-    if DF_merged_fit_theo.shape[0] == tis.shape[0]:
+    if DF_merged_fit_theo.shape[0] == theo_intensity_dict.shape[0]:
         fig_norm_intensity = go.Figure()
         phase_list = DF_merged_fit_theo['Phase'].unique().tolist()
         for i in range(len(phase_list)):
@@ -785,7 +785,7 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
     gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
 
     #initialize Uncertainty DataFrame
-    DF_flags_for_user=flag_phase_fraction(np.nan, " ", "Initialize", " ")
+    flags_for_user_DF=flag_phase_fraction(np.nan, " ", "Initialize", " ")
 
     #############################
     # Read in diffraction data
@@ -810,10 +810,10 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
     #? Could this be merged with Read in Phase data?
     print("\n\n Calculate Theoretical Intensities\n")
 
-    tis = {} # e.g. tis['austenite-duplex.cif'] maps to austenite theoretical intensities
+    theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
 
     for i in range(len(cif_fnames)):
-        tis[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
+        theo_intensity_dict[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx',
                                                          material=cif_fnames[i],
                                                          cif_file=cif_fnames[i],
                                                          instrument_calibration_file=instprm_fname,
@@ -824,11 +824,11 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
 
     # Merge and sort the theoretical intensities
     #? Sort seems a kind of fragile way to align the data 
-    tis = pd.concat(list(tis.values()),axis=0,ignore_index=True)
-    tis = tis.sort_values(by='two_theta')
-    tis = tis.reset_index(drop=True)
+    theo_intensity_dict = pd.concat(list(theo_intensity_dict.values()),axis=0,ignore_index=True)
+    theo_intensity_dict = theo_intensity_dict.sort_values(by='two_theta')
+    theo_intensity_dict = theo_intensity_dict.reset_index(drop=True)
     print("\n\n Theoretical Intensity Dataframe")
-    print(tis)
+    print(theo_intensity_dict)
 
     ########################################
     # Read in phase data
@@ -851,7 +851,7 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
         # hardcoded in for now with Cu source.
         #? Read from instrument parameter file? Prompt user?
         Ka1_wavelength=1.5405
-        DF_flags_for_user=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=DF_flags_for_user)
+        flags_for_user_DF=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=flags_for_user_DF)
 
     ########################################
     # use the theoretical intensities for peak fit location
@@ -859,13 +859,13 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
     print("\n\n Peak Fit (LeBail) of Experimental Data \n")
 
     # use the theoretical intensities for peak fit location
-    peaks_list=tis['two_theta']
+    peaks_list=theo_intensity_dict['two_theta']
     
     # Add to the two_theta values to move the peak location for debugging
     # 0.2 on example 5 is enough to throw off the last two peaks
     # 0.5 on example 5 will result in negative intensities being fit
-    # tis['two_theta']+= 0.5
-    #peaks_list=tis['two_theta']+0.5
+    # theo_intensity_dict['two_theta']+= 0.5
+    #peaks_list=theo_intensity_dict['two_theta']+0.5
 
     peaks_ok = False
     fit_attempts = 0
@@ -884,10 +884,10 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
         # Currently the fit processes are a little different...
         elif(fit_attempts == 1):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
         elif(fit_attempts == 2):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
         elif(fit_attempts == 3):
             holding_sig = False
             holding_gam = True
@@ -925,29 +925,29 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
         elif(fit_attempts >= fit_attempt_limit):
             print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
             peaks_ok = True
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
             
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
             peaks_ok = False
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=DF_flags_for_user)
+            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=flags_for_user_DF)
             # reset the peak list in the histogram to avoid appending during successive attempts
             hist.data['Peak List']['peaks']=[]
             # reset and repopulate the peak list
-            peaks_list=tis['two_theta']
+            peaks_list=theo_intensity_dict['two_theta']
 
     fit.fit_instprm_file(hist, peaks_list)
     hist.SaveProfile("created_instprm")
 
-def get_conversions(phase_frac,cell_masses,cell_volumes):
+def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
 
     """
     *ADD*
     
     Parameters:
         phase_frac: *ADD*
-        cell_masses: *ADD*
-        cell_volumes: *ADD*
+        cell_masses_dict: *ADD*
+        cell_volumes_dict: *ADD*
 
     
     Returns:
@@ -971,8 +971,8 @@ def get_conversions(phase_frac,cell_masses,cell_volumes):
     cell_number_vec = np.zeros(n_phases)
 
     for ii in range(n_phases):
-        cell_mass_vec[ii] = cell_masses[phase_frac['Dataset: 1'][0][ii]['Phase']]
-        cell_volume_vec[ii] = cell_volumes[phase_frac['Dataset: 1'][0][ii]['Phase']]
+        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset: 1'][0][ii]['Phase']]
+        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset: 1'][0][ii]['Phase']]
         cell_number_vec[ii] = phase_frac['Dataset: 1'][0][ii]['Phase_Fraction']
 
     for dataset in phase_frac:
@@ -1021,7 +1021,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,c
     #create the above dicts to store data returned from compute_results
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
-        fit_data, results_df, phase_frac_DF, two_theta, tis, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
+        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
                                     instprm_fname,cif_fnames,crystal_data, G2sc)
         temp_string = 'Dataset: ' + str(x + 1)
         results_df['sample_index'] = str(x + 1)
@@ -1031,11 +1031,11 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,c
         results_table[temp_string] = results_df
         phase_frac[temp_string] = phase_frac_DF
         two_thetas[temp_string] = two_theta.tolist()
-        ti_tables[temp_string] = tis
+        ti_tables[temp_string] = theo_intensity_dict
         uncert[temp_string] = uncert_DF
         altered_results[temp_string] = results_df
         altered_phase[temp_string] = phase_frac_DF
-        altered_ti[temp_string] = tis
+        altered_ti[temp_string] = theo_intensity_dict
         fit_points[temp_string] = fit_data
         print("Finish results for file ",x)
 
@@ -1064,12 +1064,33 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,c
 
 def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
 
+    """
+    *ADD*
+    
+    Parameters:
+        cif_fnames: file names for cif files
+        datadir: directory path
+        instprm_fname: file name for instrument parameter file
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
+
     print("Begin Interaction Volume")
+    
+    # Initialize dictionarys
     scattering_dict = {}
-    atomic_masses = {}
-    elem_fractions = {}
-    cell_volumes = {}
-    cell_masses = {}
+    atomic_masses_dict = {}
+    elem_fractions_dict = {}
+    cell_volumes_dict = {}
+    cell_masses_dict = {}
+    
     for x in range(len(cif_fnames)):
         #print("Compute results for cif file ",x)
         print("Compute results for cif file ",cif_fnames[x])
@@ -1086,7 +1107,7 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
             for line in lines:
                 if len(line.split()) > 0:
                     if line.split()[0] == '_cell_volume':
-                        cell_volumes[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
+                        cell_volumes_dict[cif_fnames[x]] = (float(line.split()[1].split('(')[0]))
                     if line.split()[0] == '_exptl_crystal_density_diffrn':
                         crystal_density = float(line.split()[1])
                 if addon == True and len(line) > 1:
@@ -1108,18 +1129,19 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
                         wavelengths.append(float(line_split[1].strip('\n')))
         
         print("Element Calculation")
-        elems_for_phase = []
-        elem_percentage = []
+        elems_for_phase = [] # list of element symbols
+        elem_fraction = [] # list of atomic fraction at this position
         atoms_per_cell = None
         
         # Should throw an error message if the list is blank...
+        # reading line by line of elements
         for elem in elems:
             print("running element ", elem)
             temp = elem.split()
             elems_for_phase.append(temp[1])
-            elem_percentage.append(float(temp[5]))
+            elem_fraction.append(float(temp[5]))
             atoms_per_cell = int(temp[8])
-            #print("Results: ", elems_for_phase, elem_percentage,atoms_per_cell)
+            #print("Results: ", elems_for_phase, elem_fraction,atoms_per_cell)
         
         print("Cell Volume Calculation")
         cell_mass = 0.0
@@ -1128,16 +1150,16 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
             key = elem + '_'
             elem_mass = atmdata.AtmBlens[key]['Mass']
             # included the atoms per cell here
-            cell_mass += elem_mass * elem_percentage[count] * atoms_per_cell
-            atomic_masses[elem] = elem_mass
+            cell_mass += elem_mass * elem_fraction[count] * atoms_per_cell
+            atomic_masses_dict[elem] = elem_mass
             print("Element: ", elem,"\tMass: ",elem_mass)
             count += 1
         
-        cell_masses[cif_fnames[x]] = cell_mass
-        print(cell_mass, ' ', cell_masses)
+        cell_masses_dict[cif_fnames[x]] = cell_mass
+        print(cell_mass, ' ', cell_masses_dict)
 
         print("Begin Cell Density")
-        cell_density = cell_mass/cell_volumes[cif_fnames[x]]
+        cell_density = cell_mass/cell_volumes_dict[cif_fnames[x]]
         pack_fraction = crystal_density/cell_density
         #print(cell_density,pack_fraction)
         elem_details = getFormFactors(elems_for_phase)
@@ -1145,7 +1167,7 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
         scattering_nums = []
         for elem in elem_details:
             #print(elem)
-            scattering_nums.append(findMu(elem, wavelengths, pack_fraction, cell_volumes[cif_fnames[x]])) #scattering nums has elem_sym, f', f'', and mu
+            scattering_nums.append(findMu(elem, wavelengths, pack_fraction, cell_volumes_dict[cif_fnames[x]])) #scattering nums has elem_sym, f', f'', and mu
             #print(elem, scattering_nums)
         
         print("Begin Cell Scattering")
@@ -1155,17 +1177,19 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
             elem.append(atoms_per_cell)
 
         scattering_dict[cif_fnames[x]] = scattering_nums
-        elem_fractions[cif_fnames[x]] = elem_percentage
+        elem_fractions_dict[cif_fnames[x]] = elem_fraction
         
     print("Interaction Volume Computation Complete")
 
-    return {
+    interaction_dict={
         'scattering_dict':scattering_dict,
-        'atomic_masses':atomic_masses,
-        'elem_fractions':elem_fractions,
-        'cell_volumes':cell_volumes,
-        'cell_masses':cell_masses
-    }
+        'atomic_masses_dict':atomic_masses_dict,
+        'elem_fractions_dict':elem_fractions_dict,
+        'cell_volumes_dict':cell_volumes_dict,
+        'cell_masses_dict':cell_masses_dict
+        }
+
+    return interaction_dict
 
 def run_mcmc(results_table,fit_vi,number_mcmc_runs):
 
@@ -1250,7 +1274,7 @@ def format_crystal_data(crystal_data,cif_name):
 
     return crystal_data
 
-def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions):
+def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict):
     peaks_dict = {}
     for phase_name in cif_fnames:
         peaks_dict[phase_name] = []
@@ -1266,18 +1290,18 @@ def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions):
         for elem in scattering_dict[row[1]['Phase']]:
             count = 0
             FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
-            final_FF += FF * elem_fractions[row[1]['Phase']][count]
+            final_FF += FF * elem_fractions_dict[row[1]['Phase']][count]
             count += 1
         current_peak.append(final_FF)
         peaks_dict[row[1]['Phase']].append(current_peak)
     
     return peaks_dict
 
-def compute_summarized_phase_info(scattering_dict,elem_fractions,peaks_dict):
+def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict):
     summarized_phase_info = {}
     for key, value in scattering_dict.items():
         summarized_phase_info[key] = [0.0,0.0, 0.0]
-        current_fracs = elem_fractions[key]
+        current_fracs = elem_fractions_dict[key]
         for i in range(len(value)):
             summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
             summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
