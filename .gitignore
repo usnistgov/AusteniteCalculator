@@ -24,7 +24,9 @@ ExampleData/Example03A/Diagnostic/*
 ExampleData/Example05/Diagnostic/*
 ExampleData/Example07A/Diagnostic/*
 ExampleData/Example08A/Diagnostic/*
+ExampleData/InstrumentParameter/Diagnostic/*
 stan_files/.*exe
 stan_files/.*hpp
 stan_files/multiple_samples-*
 stan_files/one_sample-*
+
