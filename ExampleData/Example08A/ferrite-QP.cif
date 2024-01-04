@@ -1,9 +1,9 @@
  
 ######################################################################
-data_ferrite-FeOnly
+data_ferrite-QP
 
-# phase info for ferrite-FeOnly follows
-_pd_phase_name  ferrite-FeOnly
+# phase info for ferrite-QP follows
+_pd_phase_name  ferrite-QP
 _cell_length_a  2.86193(5)
 _cell_length_b  2.86193(5)
 _cell_length_c  2.86193(5)
