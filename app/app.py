@@ -269,9 +269,9 @@ app.layout = dbc.Container([
         dbc.Tab([
             html.Br(),
             html.Div(id='intensity-plot-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'intensity-plot-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             html.Div("""Plot of the raw data, plotted as a continuous line.
@@ -292,9 +292,9 @@ app.layout = dbc.Container([
         dbc.Tab([
             html.Br(),
             html.Div(id='fit-theo-table-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'fit-theo-table-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             
@@ -309,9 +309,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.Br(),
             html.Div(id='norm-int-plot-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'norm-int-plot-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant.
@@ -320,9 +320,9 @@ app.layout = dbc.Container([
             dcc.Graph(id='normalized-intensity-plot'),
             html.Br(),
             html.Div(id='two-theta-diff-plot-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'two-theta-diff-plot-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             # Graph of the two_theta values
@@ -411,9 +411,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.Div("Select dataset:"),
             html.Div(id='interaction-vol-plot-placeholder',children=[
-                    dcc.Dropdown(options = ['Dataset: 1'],
+                    dcc.Dropdown(options = ['Dataset_1'],
                                 id = 'interaction-vol-plot-dropdown',
-                                value='Dataset: 1')]),
+                                value='Dataset_1')]),
 
             html.Br(),
             html.Div("Select phase:"),
@@ -904,14 +904,15 @@ def update_output(n_clicks,
     else:
         fit_vi = True
 
-    mcmc_res = compute_results.run_mcmc(results_table,fit_vi,number_mcmc_runs)
+    mcmc_res = compute_results.run_mcmc(results_table,number_mcmc_runs,fit_vi)
     mcmc_df = mcmc_res['mcmc_df']
     param_table = mcmc_res['param_table']
     del(mcmc_res)
     print("Inference complete")
 
-    with open('export_file.txt', 'w') as writer:
-        writer.write('Phase Fraction Goes here')
+    # Odd place to ouput some of the data...
+#    with open('export_file.txt', 'w') as writer:
+#        writer.write('Phase Fraction Goes here')
 
     # convert Dataframes to dictionaries, and save the table and cols in a tuple
     for key, value in results_table.items():
@@ -984,37 +985,37 @@ def update_output(n_clicks,
     
     intensity_plot_dropdown = html.Div([
         'Please select a dataset to view the intensity plot',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'],
                     id = 'intensity-plot-dropdown',
-                    value = 'Dataset: 1')
+                    value = 'Dataset_1')
     ])
 
     norm_int_plot_dropdown = html.Div([
         'Please select a dataset to view the normailzed intensities plot',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'],
                      id = 'norm-int-plot-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     interaction_vol_plot_dropdown = html.Div([
         'Please select a dataset to view the interaction volume',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))], 
                      id = 'interaction-vol-plot-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     fit_theo_table_dropdown = html.Div([
         'Please select a dataset to view the fit and theoretical intensities table',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))], 
                      id = 'fit-theo-table-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     two_theta_diff_plot_dropdown = html.Div([
         'Please select a dataset to view the difference between fit and theoretical two theta values',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))], 
                      id = 'two-theta-diff-plot-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     interaction_vol_plot_phase_dropdown = html.Div([
@@ -1079,8 +1080,9 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
     m_vec = np.array(data.get('cell_mass_vec'))
     v_vec = np.array(data.get('cell_volume_vec'))
 
-    print(m_vec)
-    print(v_vec)
+    print("Conversion vectors:")
+    print("Mass fraction: ", m_vec)
+    print("Volume fraction: ",v_vec)
 
     param_table = pd.DataFrame(data.get('param_table'))
     ncol = param_table.shape[1]
@@ -1500,6 +1502,8 @@ def create_zip_report(data, n_clicks,
     Raises:
         
     """
+
+    print("Saving report to file: ")
     hash = random.randrange(10000)
     if data == None or n_clicks is None:
         raise dash.exceptions.PreventUpdate
@@ -1541,6 +1545,8 @@ def create_zip_report(data, n_clicks,
         raw_fig.write_image(os.path.join(temp_path, key, 'raw_data.pdf'))
         fig_fit_hist.write_image(os.path.join(temp_path, key, 'fit_data.pdf'))
 
+    #breakpoint()
+
     #get tables and send to .csv files
     for key, value in data.get('results_table').items():
         results_df = pd.DataFrame.from_dict(value[0])
@@ -1550,12 +1556,23 @@ def create_zip_report(data, n_clicks,
         phase_frac_df = pd.DataFrame.from_dict(value[0])
         phase_frac_df.to_csv(os.path.join(temp_path, key, 'phase_frac.csv'))
 
-    for key, value in data.get('pf_uncerts').items():
-        remade_df = pd.DataFrame(value['mu_df'], columns=['which_phase', 'value'])
-        value['mu_df'] = remade_df
+    #mu_samps .csv files
+    for key, value in data.get('mu_samps').items():
+        print("Key: ", key)
+        #print("Value: ", value)
+        mu_samps_df = pd.DataFrame.from_dict(value[0])
+        mu_samps_df.to_csv(os.path.join(temp_path, key, 'mu_samps.csv'))
 
-        pf_uncert_fig = compute_results.get_pf_uncertainty_fig(value)
-        pf_uncert_fig.write_image(os.path.join(temp_path, key, 'pf_uncert_fig.pdf'))
+    # Breakpoint to look at the data structure
+    #breakpoint()
+
+    # This doesn' seem to exist anymore...
+#    for key, value in data.get('pf_uncerts').items():
+#        remade_df = pd.DataFrame(value['mu_df'], columns=['which_phase', 'value'])
+#        value['mu_df'] = remade_df
+#
+#        pf_uncert_fig = compute_results.get_pf_uncertainty_fig(value)
+#        pf_uncert_fig.write_image(os.path.join(temp_path, key, 'pf_uncert_fig.pdf'))
 
     for key, value in data.get('altered_results').items():
         big_table = value[0]
@@ -1573,6 +1590,13 @@ def create_zip_report(data, n_clicks,
         norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta, key)
         norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
         two_theta_diff_plot.write_image(os.path.join(temp_path, key, 'two_theta_diff.pdf'))
+
+    # dump the entire data dictionary to file
+
+    #print(data.items())
+    test={a:5,b:3,c:7}
+    with open('data_dict.json', 'w') as fp:
+        json.dump(test, os.path.join(temp_path, fp) )
 
     if send_input:
         instprm_type, instprm_string = instprm_contents.split(',')
