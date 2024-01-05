@@ -13,6 +13,7 @@ ExampleScripts/cif_composition_simulations.ipynb
 *.pyc
 *.bak*
 *.lst
+*.zip
 app/GenerateJson.py
 app/sample.json
 app/sample2.json
@@ -29,4 +30,3 @@ stan_files/.*exe
 stan_files/.*hpp
 stan_files/multiple_samples-*
 stan_files/one_sample-*
-
