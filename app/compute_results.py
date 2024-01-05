@@ -15,8 +15,13 @@ import json
 import base64
 import re
 
+# User developed packages
+# prefer to use complete name rather than 'from' for readability
+import compute_uncertainties
+
 from interaction_vol import crystallites_illuminated_calc, findMu, getFormFactors, create_graph_data
-from compute_uncertainties import run_stan, generate_param_table
+
+
 
 def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc):
     """
@@ -964,16 +969,16 @@ def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
     volume_conversion = deepcopy(phase_frac)
     
     #find denominator first(normalize at the same time)
-    n_phases = len(phase_frac["Dataset: 1"][0])
+    n_phases = len(phase_frac["Dataset_1"][0])
 
     cell_mass_vec = np.zeros(n_phases)
     cell_volume_vec = np.zeros(n_phases)
     cell_number_vec = np.zeros(n_phases)
 
     for ii in range(n_phases):
-        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset: 1'][0][ii]['Phase']]
-        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset: 1'][0][ii]['Phase']]
-        cell_number_vec[ii] = phase_frac['Dataset: 1'][0][ii]['Phase_Fraction']
+        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset_1'][0][ii]['Phase']]
+        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset_1'][0][ii]['Phase']]
+        cell_number_vec[ii] = phase_frac['Dataset_1'][0][ii]['Phase_Fraction']
 
     for dataset in phase_frac:
 
@@ -986,7 +991,8 @@ def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
 def convert_mu_samps(mu_samps,conversion_vec):
 
     """
-    *ADD*
+    Converts draws of normalized intensity (mu_samps) from fraction of unit cells
+    to either mass fraction or volume fraction
     
     Parameters:
         mu_samps: *ADD*
@@ -1001,6 +1007,31 @@ def convert_mu_samps(mu_samps,conversion_vec):
 
     
     """
+
+    c = conversion_vec
+    mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
+
+    return mu_samps
+
+def normalize_mu_samps(mu_samps):
+
+    """
+    Normalize mu_samps values to the domain of 0 to 1
+    
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+    
+    Returns:
+        | *ADD*
+        |
+        
+    Raises:
+
+    
+    """
+    
 
     c = conversion_vec
     mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
@@ -1023,7 +1054,8 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,c
         print("Compute results for file ",x)
         fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
                                     instprm_fname,cif_fnames,crystal_data, G2sc)
-        temp_string = 'Dataset: ' + str(x + 1)
+        #Use _ instead of : to avoid special characters in export
+        temp_string = 'Dataset_' + str(x + 1)
         results_df['sample_index'] = str(x + 1)
         
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
@@ -1191,12 +1223,30 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
 
     return interaction_dict
 
-def run_mcmc(results_table,fit_vi,number_mcmc_runs):
+def run_mcmc(results_table,number_mcmc_runs,fit_vi):
+
+    """
+    *ADD*
+    
+    Parameters:
+        results_table: from crystallites illuminated
+        fit_vi: ???
+        number_mcmc_runs: number of mcmc runs to try
+
+    
+    Returns:
+        dictionary: contains a dataframe and parameter table
+        |
+        
+    Raises:
+
+    
+    """
 
     results_table_df = pd.concat(results_table,axis=0).reset_index()
-    mcmc_df = run_stan(results_table,int(number_mcmc_runs),fit_vi)
+    mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs),fit_vi)
     unique_phases = np.unique(results_table_df.Phase)
-    param_table = generate_param_table(mcmc_df,unique_phases,results_table_df)
+    param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
 
     mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
     print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
@@ -1229,7 +1279,7 @@ def compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase
             crystal_data = format_crystal_data(crystal_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
 
             num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(crystal_data,
-                phase_frac['Dataset: 1'].loc[phase_frac['Dataset: 1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
+                phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
                 crystal_data[cif_name][0],
                 crystal_data[cif_name][1],
                 peak_data[x][1],
@@ -1243,8 +1293,8 @@ def compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase
             
             # add in uncertainties due to number crystallites diffracted
             cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
-            row_bool = (results_table['Dataset: 1'].Phase == cif_name) & (np.abs(results_table['Dataset: 1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
-            results_table['Dataset: 1'].u_cryst_diff.loc[row_bool] = cd_uncert
+            row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
+            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = cd_uncert
 
     return {'crystallites_dict':crystallites_dict, 
             'results_table':results_table}
@@ -1281,7 +1331,7 @@ def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_d
         
     # Peak dictionary includes F value, multiplicity, theta position, F_squared value
     # doesn't seem like the values are quite right... AC 3 Mar 2023
-    for row in results_table['Dataset: 1'].iterrows():
+    for row in results_table['Dataset_1'].iterrows():
         current_peak = []
         current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
         current_peak.append(row[1]['mul'])

@@ -40,8 +40,8 @@ def concat_results_tables(results_table,from_records=False):
     *ADD*
     
     Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
+        results_table: *ADD*
+        from_records: *ADD*
 
     
     Returns:
@@ -72,8 +72,9 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     *ADD*
     
     Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
+        results_table: *ADD*
+        number_mcmc_runs: *ADD*
+        fit_variational: *Flag ???*
 
     
     Returns:
@@ -578,8 +579,8 @@ def generate_pf_plot(mcmc_df,unique_phase_names):
     *ADD*
     
     Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
+        mcmc_df: Equivalent to mu_samps?
+        unique_phase_names: list of phase names?  How are they sorted
 
     
     Returns:
