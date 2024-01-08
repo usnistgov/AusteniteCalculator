@@ -37,7 +37,7 @@ def get_unique_phases(results_table):
 def concat_results_tables(results_table,from_records=False):
 
     """
-    *ADD*
+    Combine tables if there are multiple xrd records
     
     Parameters:
         results_table: *ADD*
@@ -69,7 +69,11 @@ def concat_results_tables(results_table,from_records=False):
 
 def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     """
-    *ADD*
+    Runs an external script using Stan (https://mc-stan.org/) to return estimates
+    of the phase fractions. Largely uses normalized intensity data. Uses Bayesian
+    priors and data to estimate uncertainties express draws via a posterior distrubtion
+    
+    Samples in this case implies xrd files/scans
     
     Parameters:
         results_table: *ADD*
@@ -87,6 +91,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     """
     indata = concat_results_tables(results_table)
 
+    # Create a new dataframe with a selection of data
     mydf = pd.DataFrame({
         'I':indata.int_fit,
         'R':indata.R_calc,
@@ -106,27 +111,34 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     for ii, pn in enumerate(unique_phases):
         mydf.loc[mydf['phases'] == pn,'phase_id'] = ii+1
 
-    # compute normalized intensities
+    # compute variation in normalized intensities
+    # commented out, use n_int directly so that texture variation is included
     #mydf['IR'] = mydf.I / mydf.R
+    
+    # Is this even used?
     # not sure if we should use texture corrected values or not
     mydf['sig_IR'] = mydf['sigma_I']/mydf.R
 
-    # compute prior scales
+    # compute Bayesian prior distributions
+    # prior_sample_scale for variation between multiple xrd scans
     if  len(results_table) > 1:
         prior_sample_scale = np.std(mydf.IR)
 
     else:
         prior_sample_scale = None
 
+    #prior_exp_scale for variation based on peak to peak variation
     prior_exp_scale = np.mean(mydf.groupby(['sample_id','phase_id']).IR.std())
+    #prior_location is the inital location (value) of the data
     prior_location = np.array(mydf.groupby('phase_id').IR.mean())
 
+    print("Bayesian Prior Estimates")
     print("Prior sample scale: {}".format(prior_sample_scale))
     print("Prior exp scale: {}".format(prior_exp_scale))
     print("Prior location: {}".format(prior_location))
     print("Prior scale: {}".format(np.std(mydf.IR)))
 
-    # sigle sample
+    ### Code for the single sample case
     if len(results_table) == 1:
 
         # stan
@@ -175,7 +187,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
         
 
-    ### Code for multiple samples
+    ### Code for the multiple sample case
     elif len(results_table) > 1:
   
           #check OS to determine which stan executable to use
