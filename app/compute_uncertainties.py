@@ -153,9 +153,9 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
             "N_phases":len(np.unique(mydf.phases)),
             "Y":mydf.IR,
             "phase":mydf.phase_id,
-            "prior_scale":np.std(mydf.IR),
-            "prior_exp_scale":prior_exp_scale,
-            "prior_location":prior_location,
+            "prior_scale":np.std(mydf.IR), # standard deveiation
+            "prior_exp_scale":prior_exp_scale, # mean of the standard deviations
+            "prior_location":prior_location, # mean value
             "u_int_fit":mydf.sigma_I/mydf.R,
             "u_int_count":mydf.u_int_count/mydf.R,
             "u_cryst_diff":mydf.u_cryst_diff/mydf.R
@@ -165,8 +165,9 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
         if fit_variational:
             fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
-
-        else: 
+        
+        # Runs 4*2000 samples anyway, number of mcmc runs is warmup period?
+        else:
             fit = model.sample(data=stan_data,
                                chains=4,
                                iter_warmup=number_mcmc_runs, 
@@ -174,7 +175,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
         
 
-    # multiple samples
+    ### Code for multiple samples
     elif len(results_table) > 1:
   
           #check OS to determine which stan executable to use
@@ -482,6 +483,7 @@ def generate_pf_table(mcmc_df,unique_phase_names):
     mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
     n_phase = mu_res.shape[1]
     
+    # Does row summation to normalize each row
     row_sums = np.sum(mu_res,axis=1)
     mu_res_norm = mu_res
 
