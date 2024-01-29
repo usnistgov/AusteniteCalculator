@@ -22,7 +22,7 @@ RUN /root/g2full/bin/pip install -r /root/AustCalc/requirements.txt
 RUN ~/g2full/bin/python3 -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 COPY ./ /root/AustCalc/
 
-WORKDIR /root/AustCalc/app/
+WORKDIR /root/AustCalc/
 
 EXPOSE 8050
 

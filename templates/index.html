@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Austenite Calculator</title>
+  <!-- Latest compiled and minified CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+</head>
+  
+
+<body>
+
+  <div class="container-fluid">
+    <br>
+    <h1>Austenite Calculator</h1>
+    <br>
+    <ul class="nav nav-tabs">
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#about-tab">About</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" type="button" href="#data-upload-tab">Data Upload</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#intensity-plots-tab" id="intensity-plots-tab-button">Intensity Plots</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#normalized-int-tab">Normalized Intensity</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#phase-frac-tab">Phase Fraction</button>
+      </li>
+
+    </ul>
+
+    <div class="tab-content">
+
+      <div class="tab-pane" id="about-tab">
+        <br>
+        The Austenite Calculator is a super cool app. 
+        It helps you estimate and quantify uncertainty of the various phases in your material.
+      </div>
+
+      <div class="tab-pane container active" id="data-upload-tab">
+        <br>
+        <div class="row">
+
+          <span class="border-start">
+          <h4>Step 1: Data Selection</h4>
+          <p>Use the buttons below to upload your .xrdml and .instprm files. Alternatively, click the "Use Default Files" button below to use a sample set of files.</p>
+          
+          <div class="col-6">
+            <h6>Option 1: Upload Custom Files</h6>
+
+            <div class="mb-3">
+              <label for="xrdml-file" class="form-label">X-Ray Diffraction File (.csv, .xrdml, etc.)</label>
+              <input type="file" class="form-control" id="xrdml-file">
+            </div>
+          
+            <div class="mb-3">
+              <label for="instprm-file" class="form-label">Instrument Parameter File (.instprm)</label>
+              <input type="file" class="form-control" id="instprm-file">
+            </div>
+
+            <div class="mb-3">
+              <label for="cif-file" class="form-label">Crystallographic Information Files (.cif)</label>
+              <input type="file" class="form-control" id="cif-file">
+            </div>
+
+            <div class="mb-3">
+              <label for="cryst-illum-file" class="form-label">Crystallites Illuminated JSON (.json) - see \'File Creation\' Tab</label>
+              <input type="file" class="form-control" id="cryst-illum-file">
+            </div>
+          
+
+            
+            <h6>Option 2: Use Example Files</h6>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="none" checked> 
+              <label class="form-check-label" for="radio1">None</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio2" name="default-file-radio" value="example1"> 
+              <label class="form-check-label" for="radio2">Example 5</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="example2"> 
+              <label class="form-check-label" for="radio3">Example 5</label>
+            </div>
+
+            <br>
+          </div>
+          </span>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <span class="border-start">
+          <h4>Step 2: Statistical Inference Options</h4>
+          <div class="col-6">
+            <label for="num-mcmc" class="form-label">Number of MCMC samples:</label>
+            <select class="form-select" id="num-mcmc">
+              <option>1000 (Testing Only)</option>
+              <option>4000</option>
+              <option>8000</option>
+            </select>
+          </div>
+          </span>
+        </div>
+
+        <br>
+
+        <span class="border-start">
+        <div class="row">
+          
+          <div class="col-6">
+            
+            <h4>Step 3: Submit</h4>
+            <p>When your data selections have been made, click the button below to run the analysis.</p>
+
+          </div>
+        </div>
+
+        <br>
+
+        <div class="row">
+
+          <div class="col-1">
+            <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+          </div>
+
+          <div class="col-6">
+            <div id="loading-indicator" style="display:none">
+              <div class="d-flex align-items-center">
+                Running Submission... Please wait while results are computed... &nbsp; &nbsp;
+                <div class="spinner-border ml-auto" role="status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </span> 
+
+        <br>
+        <br>
+      </div>
+
+      <div class="tab-pane" id="intensity-plots-tab">
+
+        <div class="row">
+          <div id='raw-intensity-plot'></div>
+        </div>
+        
+        <div class="row">
+          <div id='fitted-intensity-plot'></div>
+        </div>
+        
+      </div>
+
+      <div class="tab-pane" id="normalized-int-tab">
+        <br>
+
+        <div class="row">
+          <table id="results-table" class="table" style="white-space:nowrap"></table>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <div id='normalized-intensities-plot'></div>
+        </div>
+
+      </div>
+        
+
+      <div class="tab-pane" id="phase-frac-tab">
+
+        <br>
+
+        <div class="row">
+          <div id="phase-fraction-plot"></div>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <table id="pf-table" class="table" style="white-space:nowrap"></table>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <table id="uncert-table" class="table" style="white-space:nowrap"></table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+
+</html>

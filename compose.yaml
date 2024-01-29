@@ -1,8 +1,0 @@
-services:
-  app: 
-    image: ac
-    command: /root/g2full/bin/python3 app.py
-    ports: 
-      - 8050:8050
-    volumes: 
-      - .:/root/AustCalc/

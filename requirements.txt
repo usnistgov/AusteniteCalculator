@@ -1,13 +1,6 @@
-apscheduler
 cmdstanpy
-dash
-dash-bootstrap-components
-dash-extensions==0.0.71
-dash-unload-component
 flask
-future
 gunicorn
-kaleido
 matplotlib
 numpy
 numpydoc

@@ -1,7 +1,0 @@
-2
-austenite-Duplex.cif, ferrite-Duplex.cif
-0.287, 0.713
-0.128, 0.738
-5, 4
-1.661, 4.127
-0.738, 4.271

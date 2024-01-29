@@ -1,8 +1,0 @@
-2
-Phase: austenite-Duplex.cif, ferrite-Duplex.cif
-Phase_Fraction: 0.819, 0.181
-Phase_Fraction_StDev: 1.351, 0.055
-Number_hkls: 4, 4
-hkls: 
-Mean_nint: 0.83, 0.183
-StDev_nint: 1.369, 0.056
