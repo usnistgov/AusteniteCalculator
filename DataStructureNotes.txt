@@ -1,0 +1,60 @@
+keys for data in app.py in create_zip_report (contains pretty much everything)
+
+? **Seems like a mix of dataframes and dictionaries, maybe pick one?**
+
+'results_table' -> Dataframe? for the normalized intensities
+	dict (Dataset), list (0 or 1 -headers?), list (each peak?), dict (columns of table of fit and theoretical intensities)
+
+
+'phase_frac' -> Dataframe? for Table of Phase Fractions (deprecated?)
+	dict (Dataset), list (0 or 1 -headers?), list (each phase)
+
+
+ 'volume_conversion',-> Dataframe? for Table of Phase Fractions after conversion to volume fraction (deprecated?)
+	dict (Dataset), list (0 or 1 -headers?), list (each phase)
+
+ 'mass_conversion', -> Dataframe? for Table of Phase Fractions after conversion to volume fraction (deprecated?)
+	dict (Dataset), list (0 or 1 -headers?), list (each phase)
+
+'two_thetas', -> Dict/List for the list of two theta values
+	dict (Dataset), list (length of dataset)
+
+'ti_tables', -> Theoretical intensities calculated
+	dict (Dataset), list (0 or 1 -headers?), dict (each peak?),
+
+'uncert', -> Dataframe? for the different flags  ** Should rename **
+	dict (Dataset), list (0 or 1 -headers?),
+
+
+?** I don't see where any alterations are made.  Why do we have these?**
+'altered_results', 
+	dict (Dataset), list (0 or 1 -headers?),
+'altered_phase', 
+'altered_ti', 
+
+
+'fit_points', -> list of lists returned from 'compute' in compute_results.  Histogram data, fit of background, fit of data
+	dict (Dataset), list (0 or 1 -headers?), list (??? Shape is 3, 4145)
+
+'interaction_vol_data', -> depth profile of interaction parameters.  Comes from compute_summarized_phase_info ?!?
+	dict (Phase), list (each peak?), list (???), list (Dataframe? 0 or 1 -headers?), different depths?
+
+'cell_masses_dict', -> masses of each cell, as a dictionary with phase name
+	dict (Phase), summed mass (atomic mass units)
+
+'cell_volumes_dict', 
+
+'cell_mass_vec', -> masses of each cell, as a list (no phase names)
+
+'cell_volume_vec', 
+
+'mu_samps', 
+	dict (Phase, but only numbered?)
+? Why isn't this also separated by Dataset?
+? Looks like the names (phase_mu[1] phase_mu[2]) come from Stan. Any way to rename them?
+
+'param_table', -> Sources of Uncertainty table
+	dict (each row is the phase, with column names)
+
+ 'crystallites' _ 
+	dict (Phase), list (Peak)
