@@ -64,10 +64,12 @@ import GSASIIscriptable as G2sc
 import GSASIIpath
 
 # Use a specific version of GSAS-II for consistency
-try:
-    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
-except Exception: #GSAS raises an execption if unable to connect to svn
-    print("Unable to update, using whichever version is installed")
+## Commenting out for now, GSAS svn server sometimes down
+
+#try:
+#    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
+#except Exception: #GSAS raises an execption if unable to connect to svn
+#    print("Unable to update, using whichever version is installed")
 
 
 def clear_directory():
