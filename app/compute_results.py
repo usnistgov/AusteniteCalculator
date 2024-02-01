@@ -160,7 +160,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         if(fit_attempts == 0):
             #fit.fit_peaks(hist, peaks_list)
             # Probably should be outside the "Series of Individual Peaks" title?
-            Rowles_proj, DF_flags_for_user=fit.fit_peaks_Rowles(gpx, cif_fnames, DF_flags_for_user, Chebyschev_coeffiecients=5)
+            Rowles_proj, flags_for_user_DF=fit.fit_peaks_Rowles(gpx, cif_fnames, flags_for_user_DF, Chebyschev_coeffiecients=5)
             fit_type="LeBail"
         if(fit_attempts == 1):
             fit.fit_peaks(hist, peaks_list)
@@ -168,11 +168,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         elif(fit_attempts == 2):
             fit.fit_moved_right_peaks(hist, peaks_list, peak_verify)
             fit_type="PeakFit"
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a lower 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
         elif(fit_attempts == 3):
             fit.fit_moved_left_peaks(hist, peaks_list, peak_verify)
             fit_type="PeakFit"
-            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=DF_flags_for_user)
+            DF_flags_for_user=flag_phase_fraction(np.nan,"Fitting", "Moving initial fit location to a higher 2-theta value", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
         elif(fit_attempts == 4):
             holding_sig = False
             holding_gam = True
