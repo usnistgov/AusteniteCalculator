@@ -45,6 +45,7 @@ from copy import deepcopy
 import compute_results
 import compute_uncertainties
 import interaction_vol
+import app_html_index_template
 
 inside_docker = False
 
@@ -62,6 +63,7 @@ elif re.search('creuzige',os.getcwd()):
 import GSASIIscriptable as G2sc
 import GSASIIpath
 
+# Use a specific version of GSAS-II for consistency
 try:
     GSASIIpath.svnUpdateDir(version=5300,verbose=True)
 except Exception: #GSAS raises an execption if unable to connect to svn
@@ -82,107 +84,19 @@ scheduler.add_job(clear_directory, 'interval', hours=24)
 scheduler.start()
 
 # Bottom banner and NIST formatting
-custom_index = """<!DOCTYPE html>
-<html>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        <link rel="stylesheet" href="assets/nist-combined.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-        {%css%}
-    </head>
 
-    <body>
-    <header class="nist-header" id="nist-header" role="banner">
-    <a href="https://www.nist.gov/" title="National Institute of Standards and Technology" class="nist-header__logo-link" rel="home">
-        <svg aria-hidden="true" class="nist-header__logo-icon" version="1.1" xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
-        <path d="M20.911 5.375l-9.482 9.482 9.482 9.482c0.446 0.446 0.446 1.161 0 1.607l-2.964 2.964c-0.446 0.446-1.161 0.446-1.607 0l-13.25-13.25c-0.446-0.446-0.446-1.161 0-1.607l13.25-13.25c0.446-0.446 1.161-0.446 1.607 0l2.964 2.964c0.446 0.446 0.446 1.161 0 1.607z"></path>
-        </svg>
-        <svg class="nist-header__logo-image" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-237 385.7 109.7 29.3">
-        <title>National Institute of Standards and Technology</title>
-        <g>
-            <path class="st0" d="M-231,415h-6v-23.1c0,0,0-4.4,4.4-5.8c4-1.3,6.6,1.3,6.6,1.3l19.7,21.3c1,0.6,1.4,0,1.4-0.6v-22h6.1V409
-            c0,1.9-1.6,4.4-4,5.3c-2.4,0.9-4.9,0.9-7.9-1.7l-18.5-20c-0.5-0.5-1.8-0.6-1.8,0.4L-231,415L-231,415z"/>
-            <path class="st0" d="M-195,386.1h6.1v20.7c0,2.2,1.9,2.2,3.6,2.2h26.8c1.1,0,2.4-1.3,2.4-2.7c0-1.4-1.3-2.8-2.5-2.8H-176
-            c-3,0.1-9.2-2.7-9.2-8.5c0-7.1,5.9-8.8,8.6-9h49.4v6.1h-12.3V415h-6v-22.9h-30.2c-2.9-0.2-4.9,4.7-0.2,5.4h18.6
-            c2.8,0,7.4,2.4,7.5,8.4c0,6.1-3.6,9-7.5,9H-185c-4.5,0-6.2-1.1-7.8-2.5c-1.5-1.5-1.7-2.3-2.2-5.3L-195,386.1
-            C-194.9,386.1-195,386.1-195,386.1z"/>
-        </g>
-        </svg>
-    </a>
-    </header>
-        
-    {%app_entry%}
-    {%config%}
-    {%scripts%}
-    {%renderer%}
-      
-        <footer class="nist-footer">
-        
-        <div class="nist-footer__inner">
-            <div class="nist-footer__menu" role="navigation">
-            <ul>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/privacy-policy">Site Privacy</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/oism/accessibility">Accessibility</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/privacy">Privacy Program</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/oism/copyrights">Copyrights</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.commerce.gov/vulnerability-disclosure-policy">Vulnerability Disclosure</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/no-fear-act-policy">No Fear Act Policy</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/foia">FOIA</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.nist.gov/environmental-policy-statement">Environmental Policy</a>
-                </li>
-                <li class="nist-footer__menu-item ">
-                <a href="https://www.nist.gov/summary-report-scientific-integrity">Scientific Integrity</a>
-                </li>
-                <li class="nist-footer__menu-item ">
-                <a href="https://www.nist.gov/nist-information-quality-standards">Information Quality Standards</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.commerce.gov/">Commerce.gov</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.science.gov/">Science.gov</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://www.usa.gov/">USA.gov</a>
-                </li>
-                <li class="nist-footer__menu-item">
-                <a href="https://vote.gov/">Vote.gov</a>
-                </li>
-            </ul>
-            </div>
-        </div>
-        <div class="nist-footer__logo">
-            <a href="https://www.nist.gov/" title="National Institute of Standards and Technology" class="nist-footer__logo-link" rel="home">
-            <img src="assets/nist_logo_brand_white.svg" alt="National Institute of Standards and Technology logo" />
-            </a>
-        </div>
-        </footer>
-
-    </body>
-</html>"""
 
 
 app = dash.Dash(__name__,
-                external_stylesheets=[dbc.themes.COSMO],
-                index_string = custom_index)
+                external_stylesheets=['boostrap.min.css','nist-combined.css'],
+                external_scripts=['jquery.min.js'],
+                serve_locally=True,
+                index_string = app_html_index_template.app_html_index,
+                prevent_initial_callbacks=True)
                 #requests_pathname_prefix = '/austenite-calculator/') # <- need this line uncommented for production!
+
+app.server.config["SESSION_COOKIE_SAMESITE"] = "Strict"
+
 
 server = app.server
 root_dir = os.getcwd()
@@ -355,9 +269,9 @@ app.layout = dbc.Container([
         dbc.Tab([
             html.Br(),
             html.Div(id='intensity-plot-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'intensity-plot-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             html.Div("""Plot of the raw data, plotted as a continuous line.
@@ -378,9 +292,9 @@ app.layout = dbc.Container([
         dbc.Tab([
             html.Br(),
             html.Div(id='fit-theo-table-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'fit-theo-table-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             
@@ -395,9 +309,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.Br(),
             html.Div(id='norm-int-plot-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'norm-int-plot-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             html.Div("""Plot of the Normalized Intensities.  The value for each phase should be constant.
@@ -406,9 +320,9 @@ app.layout = dbc.Container([
             dcc.Graph(id='normalized-intensity-plot'),
             html.Br(),
             html.Div(id='two-theta-diff-plot-placeholder',children=[
-                dcc.Dropdown(options = ['Dataset: 1'], 
+                dcc.Dropdown(options = ['Dataset_1'], 
                             id = 'two-theta-diff-plot-dropdown',
-                            value='Dataset: 1')
+                            value='Dataset_1')
              ]),
             html.Br(),
             # Graph of the two_theta values
@@ -497,9 +411,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.Div("Select dataset:"),
             html.Div(id='interaction-vol-plot-placeholder',children=[
-                    dcc.Dropdown(options = ['Dataset: 1'],
+                    dcc.Dropdown(options = ['Dataset_1'],
                                 id = 'interaction-vol-plot-dropdown',
-                                value='Dataset: 1')]),
+                                value='Dataset_1')]),
 
             html.Br(),
             html.Div("Select phase:"),
@@ -946,10 +860,10 @@ def update_output(n_clicks,
 
     civ_res = compute_results.compute_interaction_volume(cif_fnames,datadir,instprm_fname)
     scattering_dict = civ_res['scattering_dict']
-    atomic_masses = civ_res['atomic_masses']
-    elem_fractions = civ_res['elem_fractions']
-    cell_volumes = civ_res['cell_volumes']
-    cell_masses = civ_res['cell_masses']
+    atomic_masses_dict = civ_res['atomic_masses_dict']
+    elem_fractions_dict = civ_res['elem_fractions_dict']
+    cell_volumes_dict = civ_res['cell_volumes_dict']
+    cell_masses_dict = civ_res['cell_masses_dict']
     del(civ_res)
     
     
@@ -969,11 +883,11 @@ def update_output(n_clicks,
     
     
     print("Begin Computing peaks_dict")
-    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions)
+    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict)
     print("peaks_dict completed.")
 
     print("Before Summarized Phase Info")
-    graph_data_dict = compute_results.compute_summarized_phase_info(scattering_dict,elem_fractions,peaks_dict)
+    graph_data_dict = compute_results.compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict)
     print("Summarized Phase Info Complete.")
 
     print("Computing crystallites illuminated...")
@@ -990,14 +904,15 @@ def update_output(n_clicks,
     else:
         fit_vi = True
 
-    mcmc_res = compute_results.run_mcmc(results_table,fit_vi,number_mcmc_runs)
+    mcmc_res = compute_results.run_mcmc(results_table,number_mcmc_runs,fit_vi)
     mcmc_df = mcmc_res['mcmc_df']
     param_table = mcmc_res['param_table']
     del(mcmc_res)
     print("Inference complete")
 
-    with open('export_file.txt', 'w') as writer:
-        writer.write('Phase Fraction Goes here')
+    # Odd place to ouput some of the data...
+#    with open('export_file.txt', 'w') as writer:
+#        writer.write('Phase Fraction Goes here')
 
     # convert Dataframes to dictionaries, and save the table and cols in a tuple
     for key, value in results_table.items():
@@ -1040,7 +955,7 @@ def update_output(n_clicks,
         altered_ti[key] = (ti_tbl, ti_col)
         
     print("Getting mass and volume conversions...")
-    mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses,cell_volumes)
+    mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec = compute_results.get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict)
     print("Mass and volume conversions complete")
 
     main_dict = {
@@ -1056,8 +971,8 @@ def update_output(n_clicks,
         'altered_ti':altered_ti,
         'fit_points':fit_points,
         'interaction_vol_data':graph_data_dict,
-        'cell_masses':cell_masses,
-        'cell_volumes':cell_volumes,
+        'cell_masses_dict':cell_masses_dict,
+        'cell_volumes_dict':cell_volumes_dict,
         'cell_mass_vec':cell_mass_vec.tolist(),
         'cell_volume_vec':cell_volume_vec.tolist(),
         'mu_samps':mcmc_df.to_dict(orient='list'), # inverse operation to pd.DataFrame({'col1':[1,2,3],'col2':[2,3,4], etc})
@@ -1070,37 +985,37 @@ def update_output(n_clicks,
     
     intensity_plot_dropdown = html.Div([
         'Please select a dataset to view the intensity plot',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'],
                     id = 'intensity-plot-dropdown',
-                    value = 'Dataset: 1')
+                    value = 'Dataset_1')
     ])
 
     norm_int_plot_dropdown = html.Div([
         'Please select a dataset to view the normailzed intensities plot',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))] + ['View all datasets'],
                      id = 'norm-int-plot-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     interaction_vol_plot_dropdown = html.Div([
         'Please select a dataset to view the interaction volume',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))], 
                      id = 'interaction-vol-plot-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     fit_theo_table_dropdown = html.Div([
         'Please select a dataset to view the fit and theoretical intensities table',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))], 
                      id = 'fit-theo-table-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     two_theta_diff_plot_dropdown = html.Div([
         'Please select a dataset to view the difference between fit and theoretical two theta values',
-        dcc.Dropdown(options = ['Dataset: ' + str(i + 1) for i in range(len(xrdml_fnames))], 
+        dcc.Dropdown(options = ['Dataset_' + str(i + 1) for i in range(len(xrdml_fnames))], 
                      id = 'two-theta-diff-plot-dropdown',
-                     value='Dataset: 1')
+                     value='Dataset_1')
     ])
 
     interaction_vol_plot_phase_dropdown = html.Div([
@@ -1165,8 +1080,9 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
     m_vec = np.array(data.get('cell_mass_vec'))
     v_vec = np.array(data.get('cell_volume_vec'))
 
-    print(m_vec)
-    print(v_vec)
+    print("Conversion vectors:")
+    print("Mass fraction: ", m_vec)
+    print("Volume fraction: ",v_vec)
 
     param_table = pd.DataFrame(data.get('param_table'))
     ncol = param_table.shape[1]
@@ -1586,6 +1502,8 @@ def create_zip_report(data, n_clicks,
     Raises:
         
     """
+
+    print("Saving report to file: ")
     hash = random.randrange(10000)
     if data == None or n_clicks is None:
         raise dash.exceptions.PreventUpdate
@@ -1627,6 +1545,8 @@ def create_zip_report(data, n_clicks,
         raw_fig.write_image(os.path.join(temp_path, key, 'raw_data.pdf'))
         fig_fit_hist.write_image(os.path.join(temp_path, key, 'fit_data.pdf'))
 
+    #breakpoint()
+
     #get tables and send to .csv files
     for key, value in data.get('results_table').items():
         results_df = pd.DataFrame.from_dict(value[0])
@@ -1636,12 +1556,23 @@ def create_zip_report(data, n_clicks,
         phase_frac_df = pd.DataFrame.from_dict(value[0])
         phase_frac_df.to_csv(os.path.join(temp_path, key, 'phase_frac.csv'))
 
-    for key, value in data.get('pf_uncerts').items():
-        remade_df = pd.DataFrame(value['mu_df'], columns=['which_phase', 'value'])
-        value['mu_df'] = remade_df
+    #mu_samps .csv files
+    for key, value in data.get('mu_samps').items():
+        print("Key: ", key)
+        #print("Value: ", value)
+        mu_samps_df = pd.DataFrame.from_dict(value[0])
+        mu_samps_df.to_csv(os.path.join(temp_path, key, 'mu_samps.csv'))
 
-        pf_uncert_fig = compute_results.get_pf_uncertainty_fig(value)
-        pf_uncert_fig.write_image(os.path.join(temp_path, key, 'pf_uncert_fig.pdf'))
+    # Breakpoint to look at the data structure
+    #breakpoint()
+
+    # This doesn' seem to exist anymore...
+#    for key, value in data.get('pf_uncerts').items():
+#        remade_df = pd.DataFrame(value['mu_df'], columns=['which_phase', 'value'])
+#        value['mu_df'] = remade_df
+#
+#        pf_uncert_fig = compute_results.get_pf_uncertainty_fig(value)
+#        pf_uncert_fig.write_image(os.path.join(temp_path, key, 'pf_uncert_fig.pdf'))
 
     for key, value in data.get('altered_results').items():
         big_table = value[0]
@@ -1659,6 +1590,13 @@ def create_zip_report(data, n_clicks,
         norm_int_plot = compute_results.create_norm_intensity_graph(big_df, ti_df, phase_df, current_two_theta, key)
         norm_int_plot.write_image(os.path.join(temp_path, key, 'norm_int_plot.pdf'))
         two_theta_diff_plot.write_image(os.path.join(temp_path, key, 'two_theta_diff.pdf'))
+
+    # dump the entire data dictionary to file
+
+    #print(data.items())
+    test={a:5,b:3,c:7}
+    with open('data_dict.json', 'w') as fp:
+        json.dump(test, os.path.join(temp_path, fp) )
 
     if send_input:
         instprm_type, instprm_string = instprm_contents.split(',')
