@@ -5,6 +5,7 @@
     "beam_size": "1",
     "raster_x": "4",
     "raster_y": "4",
+    "sample_displacement": 0,
     "L": "265",
     "W_F": "1",
     "H_F": "1",
