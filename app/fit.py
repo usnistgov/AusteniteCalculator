@@ -426,7 +426,7 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecient
     
 
     Args:
-        GSAS_projfile: GSAS-II powder diffraciton histogram
+        GSAS_projfile: GSAS-II project file with histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
         DF_flags: notes to the users
@@ -440,11 +440,15 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecient
     # Set for up to 10 refinement cycles
     GSAS_projfile.set_Controls('cycles',10)
     
+    ## Change diffractometer type to Bragg-Brentano
+    
     #Read original lattice parameters
 
 #    print("Histograms List: ")
 #    for i in GSAS_projfile.histograms():
 #        print("Histogram Name: ", i.name)
+
+    ## NEED TO ADD PHASES TO GPX, better to do then add histogram
 
     original_lattice=[]
     #print("Print phases")
@@ -468,9 +472,17 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecient
 ##       Sample Parameters don't seem the same in GUI and script...
 ##       Try adjusting zero error instead
 
+    ## Add histogram scale to fit with background
     background_refine={'set': {"Background": {"no. coeffs": Chebyschev_coeffiecients,
                                      'type': 'chebyschev-1', 'refine': True}}}
-                                  
+
+    
+    
+    ## Add a sample displacement value (if needed) ['Shift']
+    
+    ## Refine unit cells before LeBail
+    
+    # Turn off scale as well
     cellscale_refine={'set': {"Background": {'refine': False}},
                       'set': { "LeBail": True,"Cell": True, "Instrument Parameters": ["Zero"] }}
  
