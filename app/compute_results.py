@@ -23,7 +23,7 @@ from interaction_vol import crystallites_illuminated_calc, findMu, getFormFactor
 
 
 
-def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc):
+def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc):
     """
 
     Main computation function for phase calculations
@@ -36,7 +36,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
         xrdml_fname: Diffraction data (xrdml title legacy)
         instprm_fname: Instrument Parameter File
         cif_fnames: Crystollographic Info File
-        xtal_data: crystal data from json file
+        json_data: crystal data from json file
         G2sc: GSAS-II Scripting Toolkit location
 
     Returns:
@@ -77,6 +77,12 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
     max_two_theta=max(two_theta_range)
     #print(min_two_theta,max_two_theta)
 
+    #############################
+    # Do a Le Bail fit to find the two theta positions with sample displacements
+    #############################
+    # probably pull out to a separate function
+    
+    
     ########################################
     # Caculate the theoretical intensities from cif files
     ########################################
@@ -89,7 +95,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
                                                          material=cif_fnames[i], \
                                                          cif_file=cif_fnames[i], \
                                                          instrument_calibration_file=instprm_fname, \
-                                                         xtal_data=xtal_data, \
+                                                         json_data=json_data, \
                                                          G2sc=G2sc, \
                                                          x_range=[min_two_theta,max_two_theta], \
                                                          DataPathWrap=data_path_wrap, \
@@ -137,6 +143,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,xtal_data,G2sc)
 
     # use the theoretical intensities for peak fit location
     peaks_list=theo_intensity_dict['two_theta']
+    # REPLACE WITH LE BAIL FIT DATA
+
 
     # Add to the two_theta values to move the peak location for debugging
     # 0.2 on example 5 is enough to throw off the last two peaks
@@ -534,7 +542,7 @@ def find_two_theta_in_range(sin_theta, hist):
 
 #####################################
 def get_theoretical_intensities(gpx_file_name,material,cif_file, \
-        instrument_calibration_file,xtal_data, \
+        instrument_calibration_file,json_data, \
         x_range,G2sc,DataPathWrap,SaveWrap, flags_for_user_DF):
     """
     Function to calculate the theoretical intensities.
@@ -545,7 +553,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
         material: Short name for the material (phase) for the dataframe e.g., 'Austenite', 'Ferrite'
         cif_file: Crystallographic Information Format file for the phase to be simulated
         instrument_calibration_file: instrument parameter file
-        xtal_data: crystal data from json file
+        json_data: crystal data from json file
         x_range: two_theta range to calculate over (x-axis). List of length 2
         G2sc: GSAS-II scriptable module.  Passed to resolve the pathway
         DataPathWrap: Path prefix to the location of the datafiles to read
@@ -590,8 +598,8 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
 
 
     # Read in from file if there's a 4th column
-    if len(xtal_data[material])==4:
-        theo_intensity_DF['Texture Correction'] =xtal_data[material][3]
+    if len(json_data[material])==4:
+        theo_intensity_DF['Texture Correction'] =json_data[material][3]
     # Else, assume no texture
     else:
         theo_intensity_DF['Texture Correction'] =1
@@ -1113,7 +1121,7 @@ def normalize_mu_samps(mu_samps):
 
     return mu_samps
 
-def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc):
+def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,json_data,G2sc):
     print("Running peak fitting...")
     results_table = {}
     phase_frac = {}
@@ -1128,7 +1136,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,c
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
         fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
-                                    instprm_fname,cif_fnames,crystal_data, G2sc)
+                                    instprm_fname,cif_fnames,json_data, G2sc)
         #Use _ instead of : to avoid special characters in export
         temp_string = 'Dataset_' + str(x + 1)
         results_df['sample_index'] = str(x + 1)
@@ -1329,7 +1337,7 @@ def run_mcmc(results_table,number_mcmc_runs,fit_vi):
 
     return {'mcmc_df':mcmc_df, 'param_table':param_table}
 
-def compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase_frac):
+def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_frac):
 
     crystallites_dict = {}
     #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
@@ -1351,15 +1359,15 @@ def compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase
         for x in range(len(peak_data)):
 
             # this calculation is redundant, so we can potentially move outside the loop, but overhead is minimal in the meantime
-            crystal_data = format_crystal_data(crystal_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
+            json_data = format_json_data(json_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
 
-            num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(crystal_data,
+            num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(json_data,
                 phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
-                crystal_data[cif_name][0],
-                crystal_data[cif_name][1],
+                json_data[cif_name][0],
+                json_data[cif_name][1],
                 peak_data[x][1],
                 peak_data[x][2],
-                crystal_data[cif_name][2])
+                json_data[cif_name][2])
             if cif_name in crystallites_dict.keys():
                 crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
             else:
@@ -1374,30 +1382,30 @@ def compute_crystallites_illuminated(crystal_data,peaks_dict,results_table,phase
     return {'crystallites_dict':crystallites_dict,
             'results_table':results_table}
 
-def format_crystal_data(crystal_data,cif_name):
+def format_json_data(json_data,cif_name):
     """
     Reformats the crystal data objects from json to expected types.
 
     Args:
-        crystal_data: crystal_data object loaded from json file
+        json_data: json_data object loaded from json file
         cif_name: the cif name
 
     Returns:
-        **crystal_data** correctly formatted crystal_data object
+        **json_data** correctly formatted json_data object
 
     """
 
     # convert eg, '[1,2,3]' to [1,2,3]
-    if type(crystal_data[cif_name]) is not list:
-        crystal_data[cif_name] = crystal_data[cif_name][1:(len(crystal_data[cif_name])-1)].split(",")
-        crystal_data[cif_name] = [float(x) for x in crystal_data[cif_name]]
+    if type(json_data[cif_name]) is not list:
+        json_data[cif_name] = json_data[cif_name][1:(len(json_data[cif_name])-1)].split(",")
+        json_data[cif_name] = [float(x) for x in json_data[cif_name]]
 
     for name in ['beam_size','raster_x','raster_y','L','W_F','H_F','H_R']:
 
-        if name in crystal_data.keys():
-            crystal_data[name] = float(crystal_data[name])
+        if name in json_data.keys():
+            json_data[name] = float(json_data[name])
 
-    return crystal_data
+    return json_data
 
 def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict):
     peaks_dict = {}
@@ -1476,6 +1484,14 @@ def gather_example(example_name):
         xrdml_fnames = ['QP980_AR_th-tthscan_AR0p5_trunc.csv']
         instprm_fname = 'ThomasXRD-Co-Cal.instprm'
         json_fname = 'QP_A.json'
+
+    elif example_name == "Example09A":
+        datadir = '../ExampleData/Example09A'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+        workdir = '../server_workdir'
+        xrdml_fnames = ['S231113-AAC-850-017_norm_mask_1D_sum_scaled.csv']
+        instprm_fname = 'E231208-AAC-660.instprm'
+        json_fname = 'Example05copy.json'
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
@@ -1598,22 +1614,22 @@ def process_data_input(use_default_files,
     ### Read in JSON File
     # Needed earlier for some of the theoretical intensity data
     # AC 2023 June 07 - why here?
-        #crystal_data = json.loads(json_string)
+        #json_data = json.loads(json_string)
 
     #need to convert strings to numbers in json dict
 
     # May need to adjust for multi array
     #AC - Why use strings? Try without
-#        for key in crystal_data.keys():
+#        for key in json_data.keys():
 #            if(key != 'beam_shape'):
-#                if(crystal_data[key][0] == '['):
-#                    crystal_data[key] = crystal_data[key].strip('][').split(',')
-#                    for x in range(len(crystal_data[key])):
-#                        crystal_data[key][x] = float(crystal_data[key][x])
+#                if(json_data[key][0] == '['):
+#                    json_data[key] = json_data[key].strip('][').split(',')
+#                    for x in range(len(json_data[key])):
+#                        json_data[key][x] = float(json_data[key][x])
 #                else:
-#                    crystal_data[key] = float(crystal_data[key])
+#                    json_data[key] = float(json_data[key])
 
     with open(os.path.join(datadir, json_fname), 'r') as f:
-        crystal_data = json.loads(f.read())
+        json_data = json.loads(f.read())
 
-    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, crystal_data
+    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_data
