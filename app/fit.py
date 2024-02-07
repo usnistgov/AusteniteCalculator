@@ -3,11 +3,12 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import math
+import json
 #from compute_results import flag_phase_fraction
 import compute_results
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
-    """Subroutine to fit data using LeBail fitting
+    """Subroutine to fit data using individual peak fitting
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -67,8 +68,79 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     #hist.refine_peaks()
 
 
+def fit_peaks_LeBail_assist(hist, LeBail_peaks_list, Chebyschev_coeffiecients=5):
+    """Subroutine to fit data using peaks found from LeBail fitting
+
+    Args:
+        hist: GSAS-II powder diffraciton histogram
+        peaks_list: list of 2theta locations to(numpy array)
+        Chebyschev_coeffiecients: Number of background parameters (integer)
+        
+    Returns:
+
+    Raises:
+
+    """
+    
+    print("Fitting peaks\n")
+    # Set up background refinement
+    #? Also maybe belongs in a function
+    #? How to adjust the number of background parameters (currently 5)
+    hist.set_refinements({'Background': {"no. coeffs": Chebyschev_coeffiecients,'type': 'chebyschev-1', 'refine': True}})
+    hist.refine_peaks()
+
+    # Add peak location and area
+    for i in range(len(LeBail_peaks_list['pos'])):
+        #print(LeBail_peaks_list['LeBail_Int'][i], LeBail_peaks_list['pos'][i])
+        hist.add_peak(LeBail_peaks_list['LeBail_Int'][i],ttheta=LeBail_peaks_list['pos'][i] )
+        
+    # Zero, Refine with nothing fitting
+    hist.set_peakFlags(area=False)
+    hist.refine_peaks()
+
+    # First, fit only the sigma (const position and intensity)
+    hist.set_peakFlags(sig=True)
+    hist.refine_peaks()
+    
+    # Second, fit only gamma while holding sigma
+    hist.set_peakFlags(sig=False,gam=True)
+    hist.refine_peaks(mode = 'hold')
+            
+    # Third, area while holding position
+    hist.set_peakFlags(area=True,gam=False)
+    hist.refine_peaks(mode = 'hold')
+
+    # Fourth, pos while holding area
+    hist.set_peakFlags(pos=True, area=False)
+    hist.refine_peaks(mode = 'hold')
+
+    # Fifth, pos and area
+    hist.set_peakFlags(pos=True, area=True)
+    hist.refine_peaks(mode = 'hold')
+
+#    # Third, fit the area, position, and gaussian (sig) component of the width
+#    hist.set_peakFlags(pos=True,area=True,sig=True)
+#    hist.refine_peaks()
+#
+#    # Fourth, fit the area, position, and lortenzian (gam) component of the width, while holding the prior sigma value
+#    hist.set_peakFlags(pos=True,area=True,gam=True)
+#
+#    # Fifth, fit the area, position, and gaussian (sig) component of the width again, while holding the prior gam value
+#    # otherwise large peaks are missing intensity...
+#    hist.set_peakFlags(pos=True,area=True,sig=True,gam=False)
+#    hist.refine_peaks(mode = 'hold')
+
+    # Additional cycles seem to just bounce between values. Ending with a sig fit seems to help get the larger peaks.
+
+    # Fit the area, position, gaussian (sig) and lortenzian (gam) component simultaneously
+    # Still tends to be unstable since sig and gam are highly correlate...
+    #hist.set_peakFlags(pos=True,area=True,sig=True, gam=True)
+    #hist.refine_peaks()
+    print(hist.data['Peak List'])
+
+
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using LeBail fitting, shifting peaks to the left (lower 2-theta)
+    """Subroutine to fit data using individual fitting, shifting peaks to the left (lower 2-theta)
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -117,7 +189,7 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     hist.refine_peaks(mode = 'hold')
 
 def fit_moved_right_peaks(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using LeBail fitting, shifting peaks to the right (higher 2-theta)
+    """Subroutine to fit data using individual peak fitting, shifting peaks to the right (higher 2-theta)
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -165,7 +237,7 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     hist.refine_peaks(mode = 'hold')   
 
 def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
-    """Subroutine to fit data using LeBail fitting, but hold the sigma value
+    """Subroutine to fit data using individual peak fitting, but hold the sigma value
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -212,7 +284,7 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     hist.refine_peaks(mode = 'hold')
 
 def fit_peaks_holdgam(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using LeBail fitting, holding gamma value
+    """Subroutine to fit data using individual peak fitting, holding gamma value
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -258,7 +330,7 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     hist.refine_peaks(mode = 'hold')
 
 def fit_instprm_file(hist, peaks_list, Chebyschev_coeffiecients=5):
-    """Subroutine to fit data using LeBail fitting
+    """Subroutine to fit data using individual peak fitting
 
     Args:
         hist: GSAS-II powder diffraciton histogram
@@ -402,7 +474,11 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     return verify_list
 
 
-def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecients=5):
+def fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,json_data,flags_for_user_DF,Chebyschev_coeffiecients=5):
+
+#datadir,workdir,xrdml_fname,instprm_fname,cif_fnames, flags_for_user_DF, Chebyschev_coeffiecients=5
+
+
     """Subroutine to fit data using LeBail fitting
     Uses suggested order from Matthew Rowles (model 3), arXiv:2008.11046v4
     Also uses full pattern fitting for lattice parameters
@@ -435,98 +511,161 @@ def fit_peaks_Rowles(GSAS_projfile, cif_files, DF_flags, Chebyschev_coeffiecient
     Raises:
 
     """
+    
+    data_path_wrap = lambda fil: datadir + '/' + fil
+    save_wrap = lambda fil: workdir + '/' + fil
+    
     print("Fitting entire pattern\n")
     
-    # Set for up to 10 refinement cycles
-    GSAS_projfile.set_Controls('cycles',10)
+    gpx = G2sc.G2Project(newgpx=save_wrap('LeBail_fit.gpx'))
     
-    ## Change diffractometer type to Bragg-Brentano
+
     
-    #Read original lattice parameters
+    # Read in phases
+    for phase_file in cif_fnames:
+        gpx.add_phase(data_path_wrap(phase_file),fmthint='CIF') # add a phase to the project
+    
+    # Read in histogram
+    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
+                                    data_path_wrap(instprm_fname),
+                                    phases=gpx.phases(),databank=1, instbank=1)
 
 #    print("Histograms List: ")
-#    for i in GSAS_projfile.histograms():
+#    for i in gpx.histograms():
 #        print("Histogram Name: ", i.name)
 
     ## NEED TO ADD PHASES TO GPX, better to do then add histogram
-
-    original_lattice=[]
-    #print("Print phases")
-    for i in GSAS_projfile.phases():
-        #print("Phase Name: ", i.name)
-        #print("Unit Cell: ", i.data.keys())
-        #print("Unit Cell: ", i.data["General"]["Cell"][1])
-        original_lattice.append(i.data["General"]["Cell"][1])
-        #print("Unit Cell Volume: ", i.data["General"]["Cell"][7])
-    
+    # otherwise:
     #print("Link phases")
-    for histogram in GSAS_projfile.histograms():
-        for phase in GSAS_projfile.phases():
-            GSAS_projfile.link_histogram_phase(histogram, phase)
+    #for histogram in gpx.histograms():
+    #    for phase in gpx.phases():
+    #        gpx.link_histogram_phase(histogram, phase)
     
-    ## Refine steps listed above
-    ## https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html#refinement-recipe
-    ## REMEMBER to turn the refinement off between steps!
-    # Tried to do these as individual refinements, but didn't work as well.
 
-##       Sample Parameters don't seem the same in GUI and script...
-##       Try adjusting zero error instead
-
-    ## Add histogram scale to fit with background
+    # Read sample displacement from data
+    # Also could consider setting the number of background coefficients this way
+    sample_displacement = json_data['sample_displacement']
+  
+    ##### Step 0: Set for up to 10 refinement cycles
+    gpx.set_Controls('cycles',10)
+  
+    ##### Step 1: refine the background (and scale, which is enabled by default)
     background_refine={'set': {"Background": {"no. coeffs": Chebyschev_coeffiecients,
                                      'type': 'chebyschev-1', 'refine': True}}}
+    gpx.do_refinements([background_refine])
+    
 
+    ##### Step 2: enter a value for sample displacement (shift), refine unit cells, scale, and sample displacement
     
-    
-    ## Add a sample displacement value (if needed) ['Shift']
-    
-    ## Refine unit cells before LeBail
-    
-    # Turn off scale as well
-    cellscale_refine={'set': {"Background": {'refine': False}},
-                      'set': { "LeBail": True,"Cell": True, "Instrument Parameters": ["Zero"] }}
- 
-    strain_refine={'set': { "LeBail": False,"Cell": False, "Instrument Parameters": ["Zero"] },
-                      'set':{ "Mustrain": { "type": "isotropic", "refine": True}} }
-    
-    # size refinement still has strain active, and these are highly correlated
-    size_refine={'set':{ "Mustrain": { "type": "isotropic", "refine": False}},
-                 'set': { "Size": { "type": "isotropic","refine": True}} }
- 
+    # Shift seems to behave differently than other fitting paramters, hard to set otherwise
+    hist.data["Sample Parameters"]['Shift']=[sample_displacement , True]
 
+    # seems like the clear is needed, the refine doesn't seem to take effect
+    unitcell_refine={'clear': {"Background": {'refine': False}},
+                     'set': {'Sample Parameters': ['Scale'] },
+                     'set': {'Cell': True }}
 
+    gpx.do_refinements([unitcell_refine])
 
-    GSAS_projfile.do_refinements([background_refine,cellscale_refine,
-                                strain_refine ])
+    ##### Step 3: use LeBail to extract intensities.  Still refine unit cells
     
+    fit_sample_displacement=hist.data["Sample Parameters"]['Shift'][0]
+    hist.data["Sample Parameters"]['Shift']=[fit_sample_displacement , False]
+
+    LeBail_refine={'clear': {'Sample Parameters': ['Scale'] },
+                   'set': { "LeBail": True}}
+
+    gpx.do_refinements([LeBail_refine])
+    
+    ##### Step 4: Refine microstrain, still with Le Bail and unit cells
+    
+    ## Again, the Microstrain seems to be hard to set directly
+    print("Setting the HAP strain values")
+    for phase in gpx.phases():
+        phase.data['Histograms']['PWDR '+xrdml_fname]['Mustrain'][2]=[True, False, False]
+        print(phase.data['Histograms']['PWDR '+xrdml_fname]['Mustrain'])
+    print()
+
+    # empty set since we did not create a dictionary and modified directly
+    gpx.do_refinements()
+    
+    ##### Step 5 Final refinement, refine displacement, background, unit cell, microstrain
+    
+    fit_sample_displacement=hist.data["Sample Parameters"]['Shift'][0]
+    hist.data["Sample Parameters"]['Shift']=[fit_sample_displacement , True]
+
+    Final_refine={'set': {"Background": {'refine': True}}}
+
+    gpx.do_refinements([Final_refine])
+    
+    #### Output
     print("Histograms data: ")
-    for i in GSAS_projfile.histograms():
-        print("Histogram data: ", i.data)
+    for i in gpx.histograms():
+        #print("Histogram data: ", i.data)
         print("Reflection List data: ", i.data.keys())
-        for phase in GSAS_projfile.phases():
+        for n, phase in  enumerate(gpx.phases()):
+            print("Phase name: ",phase.name)
             print("\n\nReflection List data: ", i.data["Reflection Lists"][phase.name]["RefList"])
+            # Create a new data frame if it's the first phase
+            if n==0:
+                LeBail_reflist_DF=pd.DataFrame(i.data["Reflection Lists"][phase.name]["RefList"],
+                 columns=['h','k','l','mul','d','pos','sig','gam',
+                 'F_obs_sq','F_calc_sq','phase','I_corr','Prfo','Trans','ExtP'])
+                LeBail_reflist_DF[['Phase']] = phase.name
+                #print(LeBail_reflist_DF)
+            # otherwise append
+            else:
+                LeBail_reflist2_DF=pd.DataFrame(i.data["Reflection Lists"][phase.name]["RefList"],
+                 columns=['h','k','l','mul','d','pos','sig','gam',
+                 'F_obs_sq','F_calc_sq','phase','I_corr','Prfo','Trans','ExtP'])
+                LeBail_reflist2_DF[['Phase']] = phase.name
+                LeBail_reflist_DF=pd.concat([LeBail_reflist_DF,LeBail_reflist2_DF],axis=0,ignore_index=True)
+                #print(LeBail_reflist_DF)
+                #print(LeBail_reflist2_DF)
+            
+            
+            
+    LeBail_reflist_DF = LeBail_reflist_DF.sort_values(by='pos')
+    LeBail_reflist_DF = LeBail_reflist_DF.reset_index(drop=True)
+    # Calculate an intensity
+    LeBail_reflist_DF['LeBail_Int']=LeBail_reflist_DF['I_corr']*LeBail_reflist_DF['F_calc_sq']
 
-    fit_lattice=[]
+    print("Reflection List DataFrame")
+    print(LeBail_reflist_DF)
+            
+    #### Flags
 
-    #print("Phase data: ")
-    for i in GSAS_projfile.phases():
-        #print("Phase data: ", i.data)
-         #print("Unit Cell: ", i.data.keys())
-        fit_lattice.append(i.data["General"]["Cell"][1])
-        #print("Unit Cell: ", i.data["General"]["Cell"][1])
-        #print("Unit Cell Volume: ", i.data["General"]["Cell"][7])
-    
-    # Flags
-    print("Change in lattice parameters")
-    print(original_lattice,fit_lattice)
-    for n, phase in enumerate(GSAS_projfile.phases()):
-        DF_flags=compute_results.flag_phase_fraction(np.nan,"Lattice Spacing","Original Lattice Value: "+"{:.7f}".format(original_lattice[n])+"\t Fitted Lattice Value: "+"{:.7f}".format(fit_lattice[n])+" for phase: "+phase.name, "Check lattice spacing in .cif files", DF_to_append=DF_flags)
+    # Note the sample displacement
+    print("Sample Displacement Found")
+    flags_for_user_DF=compute_results.flag_phase_fraction(np.nan,
+    "Sample Displacement","A sample displacement (shift) value of: "+"{:.4f}".format(hist.data["Sample Parameters"]['Shift'][0])+" um was fit",
+    "Check goniometer alignment if this value is large",
+     DF_to_append=flags_for_user_DF)
 
+    # Note the microstrain?
     
     ## Save new peak_list
-    
+#                    for n, phase in enumerate(Rowles_proj.phases()):
+#                    #print("\n\nReflection List data: ", histogram.data["Reflection Lists"][phase.name]["RefList"])
+#                    #print(n)
+#                    t_peaks[phase.name] = pd.DataFrame(histogram.data["Reflection Lists"][phase.name]["RefList"])
+#                    
+#                    
     # Just like in Theoretical Intensities, use Fcsq*Icorr for R
 
 
+
+    # TO ADD
+    # Save new lattice spacing?
+#    fit_lattice=[]
+#
+#    #print("Phase data: ")
+#    for i in gpx.phases():
+#        #print("Phase data: ", i.data)
+#         #print("Unit Cell: ", i.data.keys())
+#        fit_lattice.append(i.data["General"]["Cell"][1])
+#        #print("Unit Cell: ", i.data["General"]["Cell"][1])
+#        #print("Unit Cell Volume: ", i.data["General"]["Cell"][7])
+
     print(" \n\n End of Rowles \n\n")
-    return(GSAS_projfile, DF_flags)
+    return(LeBail_reflist_DF.to_dict(), flags_for_user_DF)

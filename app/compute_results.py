@@ -76,12 +76,16 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     min_two_theta=min(two_theta_range)
     max_two_theta=max(two_theta_range)
     #print(min_two_theta,max_two_theta)
+    
+    # Read in json data
+    #with open(os.path.join(datadir, json_fname), 'r') as f:
+    #    json_data = json.loads(f.read())
 
     #############################
     # Do a Le Bail fit to find the two theta positions with sample displacements
     #############################
     # probably pull out to a separate function
-    
+    LeBail_reflection_list_dict, flags_for_user_DF=fit.fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,json_data, flags_for_user_DF, Chebyschev_coeffiecients=5)
     
     ########################################
     # Caculate the theoretical intensities from cif files
@@ -90,6 +94,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
 
     theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
 
+    # Check if these are still dataframes or dictionaries
     for i in range(len(cif_fnames)):
         theo_intensity_dict[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
                                                          material=cif_fnames[i], \
@@ -144,6 +149,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     # use the theoretical intensities for peak fit location
     peaks_list=theo_intensity_dict['two_theta']
     # REPLACE WITH LE BAIL FIT DATA
+    
 
 
     # Add to the two_theta values to move the peak location for debugging
@@ -166,10 +172,9 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     while not (peaks_ok):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
-            #fit.fit_peaks(hist, peaks_list)
+            fit.fit_peaks_LeBail_assist(hist, LeBail_reflection_list_dict)
             # Probably should be outside the "Series of Individual Peaks" title?
-            Rowles_proj, flags_for_user_DF=fit.fit_peaks_Rowles(gpx, cif_fnames, flags_for_user_DF, Chebyschev_coeffiecients=5)
-            fit_type="LeBail"
+            fit_type="PeakFit"
         if(fit_attempts == 1):
             fit.fit_peaks(hist, peaks_list)
             fit_type="PeakFit"
@@ -310,6 +315,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     u_pos_fit_list=[]
     u_int_fit_list=[]
 
+    #breakpoint()
+
     # Not as clear where uncertainties can be pulled from for LeBail fitting
     if fit_type=="LeBail":
         DF_merged_fit_theo['u_int_fit']=(DF_merged_fit_theo['int_fit'])**0.5
@@ -320,8 +327,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
         for i in list(range(len(DF_merged_fit_theo.index))):
             u_pos_fit_list.append(hist.data['Peak List']['sigDict']['pos'+str(i)])
             u_int_fit_list.append(hist.data['Peak List']['sigDict']['int'+str(i)])
-            DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
-            DF_merged_fit_theo['u_int_fit']=u_int_fit_list
+        DF_merged_fit_theo['u_pos_fit']=u_pos_fit_list
+        DF_merged_fit_theo['u_int_fit']=u_int_fit_list
     else:
         # Add error message
         print("fit_type Error")
@@ -336,7 +343,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     elif fit_type=="PeakFit":
         DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
         # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
-        DF_merged_fit_theo['u_int_count']=(DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])
+        # 2* background since I have just the peak values in the int_fit
+        DF_merged_fit_theo['u_int_count']=np.sqrt(2*DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])
     else:
         # Add error message
         print("fit_type Error")
