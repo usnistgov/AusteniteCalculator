@@ -114,9 +114,26 @@ def fit_peaks_LeBail_assist(hist, LeBail_peaks_list, Chebyschev_coeffiecients=5)
     hist.set_peakFlags(pos=True, area=False)
     hist.refine_peaks(mode = 'hold')
 
-    # Fifth, pos and area
-    hist.set_peakFlags(pos=True, area=True)
+    # Fifth, area and sigma
+    hist.set_peakFlags(pos=False, area=True, sig=True)
     hist.refine_peaks(mode = 'hold')
+
+    # Sixth, pos and area
+    hist.set_peakFlags(pos=True, area=True, sig=False)
+    hist.refine_peaks(mode = 'hold')
+
+    # Seventh, pos, area, sigma
+    hist.set_peakFlags(pos=True, area=True, sig=True)
+    hist.refine_peaks(mode = 'hold')
+
+    # Eigth, try gamma again
+    hist.set_peakFlags(pos=False, area=False, sig=False, gam=True)
+    hist.refine_peaks(mode = 'hold')
+
+    # Final, just pos and area
+    hist.set_peakFlags(pos=True, area=True,sig=False, gam=False)
+    hist.refine_peaks(mode = 'hold')
+
 
 #    # Third, fit the area, position, and gaussian (sig) component of the width
 #    hist.set_peakFlags(pos=True,area=True,sig=True)
