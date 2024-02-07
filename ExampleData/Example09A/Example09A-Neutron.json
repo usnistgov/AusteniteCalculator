@@ -1,0 +1,13 @@
+{
+    "austenite-Duplex.cif": [50,10,1,[0.70,0.73,1.30,1.05,0.70]],
+    "ferrite-Duplex.cif": [40,10,1,[0.76,2.70,1.16,0.76,0.92]],
+    "beam_shape": "circle",
+    "beam_size": "1",
+    "raster_x": "4",
+    "raster_y": "4",
+    "sample_displacement": 900,
+    "L": "265",
+    "W_F": "1",
+    "H_F": "1",
+    "H_R": "70"
+}
