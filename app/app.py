@@ -897,6 +897,9 @@ def update_output(n_clicks,
     crystallites_dict = cci_res['crystallites_dict']
     results_table = cci_res['results_table']
     del(cci_res)
+    
+    # Add the uncertainties, but needs to link to u_int_fit
+    
     print("Computing crystallites illuminated complete.")
 
     print("Running Inference...")

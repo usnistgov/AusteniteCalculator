@@ -23,9 +23,11 @@ getElSym = lambda sym: sym.split('+')[0].split('-')[0].capitalize()
 
 def getFormFactors(Elems):
     '''
-    This function is from GSAS
+    Calculate Scattering factors (FormFactors) by element name
+    **This function copied from GSAS-II**
+    
     Args:
-        Elems: The elements that form factors are needed for
+        Elems: The element abbreviation that form factors are needed for
 
     Returns:
         elemInfo: Form factor information for each element in elems
@@ -53,7 +55,9 @@ def getFormFactors(Elems):
 
 def getFormFactorCoeff(El): 
     '''
-    This function is from GSAS, a helper function for GetFormFactors
+    Helper function for GetFormFactors to pull data from atom data dictionary
+    **This function copied from GSAS-II**
+    
     Args:
         El: The element that a form factor coefficient is needed for
 
@@ -71,11 +75,16 @@ def getFormFactorCoeff(El):
     return FormFactors
 
 def GetXsectionCoeff(El):
-    """Read atom orbital scattering cross sections for fprime calculations via Cromer-Lieberman algorithm
-
-    :param El: 2 character element symbol
-    :return: Orbs: list of orbitals each a dictionary with detailed orbital information used by FPcalc
-
+    """
+    Read atom orbital scattering cross sections for fprime calculations via Cromer-Lieberman algorithm
+    **This function copied from GSAS-II**
+    
+    Args:
+        El: 2 character element symbol
+    Returns:
+        Orbs: list of orbitals each a dictionary with detailed orbital information used by FPcalc
+    Raises:
+    
     each dictionary is:
 
     * 'OrbName': Orbital name read from file
@@ -153,11 +162,15 @@ def GetXsectionCoeff(El):
     return Orbs
 
 def FPcalc(Orbs, KEv):
-    """Compute real & imaginary resonant X-ray scattering factors
-
-    :param Orbs: list of orbital dictionaries as defined in GetXsectionCoeff
-    :param KEv: x-ray energy in keV
-    :return: C: (f',f",mu): real, imaginary parts of resonant scattering & atomic absorption coeff.
+    """
+    Compute real & imaginary resonant X-ray scattering factors
+    **This function copied from GSAS-II**
+    Args:
+        Orbs: list of orbital dictionaries as defined in GetXsectionCoeff
+        KEv: x-ray energy in keV
+    Returns:
+        C: (f',f",mu): real, imaginary parts of resonant scattering & atomic absorption coeff.
+    Raises:
     """
     def Aitken(Orb, LKev):
         Nval = Orb['Nval']
@@ -240,6 +253,8 @@ def FPcalc(Orbs, KEv):
 
 def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
     '''
+    Find the absorbtion coefficient (mu) for each phase
+    
     Args:
         singular_elem_details: numbers about an element needed for the calculation
         wavelengths: x-ray wavelengths
@@ -280,6 +295,7 @@ def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
 
 def create_graph_data(peak_data, summarized_data):
     '''
+    Create dataframes and centroid values used to plot the interaction volume
     FIX - needs aggregate data for absorption, not just one phase.
     CHECK - SRM example should have similar centriods for first peaks
     

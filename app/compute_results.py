@@ -1167,6 +1167,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
     full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
     full_results_table['Uncertainties due to Fitting'] = full_results_table['u_int_fit']/full_results_table['R_calc']
     full_results_table['Uncertainties due to Counts'] = full_results_table['u_int_count']/full_results_table['R_calc']
+    #full_results_table['Uncertainties due to Number of Crystals Diffracting'] = full_results_table['u_cryst_diff']
     full_results_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
     u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(full_results_table.round(6))
     print("Peak fitting complete")
@@ -1359,8 +1360,16 @@ def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_fr
 
     # initialize crystiallites diffracted counts to 0
     for dname in results_table.keys():
-        results_table[dname]['u_cryst_diff'] = 0
+        results_table[dname]['num_cryst_diff'] = 0
 
+    # initialize crystiallites diffracted uncertainty to 0
+    for dname in results_table.keys():
+        results_table[dname]['sqrt_cryst_diff'] = 0
+
+    # initialize crystiallites diffracted uncertainty to 0
+    for dname in results_table.keys():
+        results_table[dname]['u_cryst_diff'] = 0
+    
     # Same dataset ok since the material is nominally the same?
     for cif_name, peak_data in peaks_dict.items():
         print("Phase: ", cif_name)
@@ -1385,7 +1394,14 @@ def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_fr
             # add in uncertainties due to number crystallites diffracted
             cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
             row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
-            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = cd_uncert
+            
+            #append number of crystals to the database
+            results_table['Dataset_1'].num_cryst_diff.loc[row_bool] = crystallites_dict[cif_name][x][3]
+            #append sqrt of crystals to the database
+            results_table['Dataset_1'].sqrt_cryst_diff.loc[row_bool] = cd_uncert
+            # append n_int*sqrt/number to the database
+            # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
+            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
 
     return {'crystallites_dict':crystallites_dict,
             'results_table':results_table}
