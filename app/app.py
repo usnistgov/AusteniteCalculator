@@ -1430,8 +1430,8 @@ def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
         
         
         #ADD Particle size not hardcode 40
-        centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3])
-        depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[4])
+        centroid_plot = interaction_vol.create_centroid_plot(df_midpoint, current_peak[3], current_peak[4])
+        depth_plot = interaction_vol.create_depth_plot(df_endpoint['x'], df_endpoint['y'], current_peak[5])
         #breakpoint()
         crystal_info = data.get('crystallites').get(phase_value)[int(peak_value)]
         # check the order
