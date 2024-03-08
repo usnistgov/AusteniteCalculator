@@ -27,6 +27,7 @@ ExampleScripts/cif_composition_simulations.ipynb
 *.bak*
 *.lst
 *.zip
+*.svg
 app/GenerateJson.py
 app/sample.json
 app/sample2.json
