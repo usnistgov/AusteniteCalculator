@@ -780,6 +780,8 @@ def func(n_clicks):
     return send_file("austenitecalculator.pdf")
 
 ### --- all other outputs --- ###
+
+### --- Run Analysis and update plots --- ###
 @app.callback(
     Output('intensity-plot-placeholder', 'children'),
     Output('fit-theo-table-placeholder', 'children'),
@@ -844,6 +846,7 @@ def update_output(n_clicks,
     Raises:
        
     '''
+    # Process data input (pdi)
     pdi_res = compute_results.process_data_input(use_default_files,
                                                  use_example05_files,
                                                  use_example06_files,
@@ -860,6 +863,7 @@ def update_output(n_clicks,
     datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, crystal_data = pdi_res
     del(pdi_res)
 
+    # compute interaction volume (civ)
     civ_res = compute_results.compute_interaction_volume(cif_fnames,datadir,instprm_fname)
     scattering_dict = civ_res['scattering_dict']
     atomic_masses_dict = civ_res['atomic_masses_dict']
@@ -868,7 +872,7 @@ def update_output(n_clicks,
     cell_masses_dict = civ_res['cell_masses_dict']
     del(civ_res)
     
-    
+    # compute peak fitting (cpf)
     cpf_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
     results_table = cpf_res['results_table']
     phase_frac = cpf_res['phase_frac']
@@ -1044,7 +1048,7 @@ def update_output(n_clicks,
             u_int_fit_count_table_data,
             u_int_fit_count_table_columns)
 
-
+### --- Update Phase Fraction Plot --- ###
 @app.callback(
     Output('pf-uncert-fig','figure'),
     Output('pf-uncert-table','data'),
@@ -1115,7 +1119,7 @@ def update_phase_fraction_plt_and_tbl(data,unit_value):
     return pf_uncert_fig, pf_uncert_data, pf_uncert_cols, param_table_data, param_table_columns
 
 
-
+### --- Update Intensity Plots --- ###
 @app.callback(
     Output('intensity-plot', 'figure'),
     Output('fitted-intensity-plot', 'figure'),
@@ -1187,6 +1191,7 @@ def update_intensity_plots(data, dataset_value):
 
         return raw_fig, fig_fit_hist
 
+### --- Update Tables --- ###
 @app.callback(
     Output('intensity-table','data'),
     Output('intensity-table','columns'),
@@ -1242,7 +1247,7 @@ def update_tables(data, value, unit_value):
     return table, cols, frac_table, frac_cols, uncert_table, uncert_cols
 
 
-
+### --- Update norm intensity and position difference Plots --- ###
 @app.callback(
     Output('two_theta-plot','figure'),
     Input('store-calculations', 'data'),
@@ -1279,6 +1284,7 @@ def update_graphs(data, value):
     
     return two_theta_diff_plot
 
+### --- Update Normalized Intensity Plots --- ###
 @app.callback(
     Output('normalized-intensity-plot','figure'),
     Input('store-calculations', 'data'),
@@ -1342,6 +1348,7 @@ def update_norm_int(data, value):
 
         return norm_int_plot
 
+### --- Update Peak dropdown plot --- ###
 @app.callback(
     Output('peak-placeholder', 'children'),
     Input('store-calculations', 'data'),
@@ -1382,6 +1389,7 @@ def update_peak_dropdown(data, value):
 
     return peak_dropdown
 
+### --- Update Interaction Volume Plots --- ###
 @app.callback(
     Output('centroid-plot', 'figure'),
     Output('interaction-depth-plot', 'figure'),
@@ -1456,6 +1464,7 @@ def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
         #print("Returning empty plot")
         return go.Figure(), go.Figure(), [], []
 
+### --- Create and Download JSON file --- ###
 @app.callback(
     Output('download-json', 'data'),
     Input('download-created-json', 'n_clicks'),
@@ -1472,7 +1481,8 @@ def update_interaction_vol_plot(data, dataset_value, phase_value, peak_value):
 def create_json(n_clicks, beam_shape, beam_size, raster_x, raster_y, L, WF, HF, HR):
 
     return None
-
+    
+### --- Download Report --- ###
 @app.callback(
     Output('download-full-report', 'data'),
     Input('store-calculations', 'data'),
@@ -1646,6 +1656,7 @@ def create_zip_report(data, n_clicks,
     shutil.make_archive(report_str, 'zip', 'calculator_report' + str(hash))
     return send_file(report_str + '.zip')
 
+### --- Store or clear calculations --- ###
 @app.callback(
     Output('store-calculations', 'clear_data'),
     Input('page-listener', 'close')
