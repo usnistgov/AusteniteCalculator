@@ -1,12 +1,12 @@
-	 
+ 
 ######################################################################
-data_ferrite-SRM487
+data_ferrite-QP
 
-# phase info for ferrite-SRM487 follows
-_pd_phase_name  ferrite-SRM487
-_cell_length_a  2.87219(5)
-_cell_length_b  2.87219(5)
-_cell_length_c  2.87219(5)
+# phase info for ferrite-QP follows
+_pd_phase_name  ferrite-QP
+_cell_length_a  2.86193(5)
+_cell_length_b  2.86193(5)
+_cell_length_c  2.86193(5)
 _cell_angle_alpha  90
 _cell_angle_beta   90
 _cell_angle_gamma  90
@@ -125,9 +125,7 @@ loop_
    _atom_site_adp_type
    _atom_site_U_iso_or_equiv
    _atom_site_site_symmetry_multiplicity
-Fe1    Fe   0.00000     0.00000     0.00000     0.806      Uiso 0.004      2   
-Cr2    Cr   0.00000     0.00000     0.00000     0.177      Uiso 0.004      2   
-Si3    Si   0.00000     0.00000     0.00000     0.016      Uiso 0.004      2   
-Mn4    Mn   0.00000     0.00000     0.00000     0.002      Uiso 0.004      2   
-C5     C    0.00000     0.00000     0.00000     0.001      Uiso 0.004      2   
-Ni6    Ni   0.00000     0.00000     0.00000     0.001      Uiso 0.004      2   
+Fe1    Fe   0.00000     0.00000     0.00000     0.9485     Uiso 0.004      2
+Mn2    Mn   0.00000     0.00000     0.00000     0.0250     Uiso 0.004      2
+Si3    Si   0.00000     0.00000     0.00000     0.0196     Uiso 0.004      2
+C4     C    0.00000     0.00000     0.00000     0.0069     Uiso 0.004      2    

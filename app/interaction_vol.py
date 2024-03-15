@@ -23,9 +23,11 @@ getElSym = lambda sym: sym.split('+')[0].split('-')[0].capitalize()
 
 def getFormFactors(Elems):
     '''
-    This function is from GSAS
+    Calculate Scattering factors (FormFactors) by element name
+    **This function copied from GSAS-II**
+    
     Args:
-        Elems: The elements that form factors are needed for
+        Elems: The element abbreviation that form factors are needed for
 
     Returns:
         elemInfo: Form factor information for each element in elems
@@ -53,7 +55,9 @@ def getFormFactors(Elems):
 
 def getFormFactorCoeff(El): 
     '''
-    This function is from GSAS, a helper function for GetFormFactors
+    Helper function for GetFormFactors to pull data from atom data dictionary
+    **This function copied from GSAS-II**
+    
     Args:
         El: The element that a form factor coefficient is needed for
 
@@ -71,11 +75,16 @@ def getFormFactorCoeff(El):
     return FormFactors
 
 def GetXsectionCoeff(El):
-    """Read atom orbital scattering cross sections for fprime calculations via Cromer-Lieberman algorithm
-
-    :param El: 2 character element symbol
-    :return: Orbs: list of orbitals each a dictionary with detailed orbital information used by FPcalc
-
+    """
+    Read atom orbital scattering cross sections for fprime calculations via Cromer-Lieberman algorithm
+    **This function copied from GSAS-II**
+    
+    Args:
+        El: 2 character element symbol
+    Returns:
+        Orbs: list of orbitals each a dictionary with detailed orbital information used by FPcalc
+    Raises:
+    
     each dictionary is:
 
     * 'OrbName': Orbital name read from file
@@ -153,11 +162,15 @@ def GetXsectionCoeff(El):
     return Orbs
 
 def FPcalc(Orbs, KEv):
-    """Compute real & imaginary resonant X-ray scattering factors
-
-    :param Orbs: list of orbital dictionaries as defined in GetXsectionCoeff
-    :param KEv: x-ray energy in keV
-    :return: C: (f',f",mu): real, imaginary parts of resonant scattering & atomic absorption coeff.
+    """
+    Compute real & imaginary resonant X-ray scattering factors
+    **This function copied from GSAS-II**
+    Args:
+        Orbs: list of orbital dictionaries as defined in GetXsectionCoeff
+        KEv: x-ray energy in keV
+    Returns:
+        C: (f',f",mu): real, imaginary parts of resonant scattering & atomic absorption coeff.
+    Raises:
     """
     def Aitken(Orb, LKev):
         Nval = Orb['Nval']
@@ -240,6 +253,8 @@ def FPcalc(Orbs, KEv):
 
 def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
     '''
+    Find the absorbtion coefficient (mu) for each phase
+    
     Args:
         singular_elem_details: numbers about an element needed for the calculation
         wavelengths: x-ray wavelengths
@@ -280,6 +295,7 @@ def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
 
 def create_graph_data(peak_data, summarized_data):
     '''
+    Create dataframes and centroid values used to plot the interaction volume
     FIX - needs aggregate data for absorption, not just one phase.
     CHECK - SRM example should have similar centriods for first peaks
     
@@ -289,7 +305,7 @@ def create_graph_data(peak_data, summarized_data):
 
     Returns:
         df_endpoints: endpoints of graph data created
-        df_midpoints: midpoints of graph data created
+        df_mid: midpoints of graph data created
         Centroid_x: centroid of depth data in x
         Centroid_y: centroid of depth data in y
 
@@ -332,17 +348,39 @@ def create_graph_data(peak_data, summarized_data):
 
     #scattered, but not absorbed on return to the surface
     df_mid['Escaped']=df_mid['scattered'] *  np.exp(-(summarized_data[2]/10000) * df_mid['travel_dist'])
+    df_mid['Escaped Index Sum']=df_mid['Escaped'].cumsum()
     df_mid['RelativeEscaped']=df_mid['Escaped']/I0
+    
     
     Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
     Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
 
-    return [df_endpoints, df_mid, Centroid_x, Centroid_y, peak_data[2]]
+    print("df_mid")
+    print(df_mid)
+    print("50%: ",np.quantile(df_mid['Escaped'],.50))
+    print("end of df_mid")
+
+    # Not working right.  50% percentile should be centroid
+    # maybe have to sum to get the value?
+
+    print("100% counts sum: ",np.sum(df_mid['Escaped']))
+    print("90% counts sum: ",np.sum(df_mid['Escaped'])*.9)
+    print("50% counts sum: ",np.sum(df_mid['Escaped'])*.5)
+    print("10% counts sum: ",np.sum(df_mid['Escaped'])*.1)
+    print("5% counts sum: ",np.sum(df_mid['Escaped'])*.05)
+
+    # Use 5% instead of 95% since the values are negative?
+    # np.interp doesn't work on non-increasing functions, need to flip
+    percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
+
+    print("90% counts pos: ",percentile90_y)
+    
+    return [df_endpoints, df_mid, Centroid_x, Centroid_y, percentile90_y, peak_data[2]]
 
 #def transmission_mode_data(peak_data, summarized_data):
 
 
-def create_centroid_plot(df_mid, Centroid_y):
+def create_centroid_plot(df_mid, Centroid_y, percentile95_y):
     '''
     Plots x-ray depth over material and centroid of data
     Args:
@@ -385,6 +423,8 @@ def create_centroid_plot(df_mid, Centroid_y):
     fig.add_trace(trace1)
     fig.add_trace(trace2)
     fig.add_hline(y=Centroid_y, line_dash="dot")
+    fig.add_hline(y=percentile95_y, line_dash="dash")
+
 
 # Need a better way of passing the shape parameters
 # Add a shape

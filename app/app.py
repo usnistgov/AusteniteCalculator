@@ -18,12 +18,19 @@ import compute_results
 import compute_uncertainties
 
 if platform.system() == 'Linux':
-    sys.path.insert(0,'/root/g2full/GSASII/') 
+    sys.path.insert(0,'/root/g2full/GSASII/')
     inside_docker = True
 
 import GSASIIscriptable as G2sc
 import GSASIIpath
 
+# Use a specific version of GSAS-II for consistency
+## Commenting out for now, GSAS svn server sometimes down
+
+#try:
+#    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
+#except Exception: #GSAS raises an execption if unable to connect to svn
+#    print("Unable to update, using whichever version is installed")
 
 app = Flask(__name__)
 
@@ -34,7 +41,7 @@ def index():
 @app.route("/submit",methods=['POST'])
 def submit():
 
-    # let's try to just get example 5 working 
+    # let's try to just get example 5 working
     datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example("Example05")
 
     with open(os.path.join(datadir, json_fname), 'r') as f:

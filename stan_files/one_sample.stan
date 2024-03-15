@@ -12,8 +12,8 @@ data {
 }
 
 parameters {
-    vector<lower=0>[N_phases] sigma_exp;
-    vector<lower=0>[N_phases] phase_mu;
+    vector<lower=0>[N_phases] sigma_exp; 
+    vector<lower=0>[N_phases] phase_mu; 
 }
 
 model {

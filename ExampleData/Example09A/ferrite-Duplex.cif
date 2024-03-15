@@ -1,9 +1,9 @@
-	 
+ 
 ######################################################################
-data_ferrite-SRM487
+data_ferrite-Duplex
 
-# phase info for ferrite-SRM487 follows
-_pd_phase_name  ferrite-SRM487
+# phase info for ferrite-Duplex follows
+_pd_phase_name  ferrite-Duplex
 _cell_length_a  2.87219(5)
 _cell_length_b  2.87219(5)
 _cell_length_c  2.87219(5)
