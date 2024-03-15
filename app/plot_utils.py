@@ -1,12 +1,14 @@
 import base64
 import io
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import matplotlib.colors as mcolors
 
 def create_encoded_plots(pk_fit_res,mcmc_res):
-
+    matplotlib.use('agg')
+    
     to_return = {}
 
     image_prefix = 'data:image/png;base64,'
@@ -14,7 +16,7 @@ def create_encoded_plots(pk_fit_res,mcmc_res):
     # raw intensities plot
     name = 'raw_intensity_plot'
     tmpfile = io.BytesIO()
-    plt.plot(pk_fit_res['two_thetas']['Dataset: 1'],pk_fit_res['fit_points']['Dataset: 1'][0])
+    plt.plot(pk_fit_res['two_thetas']['Dataset_1'],pk_fit_res['fit_points']['Dataset_1'][0])
     plt.title('Raw Intensities')
     plt.xlabel('Two Theta')
     plt.ylabel('Intensity')
@@ -26,8 +28,8 @@ def create_encoded_plots(pk_fit_res,mcmc_res):
     # fitted intensities plot
     name = 'fitted_intensity_plot'
     tmpfile = io.BytesIO()
-    plt.plot(pk_fit_res['two_thetas']['Dataset: 1'],pk_fit_res['fit_points']['Dataset: 1'][0])
-    plt.plot(pk_fit_res['two_thetas']['Dataset: 1'],pk_fit_res['fit_points']['Dataset: 1'][2])
+    plt.plot(pk_fit_res['two_thetas']['Dataset_1'],pk_fit_res['fit_points']['Dataset_1'][0])
+    plt.plot(pk_fit_res['two_thetas']['Dataset_1'],pk_fit_res['fit_points']['Dataset_1'][2])
     plt.title('Raw and Fitted Intensities')
     plt.xlabel('Two Theta')
     plt.ylabel('Intensity')
