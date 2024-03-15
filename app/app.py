@@ -11,6 +11,7 @@ import platform
 import os
 import io
 import base64
+import re
 
 # user created
 import plot_utils
@@ -20,6 +21,10 @@ import compute_uncertainties
 if platform.system() == 'Linux':
     sys.path.insert(0,'/root/g2full/GSASII/')
     inside_docker = True
+
+elif re.search('creuzige',os.getcwd()):
+    sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
+
 
 import GSASIIscriptable as G2sc
 import GSASIIpath
