@@ -1,5 +1,7 @@
 Docker line for dev env
 
-docker run -p 8050:8050 --mount type=bind,source="/c/Users/dtn1/OneDrive - NIST/Documents/ByScientist/AdamCreuziger/ac_flask",target=/root/AustCalc/ ac_flask
+docker run -p 8050:8050 --mount type=bind,source="/c/Users/dtn1/OneDrive - NIST/Documents/ByScientist/AdamCreuziger/austenitecalculator",target=/root/AustCalc/ ac_flask
 
-to make interactive, use -it flag and add /bin/bash at the end
+to make interactive, use -it flag and add /bin/bash at the end:
+
+docker run -p 8050:8050 --mount type=bind,source="/c/Users/dtn1/OneDrive - NIST/Documents/ByScientist/AdamCreuziger/austenitecalculator",target=/root/AustCalc/ -it ac_flask /bin/bash
