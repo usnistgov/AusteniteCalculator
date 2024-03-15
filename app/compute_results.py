@@ -1533,33 +1533,33 @@ def gather_example(example_name):
     """
 
     if example_name == 'Example01':
-        datadir = './ExampleData/Example01'
+        datadir = '../ExampleData/Example01'
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
-        workdir = './server_workdir'
+        workdir = '../server_workdir'
         xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
         instprm_fname = 'TestCalibration.instprm'
         json_fname = 'Example01.json'
 
     elif example_name == 'Example05':
-        datadir = './ExampleData/Example05'
+        datadir = '../ExampleData/Example05'
         cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
-        workdir = './server_workdir'
+        workdir = '../server_workdir'
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
         json_fname = 'Example05.json'
 
     elif example_name == "Example06":
-        datadir = './ExampleData/Example06'
+        datadir = '../ExampleData/Example06'
         cif_fnames = ['alpha-prime-martensite-SRI.cif','epsilon-martensite-SRI.cif','austenite-SRI.cif']
-        workdir = './server_workdir'
+        workdir = '../server_workdir'
         xrdml_fnames = ['Example06_simulation_generation_data.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
         json_fname = 'Example06.json'
 
     elif example_name == "Example08A":
-        datadir = './ExampleData/Example08A'
+        datadir = '../ExampleData/Example08A'
         cif_fnames = ['austenite-FeOnly.cif','ferrite-FeOnly.cif']
-        workdir = './server_workdir'
+        workdir = '../server_workdir'
         xrdml_fnames = ['QP980_AR_th-tthscan_AR0p5_trunc.csv']
         instprm_fname = 'ThomasXRD-Co-Cal.instprm'
         json_fname = 'QP_A.json'

@@ -100,7 +100,8 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         'u_cryst_diff':indata.u_cryst_diff,
         'phases':indata.Phase,
         'two_th':indata.two_theta,
-        'sample_id':indata.sample_id
+        'sample_id':indata.sample_id,
+        'IR':indata.n_int # Check if this keeps the texture corrections
     })
 
     # create numeric phase id's
@@ -147,17 +148,17 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         # Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
         if sys.platform.startswith('win'): #windows
             #Untested
-            exe_file = './stan_files/one_sample.exe'
+            exe_file = '../stan_files/one_sample.exe'
         elif sys.platform.startswith('darwin'): # MacOS
-            exe_file = './stan_files/one_sample'
+            exe_file = '../stan_files/one_sample'
         elif sys.platform.startswith('linux'):
             # Untested.  If we include precompiled files, we may need to change the filename
-            exe_file = './stan_files/one_sample'
+            exe_file = '../stan_files/one_sample'
         else:
             print("Not a recognized OS")
 
 
-        model = CmdStanModel(stan_file='./stan_files/one_sample.stan')
+        model = CmdStanModel(stan_file='../stan_files/one_sample.stan')
         #model = CmdStanModel(exe_file=exe_file)
 
         stan_data = {
