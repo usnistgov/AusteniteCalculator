@@ -262,6 +262,13 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
     mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
+    phase_cols = mcmc_df.loc[:,mcmc_df.columns.str.contains("phase_mu")]
+    ni_sum = np.sum(phase_cols,axis=1)
+    for i in range(phase_cols.shape[1]):
+        phase_cols.iloc[:,i] = phase_cols.iloc[:,i]/ni_sum
+
+    mcmc_df.loc[:,mcmc_df.columns.str.contains("phase_mu")] = phase_cols
+
     return mcmc_df
 
 def run_pymc(I,R,sigma_I,phases,pfs,plot=False):
