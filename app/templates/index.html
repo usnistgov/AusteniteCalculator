@@ -40,6 +40,14 @@
         <button class="nav-link" data-bs-toggle="tab" type="button" href="#phase-frac-tab">Phase Fraction</button>
       </li>
 
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#file-creation-cryst-tab">File Creation (Crystallites Illuminated)</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#file-creation-instrpm-json-tab">File Creation (instprm and json)</button>
+      </li>
+
     </ul>
 
     <div class="tab-content">
@@ -208,14 +216,22 @@
 
       </div>
 
-      <div class="tab-pane" id="file-creation-cryst"></div>
+      <div class="tab-pane" id="file-creation-cryst-tab"> 
+        <br>
+        <button type="button" class="btn btn-primary" id="button-cryst">Download File</button>
+      </div>
 
-      <div class="tab-pane" id="file-creation-instrpm-json"></div>
-
+      
+      <div class="tab-pane" id="file-creation-instrpm-json-tab">
+        <br>
+        <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
+      </div>
     </div>
+  
   </div>
 
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/aux_file_downloads.js') }}"></script>
 
 </body>
 

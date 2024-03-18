@@ -84,6 +84,15 @@ def submit():
 
     return jsonify(all_results)
 
+@app.route("/instprm_json",methods=["POST"])
+def instprm_json():
+    request_var = request.get_json()
+    return "The value you submitted to the instprm route is " + request_var['var']
+
+@app.route("/cryst",methods=["POST"])
+def cryst():
+    request_var = request.get_json()
+    return "The value you submitted to the cryst route is " + request_var['var']
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0',port=8050,debug=True)
