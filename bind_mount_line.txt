@@ -1,1 +1,0 @@
-docker run -d -p 8050:8050 --name ac --mount type=bind,source="/c/Users/dtn1/OneDrive - NIST/Documents/ByScientist/AdamCreuziger/ac_flask",target=/root/AustCalc ac_flask

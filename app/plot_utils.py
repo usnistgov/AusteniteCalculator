@@ -60,7 +60,7 @@ def create_encoded_plots(pk_fit_res,mcmc_res):
     to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
     plt.clf()
 
-    # phase 
+    # phase fraction
     name = 'phase_fraction_plot'
     tmpfile = io.BytesIO()
     for i,phase in enumerate(unique_phases):
@@ -72,5 +72,32 @@ def create_encoded_plots(pk_fit_res,mcmc_res):
     tmpfile.seek(0) # go to beginning of buffer
     to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
     plt.clf()
+
+    # phase conversion -- mass_frac
+    name = 'phase_fraction_plot_mass_frac'
+    tmpfile = io.BytesIO()
+    for i,phase in enumerate(unique_phases):
+        plt.hist(mcmc_res['mcmc_df'].iloc[:,i]*10,alpha=.5,density=True,bins=30,label=phase)
+    plt.xlabel("Phase Fraction")
+    plt.ylabel("Density")
+    plt.title("Phase Fraction Histogram")
+    plt.savefig(tmpfile, format='png')
+    tmpfile.seek(0) # go to beginning of buffer
+    to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
+    plt.clf()
+
+    # phase conversion -- vol_frac
+    name = 'phase_fraction_plot_vol_frac'
+    tmpfile = io.BytesIO()
+    for i,phase in enumerate(unique_phases):
+        plt.hist(mcmc_res['mcmc_df'].iloc[:,i]*5,alpha=.5,density=True,bins=30,label=phase)
+    plt.xlabel("Phase Fraction")
+    plt.ylabel("Density")
+    plt.title("Phase Fraction Histogram")
+    plt.savefig(tmpfile, format='png')
+    tmpfile.seek(0) # go to beginning of buffer
+    to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
+    plt.clf()
+
 
     return to_return

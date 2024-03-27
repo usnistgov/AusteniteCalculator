@@ -1086,12 +1086,12 @@ def convert_mu_samps(mu_samps,conversion_vec):
     to either mass fraction or volume fraction
 
     Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
+        mu_samps: np.array that is N x number of phase fractions
+        conversion_vec: np.array of the conversion weights, will be same length as the number
+        of phase fractions
 
     Returns:
-        | *ADD*
+        | np.array that is N x 'number of phase fractions' 
         |
 
     Raises:
