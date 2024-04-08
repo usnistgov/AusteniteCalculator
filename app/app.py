@@ -46,11 +46,14 @@ def index():
 @app.route("/submit",methods=['POST'])
 def submit():
 
-    req = print(request.get_json())
+    req = request.get_json()
     print(req)
 
-    # let's try to just get example 5 working
-    datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example("Example05")
+    if req['radioValue'] == 'None':
+        return jsonify({'res':'None'})
+
+    else:
+        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
 
     with open(os.path.join(datadir, json_fname), 'r') as f:
         crystal_data = json.loads(f.read())

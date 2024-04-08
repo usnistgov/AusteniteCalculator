@@ -1568,9 +1568,12 @@ def gather_example(example_name):
         datadir = '../ExampleData/Example09A'
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
-        xrdml_fnames = ['S231113-AAC-850-017_norm_mask_1D_sum_scaled.csv']
+        breakpoint()
+        all_files = pd.Series(os.listdir(datadir))
+        xrdml_fnames = all_files.loc[all_files.str.contains('csv$')]
+        xrdml_fnames = xrdml_fnames.to_list()
         instprm_fname = 'E231208-AAC-660.instprm'
-        json_fname = 'Example05copy.json'
+        json_fname = 'Example09A-EBSD.json'
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
