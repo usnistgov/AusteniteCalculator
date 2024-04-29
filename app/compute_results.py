@@ -1037,18 +1037,40 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
 
 def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
 
+    phase_names = phase_frac['Dataset_1'].Phase
+    n_phases = phase_names.shape[0]
+
+    cell_mass_vec = np.zeros(n_phases)
+    cell_volume_vec = np.zeros(n_phases)
+
+    for ii in range(n_phases):
+        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
+        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
+
+    outdf = pd.DataFrame({
+        'Phase':phase_names,
+        'mass_conversion':cell_mass_vec,
+        'volume_conversion':cell_volume_vec
+    })
+
+    return outdf
+
+
+def get_conversions_old(phase_frac,cell_masses_dict,cell_volumes_dict):
+
     """
     *ADD*
 
     Parameters:
-        phase_frac: *ADD*
-        cell_masses_dict: *ADD*
-        cell_volumes_dict: *ADD*
+        phase_frac: dictionary entry from compute_peak_fitting()
+        cell_masses_dict: dictionary entry returned from compute_interaction_volume()
+        cell_volumes_dict: dictionary entry returned from from compute_interaction_volume()
 
 
     Returns:
-        | *ADD*
-        |
+        | dict with the following key-value pairs:
+        |   mass_conversion: dictionary that contains the normalized constant for each phase to convert from number of cells to mass
+        |   volume_conversion: dictionary that contains normalized constant for each phase to convert from number of cells to volume
 
     Raises:
 
@@ -1060,74 +1082,25 @@ def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
     volume_conversion = deepcopy(phase_frac)
 
     #find denominator first(normalize at the same time)
-    n_phases = len(phase_frac["Dataset_1"][0])
+    n_phases = phase_frac["Dataset_1"].shape[0]
 
     cell_mass_vec = np.zeros(n_phases)
     cell_volume_vec = np.zeros(n_phases)
     cell_number_vec = np.zeros(n_phases)
 
     for ii in range(n_phases):
-        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset_1'][0][ii]['Phase']]
-        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset_1'][0][ii]['Phase']]
-        cell_number_vec[ii] = phase_frac['Dataset_1'][0][ii]['Phase_Fraction']
+        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
+        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
+        cell_number_vec[ii] = phase_frac['Dataset_1'].Phase_Fraction.iloc[ii]
 
     for dataset in phase_frac:
 
         for ii in range(n_phases):
-            mass_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vec[ii]*cell_mass_vec[ii]/np.sum(cell_number_vec*cell_mass_vec)
-            volume_conversion[dataset][0][ii]['Phase_Fraction'] = cell_number_vec[ii]*cell_volume_vec[ii]/np.sum(cell_number_vec*cell_volume_vec)
+            mass_conversion[dataset].Phase_Fraction.iloc[ii] = cell_number_vec[ii]*cell_mass_vec[ii]/np.sum(cell_number_vec*cell_mass_vec)
+            volume_conversion[dataset].Phase_Fraction.iloc[ii] = cell_number_vec[ii]*cell_volume_vec[ii]/np.sum(cell_number_vec*cell_volume_vec)
 
-    return mass_conversion, volume_conversion, cell_mass_vec, cell_volume_vec
+    return {'mass_conversion':mass_conversion, 'volume_conversion':volume_conversion, 'cell_mass_vec':cell_mass_vec, 'cell_volume_vec':cell_volume_vec}
 
-def convert_mu_samps(mu_samps,conversion_vec):
-
-    """
-    Converts draws of normalized intensity (mu_samps) from fraction of unit cells
-    to either mass fraction or volume fraction
-
-    Parameters:
-        mu_samps: np.array that is N x number of phase fractions
-        conversion_vec: np.array of the conversion weights, will be same length as the number
-        of phase fractions
-
-    Returns:
-        | np.array that is N x 'number of phase fractions' 
-        |
-
-    Raises:
-
-
-    """
-
-    c = conversion_vec
-    mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
-
-    return mu_samps
-
-def normalize_mu_samps(mu_samps):
-
-    """
-    Normalize mu_samps values to the domain of 0 to 1
-
-    Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
-
-    Returns:
-        | *ADD*
-        |
-
-    Raises:
-
-
-    """
-
-
-    c = conversion_vec
-    mu_samps = mu_samps.apply(lambda x: x*c/np.sum(x*c),axis=1,raw=True)
-
-    return mu_samps
 
 def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,json_data,G2sc):
     print("Running peak fitting...")
@@ -1349,7 +1322,36 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
 
     return interaction_dict
 
-def run_mcmc(results_table,number_mcmc_runs):
+def compute_conversion_mcmc_dfs(mcmc_df,conversions):
+
+    """
+    Takes in results from compute_uncertainties.run_stan() and computes conversions for mass frac and volume frac
+    """
+
+    number_cell_samples = mcmc_df.loc[:,mcmc_df.columns.str.contains("phase_mu")]
+
+    
+    mass_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['mass_conversion'])/np.sum(x*np.array(conversions['mass_conversion'])),
+                                                  axis=1,
+                                                  raw=True)
+    
+    vol_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['volume_conversion'])/np.sum(x*np.array(conversions['volume_conversion'])),
+                                                 axis=1,
+                                                 raw=True)
+    
+    number_cell_samples['conversion_type'] = 'Number Cells'
+    mass_frac_df['conversion_type'] = 'Mass Fraction'
+    vol_frac_df['conversion_type'] = 'Volume Fraction'
+
+    return({
+        'number_cells_df':number_cell_samples,
+        'mass_frac_df':mass_frac_df,
+        'vol_frac_df':vol_frac_df
+    })
+
+
+
+def run_mcmc(results_table,number_mcmc_runs,conversions):
 
     """
     *ADD*
@@ -1357,6 +1359,7 @@ def run_mcmc(results_table,number_mcmc_runs):
     Parameters:
         results_table: from crystallites illuminated
         number_mcmc_runs: number of mcmc posterior samples
+        conversions: dict containing conversion factors for each phase, for mass and volume
 
 
     Returns:
@@ -1370,14 +1373,17 @@ def run_mcmc(results_table,number_mcmc_runs):
 
     results_table_df = pd.concat(results_table,axis=0).reset_index()
     mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
+    mcmc_df_dict = compute_conversion_mcmc_dfs(mcmc_df,conversions)
     unique_phases = np.unique(results_table_df.Phase)
     param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
 
-    mcmc_df.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
+    # mcmc_df_dict.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
     print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
     print(mcmc_df.info(memory_usage=True))
 
-    return {'mcmc_df':mcmc_df, 'param_table':param_table}
+    pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
+
+    return mcmc_df_dict, param_table, pf_table
 
 def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_frac):
 

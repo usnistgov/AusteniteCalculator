@@ -73,15 +73,20 @@ def submit():
     print("Computing crystallites illuminated...")
     cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 
-    print("Running MCMC")
-    mcmc_res = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000)
-    pf_table = compute_uncertainties.generate_pf_table(mcmc_res['mcmc_df'],np.unique(pk_fit_res['full_results_table'].Phase))
+    print("Computing mass fraction and volume fracation conversion factors...")
+    conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
+                                                  int_vol_res['cell_masses_dict'],
+                                                  int_vol_res['cell_volumes_dict'])
 
-    encoded_plots = plot_utils.create_encoded_plots(pk_fit_res,mcmc_res)
+    print("Running MCMC")
+    mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
+
+
+    encoded_plots = plot_utils.create_encoded_plots(pk_fit_res,mcmc_df_dict)
 
     # combine all results into a dictionary to send to browser
     all_results = {'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
-                   'param_table_html':mcmc_res['param_table'].to_html(justify='left'),
+                   'param_table_html':param_table.to_html(justify='left'),
                    'pf_table_html':pf_table.to_html(justify='left'),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
                    'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),

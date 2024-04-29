@@ -1,9 +1,5 @@
-from enum import unique
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.express as px
-from scipy.stats import truncnorm
 from cmdstanpy import CmdStanModel
 import sys
 
@@ -256,7 +252,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
     return mcmc_df
 
-def run_pymc(I,R,sigma_I,phases,pfs,plot=False):
+def generate_pf_table(mcmc_df_dict,unique_phase_names):
     """
     *ADD*
 
@@ -273,252 +269,36 @@ def run_pymc(I,R,sigma_I,phases,pfs,plot=False):
 
 
     """
-    # uses pymc3
+    full_dict = {}
 
-    I = np.array(I)[pfs]
-    R = np.array(R)[pfs]
-    sigma_I = np.array(sigma_I)[pfs]
-    phases = np.array(phases)[pfs]
+    for conversion_name in mcmc_df_dict.keys():
 
+        mcmc_df = mcmc_df_dict[conversion_name]
 
-    phase_counts = np.unique(phases, return_counts=True)[1]
+        mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
+        n_phase = mu_res.shape[1]
+        quantiles = np.zeros((n_phase,2))
 
-    if np.min(phase_counts) <= 2:
-        return None
-
-    phase_names = phases.copy()
-
-    Z = I/R
-    unique_phase_names = np.unique(phase_names)
-
-    phases = np.zeros(len(phases),dtype=np.int8)
-
-    # create numeric index for each phase
-    for ii in range(len(unique_phase_names)):
-
-        phases[phase_names==unique_phase_names[ii]] = int(ii)
-
-    unique_phases = np.unique(phases)
-    phase_stds = np.zeros(len(unique_phases))
-
-    # standard deviations for each phase
-    for ii in range(len(unique_phases)):
-
-        phase_stds[ii] = np.std(Z[phases==unique_phases[ii]])
-
-    # prior scale and means
-    prior_scale=np.mean(phase_stds)
-    prior_mean_centers = np.ones(len(unique_phases))
-
-    #print(prior_scale)
-    #print(prior_mean_centers)
-
-    if plot:
-        plt.scatter(x=np.arange(len(Z)),y=Z,c=phases)
-        print("Z: {}".format(Z))
-        print("phases: {}".format(phases))
-
-    basic_model = pm.Model()
-
-    with basic_model:
-
-        # Priors for unknown model parameters
-        sigma_exp = pm.HalfStudentT("sigma_exp", sd=prior_scale*2, nu=4,shape=len(unique_phases))
-        mu = pm.TruncatedNormal("mu",
-                       mu=prior_mean_centers,
-                       sd=np.std(Z)*10,
-                       lower=0,
-                       shape=len(unique_phases))
-
-        full_sigma = pm.math.sqrt( (1/R**2)*(sigma_I**2) + pm.math.sqr(sigma_exp[phases]) )
-
-        # Likelihood (sampling distribution) of observations
-        Y_obs = pm.Normal("Y_obs", mu=mu[phases], sd=full_sigma, observed=Z)
-
-        #if plot:
-            #pm.model_to_graphviz(basic_model)
-
-        trace = pm.sample(1000, return_inferencedata=False,tune=1000)
-
-        mu_norm = np.apply_along_axis(lambda x: x/np.sum(x),1,trace['mu'])
-
-        mu_df = pd.DataFrame(mu_norm,columns=unique_phase_names)
-        mu_df = pd.melt(mu_df,value_vars = unique_phase_names,var_name='which_phase',value_name='value')
-
-        #sig_df = pd.DataFrame(trace['sigma_exp'],columns=unique_phase_names)
-        #sig_df = pd.melt(sig_df,value_vars = unique_phase_names,var_name='which_phase',value_name='value')
-
-    summary_table = pd.DataFrame({
-        'phase':unique_phase_names,
-        'PF_Est':np.zeros(len(unique_phase_names)),
-        'PF_L95':np.zeros(len(unique_phase_names)),
-        'PF_U95':np.zeros(len(unique_phase_names))
-    })
-
-    for ii, pn in enumerate(unique_phase_names):
-
-        quantiles = np.quantile(mu_df['value'].loc[mu_df['which_phase']==pn],[.5,.025,.975])
-        summary_table.loc[summary_table['phase'] == pn, ['PF_Est','PF_L95','PF_U95']] = quantiles
-
-    return {'mu_df':mu_df,'trace':trace,
-            'unique_phase_names':unique_phase_names,
-            'summary_table':summary_table}
-
-def generate_pf_plot_and_table(mcmc_df,unique_phase_names,results_table):
-    """
-    *ADD*
-
-    Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
-
-    Returns:
-        | *ADD*
-        |
-
-    Raises:
-
-
-    """
-    mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
-    n_phase = mu_res.shape[1]
-    multiple_samples = 'sigma_sample' in mcmc_df.columns
-
-    row_sums = np.sum(mu_res,axis=1)
-    mu_res_norm = mu_res
-
-    for ii in range(n_phase):
-        mu_res_norm[:,ii] = mu_res_norm[:,ii]/row_sums
-
-    out_df = [None]*n_phase
-
-    quantiles = np.zeros((n_phase,2))
-
-    # table to store phase fraction estimates and 95% credible intervals
-    pf_table = pd.DataFrame({
-        'Phase':unique_phase_names,
-        'Phase Fraction Estimate':0,
-        'Phase Fraction (Lower 95%)':0,
-        'Phase Fraction (Upper 95%)':0
-    })
-
-    # table to hold parameter estimates for sources of uncertainty
-
-    param_table = pd.DataFrame({
-        'Phase':unique_phase_names,
-        'Experimental Error Variability':[0]*n_phase,
-        'X-ray Count Median Variability':[0]*n_phase,
-        'Parameter Fit Median Variability':[0]*n_phase
-    })
-
-    if multiple_samples:
-        param_table['sigma_samp'] = [0]*n_phase
-        param_table['sigma_interaction'] = [0]*n_phase
-
-    results_table = pd.concat(results_table,axis=0).reset_index()
-    results_table = results_table.loc[results_table['Peak_Fit_Success'],:]
-
-
-    for ii,ph in enumerate(unique_phase_names):
-
-        out_df[ii] = pd.DataFrame({
-            'mu_samps':mu_res_norm[:,ii],
-            'phase':unique_phase_names[ii]
+        # table to store phase fraction estimates and 95% credible intervals
+        pf_table = pd.DataFrame({
+            'Phase':unique_phase_names,
+            'Phase Fraction Estimate':0.0,
+            'Phase Fraction (Lower 95%)':0.0,
+            'Phase Fraction (Upper 95%)':0.0
         })
 
-        quantiles[ii,:] = np.quantile(mu_res_norm[:,ii],(.025,.975))
+        for j,ph in enumerate(unique_phase_names):
 
-        #t_mu_samps = mcmc_df['phase_mu[' + str(ii+1) + ']']
-        t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
+            quantiles[j,:] = np.quantile(mu_res[:,j],(.025,.975))
 
-        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction Estimate'] = np.mean(mu_res_norm[:,ii])
-        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Lower 95%)'] = np.quantile(mu_res_norm[:,ii],.025)
-        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Upper 95%)'] = np.quantile(mu_res_norm[:,ii],.975)
+            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction Estimate'] = np.mean(mu_res[:,j])
+            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Lower 95%)'] = np.quantile(mu_res[:,j],.025)
+            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Upper 95%)'] = np.quantile(mu_res[:,j],.975)
 
-        # sigma_exp
-        param_table.loc[param_table['Phase'] == ph, 'Experimental Error Variability'] = np.mean(t_sigexp_samps)
+        full_dict[conversion_name] = pf_table
+        pf_table['Conversion Type'] = conversion_name
 
-        # medians
-        dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
-        param_table.loc[param_table['Phase'] == ph, 'X-ray Count Variability'] = np.median(dummy)
-
-        dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
-        param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
-
-    if multiple_samples:
-        param_table.loc[:,'sigma_samp'] = np.mean(mcmc_df['sigma_sample'])
-        param_table.loc[:,'sigma_interaction'] = np.mean(mcmc_df['sigma_interaction'])
-        param_table['Sample Variability'] = np.sqrt( param_table['sigma_samp']**2 + param_table['sigma_interaction']**2)
-        param_table = param_table.drop(columns=['sigma_samp','sigma_interaction'])
-
-
-
-    out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
-
-    quantiles = quantiles.flatten()
-
-    col_list = px.colors.qualitative.Plotly
-
-    # figure
-    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,barmode="overlay")
-
-    for ii in range(len(quantiles)):
-        fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])
-
-    return fig, pf_table, param_table
-
-def generate_pf_table(mcmc_df,unique_phase_names):
-    """
-    *ADD*
-
-    Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
-
-    Returns:
-        | *ADD*
-        |
-
-    Raises:
-
-
-    """
-    mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
-    n_phase = mu_res.shape[1]
-
-    # Does row summation to normalize each row
-    row_sums = np.sum(mu_res,axis=1)
-    mu_res_norm = mu_res
-
-    for ii in range(n_phase):
-        mu_res_norm[:,ii] = mu_res_norm[:,ii]/row_sums
-
-    out_df = [None]*n_phase
-
-    quantiles = np.zeros((n_phase,2))
-
-    # table to store phase fraction estimates and 95% credible intervals
-    pf_table = pd.DataFrame({
-        'Phase':unique_phase_names,
-        'Phase Fraction Estimate':0.0,
-        'Phase Fraction (Lower 95%)':0.0,
-        'Phase Fraction (Upper 95%)':0.0
-    })
-
-    for ii,ph in enumerate(unique_phase_names):
-
-        out_df[ii] = pd.DataFrame({
-            'mu_samps':mu_res_norm[:,ii],
-            'phase':unique_phase_names[ii]
-        })
-
-        quantiles[ii,:] = np.quantile(mu_res_norm[:,ii],(.025,.975))
-
-        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction Estimate'] = np.mean(mu_res_norm[:,ii])
-        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Lower 95%)'] = np.quantile(mu_res_norm[:,ii],.025)
-        pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Upper 95%)'] = np.quantile(mu_res_norm[:,ii],.975)
+    pf_table = pd.concat(full_dict).reset_index()
 
     return pf_table
 
@@ -580,56 +360,3 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
 
 
     return param_table
-
-def generate_pf_plot(mcmc_df,unique_phase_names):
-    """
-    *ADD*
-
-    Parameters:
-        mcmc_df: Equivalent to mu_samps?
-        unique_phase_names: list of phase names?  How are they sorted
-
-
-    Returns:
-        | *ADD*
-        |
-
-    Raises:
-
-
-    """
-    mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
-    n_phase = mu_res.shape[1]
-
-    row_sums = np.sum(mu_res,axis=1)
-    mu_res_norm = mu_res
-
-    for ii in range(n_phase):
-        mu_res_norm[:,ii] = mu_res_norm[:,ii]/row_sums
-
-    out_df = [None]*n_phase
-    quantiles = np.zeros((n_phase,2))
-
-
-    for ii,ph in enumerate(unique_phase_names):
-
-        out_df[ii] = pd.DataFrame({
-            'mu_samps':mu_res_norm[:,ii],
-            'phase':ph
-        })
-
-        quantiles[ii,:] = np.quantile(mu_res_norm[:,ii],(.025,.975))
-
-    out_df = pd.concat(out_df,axis=0).reset_index(drop=True)
-
-    quantiles = quantiles.flatten()
-
-    col_list = px.colors.qualitative.Plotly
-
-    # figure
-    fig = px.histogram(out_df,x='mu_samps',color='phase',opacity=.75,labels={'mu_samps': "Phase Fraction",'phase':"Phase"},histnorm='probability',nbins=100,range_x=[0,1],barmode='overlay')
-
-    for ii in range(len(quantiles)):
-        fig.add_vline(quantiles[ii],opacity=.5,line_dash='dash',line_color=col_list[ ii // 2 ])
-
-    return fig
