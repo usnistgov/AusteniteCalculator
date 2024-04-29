@@ -105,7 +105,7 @@
             </div>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example09A"> 
+              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example09A_subset"> 
               <label class="form-check-label" for="radio3">Example 09A (Multiple Samples)</label>
             </div>
 
@@ -168,6 +168,14 @@
       </div>
 
       <div class="tab-pane" id="intensity-plots-tab">
+
+        <br>
+
+        <div class="col-2">
+          <label for="intensity-plots-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="intensity-plots-select">
+            </select>
+        </div>
 
         <div class="row">
           <div id='raw-intensity-plot'></div>

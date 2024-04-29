@@ -76,9 +76,8 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     Samples in this case implies xrd files/scans
 
     Parameters:
-        results_table: *ADD*
-        number_mcmc_runs: *ADD*
-        fit_variational: *Flag ???*
+        results_table: Dictionary of 'pd.DataFrame's, e.g., results_table['Dataset_1']
+        number_mcmc_runs: Number of MCMC warmup runs. 2000 runs are kept total, but these are used as a 'warm-up' for the sampler.
 
 
     Returns:
@@ -128,9 +127,10 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     else:
         prior_sample_scale = None
 
-    #prior_exp_scale for variation based on peak to peak variation
+    # prior_exp_scale = variation based on peak to peak variation
     prior_exp_scale = np.mean(mydf.groupby(['sample_id','phase_id']).IR.std())
-    #prior_location is the inital location (value) of the data
+    
+    # prior_location is the inital location (value) of the data
     prior_location = np.array(mydf.groupby('phase_id').IR.mean())
 
     print("Bayesian Prior Estimates")
@@ -146,17 +146,20 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
         #check OS to determine which stan executable to use
         # Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
-        if sys.platform.startswith('win'): #windows
+        
+        if sys.platform.startswith('win'): # windows -- have not tested this in a while
             #Untested
             exe_file = '../stan_files/one_sample.exe'
+
         elif sys.platform.startswith('darwin'): # MacOS
             exe_file = '../stan_files/one_sample'
+
         elif sys.platform.startswith('linux'):
             # Untested.  If we include precompiled files, we may need to change the filename
             exe_file = '../stan_files/one_sample'
+
         else:
             print("Not a recognized OS")
-
 
         model = CmdStanModel(stan_file='../stan_files/one_sample.stan')
         #model = CmdStanModel(exe_file=exe_file)
@@ -175,23 +178,17 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         }
 
 
-
-        if fit_variational:
-            fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
-
         # Runs 4*2000 samples anyway, number of mcmc runs is warmup period?
-        else:
-            fit = model.sample(data=stan_data,
-                               chains=4,
-                               iter_warmup=number_mcmc_runs,
-                               iter_sampling=2000)
-
+        fit = model.sample(data=stan_data,
+                            chains=4,
+                            iter_warmup=number_mcmc_runs,
+                            iter_sampling=2000)
 
 
     ### Code for the multiple sample case
     elif len(results_table) > 1:
 
-          #check OS to determine which stan executable to use
+        # check OS to determine which stan executable to use
         # Should this be a try/except block?    https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
         if sys.platform.startswith('win'): #windows
             #Untested
@@ -219,7 +216,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
         model = CmdStanModel(stan_file = '../stan_files/multiple_samples.stan')
         #model = CmdStanModel(exe_file=exe_file)
-
+ 
         stan_data = {
             "N":mydf.shape[0],
             "N_samples":len(np.unique(mydf.sample_id)),
@@ -240,25 +237,13 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
 
 
-        if fit_variational:
-            fit = model.variational(data=stan_data,grad_samples=20,output_samples=2000,require_converged=False)
+        fit = model.sample(data=stan_data,
+                           chains=4,
+                           iter_warmup=number_mcmc_runs,
+                           iter_sampling=2000)
 
-        else:
-            fit = model.sample(data=stan_data,
-                               chains=4,
-                               iter_warmup=number_mcmc_runs,
-                               iter_sampling=2000)
-
-    if fit_variational:
-
-        mcmc_df = pd.DataFrame(fit.variational_sample)
-        mcmc_df.columns = fit.variational_params_pd.columns
-
-
-    else:
-        mcmc_df = fit.draws_pd()
-        print(mcmc_df.info(memory_usage=True))
-
+    mcmc_df = fit.draws_pd()
+    print(mcmc_df.info(memory_usage=True))
 
     mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 

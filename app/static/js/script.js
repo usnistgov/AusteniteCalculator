@@ -65,14 +65,26 @@ async function fetchData() {
 
     const all_results = await response.json();
 
+    // update form selects
+    let intensity_plots_select = document.getElementById("intensity-plots-select");
+    n_dsets = Object.keys(all_results.encoded_plots.fitted_intensity_plot).length;
+    for(let i = 0; i < n_dsets; i++) {
+        let new_option = document.createElement("option");
+        new_option.value = i + 1;
+        new_option.textContent = (i + 1).toString();
+        intensity_plots_select.appendChild(new_option);
+    }
+
     // raw intensities plot
     const ri_plot = document.createElement('img');
-    ri_plot.src = all_results.encoded_plots.raw_intensity_plot;
+    ri_plot.setAttribute('id','raw-intensity-plot-img');
+    ri_plot.src = all_results.encoded_plots.raw_intensity_plot.Dataset_1;
     document.getElementById('raw-intensity-plot').appendChild(ri_plot);
 
     // fitted intensities plot
     const fi_plot = document.createElement('img');
-    fi_plot.src = all_results.encoded_plots.fitted_intensity_plot;
+    fi_plot.setAttribute('id','fitted-intensity-plot-img');
+    fi_plot.src = all_results.encoded_plots.fitted_intensity_plot.Dataset_1;
     document.getElementById('fitted-intensity-plot').appendChild(fi_plot);
 
     // normalized intensities plot
@@ -86,10 +98,21 @@ async function fetchData() {
     pf_plot.src = all_results.encoded_plots.phase_fraction_plot;
     document.getElementById('phase-fraction-plot').appendChild(pf_plot);
 
-    // save the phase fraction plots to display as needed
+    // save various plots to display as needed
+
+    //   phase fraction conversion plots
     results_storage.pf_plot_num_unit_cells = all_results.encoded_plots.phase_fraction_plot;
     results_storage.pf_plot_mass_frac = all_results.encoded_plots.phase_fraction_plot_mass_frac;
     results_storage.pf_plot_vol_frac = all_results.encoded_plots.phase_fraction_plot_vol_frac;
+
+    //   raw intensities and normalized intensities plots
+    results_storage.raw_intensity_plot = {}
+    results_storage.fitted_intensity_plot = {}
+
+    for(let i = 0; i < n_dsets; i++) {
+        results_storage.raw_intensity_plot[i + 1] = all_results.encoded_plots.raw_intensity_plot['Dataset_' + (i + 1).toString()]
+        results_storage.fitted_intensity_plot[i + 1] = all_results.encoded_plots.fitted_intensity_plot['Dataset_' + (i + 1).toString()]
+    }
 
     // results table
     const results_table_html = all_results.results_table_html;

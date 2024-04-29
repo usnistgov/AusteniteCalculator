@@ -19,3 +19,14 @@ conversion_select.addEventListener("change", function() {
     }
     
 })
+
+let intensity_plots_select = document.getElementById("intensity-plots-select");
+
+intensity_plots_select.addEventListener("change", function() {
+
+    let raw_intensity_plot_img = document.getElementById("raw-intensity-plot-img");
+    let fitted_intensity_plot_img = document.getElementById("fitted-intensity-plot-img");
+
+    raw_intensity_plot_img.src = results_storage.raw_intensity_plot[this.selectedIndex + 1];
+    fitted_intensity_plot_img.src = results_storage.fitted_intensity_plot[this.selectedIndex + 1];
+})

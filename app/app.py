@@ -74,7 +74,7 @@ def submit():
     cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 
     print("Running MCMC")
-    mcmc_res = compute_results.run_mcmc(pk_fit_res['results_table'],fit_vi=False,number_mcmc_runs=1000)
+    mcmc_res = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000)
     pf_table = compute_uncertainties.generate_pf_table(mcmc_res['mcmc_df'],np.unique(pk_fit_res['full_results_table'].Phase))
 
     encoded_plots = plot_utils.create_encoded_plots(pk_fit_res,mcmc_res)

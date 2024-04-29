@@ -1349,15 +1349,14 @@ def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
 
     return interaction_dict
 
-def run_mcmc(results_table,number_mcmc_runs,fit_vi):
+def run_mcmc(results_table,number_mcmc_runs):
 
     """
     *ADD*
 
     Parameters:
         results_table: from crystallites illuminated
-        fit_vi: ???
-        number_mcmc_runs: number of mcmc runs to try
+        number_mcmc_runs: number of mcmc posterior samples
 
 
     Returns:
@@ -1370,7 +1369,7 @@ def run_mcmc(results_table,number_mcmc_runs,fit_vi):
     """
 
     results_table_df = pd.concat(results_table,axis=0).reset_index()
-    mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs),fit_vi)
+    mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
     unique_phases = np.unique(results_table_df.Phase)
     param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
 
@@ -1568,12 +1567,21 @@ def gather_example(example_name):
         datadir = '../ExampleData/Example09A'
         cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
         workdir = '../server_workdir'
-        breakpoint()
         all_files = pd.Series(os.listdir(datadir))
         xrdml_fnames = all_files.loc[all_files.str.contains('csv$')]
         xrdml_fnames = xrdml_fnames.to_list()
         instprm_fname = 'E231208-AAC-660.instprm'
-        json_fname = 'Example09A-EBSD.json'
+        json_fname = 'Example09A-Neutron.json'
+
+    elif example_name == "Example09A_subset":
+        datadir = '../ExampleData/Example09A_subset'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+        workdir = '../server_workdir'
+        all_files = pd.Series(os.listdir(datadir))
+        xrdml_fnames = all_files.loc[all_files.str.contains('csv$')]
+        xrdml_fnames = xrdml_fnames.to_list()
+        instprm_fname = 'E231208-AAC-660.instprm'
+        json_fname = 'Example09A-Neutron.json'
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 

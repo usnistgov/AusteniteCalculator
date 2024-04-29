@@ -9,34 +9,42 @@ import matplotlib.colors as mcolors
 def create_encoded_plots(pk_fit_res,mcmc_res):
     matplotlib.use('agg')
     
-    to_return = {}
+    to_return = {
+        'raw_intensity_plot':{},
+        'fitted_intensity_plot':{}
+    }
 
     image_prefix = 'data:image/png;base64,'
 
-    # raw intensities plot
-    name = 'raw_intensity_plot'
-    tmpfile = io.BytesIO()
-    plt.plot(pk_fit_res['two_thetas']['Dataset_1'],pk_fit_res['fit_points']['Dataset_1'][0])
-    plt.title('Raw Intensities')
-    plt.xlabel('Two Theta')
-    plt.ylabel('Intensity')
-    plt.savefig(tmpfile, format='png')
-    tmpfile.seek(0) # go to beginning of buffer
-    to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
-    plt.clf()
+    full_results_table = pk_fit_res['full_results_table']
+    dset_names = np.unique(full_results_table.sample_index)
 
-    # fitted intensities plot
-    name = 'fitted_intensity_plot'
-    tmpfile = io.BytesIO()
-    plt.plot(pk_fit_res['two_thetas']['Dataset_1'],pk_fit_res['fit_points']['Dataset_1'][0])
-    plt.plot(pk_fit_res['two_thetas']['Dataset_1'],pk_fit_res['fit_points']['Dataset_1'][2])
-    plt.title('Raw and Fitted Intensities')
-    plt.xlabel('Two Theta')
-    plt.ylabel('Intensity')
-    plt.savefig(tmpfile, format='png')
-    tmpfile.seek(0) # go to beginning of buffer
-    to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
-    plt.clf()
+    for i,val in enumerate(dset_names):
+
+        # raw intensities plot
+        name = 'raw_intensity_plot'
+        tmpfile = io.BytesIO()
+        plt.plot(pk_fit_res['two_thetas']['Dataset_' + val],pk_fit_res['fit_points']['Dataset_' + val][0])
+        plt.title('Raw Intensities')
+        plt.xlabel('Two Theta')
+        plt.ylabel('Intensity')
+        plt.savefig(tmpfile, format='png')
+        tmpfile.seek(0) # go to beginning of buffer
+        to_return[name]['Dataset_' + val] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
+        plt.clf()
+
+        # fitted intensities plot
+        name = 'fitted_intensity_plot'
+        tmpfile = io.BytesIO()
+        plt.plot(pk_fit_res['two_thetas']['Dataset_' + val],pk_fit_res['fit_points']['Dataset_' + val][0])
+        plt.plot(pk_fit_res['two_thetas']['Dataset_' + val],pk_fit_res['fit_points']['Dataset_' + val][2])
+        plt.title('Raw and Fitted Intensities')
+        plt.xlabel('Two Theta')
+        plt.ylabel('Intensity')
+        plt.savefig(tmpfile, format='png')
+        tmpfile.seek(0) # go to beginning of buffer
+        to_return[name]['Dataset_' + val] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
+        plt.clf()
 
     # normalized intensities plot
     name = 'normalized_intensities_plot'
