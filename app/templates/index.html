@@ -178,27 +178,40 @@
         </div>
 
         <div class="row">
-          <div id='raw-intensity-plot'></div>
+          <div class="col-5">
+            <div id='raw-intensity-plot'></div>
+          </div>
+          
+          <div class="col-5">
+            <div id='fitted-intensity-plot'></div>
+          </div>
         </div>
         
-        <div class="row">
-          <div id='fitted-intensity-plot'></div>
-        </div>
         
       </div>
 
       <div class="tab-pane" id="normalized-int-tab">
+        
+        <br>
+
+        <div class="row">
+          <div id='normalized-intensities-plot'></div>
+        </div>
+
+        <div class="col-2">
+          <label for="normalized-intensity-plots-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="normalized-intensity-plots-select"></select>
+        </div>
+
         <br>
 
         <div class="row">
           <table id="results-table" class="table" style="white-space:nowrap"></table>
         </div>
 
-        <br>
 
-        <div class="row">
-          <div id='normalized-intensities-plot'></div>
-        </div>
+
+
 
       </div>
         
@@ -214,6 +227,7 @@
         <br>
         <div class="row">
           <div class="col-3">
+          <p>Phase Fraction Units:</p>
           <select class="form-select" aria-label="Default select example" id="conversion-select">
             <option selected value="1">Number of Unit Cells</option>
             <option value="2">Mass Fraction</option>

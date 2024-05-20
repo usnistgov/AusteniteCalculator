@@ -67,13 +67,24 @@ async function fetchData() {
 
     // update form selects
     let intensity_plots_select = document.getElementById("intensity-plots-select");
+    let normalized_intensity_plot_select = document.getElementById("normalized-intensity-plots-select");
+
     n_dsets = Object.keys(all_results.encoded_plots.fitted_intensity_plot).length;
+
     for(let i = 0; i < n_dsets; i++) {
         let new_option = document.createElement("option");
+        let option_norm_int = document.createElement("option");
+
         new_option.value = i + 1;
+        option_norm_int.value = i + 1;
+
         new_option.textContent = (i + 1).toString();
+        option_norm_int.textContent = (i + 1).toString();
+
         intensity_plots_select.appendChild(new_option);
+        normalized_intensity_plot_select.appendChild(option_norm_int);
     }
+
 
     // raw intensities plot
     const ri_plot = document.createElement('img');
@@ -89,7 +100,8 @@ async function fetchData() {
 
     // normalized intensities plot
     const ni_plot = document.createElement('img');
-    ni_plot.src = all_results.encoded_plots.normalized_intensities_plot;
+    ni_plot.setAttribute('id','normalized-intensity-plot-img');
+    ni_plot.src = all_results.encoded_plots.normalized_intensities_plot.Dataset_1;
     document.getElementById('normalized-intensities-plot').appendChild(ni_plot);
 
     // phase fraction plot
@@ -105,13 +117,15 @@ async function fetchData() {
     results_storage.pf_plot_mass_frac = all_results.encoded_plots.phase_fraction_plot_mass_frac;
     results_storage.pf_plot_vol_frac = all_results.encoded_plots.phase_fraction_plot_vol_frac;
 
-    //   raw intensities and normalized intensities plots
-    results_storage.raw_intensity_plot = {}
-    results_storage.fitted_intensity_plot = {}
+    //  raw intensities and normalized intensities plots
+    results_storage.raw_intensity_plot = {};
+    results_storage.fitted_intensity_plot = {};
+    results_storage.normalized_intensity_plot = {};
 
     for(let i = 0; i < n_dsets; i++) {
-        results_storage.raw_intensity_plot[i + 1] = all_results.encoded_plots.raw_intensity_plot['Dataset_' + (i + 1).toString()]
-        results_storage.fitted_intensity_plot[i + 1] = all_results.encoded_plots.fitted_intensity_plot['Dataset_' + (i + 1).toString()]
+        results_storage.raw_intensity_plot[i + 1] = all_results.encoded_plots.raw_intensity_plot['Dataset_' + (i + 1).toString()];
+        results_storage.fitted_intensity_plot[i + 1] = all_results.encoded_plots.fitted_intensity_plot['Dataset_' + (i + 1).toString()];
+        results_storage.normalized_intensity_plot[i + 1] = all_results.encoded_plots.normalized_intensities_plot['Dataset_' + (i + 1).toString()];
     }
 
     // results table

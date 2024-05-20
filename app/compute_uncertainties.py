@@ -298,7 +298,7 @@ def generate_pf_table(mcmc_df_dict,unique_phase_names):
         full_dict[conversion_name] = pf_table
         pf_table['Conversion Type'] = conversion_name
 
-    pf_table = pd.concat(full_dict).reset_index()
+    pf_table = pd.concat(full_dict,ignore_index=True)
 
     return pf_table
 

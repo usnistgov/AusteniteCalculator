@@ -12,7 +12,8 @@ def create_encoded_plots(pk_fit_res,mcmc_df_dict):
     # need to initialize plots with multiple return plots
     to_return = {
         'raw_intensity_plot':{},
-        'fitted_intensity_plot':{}
+        'fitted_intensity_plot':{},
+        'normalized_intensities_plot':{}
     }
 
     image_prefix = 'data:image/png;base64,'
@@ -47,31 +48,31 @@ def create_encoded_plots(pk_fit_res,mcmc_df_dict):
         to_return[name]['Dataset_' + val] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
         plt.clf()
 
-    # normalized intensities plot
-    name = 'normalized_intensities_plot'
-    tmpfile = io.BytesIO()
-    phases = full_results_table.Phase
-    unique_phases = np.unique(phases)
+        # normalized intensities plots
+        name = 'normalized_intensities_plot'
+        tmpfile = io.BytesIO()
+        phases = full_results_table.Phase
+        unique_phases = np.unique(phases)
 
-    for i,phase in enumerate(unique_phases):
-        inds = np.where(phases == phase)
-        x = full_results_table.pos_fit.iloc[inds]
-        y = full_results_table.n_int.iloc[inds]
-        plt.scatter(x,y,label=phase)
-        plt.hlines(np.mean(y),np.min(x),np.max(x),linestyles='dashed',colors=mcolors.TABLEAU_COLORS[list(mcolors.TABLEAU_COLORS.keys())[i]])
+        for j,phase in enumerate(unique_phases):
+            inds = np.where( (phases == phase) & (full_results_table.sample_index == val) )
+            x = full_results_table.pos_fit.iloc[inds]
+            y = full_results_table.n_int.iloc[inds]
+            plt.scatter(x,y,label=phase)
+            plt.hlines(np.mean(y),np.min(x),np.max(x),linestyles='dashed',colors=mcolors.TABLEAU_COLORS[list(mcolors.TABLEAU_COLORS.keys())[j]])
 
-    plt.title('Normalized Intensities')
-    plt.xlabel('Two Theta')
-    plt.ylabel('Normalized Intensity')
-    plt.savefig(tmpfile, format='png')
-    tmpfile.seek(0) # go to beginning of buffer
-    to_return[name] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
-    plt.clf()
+        plt.title('Normalized Intensities')
+        plt.xlabel('Two Theta')
+        plt.ylabel('Normalized Intensity')
+        plt.savefig(tmpfile, format='png')
+        tmpfile.seek(0) # go to beginning of buffer
+        to_return[name]['Dataset_' + val] = image_prefix + base64.b64encode(tmpfile.read()).decode('utf-8')
+        plt.clf()
 
     # phase fraction
     name = 'phase_fraction_plot'
     tmpfile = io.BytesIO()
-    breakpoint()
+    #breakpoint()
     for i,phase in enumerate(unique_phases):
         plt.hist(mcmc_df_dict['number_cells_df'].iloc[:,i],alpha=.5,density=True,bins=30,label=phase)
     plt.xlabel("Phase Fraction")
