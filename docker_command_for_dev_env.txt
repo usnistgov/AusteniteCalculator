@@ -6,3 +6,5 @@ docker run -p 8050:8050 --mount type=bind,source="/c/Users/dtn1/OneDrive - NIST/
 to make interactive, use -it flag (note adding /bin/bash at end did not work). note that the CMD command should be commented out at the end.
 
 docker run -p 8050:8050 --mount type=bind,source="/c/Users/dtn1/OneDrive - NIST/Documents/ByScientist/AdamCreuziger/austenitecalculator",target=/root/AustCalc/ -it ac
+
+python is at /root/g2full/bin/python3

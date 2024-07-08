@@ -81,16 +81,18 @@ def submit():
     print("Running MCMC")
     mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
 
-
-    encoded_plots = plot_utils.create_encoded_plots(pk_fit_res,mcmc_df_dict)
-
     # combine all results into a dictionary to send to browser
-    all_results = {'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
-                   'param_table_html':param_table.to_html(justify='left'),
-                   'pf_table_html':pf_table.to_html(justify='left'),
+    all_results = {'two_thetas':pk_fit_res['two_thetas'],
+                   'fit_points':pk_fit_res['fit_points'],
+                   'param_table':param_table.to_dict(orient='list'),
+                   'param_table_html':param_table.to_html(),
+                   'pf_table':pf_table.to_dict(orient='list'),
+                   'pf_table_html':pf_table.to_html(),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
+                   'results_table_html':pk_fit_res['full_results_table'].to_html(),
+                   'mcmc_df':mcmc_df_dict['number_cells_df'].to_dict(orient='list'),
                    'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
-                   'encoded_plots':encoded_plots}
+                   'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
 
 
     return jsonify(all_results)
