@@ -1185,7 +1185,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
         'u_int_fit_count_table_columns':u_int_fit_count_table_columns
     }
 
-def compute_interaction_volume(cif_fnames,datadir,instprm_fname):
+def compute_cell_density(cif_fnames,datadir,instprm_fname):
 
     """
     *ADD*

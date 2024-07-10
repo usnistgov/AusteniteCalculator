@@ -58,8 +58,8 @@ def submit():
     with open(os.path.join(datadir, json_fname), 'r') as f:
         crystal_data = json.loads(f.read())
 
-    print("Computing Interaction Volume")
-    int_vol_res = compute_results.compute_interaction_volume(cif_fnames,datadir,instprm_fname)
+    print("Computing Cell Density")
+    int_vol_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
 
     print("Running Peak Fitting")
     pk_fit_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
