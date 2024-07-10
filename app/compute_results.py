@@ -1103,17 +1103,38 @@ def get_conversions_old(phase_frac,cell_masses_dict,cell_volumes_dict):
 
 
 def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,json_data,G2sc):
+    """
+    ADD
+    Calls compute()
+
+    Parameters:
+        datadir: directory path
+        ADD
+
+
+    Returns:
+        : dictionary with the following dictionaries nested inside
+        ADD
+
+    Raises:
+
+
+    """
+
+
     print("Running peak fitting...")
+    # Initialize dictionaries to store data returned from compute_results
     results_table = {}
     phase_frac = {}
     two_thetas = {}
     uncert = {}
     ti_tables = {}
-    altered_results = {}
+    altered_results = {} # What does altered mean?
     altered_phase = {}
     altered_ti = {}
     fit_points = {}
-    #create the above dicts to store data returned from compute_results
+
+    # Loop over files entered
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
         fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
@@ -1209,8 +1230,6 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
         cell_volumes_dict: unit cell volume of each phase/cif file
         cell_masses_dict': unit cell mass of each phase/cif file, summed from atomic_masses_dict and elem_fractions_dict
         }
-
-    return cell_dens_dict
 
     Raises:
 
