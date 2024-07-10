@@ -59,24 +59,24 @@ def submit():
         crystal_data = json.loads(f.read())
 
     print("Computing Cell Density")
-    int_vol_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
+    cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
 
     print("Running Peak Fitting")
     pk_fit_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
 
     print("Computing peaks_dict")
-    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],int_vol_res['scattering_dict'],int_vol_res['elem_fractions_dict'])
+    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
 
     print("Gathering Summarized Phase Info")
-    graph_data_dict = compute_results.compute_summarized_phase_info(int_vol_res['scattering_dict'],int_vol_res['elem_fractions_dict'],peaks_dict)
+    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
 
     print("Computing crystallites illuminated...")
     cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 
     print("Computing mass fraction and volume fracation conversion factors...")
     conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
-                                                  int_vol_res['cell_masses_dict'],
-                                                  int_vol_res['cell_volumes_dict'])
+                                                  cell_dens_res['cell_masses_dict'],
+                                                  cell_dens_res['cell_volumes_dict'])
 
     print("Running MCMC")
     mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)

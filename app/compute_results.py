@@ -1188,7 +1188,12 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
 def compute_cell_density(cif_fnames,datadir,instprm_fname):
 
     """
-    *ADD*
+    Based on the atomic information, compute scattering and
+    Each cif file will contain several elements
+    Used to convert the phase fraction between number of unit cells,
+    mass of unit cells, and volume of unit cells
+    Uses the volume as entered in cif file (should we do this after fitting?)
+
 
     Parameters:
         cif_fnames: file names for cif files
@@ -1197,23 +1202,22 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
 
 
     Returns:
-        interaction_dict: dictionary with the following dictionaries nested inside
-        scattering_dict: ??? scattering per element?
-        atomic_masses_dict: ??? atomic masses of each element?
-        elem_fractions_dict':elem_fractions_dict,
-        cell_volumes_dict: dictionary with cif_file name, then cell volume as
-            read from the .cif file
-        cell_masses_dict':cell_masses_dict
+        cell_dens_dict: dictionary with the following dictionaries nested inside
+        scattering_dict: dictionary with phase/cif file,  then scattering factors per element for the given wavelength
+        atomic_masses_dict: dictionary with atomic masses of each element listed
+        elem_fractions_dict: dictionary with element fractions, then each element listed
+        cell_volumes_dict: unit cell volume of each phase/cif file
+        cell_masses_dict': unit cell mass of each phase/cif file, summed from atomic_masses_dict and elem_fractions_dict
         }
 
-    return interaction_dict
+    return cell_dens_dict
 
     Raises:
 
 
     """
 
-    print("Begin Interaction Volume")
+    print("Begin Compute Cell Density")
 
     # Initialize dictionarys
     scattering_dict = {}
@@ -1232,6 +1236,7 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
         elems = []
         crystal_density = None
         print("Begin Open files")
+        print("Read Cell Volume")
         # Somewhat fragile to cif format and number of returns after line ending
         with open(cif_path) as f:
             lines = f.readlines()
@@ -1250,6 +1255,7 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
                     addon = True
 
         print("Begin parameter files readin")
+        # Assumes only one or two wavelengths
         wavelengths = []
         with open(instprm_path) as fi:
             lines = fi.readlines()
@@ -1274,7 +1280,7 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
             atoms_per_cell = int(temp[8])
             #print("Results: ", elems_for_phase, elem_fraction,atoms_per_cell)
 
-        print("Cell Volume Calculation")
+        print("Cell Mass Calculation")
         cell_mass = 0.0
         count = 0
         for elem in elems_for_phase:
@@ -1310,9 +1316,9 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
         scattering_dict[cif_fnames[x]] = scattering_nums
         elem_fractions_dict[cif_fnames[x]] = elem_fraction
 
-    print("Interaction Volume Computation Complete")
+    print("Compute Cell Density Computation Complete")
 
-    interaction_dict={
+    cell_dens_dict={
         'scattering_dict':scattering_dict,
         'atomic_masses_dict':atomic_masses_dict,
         'elem_fractions_dict':elem_fractions_dict,
@@ -1320,7 +1326,7 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
         'cell_masses_dict':cell_masses_dict
         }
 
-    return interaction_dict
+    return cell_dens_dict
 
 def compute_conversion_mcmc_dfs(mcmc_df,conversions):
 
