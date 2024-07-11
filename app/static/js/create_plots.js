@@ -116,6 +116,13 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
         t_y = [];
 
     }
+    
+    // Add mean lines
+    // ? from uncertainty table, if it has the mean?
+    // Array.from({length: 10}, () => 5)
+    // let text1 = "sea";
+    // text1.concat(" ", text2);
+    
 
     var layout = {
         title: 'Normalized Intensities',
