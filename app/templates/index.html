@@ -170,7 +170,7 @@
       <div class="tab-pane" id="intensity-plots-tab">
 
         <br>
-
+        <h4>Raw and Fitted Diffraction Data</h4>
         <div class="col-2">
           <label for="intensity-plots-select" class="form-label">Which Dataset</label>
             <select class="form-select" id="intensity-plots-select">
@@ -196,18 +196,19 @@
       <div class="tab-pane" id="normalized-int-tab">
         
         <br>
-
+        <h4>Normalized Intensities and Calculated Values per Peak</h4>
         <div class="row">
           <div id='normalized-intensities-plot'></div>
         </div>
 
+        <h6>Normalized Intensities</h6>
         <div class="col-2">
           <label for="normalized-intensity-plots-select" class="form-label">Which Dataset</label>
             <select class="form-select" id="normalized-intensity-plots-select"></select>
         </div>
 
         <br>
-
+        <h6>Calculated Values per Peak</h6>
         <div class="row">
           <table id="results-table" class="table" style="white-space:nowrap"></table>
         </div>
@@ -224,13 +225,14 @@
         <br>
 
         <div class="row">
+          <h4>Phase Fraction Histogram</h4>
           <div id="phase-fraction-plot"></div>
         </div>
 
         <br>
         <div class="row">
           <div class="col-3">
-          <p>Phase Fraction Units:</p>
+          <h6>Choose Units to Display Phase Fraction Histogram:</h6>
           <select class="form-select" aria-label="Default select example" id="conversion-select">
             <option selected value="1">Number of Unit Cells</option>
             <option value="2">Mass Fraction</option>
@@ -242,12 +244,14 @@
         <br>
 
         <div class="row">
+          <h4>Phase Fraction Values (different units)</h4>
           <table id="pf-table" class="table" style="white-space:nowrap"></table>
         </div>
 
         <br>
 
         <div class="row">
+          <h4>Sources of Uncertainty (scaled by normalized intensity)</h4>
           <table id="uncert-table" class="table" style="white-space:nowrap"></table>
         </div>
 

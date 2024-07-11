@@ -326,6 +326,7 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
     # table to hold parameter estimates for sources of uncertainty
     param_table = pd.DataFrame({
         'Phase':unique_phase_names,
+        'Mean Normalized Intensity':np.zeros(n_phase),
         'Experimental Error Variability':np.zeros(n_phase),
         'X-ray Count Variability':np.zeros(n_phase),
         'Parameter Fit Variability':np.zeros(n_phase),
@@ -341,6 +342,14 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
 
         t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
 
+        # mean normalized intensity
+        mean_ph=0
+        subset_table=results_table.loc[:,['Phase','n_int']]
+        # need to add 'float' to keep a dataframe from being returned,
+        # which breaks the datatype
+        mean_ph=float(subset_table[subset_table['Phase']==ph].mean())
+        param_table.loc[param_table['Phase'] == ph, 'Mean Normalized Intensity'] = mean_ph
+        
         # sigma_exp
         param_table.loc[param_table['Phase'] == ph, 'Experimental Error Variability'] = np.mean(t_sigexp_samps)
 
