@@ -151,7 +151,8 @@ function createPhaseFractionPlot(all_results,div_id) {
         data.push({
             x:all_results.mcmc_df['phase_mu['.concat(i+1).concat(']')],
             type:'histogram',
-            opacity:0.6
+            opacity:0.6,
+            name: all_results.unique_phases[i]
         })
 
     }
