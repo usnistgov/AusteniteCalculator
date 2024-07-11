@@ -82,6 +82,10 @@ def submit():
     mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
 
     # combine all results into a dictionary to send to browser
+    # param_table has the uncertainty parameters from mcmc result
+    # pf_table has the phase fraction with conversions
+    # results_table is the combined fit and theoretical data
+    # mcmc_df are all the simulated phase fractions (by unit cell)
     all_results = {'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
                    'param_table':param_table.to_dict(orient='list'),
@@ -93,6 +97,11 @@ def submit():
                    'mcmc_df':mcmc_df_dict['number_cells_df'].to_dict(orient='list'),
                    'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
                    'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
+
+    # quick and dirty way to export all
+    with open("export-all.json", "w") as outfile:
+        json.dump(all_results, outfile)
+
 
 
     return jsonify(all_results)
