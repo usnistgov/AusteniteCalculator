@@ -99,10 +99,8 @@ def submit():
                    'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
 
     # quick and dirty way to export all
-    with open("export-all.json", "w") as outfile:
-        json.dump(all_results, outfile)
-
-
+    #with open("export-all.json", "w") as outfile:
+    #    json.dump(all_results, outfile)
 
     return jsonify(all_results)
 
