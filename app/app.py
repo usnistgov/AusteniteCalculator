@@ -88,6 +88,9 @@ def submit():
     # mcmc_df are all the simulated phase fractions (by unit cell)
     all_results = {'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
+                   # issues since user flags are per data set
+                   #'user_flags':pk_fit_res['user_flags'],
+                   #'user_flags_html':pk_fit_res['user_flags'].to_html(),
                    'param_table':param_table.to_dict(orient='list'),
                    'param_table_html':param_table.to_html(),
                    'pf_table':pf_table.to_dict(orient='list'),

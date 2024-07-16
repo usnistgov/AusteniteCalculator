@@ -101,6 +101,11 @@ async function fetchData() {
     document.getElementById('phase-fraction-plot').appendChild(pf_plot);
 
     // tables
+    // ??? Why call these 'table' if they are html?  Confusing with app.py
+
+    // User Flags table
+    // const user_flags_html = all_results.user_flags_html;
+    // document.getElementById('user-flags-table').innerHTML=user_flags_html;
 
     // results table
     const results_table_html = all_results.results_table_html;
