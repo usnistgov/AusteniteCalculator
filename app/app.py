@@ -90,13 +90,13 @@ def submit():
                    'fit_points':pk_fit_res['fit_points'],
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],
-                   #'user_flags_html':pk_fit_res['user_flags'].to_html(),
+                   #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
                    'param_table':param_table.to_dict(orient='list'),
-                   'param_table_html':param_table.to_html(),
+                   'param_table_html':param_table.to_html(justify='left'),
                    'pf_table':pf_table.to_dict(orient='list'),
-                   'pf_table_html':pf_table.to_html(),
+                   'pf_table_html':pf_table.to_html(justify='left'),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
-                   'results_table_html':pk_fit_res['full_results_table'].to_html(),
+                   'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
                    'mcmc_df':mcmc_df_dict['number_cells_df'].to_dict(orient='list'),
                    'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
                    'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
