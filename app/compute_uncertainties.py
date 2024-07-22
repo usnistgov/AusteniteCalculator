@@ -347,7 +347,7 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
         subset_table=results_table.loc[:,['Phase','n_int']]
         # need to add 'float' to keep a dataframe from being returned,
         # which breaks the datatype
-        mean_ph=float(subset_table[subset_table['Phase']==ph].mean())
+        mean_ph=float(subset_table.loc[subset_table['Phase']==ph,'n_int'].mean())
         param_table.loc[param_table['Phase'] == ph, 'Mean Normalized Intensity'] = mean_ph
         
         # sigma_exp
