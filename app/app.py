@@ -90,6 +90,8 @@ def submit():
                    'fit_points':pk_fit_res['fit_points'],
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],
+                   # Create dictionary of html tables
+                   # Have it be a choice of the which dataset
                    #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
                    'param_table':param_table.to_dict(orient='list'),
                    'param_table_html':param_table.to_html(justify='left'),
