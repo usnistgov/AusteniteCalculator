@@ -2,6 +2,14 @@
 // fragile to missing commas, hang on 'running submission'
 
 
+customColorScale = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd'
+]
+
 /**
  * Return the Raw Intenisty Plot as a plotly object
  *
@@ -93,8 +101,12 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
     let t_x = [];
     let t_y = [];
 
+    let phase_mean = 0;
+
+    // loop through unique phases
     for(let i = 0; i < all_results.unique_phases.length; i++) {
 
+        // loop through Phase column for matches to current phase
         for(let j = 0; j < all_results.results_table.Phase.length; j++) {
             
             if(all_results.results_table.Phase[j] == all_results.unique_phases[i]) {
@@ -110,6 +122,21 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
             mode:'markers',
             type: 'scatter',
             name: all_results.unique_phases[i],
+            marker: {
+                color: customColorScale[i]
+            }
+        });
+
+        phase_mean = math.sum(t_y)/t_y.length;
+
+        data.push({
+            x: [math.min(all_results.results_table.pos_fit),math.max(all_results.results_table.pos_fit)],
+            y: [phase_mean, phase_mean],
+            name: all_results.unique_phases[i],
+            mode: 'lines',
+            marker: {
+                color: customColorScale[i]
+            }
         });
 
         t_x = [];
