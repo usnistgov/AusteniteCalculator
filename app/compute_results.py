@@ -285,7 +285,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
     results_table = {}
     phase_frac = {}
     two_thetas = {}
-    uncert = {}
+    user_flags = {}
     ti_tables = {}
     altered_results = {} # What does altered mean?
     altered_phase = {}
@@ -295,7 +295,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
     # Loop over files entered
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
-        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, uncert_DF = compute(datadir,workdir,xrdml_fnames[x], \
+        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, user_flags_DF = compute(datadir,workdir,xrdml_fnames[x], \
                                     instprm_fname,cif_fnames,json_data, G2sc)
         #Use _ instead of : to avoid special characters in export
         temp_string = 'Dataset_' + str(x + 1)
@@ -307,7 +307,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
         phase_frac[temp_string] = phase_frac_DF
         two_thetas[temp_string] = two_theta.tolist()
         ti_tables[temp_string] = theo_intensity_dict
-        uncert[temp_string] = uncert_DF
+        user_flags[temp_string] = user_flags_DF
         altered_results[temp_string] = results_df
         altered_phase[temp_string] = phase_frac_DF
         altered_ti[temp_string] = theo_intensity_dict
@@ -354,7 +354,7 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
         'full_results_table':full_results_table,
         'phase_frac':phase_frac,
         'two_thetas':two_thetas,
-        'uncert':uncert,
+        'user_flags':user_flags,
         'ti_tables':ti_tables,
         'altered_results':altered_results,
         'altered_phase':altered_phase,
