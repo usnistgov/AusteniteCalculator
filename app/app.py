@@ -100,7 +100,7 @@ def submit():
                    'param_table':param_table.to_dict(orient='list'),
                    'param_table_html':param_table.to_html(justify='left'),
                    'pf_table':pf_table.to_dict(orient='list'),
-                   'pf_table_html':pf_table.to_html(justify='left'),
+                   'pf_table_html':pf_table.to_html(justify='left', index=False),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
                    'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
                    'mcmc_df':mcmc_df_dict['number_cells_df'].to_dict(orient='list'),
