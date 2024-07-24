@@ -58,6 +58,9 @@ def submit():
     with open(os.path.join(datadir, json_fname), 'r') as f:
         crystal_data = json.loads(f.read())
 
+    print("Collecting Version information")
+    version_DF = compute_results.version_summary()
+
     print("Computing Cell Density")
     cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
 
@@ -86,7 +89,8 @@ def submit():
     # pf_table has the phase fraction with conversions
     # results_table is the combined fit and theoretical data
     # mcmc_df are all the simulated phase fractions (by unit cell)
-    all_results = {'two_thetas':pk_fit_res['two_thetas'],
+    all_results = {'version_html':version_DF.to_html(justify='left', index=False),
+                   'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],

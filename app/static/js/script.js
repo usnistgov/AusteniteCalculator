@@ -103,6 +103,11 @@ async function fetchData() {
     // tables
     // ??? Why call these 'table' if they are html?  Confusing with app.py
 
+    // version summary table
+    const version_table_html = all_results.version_html;
+    document.getElementById('version-table').innerHTML=version_table_html;
+
+
     // User Flags table
     // const user_flags_html = all_results.user_flags_html;
     // document.getElementById('user-flags-table').innerHTML=user_flags_html;

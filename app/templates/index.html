@@ -53,13 +53,22 @@
     </ul>
 
     <div class="tab-content">
-
+  <!-- About Tab -->
       <div class="tab-pane" id="about-tab">
         <br>
         The Austenite Calculator is a super cool app. 
         It helps you estimate and quantify uncertainty of the various phases in your material.
+        <br>
+        <h4>Version Summary (Only populated after running analysis)</h4>
+        <div class="row">
+          <table id="version-table" class="table" style="white-space:nowrap"></table>
+        </div>
+        
       </div>
-
+      
+      
+      
+  <!-- Data Upload Tab -->
       <div class="tab-pane container active" id="data-upload-tab">
         <br>
         <div class="row">
@@ -167,7 +176,8 @@
         <br>
         <br>
       </div>
-
+      
+  <!-- Intensity Plots Tab -->
       <div class="tab-pane" id="intensity-plots-tab">
 
         <br>
@@ -199,7 +209,7 @@
       <br>
         
       </div>
-
+  <!-- Normalized Intensity Tab -->
       <div class="tab-pane" id="normalized-int-tab">
         
         <br>
@@ -226,7 +236,7 @@
 
       </div>
         
-
+  <!-- Phase Fraciton Tab -->
       <div class="tab-pane" id="phase-frac-tab">
 
         <br>
@@ -264,12 +274,13 @@
 
       </div>
 
-      <div class="tab-pane" id="file-creation-cryst-tab"> 
+  <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
+      <div class="tab-pane" id="file-creation-cryst-tab">
         <br>
         <button type="button" class="btn btn-primary" id="button-cryst">Download File</button>
       </div>
 
-      
+  <!-- Combined file creation tab -->
       <div class="tab-pane" id="file-creation-instrpm-json-tab">
         <br>
         <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
