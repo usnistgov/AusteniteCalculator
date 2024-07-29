@@ -58,6 +58,9 @@ def submit():
     with open(os.path.join(datadir, json_fname), 'r') as f:
         crystal_data = json.loads(f.read())
 
+    print("Collecting Version information")
+    version_DF = compute_results.version_summary()
+
     print("Computing Cell Density")
     cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
 
@@ -87,15 +90,18 @@ def submit():
     # results_table is the combined fit and theoretical data
     # mcmc_df are all the simulated phase fractions (by unit cell)
     all_results = {'conversion_table':conversions.to_dict(orient='list'),
+                   'version_html':version_DF.to_html(justify='left', index=False),
                    'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],
+                   # Create dictionary of html tables
+                   # Have it be a choice of the which dataset
                    #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
                    'param_table':param_table.to_dict(orient='list'),
                    'param_table_html':param_table.to_html(justify='left'),
                    'pf_table':pf_table.to_dict(orient='list'),
-                   'pf_table_html':pf_table.to_html(justify='left'),
+                   'pf_table_html':pf_table.to_html(justify='left', index=False),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
                    'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
                    'mcmc_df':mcmc_df_dict['number_cells_df'].to_dict(orient='list'),

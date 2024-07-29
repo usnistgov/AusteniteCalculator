@@ -1294,6 +1294,50 @@ def compute_conversion_mcmc_dfs(mcmc_df,conversions):
     })
 
 
+def version_summary():
+    import GSASIIpath
+    import subprocess
+    
+    """
+    Collect various version information to populated the "About" tab in app
+
+    Parameters:
+        None
+
+    Returns:
+        version_DF:Pandas DataFrame with summary version informaiton
+        ADD
+
+    Raises:
+
+    """
+
+    # Git information
+    # branch, commit
+    
+    git_url= ((subprocess.Popen(['git', 'config', '--get', 'remote.origin.url'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+
+
+    git_branch= ((subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+
+    git_commit_hash= ((subprocess.Popen(['git', 'log', '-1', '--pretty=format:"%H"'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+
+    git_commit_oneline=((subprocess.Popen(['git', 'log', '-1', '--oneline'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+
+    # Add Git Tag later (once we have them for versions/releases)
+    # git tag?
+
+    # GSAS version
+    GSAS_version=GSASIIpath.GetVersionNumber()
+    
+    d = {'Version_Data': ["Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
+     'Values': [git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
+    
+    version_DF = pd.DataFrame(data=d)
+    
+    return version_DF
+    
+    # Convert to dataframe, much easier to export as html
 
 #####################################
 ######### Not clear if these are still used #########
