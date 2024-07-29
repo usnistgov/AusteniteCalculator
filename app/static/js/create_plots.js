@@ -169,11 +169,31 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
  *
  * @returns {Plotly.newPlot()} Types and descriptions are both supported.
  */
-function createPhaseFractionPlot(all_results,div_id) {
+function createPhaseFractionPlot(all_results,div_id,which_conversion) {
+
+    let conversion_table = all_results.conversion_table;
+    let conversion_factor = 0;
+    let index = 0;
+    let colname = '';
 
     let data = [];
 
     for(let i = 0; i < all_results.unique_phases.length; i++) {
+
+        if(which_conversion == 'number') {
+            // do nothing
+        }
+
+        else if(which_conversion == 'mass') {
+            colname = 'mass_conversion';
+        } 
+
+        else if(which_conversion == 'volume') {
+            colname = 'volume_conversion';
+        }
+        
+        //index = conversion_table.findIndex(ph => ph == all_results.unique_phases[i]);
+        //conversion_factor = conversion_table
 
         data.push({
             x:all_results.mcmc_df['phase_mu['.concat(i+1).concat(']')],

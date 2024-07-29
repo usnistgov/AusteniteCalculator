@@ -31,6 +31,5 @@ normalized_intensities_plot_select.addEventListener("change",function() {
 
     // same as above
 
-    //normalized_intensities_plot_img.src = results_storage.normalized_intensity_plot[this.selectedIndex + 1];
 
 })

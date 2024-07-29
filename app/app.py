@@ -86,7 +86,8 @@ def submit():
     # pf_table has the phase fraction with conversions
     # results_table is the combined fit and theoretical data
     # mcmc_df are all the simulated phase fractions (by unit cell)
-    all_results = {'two_thetas':pk_fit_res['two_thetas'],
+    all_results = {'conversion_table':conversions.to_dict(orient='list'),
+                   'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],

@@ -92,7 +92,7 @@ async function fetchData() {
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
     createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName);
-    createPhaseFractionPlot(all_results,'phase-fraction-plot');
+    createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
 
     // phase fraction plot
     const pf_plot = document.createElement('img');
