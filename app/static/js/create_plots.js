@@ -172,31 +172,40 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
 function createPhaseFractionPlot(all_results,div_id,which_conversion) {
 
     let conversion_table = all_results.conversion_table;
-    let conversion_factor = 0;
     let index = 0;
-    let colname = '';
+    let c_name = '';
+
+    let conversion_array = new Array(all_results.unique_phases.length).fill(1); // array of 1's
+
+    if(which_conversion == 'number') {
+        // do nothing
+    
+    } else {
+
+        if(which_conversion == 'mass') {
+            c_name = 'mass_conversion';
+        } 
+    
+        else if(which_conversion == 'volume') {
+            c_name = 'volume_conversion';
+        }
+    
+        conversion_array = conversion_table[c_name];
+
+    }
+
+    const weights = math.divide(conversion_array,math.sum(conversion_array));
+
 
     let data = [];
 
     for(let i = 0; i < all_results.unique_phases.length; i++) {
 
-        if(which_conversion == 'number') {
-            // do nothing
-        }
-
-        else if(which_conversion == 'mass') {
-            colname = 'mass_conversion';
-        } 
-
-        else if(which_conversion == 'volume') {
-            colname = 'volume_conversion';
-        }
-        
         //index = conversion_table.findIndex(ph => ph == all_results.unique_phases[i]);
         //conversion_factor = conversion_table
 
         data.push({
-            x:all_results.mcmc_df['phase_mu['.concat(i+1).concat(']')],
+            x:math.multiply(all_results.mcmc_df['phase_mu['.concat(i+1).concat(']')],weights[i]),
             type:'histogram',
             opacity:0.6,
             name: all_results.unique_phases[i]

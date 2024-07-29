@@ -94,12 +94,6 @@ async function fetchData() {
     createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName);
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
 
-    // phase fraction plot
-    const pf_plot = document.createElement('img');
-    pf_plot.id = "pf-plot"
-    //pf_plot.src = all_results.encoded_plots.phase_fraction_plot;
-    document.getElementById('phase-fraction-plot').appendChild(pf_plot);
-
     // tables
     // ??? Why call these 'table' if they are html?  Confusing with app.py
 

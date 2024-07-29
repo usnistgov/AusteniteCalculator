@@ -1203,8 +1203,7 @@ def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
 
 
     Returns:
-        ?:?
-        ADD
+        pd.DataFrame: columns 'Phase', 'mass_conversion', and 'volume_conversion'
 
     Raises:
 
@@ -1315,25 +1314,30 @@ def version_summary():
     # Git information
     # branch, commit
     
-    git_url= ((subprocess.Popen(['git', 'config', '--get', 'remote.origin.url'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+    try:
 
+        git_url= ((subprocess.Popen(['git', 'config', '--get', 'remote.origin.url'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
 
-    git_branch= ((subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+        git_branch= ((subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
 
-    git_commit_hash= ((subprocess.Popen(['git', 'log', '-1', '--pretty=format:"%H"'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+        git_commit_hash= ((subprocess.Popen(['git', 'log', '-1', '--pretty=format:"%H"'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
 
-    git_commit_oneline=((subprocess.Popen(['git', 'log', '-1', '--oneline'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+        git_commit_oneline=((subprocess.Popen(['git', 'log', '-1', '--oneline'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
 
-    # Add Git Tag later (once we have them for versions/releases)
-    # git tag?
+        # Add Git Tag later (once we have them for versions/releases)
+        # git tag?
 
-    # GSAS version
-    GSAS_version=GSASIIpath.GetVersionNumber()
-    
-    d = {'Version_Data': ["Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
-     'Values': [git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
-    
-    version_DF = pd.DataFrame(data=d)
+        # GSAS version
+        GSAS_version=GSASIIpath.GetVersionNumber()
+        
+        d = {'Version_Data': ["Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
+        'Values': [git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
+        
+        version_DF = pd.DataFrame(data=d)
+
+    except:
+        print("Unable to fetch repo information.")
+        version_DF = pd.DataFrame({'Version_Data':[None],'Values':[None]})
     
     return version_DF
     

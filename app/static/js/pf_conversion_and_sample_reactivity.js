@@ -3,9 +3,25 @@ let conversion_select = document.getElementById("conversion-select");
 // below this needs to be changed
 conversion_select.addEventListener("change", function() {
     console.log("event triggered");
-    let pf_plot = document.getElementById("pf-plot");
 
-    // put function to create new plot based on conversion
+    let cs = document.getElementById('conversion-select');
+    let conversion_option = cs.options[cs.options.selectedIndex].innerText;
+
+    switch(conversion_option) {
+        case "Number of Unit Cells":
+            conversion_option = 'number';
+            break;
+        
+        case "Mass Fraction":
+            conversion_option = 'mass';
+            break;
+
+        case "Volume Fraction":
+            conversion_option = 'volume';
+            break;
+    }
+
+    createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option);
     
 })
 
