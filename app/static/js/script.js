@@ -117,6 +117,9 @@ async function fetchData() {
     createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName);
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
 
+    // cryst illum table
+    createCrystIllumTable()
+
     // tables
     // ??? Why call these 'table' if they are html?  Confusing with app.py
 
