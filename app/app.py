@@ -93,6 +93,7 @@ def submit():
                    'version_html':version_DF.to_html(justify='left', index=False),
                    'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
+                   'cryst_ill_res':cryst_ill_res['crystallites_dict'],
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],
                    # Create dictionary of html tables

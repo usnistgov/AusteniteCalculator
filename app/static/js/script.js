@@ -66,26 +66,49 @@ async function fetchData() {
 
     all_results = await response.json();
 
-    // update form selects
+    // update form selects for dataset number
     let intensity_plots_select = document.getElementById("intensity-plots-select");
     let normalized_intensity_plot_select = document.getElementById("normalized-intensity-plots-select");
+    let cryst_illum_data_select = document.getElementById("cryst-illum-select-dataset");
 
     const n_dsets = all_results.n_dsets;
+    let dset_select_arr = [intensity_plots_select, normalized_intensity_plot_select, cryst_illum_data_select];
 
     for(let i = 0; i < n_dsets; i++) {
-        let new_option = document.createElement("option");
-        let option_norm_int = document.createElement("option");
 
-        new_option.value = i + 1;
-        option_norm_int.value = i + 1;
+        for(let j = 0; j < dset_select_arr.length; j++) {
+            
+            let new_option = document.createElement("option");
+            new_option.value = i + 1;
+            new_option.textContent = (i + 1).toString();
+            dset_select_arr[j].appendChild(new_option);
 
-        new_option.textContent = (i + 1).toString();
-        option_norm_int.textContent = (i + 1).toString();
+        }
 
-        intensity_plots_select.appendChild(new_option);
-        normalized_intensity_plot_select.appendChild(option_norm_int);
     }
 
+    // update form selects for phase
+    let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
+    const n_phases = all_results.unique_phases.length;
+    
+    for(let i = 0; i < n_phases; i++) {
+        let new_option = document.createElement("option");
+        new_option.textContent = all_results.unique_phases[i];
+        cryst_illum_phase_select.appendChild(new_option);
+    }
+
+    // update form selects for peak
+    let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
+    let n_peaks = all_results.results_table.Phase.length;
+
+    for(let i = 0; i < n_peaks; i++) {
+        if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
+            let new_option = document.createElement("option");
+            new_option.textContent = (i + 1).toString();
+            cryst_illum_peak_select.appendChild(new_option);
+        }
+
+    }
 
     // intensities plots
     let dsetName = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)

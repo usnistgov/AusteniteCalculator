@@ -1,7 +1,6 @@
-let cryst_download_btn = document.getElementById("button-cryst");
+
 let instprm_download_btn = document.getElementById("button-instprm-json");
 
-cryst_download_btn.addEventListener('click',getCrystFile);
 instprm_download_btn.addEventListener('click',getInstprmJsonFile);
 
 async function getCrystFile() {

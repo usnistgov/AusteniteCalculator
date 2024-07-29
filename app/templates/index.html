@@ -277,7 +277,26 @@
   <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
       <div class="tab-pane" id="file-creation-cryst-tab">
         <br>
-        <button type="button" class="btn btn-primary" id="button-cryst">Download File</button>
+
+        <div class="col-3">
+          <p>Select Dataset:</p>
+          <select class="form-select" aria-label="Select Dataset:" id="cryst-illum-select-dataset">
+          </select>
+          <br>
+
+          <p>Select Phase:</p>
+          <select class="form-select" aria-label="Select Phase:" id="cryst-illum-select-phase">
+          </select>
+          <br>
+
+          <p>Select Peak</p>
+          <select class="form-select" aria-label="Select Peak:" id="cryst-illum-select-peak">
+          </select>
+          <br>
+        </div>
+
+        <table id="cryst-illum-table" class="table"></table>
+
       </div>
 
   <!-- Combined file creation tab -->

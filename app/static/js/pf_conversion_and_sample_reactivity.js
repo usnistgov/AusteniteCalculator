@@ -49,3 +49,28 @@ normalized_intensities_plot_select.addEventListener("change",function() {
 
 
 })
+
+
+ // update form selects for peak
+ let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
+ let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
+ 
+ cryst_illum_phase_select.addEventListener("change", function() {
+
+    for (p in cryst_illum_peak_select) { 
+        cryst_illum_peak_select.options.remove(0); 
+    }
+
+    let n_peaks = all_results.results_table.Phase.length;
+
+    for(let i = 0; i < n_peaks; i++) {
+        if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
+            let new_option = document.createElement("option");
+            new_option.textContent = (i + 1).toString();
+            cryst_illum_peak_select.appendChild(new_option);
+        }
+
+    }
+
+ })
+ 

@@ -160,6 +160,17 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
     Plotly.newPlot(div_id, data, layout);
 }
 
+function createZDepthPlot(all_results) {
+    
+    // info probably in all_results.results_table and all_results.crystallites_dict
+
+}
+
+function incidentAnglePlot(all_results) {
+
+    // info probably in all_results.results_table and all_results.crystallites_dict
+
+}
 
 /**
  * Return the Phase Fraction Plot as a plotly object
