@@ -105,7 +105,7 @@ def submit():
                    'pf_table_html':pf_table.to_html(justify='left', index=False),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
                    'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
-                   'mcmc_df':mcmc_df_dict['number_cells_df'].to_dict(orient='list'),
+                   'mcmc_dict':mcmc_df_dict, 
                    'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
                    'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
 

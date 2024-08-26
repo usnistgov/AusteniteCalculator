@@ -182,48 +182,38 @@ function incidentAnglePlot(all_results) {
  */
 function createPhaseFractionPlot(all_results,div_id,which_conversion) {
 
-    let conversion_table = all_results.conversion_table;
-    let index = 0;
-    let c_name = '';
-
-    let conversion_array = new Array(all_results.unique_phases.length).fill(1); // array of 1's
+    let mcmc_res = null;
 
     if(which_conversion == 'number') {
-        // do nothing
+        mcmc_res = all_results.mcmc_dict['number_cells_dict'];
     
+    } else if(which_conversion == 'mass') {
+        mcmc_res = all_results.mcmc_dict['mass_frac_dict'];
+
+    } else if(which_conversion == 'volume') {
+        mcmc_res = all_results.mcmc_dict['vol_frac_dict'];
     } else {
-
-        if(which_conversion == 'mass') {
-            c_name = 'mass_conversion';
-        } 
-    
-        else if(which_conversion == 'volume') {
-            c_name = 'volume_conversion';
-        }
-    
-        conversion_array = conversion_table[c_name];
-
+        return(null)
     }
-
-    const weights = math.divide(conversion_array,math.sum(conversion_array));
-
-
+    
     let data = [];
 
     for(let i = 0; i < all_results.unique_phases.length; i++) {
 
-        //index = conversion_table.findIndex(ph => ph == all_results.unique_phases[i]);
-        //conversion_factor = conversion_table
-
         data.push({
-            x:math.multiply(all_results.mcmc_df['phase_mu['.concat(i+1).concat(']')],weights[i]),
+            x:mcmc_res['phase_mu['.concat(i+1).concat(']')],
             type:'histogram',
             opacity:0.6,
-            name: all_results.unique_phases[i]
+            name: all_results.unique_phases[i],
+            nbinsx: 80
         })
 
     }
 
-    Plotly.newPlot(div_id, data);
+    let layout = {
+        bargap: 0
+    }
+
+    Plotly.newPlot(div_id, data, layout);
 
 };

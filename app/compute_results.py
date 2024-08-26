@@ -1249,7 +1249,7 @@ def run_mcmc(results_table,number_mcmc_runs,conversions):
 
     results_table_df = pd.concat(results_table,axis=0).reset_index()
     mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
-    mcmc_df_dict = compute_conversion_mcmc_dfs(mcmc_df,conversions)
+    mcmc_df_dict = compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000)
     unique_phases = np.unique(results_table_df.Phase)
     param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
 
@@ -1265,13 +1265,15 @@ def run_mcmc(results_table,number_mcmc_runs,conversions):
 #### run_mcmc() Utility Fuctions ####
 #####################################
 
-def compute_conversion_mcmc_dfs(mcmc_df,conversions):
+def compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000):
 
     """
     Takes in results from compute_uncertainties.run_stan() and computes conversions for mass frac and volume frac
     """
+    
+    inds_to_keep = np.random.choice(np.arange(mcmc_df.shape[0]),size=n_keep,replace=False)
 
-    number_cell_samples = mcmc_df.loc[:,mcmc_df.columns.str.contains("phase_mu")]
+    number_cell_samples = mcmc_df.loc[inds_to_keep,mcmc_df.columns.str.contains("phase_mu")]
 
     
     mass_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['mass_conversion'])/np.sum(x*np.array(conversions['mass_conversion'])),
@@ -1282,14 +1284,14 @@ def compute_conversion_mcmc_dfs(mcmc_df,conversions):
                                                  axis=1,
                                                  raw=True)
     
-    number_cell_samples['conversion_type'] = 'Number Cells'
-    mass_frac_df['conversion_type'] = 'Mass Fraction'
-    vol_frac_df['conversion_type'] = 'Volume Fraction'
+    #number_cell_samples['conversion_type'] = 'Number Cells'
+    #mass_frac_df['conversion_type'] = 'Mass Fraction'
+    #vol_frac_df['conversion_type'] = 'Volume Fraction'
 
     return({
-        'number_cells_df':number_cell_samples,
-        'mass_frac_df':mass_frac_df,
-        'vol_frac_df':vol_frac_df
+        'number_cells_dict':number_cell_samples.to_dict(orient='list'),
+        'mass_frac_dict':mass_frac_df.to_dict(orient='list'),
+        'vol_frac_dict':vol_frac_df.to_dict(orient='list')
     })
 
 

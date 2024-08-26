@@ -273,7 +273,7 @@ def generate_pf_table(mcmc_df_dict,unique_phase_names):
 
     for conversion_name in mcmc_df_dict.keys():
 
-        mcmc_df = mcmc_df_dict[conversion_name]
+        mcmc_df = pd.DataFrame(mcmc_df_dict[conversion_name])
 
         mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
         n_phase = mu_res.shape[1]
