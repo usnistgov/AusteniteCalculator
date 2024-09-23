@@ -94,7 +94,7 @@ function createFittedIntensityPlot(all_results,div_id,dataset_name) {
  *
  * @returns {Plotly.newPlot()} Types and descriptions are both supported.
  */
-function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
+function createNormalizedIntensityPlot(all_results,div_id,dataset_num) {
     
     var data = [];
 
@@ -109,7 +109,8 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
         // loop through Phase column for matches to current phase
         for(let j = 0; j < all_results.results_table.Phase.length; j++) {
             
-            if(all_results.results_table.Phase[j] == all_results.unique_phases[i]) {
+            if( (all_results.results_table.Phase[j] == all_results.unique_phases[i]) && 
+                (all_results.results_table.sample_index[j] == dataset_num) ) {
                 t_x.push(all_results.results_table.pos_fit[j]);
                 t_y.push(all_results.results_table.n_int[j]);
             }
@@ -211,7 +212,7 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion) {
     }
 
     let layout = {
-        bargap: 0
+        barmode: 'overlay'
     }
 
     Plotly.newPlot(div_id, data, layout);
