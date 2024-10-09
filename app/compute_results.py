@@ -111,6 +111,23 @@ def gather_example(example_name):
         instprm_fname = 'E231208-AAC-660.instprm'
         json_fname = 'Example09A-Neutron.json'
 
+    elif example_name == "Example99":
+        datadir = '../ExampleData/Example99'
+        #cif_fnames = ['Austenite_QP_AC.cif','Ferrite_QP_AC.cif']
+        cif_fnames = ['Austenite_TRIP_DP_AC.cif','Ferrite_TRIP_DP_AC.cif']
+        workdir = '../server_workdir'
+        all_files = pd.Series(os.listdir(datadir))
+        #xrdml_fnames = ['E240828-MRC-001-QP-02p0strain_norm_mask_1D_sum_scaled.csv']
+        #xrdml_fnames = ['E240828-MRC-003-QP-06p5strain_norm_mask_1D_sum_scaled.csv']
+        #xrdml_fnames = ['E240828-MRC-002-QP-08p3strain_norm_mask_1D_sum_scaled.csv']
+        #xrdml_fnames = ['E240828-MRC-004-QP-09p5strain_norm_mask_1D_sum_scaled.csv']
+        #xrdml_fnames = ['E231218-AAC-102-QP-3_norm_mask_1D_sum_scaled.csv']
+        #xrdml_fnames = ['E231218-AAC-103-QP-5_norm_mask_1D_sum_scaled.csv']
+        xrdml_fnames = ['E231220-AAC-215-TRIPDP-8p5_norm_mask_1D_sum_scaled.csv']
+        instprm_fname = 'E240828-MRC-000.instprm'
+        #json_fname = 'QP-E240828.json'
+        json_fname = 'TRIP_DP.json'
+
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
 
@@ -1500,6 +1517,10 @@ def process_data_input(use_default_files,
     elif use_example08A_files not in [None, []] and use_example08A_files[0] == 1:
         using_example_file = True
         example_name = "Example08A"
+
+    elif use_example99_files not in [None, []] and use_example99_files[0] == 1:
+        using_example_file = True
+        example_name = "Example99"
 
     # User uploaded data
     else:
