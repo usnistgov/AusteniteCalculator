@@ -114,7 +114,7 @@ async function fetchData() {
     let dsetName = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
-    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName);
+    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',intensity_plots_select.selectedIndex+1);
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
 
     // cryst illum table

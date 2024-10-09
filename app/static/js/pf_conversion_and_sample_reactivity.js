@@ -29,23 +29,22 @@ let intensity_plots_select = document.getElementById("intensity-plots-select");
 
 intensity_plots_select.addEventListener("change", function() {
 
-    let raw_intensity_plot_img = document.getElementById("raw-intensity-plot-img");
-    let fitted_intensity_plot_img = document.getElementById("fitted-intensity-plot-img");
+    // This function plots the dataset based on which is selcted in this.selectedIndex
+    // This uses the same pattern as script.js
+    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
 
-    // plot the dataset based on which is selcted in this.selectedIndex
-
-    // raw_intensity_plot_img.src = results_storage.raw_intensity_plot[this.selectedIndex + 1];
-    // fitted_intensity_plot_img.src = results_storage.fitted_intensity_plot[this.selectedIndex + 1];
+    createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
+    createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
 })
 
 let normalized_intensities_plot_select = document.getElementById("normalized-intensity-plots-select");
 
-normalized_intensities_plot_select.addEventListener("change",function() {
+normalized_intensities_plot_select.addEventListener("change", function() {
 
-    let normalized_intensities_plot_img = document.getElementById("normalized-intensity-plot-img");
-    console.log(this.selectedIndex);
+    // This function plots the dataset based on which is selcted in this.selectedIndex
+    // This uses the same pattern as script.js
 
-    // same as above
+    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',this.selectedIndex+1);
 
 
 })
