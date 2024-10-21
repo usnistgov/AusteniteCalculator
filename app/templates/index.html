@@ -82,7 +82,7 @@
 
             <div class="mb-3">
               <label for="xrdml-files" class="form-label">X-Ray Diffraction File (.csv, .xrdml, etc.)</label>
-              <input type="file" class="form-control" id="xrdml-files">
+              <input type="file" class="form-control" id="xrdml-files" multiple>
             </div>
           
             <div class="mb-3">
@@ -92,7 +92,7 @@
 
             <div class="mb-3">
               <label for="cif-file" class="form-label">Crystallographic Information Files (.cif)</label>
-              <input type="file" class="form-control" id="cif-file">
+              <input type="file" class="form-control" id="cif-file" multiple>
             </div>
 
             <div class="mb-3">
@@ -105,8 +105,8 @@
             <h6>Option 2: Use Example Files</h6>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="None" checked> 
-              <label class="form-check-label" for="radio1">None</label>
+              <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="uploaded_files" checked> 
+              <label class="form-check-label" for="radio1"> Use Files Uploaded from Option 1</label>
             </div>
 
             <div class="form-check">

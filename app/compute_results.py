@@ -1,4 +1,3 @@
-from bdb import Breakpoint
 from cProfile import label
 from enum import unique
 #from tkinter import TRUE  #doesn't seem to be used, and causes errors in sphinx
@@ -484,6 +483,8 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     print("\n\n Calculate Theoretical Intensities\n")
 
     theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
+
+    #breakpoint()
 
     # Check if these are still dataframes or dictionaries
     for i in range(len(cif_fnames)):

@@ -21,15 +21,27 @@ function hideLoading() {
 }
 
 function processFileContents() {
-    const file = this.files[0];
-    const the_id = this.id;
 
-    let reader = new FileReader();
-    reader.readAsText(file);
+    const n_files = Object.keys(this.files).length; // number of files uploaded
+    const file_obj = {}; // object to store files
 
-    reader.addEventListener('load',() => {
-        fileUploads[the_id] = reader.result;
-    })
+    for(let i = 0; i < n_files; i++) {
+        
+        let file = this.files[i];
+        let reader = new FileReader();
+
+        reader.readAsText(file);
+
+        // once the file has loaded, save 
+        reader.onload = function(e) {
+            file_obj[file.name] = reader.result;
+        };
+
+    }
+
+    fileUploads[this.id] = file_obj; // global scope file container
+
+
 }
 
 const xrdmlFiles = document.getElementById('xrdml-files');
