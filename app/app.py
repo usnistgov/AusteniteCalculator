@@ -74,6 +74,8 @@ def submit():
     graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
 
     print("Computing crystallites illuminated...")
+    # Need to update the full results table, but issues with dict/DF 
+ #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
     cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 
     print("Computing mass fraction and volume fracation conversion factors...")
@@ -94,6 +96,7 @@ def submit():
                    'two_thetas':pk_fit_res['two_thetas'],
                    'fit_points':pk_fit_res['fit_points'],
                    'cryst_ill_res':cryst_ill_res['crystallites_dict'],
+                   #'cryst_ill_res':cryst_ill_res,
                    # issues since user flags are per data set
                    #'user_flags':pk_fit_res['user_flags'],
                    # Create dictionary of html tables
@@ -104,15 +107,22 @@ def submit():
                    'pf_table':pf_table.to_dict(orient='list'),
                    'pf_table_html':pf_table.to_html(justify='left', index=False),
                    'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
+                   # changing to pass to full results, now a dict
+                   #'results_table':pk_fit_res['full_results_table'],
                    'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
-                   'mcmc_dict':mcmc_df_dict, 
+                   # Issues with structure of graph_data_table
+                   # Maybe due to pandas dataframes nested inside
+                   #'graph_data_table':graph_data_dict,
+                   'mcmc_dict':mcmc_df_dict,
                    'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
                    'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
 
     # quick and dirty way to export all
     #with open("export-all.json", "w") as outfile:
     #    json.dump(all_results, outfile)
-
+    
+    #breakpoint()
+    
     return jsonify(all_results)
 
 @app.route("/instprm_json",methods=["POST"])

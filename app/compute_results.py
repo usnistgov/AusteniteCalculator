@@ -337,11 +337,12 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
     full_results_table['Uncertainties due to Fitting'] = full_results_table['u_int_fit']/full_results_table['R_calc']
     full_results_table['Uncertainties due to Counts'] = full_results_table['u_int_count']/full_results_table['R_calc']
     u_int_fit_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
-    u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(u_int_fit_table.round(6))
+    # Don't convert to dict now...
+    #u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(u_int_fit_table.round(6))
     # Retained during merge to check
     #full_results_table['Uncertainties due to Number of Crystals Diffracting'] = full_results_table['u_cryst_diff']
     #full_results_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
-    #u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(full_results_table.round(6))
+    u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(full_results_table.round(6))
 
     print("Peak fitting complete")
 
@@ -1171,6 +1172,7 @@ def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_fr
             # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
             results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
 
+    #return crystallites_dict, results_table
     return {'crystallites_dict':crystallites_dict,
             'results_table':results_table}
 

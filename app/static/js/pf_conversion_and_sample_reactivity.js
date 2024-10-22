@@ -57,7 +57,9 @@ normalized_intensities_plot_select.addEventListener("change", function() {
 
     let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
 
-    for (p in cryst_illum_peak_select) { 
+    // currently just updates the table, need to add similar structure from above to update plots
+
+    for (p in cryst_illum_peak_select) {
         cryst_illum_peak_select.options.remove(0); 
     }
 

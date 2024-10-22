@@ -161,10 +161,29 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_num) {
     Plotly.newPlot(div_id, data, layout);
 }
 
+
+/**
+ * Return the Diffracted Counts vs Z depth as a plotly object
+ *
+ * @param [dict] all_results : dictionary with data
+ * @param [str] div_id : ID for which division?
+ * @param [num] dataset_name :
+ *
+ * @returns {Plotly.newPlot()} Types and descriptions are both supported.
+ */
 function createZDepthPlot(all_results) {
     
+    // html has Select Dataset, Phase, Peak
+    
     // info probably in all_results.results_table and all_results.crystallites_dict
-
+    // all_results['cryst_ill_res'] just has the N layers, N illuminated, diffracting fraction, N_diffracted
+    // graph_data_table
+    
+    //all_results['graph_data_table'][phase][index of peak list]
+    
+    //all_results['graph_data_table'][phase][index of peak list][0] or [1], both pandas dataframes.  [0] just x,y,Length, Intensity,
+    // [1] is midpoints,
+    
 }
 
 function incidentAnglePlot(all_results) {
