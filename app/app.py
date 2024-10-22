@@ -49,8 +49,24 @@ def submit():
     req = request.get_json()
     print(req)
 
-    if req['radioValue'] == 'None':
-        return jsonify({'res':'None'})
+    if req['radioValue'] == 'uploaded_files':
+
+        datadir = '../server_datadir'
+        cif_fnames = list(req['fileUploads']['cif-file'].keys())
+        workdir = '../server_workdir'
+        xrdml_fnames = list(req['fileUploads']['xrdml-files'].keys())
+        instprm_fname = list(req['fileUploads']['instprm-file'].keys())[0]
+        json_fname = list(req['fileUploads']['cryst-illum-file'].keys())[0]
+
+        # loop through all file types
+        for file_type in req['fileUploads'].keys():
+
+            # loop through all files in the file type
+            for file in req['fileUploads'][file_type].keys():
+
+                # write file with the file name 
+                with open(datadir + '/' + file,'w') as f:
+                    f.write(req['fileUploads'][file_type][file])
 
     else:
         datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
