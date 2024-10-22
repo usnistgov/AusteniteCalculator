@@ -46,6 +46,9 @@ def index():
 @app.route("/submit",methods=['POST'])
 def submit():
 
+    print("Initializing Submission")
+    Submission={}
+
     req = request.get_json()
     print(req)
 
@@ -71,17 +74,37 @@ def submit():
     else:
         datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
 
+    # Need to figure out how to merge crystal_data with phase info
     with open(os.path.join(datadir, json_fname), 'r') as f:
         crystal_data = json.loads(f.read())
+    Submission["Phase_Info"]={}
+    Submission["Phase_Info"]["Crystal"]=crystal_data
+    
+    #Maybe these should be moved into .gather_example?
+    Submission["File_Paths"]={}
+    Submission["File_Paths"]["Data_Directory"]=datadir
+    Submission["File_Paths"]["Working_Directory"]=workdir
+    Submission["File_Paths"]["Cif_Filenames"]=cif_fnames
+    Submission["File_Paths"]["Diffraction_Filenames"]=xrdml_fnames
+    Submission["File_Paths"]["Instrument_Filename"]=instprm_fname
+    Submission["File_Paths"]["JSON_Filename"]=json_fname
+
 
     print("Collecting Version information")
-    version_DF = compute_results.version_summary()
+    Submission["Version"] = compute_results.version_summary()
 
     print("Computing Cell Density")
-    cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
+    # probably need to merge dataframes later
+    Submission["Phase_Info"]["Cell"] = compute_results.compute_cell_density(Submission)
+
+
 
     print("Running Peak Fitting")
-    pk_fit_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
+    pk_fit_res = compute_results.compute_peak_fitting(G2sc, Submission)
+
+    print("\n****************************************\n",Submission.keys())
+    print("\n*************\n",Submission)
+    #breakpoint()
 
     print("Computing peaks_dict")
     peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])

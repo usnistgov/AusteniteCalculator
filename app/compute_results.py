@@ -132,7 +132,7 @@ def gather_example(example_name):
 
 
 #####################################
-def compute_cell_density(cif_fnames,datadir,instprm_fname):
+def compute_cell_density(Submit_dict):
 
     """
     Based on the atomic information, compute scattering, mass and volme
@@ -172,11 +172,13 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
     cell_volumes_dict = {}
     cell_masses_dict = {}
 
+    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
+
     for x in range(len(cif_fnames)):
         #print("Compute results for cif file ",x)
         print("Compute results for cif file ",cif_fnames[x])
-        cif_path = os.path.join(datadir, cif_fnames[x])
-        instprm_path = os.path.join(datadir, instprm_fname)
+        cif_path = os.path.join(Submit_dict["File_Paths"]["Data_Directory"], cif_fnames[x])
+        instprm_path = os.path.join(Submit_dict["File_Paths"]["Data_Directory"], Submit_dict["File_Paths"]["Instrument_Filename"])
 
         addon = False
         elems = []
@@ -264,6 +266,8 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
 
     print("Compute Cell Density Computation Complete")
 
+    # Maybe change name
+    # cell volume should indicate it's the intial value
     cell_dens_dict={
         'scattering_dict':scattering_dict,
         'atomic_masses_dict':atomic_masses_dict,
@@ -272,10 +276,12 @@ def compute_cell_density(cif_fnames,datadir,instprm_fname):
         'cell_masses_dict':cell_masses_dict
         }
 
-    return cell_dens_dict
+    cell_dens_DF = pd.DataFrame(data=cell_dens_dict)
+    #return cell_dens_dict
+    return cell_dens_DF
 
 #####################################
-def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,json_data,G2sc):
+def compute_peak_fitting(G2sc,Submit_dict):
     """
     Wrapper for compute(), creates various dictionaries for
     Calls compute()
@@ -295,6 +301,13 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
 
     """
 
+    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
+    datadir=Submit_dict["File_Paths"]["Data_Directory"]
+    workdir=Submit_dict["File_Paths"]["Working_Directory"]
+    xrdml_fnames=Submit_dict["File_Paths"]["Diffraction_Filenames"]
+    instprm_fname=Submit_dict["File_Paths"]["Cif_Filenames"]
+    cif_fnames=Submit_dict["File_Paths"]["Instrument_Filename"]
+    json_data=Submit_dict["Phase_Info"]["Crystal"]
 
     print("Running peak fitting...")
     # Initialize dictionaries to store data returned from compute_results
@@ -307,27 +320,38 @@ def compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,j
     altered_phase = {}
     altered_ti = {}
     fit_points = {}
+    
+    ## Which ones do we really use
+    # Dataset
+    # Peak
 
     # Loop over files entered
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
-        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, user_flags_DF = compute(datadir,workdir,xrdml_fnames[x], \
-                                    instprm_fname,cif_fnames,json_data, G2sc)
-        #Use _ instead of : to avoid special characters in export
-        temp_string = 'Dataset_' + str(x + 1)
-        results_df['sample_index'] = str(x + 1)
+        dataset_string = 'Dataset_' + str(x + 1)
+        #results_df['sample_index'] = str(x + 1)
 
+        # Changing to Submit_dict
+        print("Initializing dataset ", dataset_string)
+        Submit_dict[dataset_string]={}
+        
+        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, user_flags_DF = compute( G2sc, Submit_dict, dataset_string, x)
+        #Use _ instead of : to avoid special characters in export
+
+        breakpoint()
+
+        
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
         #some are duplicated because they needed to be converted in multiple ways
-        results_table[temp_string] = results_df
-        phase_frac[temp_string] = phase_frac_DF
-        two_thetas[temp_string] = two_theta.tolist()
-        ti_tables[temp_string] = theo_intensity_dict
-        user_flags[temp_string] = user_flags_DF
-        altered_results[temp_string] = results_df
-        altered_phase[temp_string] = phase_frac_DF
-        altered_ti[temp_string] = theo_intensity_dict
-        fit_points[temp_string] = fit_data
+        results_table[dataset_string] = results_df
+        phase_frac[dataset_string] = phase_frac_DF
+        two_thetas[dataset_string] = two_theta.tolist()
+        ti_tables[dataset_string] = theo_intensity_dict
+        user_flags[dataset_string] = user_flags_DF
+        altered_results[dataset_string] = results_df
+        altered_phase[dataset_string] = phase_frac_DF
+        altered_ti[dataset_string] = theo_intensity_dict
+        fit_points[dataset_string] = fit_data
         print("Finish results for file ",x)
 
     # full results table
@@ -407,7 +431,7 @@ def df_to_dict(df):
 
 
 #####################################
-def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc):
+def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     """
 
     Main computation function for phase calculations
@@ -441,15 +465,27 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
 
     """
 
+
+    print(Submit_dict["File_Paths"])
+    datadir=Submit_dict["File_Paths"]["Data_Directory"]
+    workdir=Submit_dict["File_Paths"]["Working_Directory"]
+    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
+
+    xrdml_fname=Submit_dict["File_Paths"]["Diffraction_Filenames"][dataset_index]
+    instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
+    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
+    json_data=Submit_dict["Phase_Info"]["Crystal"]
+
     #Helper functions to create full path descriptions
-    data_path_wrap = lambda fil: datadir + '/' + fil
-    save_wrap = lambda fil: workdir + '/' + fil
+    #data_path_wrap = lambda fil: datadir + '/' + fil
+    #save_wrap = lambda fil: workdir + '/' + fil
 
     # start new GSAS-II project
-    gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
+    #gpx = G2sc.G2Project(newgpx=save_wrap('pkfit.gpx'))
+    gpx = G2sc.G2Project(newgpx=os.path.join(workdir,'pkfit.gpx'))
 
     #initialize Uncertainty DataFrame
-    flags_for_user_DF=flag_phase_fraction(np.nan, " ", "Initialize", " ")
+    #Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(np.nan, " ", "Initialize", " ")
 
     #############################
     # Read in diffraction data
@@ -458,14 +494,16 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
 
     # read in diffraction data as a powder histogram
     # Do this first to get the two_theta range
-    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
-                                    data_path_wrap(instprm_fname),
+    hist = gpx.add_powder_histogram(os.path.join(datadir,xrdml_fname),
+                                    os.path.join(datadir,instprm_fname),
                                     databank=1, instbank=1)
 
     # Get the two_theta range of the histogram
     two_theta_range=hist.getdata('X')
     min_two_theta=min(two_theta_range)
     max_two_theta=max(two_theta_range)
+    Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(min_two_theta, "Read Data", "Min Range", "Check if this is the expected range")
+    Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(max_two_theta, "Read Data", "Max Range", "Check if this is the expected range", DF_to_append=Submit_dict[dataset_string]["Flags"])
     #print(min_two_theta,max_two_theta)
 
     # Read in json data
@@ -476,6 +514,11 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
     # Do a Le Bail fit to find the two theta positions with sample displacements
     #############################
     # probably pull out to a separate function
+    
+    # Maybe pass Chebyschev from json file?
+
+    breakpoint()
+
     LeBail_reflection_list_dict, flags_for_user_DF=fit.fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,json_data, flags_for_user_DF, Chebyschev_coeffiecients=5)
 
     ########################################
@@ -485,7 +528,7 @@ def compute(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,json_data,G2sc)
 
     theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
 
-    #breakpoint()
+
 
     # Check if these are still dataframes or dictionaries
     for i in range(len(cif_fnames)):
