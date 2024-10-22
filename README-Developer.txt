@@ -1,30 +1,27 @@
 Data Structures
 
+"Key Name"	*Datatype*	(Explanation)
+
 Submission
 |
- -> Austenite Calculator Version
+ -> "Version"	*DataFrame*	(Austenite Calculator Version)
  -> Phase Info (number, conversions, etc)
- -> Diffractometer Info [beam Shape, detector position]
+ -> Diffractometer Info (beam Shape, detector position)
  -> MCMC parameters
  -> Dataset
    |
    -> Comments/Flags (fit issues, offset)
-   -> Histogram Data
-   -> Histogram Graph
+   -> Histogram Data (raw data)
    -> Fit Data
-   -> Fit Graphs
    -> MCMC Uncertainty Inputs
-   -> MCMC Distribution Data
-   -> Phase Fraction Data
-   -> Phase Fraction Distribution Graphs
+   -> MCMC Distribution Data (8000 normalized intensities)
+   -> Phase Fraction Data (8000 n_ints run through phase frac calc)
    -> Peak
     |
-    -> LeBail Fit
-    -> Peak Fit
-    -> Gaussian Fit
-    -> Uncertainties from each fit
+    -> LeBail Fit (values, uncertainties)
+    -> Peak Fit (values, uncertainties)
+    -> Gaussian Fit (values, uncertainties)
     -> Theoretical Intensities
     -> hkl, multiplicity
     -> Phase
     -> Crystallites Illuminated
-    -> Interaction Graph
