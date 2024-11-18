@@ -30,6 +30,26 @@ function processFileContents() {
         let file = this.files[i];
         let reader = new FileReader();
 
+        if(this.id == 'xrdml-files' && !(/(xrdml$)|(csv$)/).test(this.files[i].name) ) {
+            alert("This file type not accepted; please upload only .csv or .xrdml files.");
+            return;
+        }
+
+        if(this.id == 'instprm-files' && !(/instprm$/).test(this.files[i].name) ) {
+            alert("This file type not accepted; please upload an .instprm file.");
+            return;
+        }
+
+        if(this.id == 'cif-file' && !(/cif$/).test(this.files[i].name) ) {
+            alert("This file type not accepted; please upload only .cif files.");
+            return;
+        }
+
+        if(this.id == 'cryst-illum-file' && !(/json$/).test(this.files[i].name) ) {
+            alert("This file type not accepted; please upload a .json file.");
+            return;
+        }
+
         reader.readAsText(file);
 
         // once the file has loaded, save 
