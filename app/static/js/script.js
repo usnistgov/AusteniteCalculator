@@ -20,6 +20,11 @@ function hideLoading() {
     document.getElementById('submit').disabled=false;
 }
 
+function showErrorTab() {
+    document.getElementById('error-tab').display='block';
+    document.getElementById('error-tab-button').click();
+}
+
 function processFileContents() {
 
     const n_files = Object.keys(this.files).length; // number of files uploaded
@@ -98,86 +103,118 @@ async function fetchData() {
 
     all_results = await response.json();
 
-    // update form selects for dataset number
-    let intensity_plots_select = document.getElementById("intensity-plots-select");
-    let normalized_intensity_plot_select = document.getElementById("normalized-intensity-plots-select");
-    let cryst_illum_data_select = document.getElementById("cryst-illum-select-dataset");
+    // add code in to check if error occured
+    if(all_results.errors) {
 
-    const n_dsets = all_results.n_dsets;
-    let dset_select_arr = [intensity_plots_select, normalized_intensity_plot_select, cryst_illum_data_select];
+        hideLoading();
+        showErrorTab();
 
-    for(let i = 0; i < n_dsets; i++) {
+        const error_log = all_results.error_dict;
+        const error_keys = Object.keys(error_log);
+        const error_vals = Object.values(error_log);
 
-        for(let j = 0; j < dset_select_arr.length; j++) {
-            
-            let new_option = document.createElement("option");
-            new_option.value = i + 1;
-            new_option.textContent = (i + 1).toString();
-            dset_select_arr[j].appendChild(new_option);
+        const the_ul = document.getElementById("error-list");
+        let newLi = null;
+
+        for(let i = 0; i < error_keys.length; i++) {
+
+            // if no errors, continue along
+            if(!error_vals[i]) {
+                continue
+            }
+
+            newLi = document.createElement("li");
+            newLi.textContent = error_keys[i] + ': ' + error_vals[i]
+    
+            // Append the <li> element to the <ul> element
+            the_ul.appendChild(newLi);
 
         }
 
-    }
 
-    // update form selects for phase
-    let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
-    const n_phases = all_results.unique_phases.length;
-    
-    for(let i = 0; i < n_phases; i++) {
-        let new_option = document.createElement("option");
-        new_option.textContent = all_results.unique_phases[i];
-        cryst_illum_phase_select.appendChild(new_option);
-    }
+    } else {
 
-    // update form selects for peak
-    let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
-    let n_peaks = all_results.results_table.Phase.length;
+        // update form selects for dataset number
+        let intensity_plots_select = document.getElementById("intensity-plots-select");
+        let normalized_intensity_plot_select = document.getElementById("normalized-intensity-plots-select");
+        let cryst_illum_data_select = document.getElementById("cryst-illum-select-dataset");
 
-    for(let i = 0; i < n_peaks; i++) {
-        if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
-            let new_option = document.createElement("option");
-            new_option.textContent = (i + 1).toString();
-            cryst_illum_peak_select.appendChild(new_option);
+        const n_dsets = all_results.n_dsets;
+        let dset_select_arr = [intensity_plots_select, normalized_intensity_plot_select, cryst_illum_data_select];
+
+        for(let i = 0; i < n_dsets; i++) {
+
+            for(let j = 0; j < dset_select_arr.length; j++) {
+                
+                let new_option = document.createElement("option");
+                new_option.value = i + 1;
+                new_option.textContent = (i + 1).toString();
+                dset_select_arr[j].appendChild(new_option);
+
+            }
+
         }
 
+        // update form selects for phase
+        let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
+        const n_phases = all_results.unique_phases.length;
+        
+        for(let i = 0; i < n_phases; i++) {
+            let new_option = document.createElement("option");
+            new_option.textContent = all_results.unique_phases[i];
+            cryst_illum_phase_select.appendChild(new_option);
+        }
+
+        // update form selects for peak
+        let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
+        let n_peaks = all_results.results_table.Phase.length;
+
+        for(let i = 0; i < n_peaks; i++) {
+            if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
+                let new_option = document.createElement("option");
+                new_option.textContent = (i + 1).toString();
+                cryst_illum_peak_select.appendChild(new_option);
+            }
+
+        }
+
+        // intensities plots
+        let dsetName = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
+        createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
+        createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
+        createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',intensity_plots_select.selectedIndex+1);
+        createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
+
+        // cryst illum table
+        createCrystIllumTable()
+
+        // tables
+        // ??? Why call these 'table' if they are html?  Confusing with app.py
+
+        // version summary table
+        const version_table_html = all_results.version_html;
+        document.getElementById('version-table').innerHTML=version_table_html;
+
+
+        // User Flags table
+        // const user_flags_html = all_results.user_flags_html;
+        // document.getElementById('user-flags-table').innerHTML=user_flags_html;
+
+        // results table
+        const results_table_html = all_results.results_table_html;
+        document.getElementById('results-table').innerHTML=results_table_html;
+
+        // uncertainties table
+        const uncert_table_html = all_results.param_table_html;
+        document.getElementById('uncert-table').innerHTML=uncert_table_html;
+
+        // pf table
+        const pf_table_html = all_results.pf_table_html;
+        document.getElementById('pf-table').innerHTML=pf_table_html;
+
+        changeTab();
+        hideLoading();
     }
-
-    // intensities plots
-    let dsetName = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
-    createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
-    createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
-    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',intensity_plots_select.selectedIndex+1);
-    createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
-
-    // cryst illum table
-    createCrystIllumTable()
-
-    // tables
-    // ??? Why call these 'table' if they are html?  Confusing with app.py
-
-    // version summary table
-    const version_table_html = all_results.version_html;
-    document.getElementById('version-table').innerHTML=version_table_html;
-
-
-    // User Flags table
-    // const user_flags_html = all_results.user_flags_html;
-    // document.getElementById('user-flags-table').innerHTML=user_flags_html;
-
-    // results table
-    const results_table_html = all_results.results_table_html;
-    document.getElementById('results-table').innerHTML=results_table_html;
-
-    // uncertainties table
-    const uncert_table_html = all_results.param_table_html;
-    document.getElementById('uncert-table').innerHTML=uncert_table_html;
-
-    // pf table
-    const pf_table_html = all_results.pf_table_html;
-    document.getElementById('pf-table').innerHTML=pf_table_html;
-
-    changeTab();
-    hideLoading();
-    
+        
 }
 

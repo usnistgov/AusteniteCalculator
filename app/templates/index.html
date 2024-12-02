@@ -50,10 +50,14 @@
         <button class="nav-link" data-bs-toggle="tab" type="button" href="#file-creation-instrpm-json-tab">File Creation (instprm and json)</button>
       </li>
 
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#error-tab" id="error-tab-button">Error Log</button>
+      </li>
+
     </ul>
 
     <div class="tab-content">
-  <!-- About Tab -->
+      <!-- About Tab -->
       <div class="tab-pane" id="about-tab">
         <br>
         The Austenite Calculator is a super cool app. 
@@ -68,7 +72,7 @@
       
       
       
-  <!-- Data Upload Tab -->
+      <!-- Data Upload Tab -->
       <div class="tab-pane container active" id="data-upload-tab">
         <br>
         <div class="row">
@@ -182,7 +186,7 @@
         <br>
       </div>
       
-  <!-- Intensity Plots Tab -->
+        <!-- Intensity Plots Tab -->
       <div class="tab-pane" id="intensity-plots-tab">
 
         <br>
@@ -214,7 +218,7 @@
       <br>
         
       </div>
-  <!-- Normalized Intensity Tab -->
+      <!-- Normalized Intensity Tab -->
       <div class="tab-pane" id="normalized-int-tab">
         
         <br>
@@ -241,7 +245,7 @@
 
       </div>
         
-  <!-- Phase Fraciton Tab -->
+      <!-- Phase Fraciton Tab -->
       <div class="tab-pane" id="phase-frac-tab">
 
         <br>
@@ -279,7 +283,7 @@
 
       </div>
 
-  <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
+      <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
       <div class="tab-pane" id="file-creation-cryst-tab">
         <br>
 
@@ -304,10 +308,21 @@
 
       </div>
 
-  <!-- Combined file creation tab -->
+      <!-- Combined file creation tab -->
       <div class="tab-pane" id="file-creation-instrpm-json-tab">
         <br>
         <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
+      </div>
+
+      <!-- Error tab -->
+      <div class="tab-pane" id="error-tab">
+        <div>
+          <br>
+          <h4>Error log:</h4>
+          <ul id="error-list">
+
+          </ul>
+        </div>
       </div>
     </div>
   

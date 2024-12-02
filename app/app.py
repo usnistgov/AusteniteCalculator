@@ -49,96 +49,149 @@ def submit():
     req = request.get_json()
     print(req)
 
+    # dictionary to hold error logs
+    error_dict = {'file_upload':False,
+                  'crystal_data':False,
+                    'version':False,
+                    'cell_density':False,
+                    'peak_fitting':False,
+                    'peak_dict':False,
+                    'phase_info':False,
+                    'crystallites_illuminated':False,
+                    'conversions':False,
+                    'mcmc':False}
+
     if req['radioValue'] == 'uploaded_files':
 
-        datadir = '../server_datadir'
-        cif_fnames = list(req['fileUploads']['cif-file'].keys())
-        workdir = '../server_workdir'
-        xrdml_fnames = list(req['fileUploads']['xrdml-files'].keys())
-        instprm_fname = list(req['fileUploads']['instprm-file'].keys())[0]
-        json_fname = list(req['fileUploads']['cryst-illum-file'].keys())[0]
+        try:
+            datadir = '../server_datadir'
+            cif_fnames = list(req['fileUploads']['cif-file'].keys())
+            workdir = '../server_workdir'
+            xrdml_fnames = list(req['fileUploads']['xrdml-files'].keys())
+            instprm_fname = list(req['fileUploads']['instprm-file'].keys())[0]
+            json_fname = list(req['fileUploads']['cryst-illum-file'].keys())[0]
 
-        # loop through all file types
-        for file_type in req['fileUploads'].keys():
+            # loop through all file types
+            for file_type in req['fileUploads'].keys():
 
-            # loop through all files in the file type
-            for file in req['fileUploads'][file_type].keys():
+                # loop through all files in the file type
+                for file in req['fileUploads'][file_type].keys():
 
-                # write file with the file name 
-                with open(datadir + '/' + file,'w') as f:
-                    f.write(req['fileUploads'][file_type][file])
+                    # write file with the file name 
+                    with open(datadir + '/' + file,'w') as f:
+                        f.write(req['fileUploads'][file_type][file])
+
+        except Exception as e:
+            error_dict['file_upload'] = type(e).__name__ + ': ' + str(e)
 
     else:
         datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
 
-    with open(os.path.join(datadir, json_fname), 'r') as f:
-        crystal_data = json.loads(f.read())
+    try:
+        with open(os.path.join(datadir, json_fname), 'r') as f:
+            crystal_data = json.loads(f.read())
+
+    except Exception as e:
+        error_dict['crystal_data'] = type(e).__name__ + ': ' + str(e)
+
 
     print("Collecting Version information")
-    version_DF = compute_results.version_summary()
+    try:
+        version_DF = compute_results.version_summary()
+    except Exception as e: 
+        error_dict['version'] = type(e).__name__ + ': ' + str(e)
 
     print("Computing Cell Density")
-    cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
+    try:
+        cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
+    except Exception as e: 
+        error_dict['cell_density'] = type(e).__name__ + ': ' + str(e)
 
     print("Running Peak Fitting")
-    pk_fit_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
+    try:
+        pk_fit_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
+    except Exception as e: 
+        error_dict['peak_fitting'] = type(e).__name__ + ': ' + str(e)
 
     print("Computing peaks_dict")
-    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
+    try:
+        peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
+    except Exception as e: 
+        error_dict['peak_dict'] = type(e).__name__ + ': ' + str(e)
 
     print("Gathering Summarized Phase Info")
-    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
+    try:
+        graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
+    except Exception as e: 
+        error_dict['phase_info'] = type(e).__name__ + ': ' + str(e)
 
     print("Computing crystallites illuminated...")
     # Need to update the full results table, but issues with dict/DF 
  #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
-    cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
+    try:
+        cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
+    except Exception as e: 
+        error_dict['crystallites_illuminated'] = type(e).__name__ + ': ' + str(e)
 
     print("Computing mass fraction and volume fracation conversion factors...")
-    conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
-                                                  cell_dens_res['cell_masses_dict'],
-                                                  cell_dens_res['cell_volumes_dict'])
+    try:
+        conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
+                                                    cell_dens_res['cell_masses_dict'],
+                                                    cell_dens_res['cell_volumes_dict'])
+    except Exception as e: 
+        error_dict['conversions'] = type(e).__name__ + ': ' + str(e)
+
 
     print("Running MCMC")
-    mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
+    try:
+        mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
+    except Exception as e: 
+        error_dict['mcmc'] = type(e).__name__ + ': ' + str(e)
 
-    # combine all results into a dictionary to send to browser
-    # param_table has the uncertainty parameters from mcmc result
-    # pf_table has the phase fraction with conversions
-    # results_table is the combined fit and theoretical data
-    # mcmc_df are all the simulated phase fractions (by unit cell)
-    all_results = {'conversion_table':conversions.to_dict(orient='list'),
-                   'version_html':version_DF.to_html(justify='left', index=False),
-                   'two_thetas':pk_fit_res['two_thetas'],
-                   'fit_points':pk_fit_res['fit_points'],
-                   'cryst_ill_res':cryst_ill_res['crystallites_dict'],
-                   #'cryst_ill_res':cryst_ill_res,
-                   # issues since user flags are per data set
-                   #'user_flags':pk_fit_res['user_flags'],
-                   # Create dictionary of html tables
-                   # Have it be a choice of the which dataset
-                   #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
-                   'param_table':param_table.to_dict(orient='list'),
-                   'param_table_html':param_table.to_html(justify='left'),
-                   'pf_table':pf_table.to_dict(orient='list'),
-                   'pf_table_html':pf_table.to_html(justify='left', index=False),
-                   'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
-                   # changing to pass to full results, now a dict
-                   #'results_table':pk_fit_res['full_results_table'],
-                   'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
-                   # Issues with structure of graph_data_table
-                   # Maybe due to pandas dataframes nested inside
-                   #'graph_data_table':graph_data_dict,
-                   'mcmc_dict':mcmc_df_dict,
-                   'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
-                   'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
+    if any(error_dict.values()):
 
-    # quick and dirty way to export all
-    #with open("export-all.json", "w") as outfile:
-    #    json.dump(all_results, outfile)
-    
-    #breakpoint()
-    
+        all_results = {
+            'errors':True,
+            'error_dict':error_dict
+        }
+
+    else:
+        # combine all results into a dictionary to send to browser
+        # param_table has the uncertainty parameters from mcmc result
+        # pf_table has the phase fraction with conversions
+        # results_table is the combined fit and theoretical data
+        # mcmc_df are all the simulated phase fractions (by unit cell)
+        all_results = {'errors':False,
+                       'conversion_table':conversions.to_dict(orient='list'),
+                        'version_html':version_DF.to_html(justify='left', index=False),
+                        'two_thetas':pk_fit_res['two_thetas'],
+                        'fit_points':pk_fit_res['fit_points'],
+                        'cryst_ill_res':cryst_ill_res['crystallites_dict'],
+                        #'cryst_ill_res':cryst_ill_res,
+                        # issues since user flags are per data set
+                        #'user_flags':pk_fit_res['user_flags'],
+                        # Create dictionary of html tables
+                        # Have it be a choice of the which dataset
+                        #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
+                        'param_table':param_table.to_dict(orient='list'),
+                        'param_table_html':param_table.to_html(justify='left'),
+                        'pf_table':pf_table.to_dict(orient='list'),
+                        'pf_table_html':pf_table.to_html(justify='left', index=False),
+                        'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
+                        # changing to pass to full results, now a dict
+                        #'results_table':pk_fit_res['full_results_table'],
+                        'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
+                        # Issues with structure of graph_data_table
+                        # Maybe due to pandas dataframes nested inside
+                        #'graph_data_table':graph_data_dict,
+                        'mcmc_dict':mcmc_df_dict,
+                        'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
+                        'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
+
+        # quick and dirty way to export all
+        #with open("export-all.json", "w") as outfile:
+        #    json.dump(all_results, outfile)
+
     return jsonify(all_results)
 
 @app.route("/instprm_json",methods=["POST"])
