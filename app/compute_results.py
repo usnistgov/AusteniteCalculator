@@ -564,7 +564,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=Submit_dict[dataset_string]["Flags"])
         print("No wavelength found, defaulting to Cu")
 
-    breakpoint()
+
 
     ########################################
     # use the theoretical intensities for peak fit location
@@ -572,10 +572,10 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     print("\n\n Series of Individual Peak Fits of Experimental Data \n")
 
     # use the theoretical intensities for peak fit location
-    peaks_list=theo_intensity_dict['two_theta']
-    # REPLACE WITH LE BAIL FIT DATA
-
-
+    peaks_list=list(Submit_dict[dataset_string]["Theoretical_Intensities"]['pos_TI'])
+    
+    # Use LeBail Fit Data
+    LB_peaks_DF=Submit_dict[dataset_string]['Le_Bail_Peaks']
 
     # Add to the two_theta values to move the peak location for debugging
     # 0.2 on example 5 is enough to throw off the last two peaks
@@ -597,7 +597,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     while not (peaks_ok):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
-            fit.fit_peaks_LeBail_assist(hist, LeBail_reflection_list_dict)
+            fit.fit_peaks_LeBail_assist(hist, LB_peaks_DF)
             # Probably should be outside the "Series of Individual Peaks" title?
             fit_type="PeakFit"
         if(fit_attempts == 1):
@@ -680,31 +680,37 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
             # Print out some of the goodness of fit data
             try:
                 print("\n\n Goodness of fit value: ", hist.data['Peak Fit Rvals']['GOF'])
-                flags_for_user_DF=flag_phase_fraction(hist.data['Peak Fit Rvals']['GOF'],"Fitting", "Fitting Goodness of Fit (GOF)", "--ADD Guidance--", DF_to_append=flags_for_user_DF)
+                Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(hist.data['Peak Fit Rvals']['GOF'],np.nan,"Fitting", "Fitting Goodness of Fit (GOF)", "--ADD Guidance--", DF_to_append=Submit_dict[dataset_string]["Flags"])
             except:
                 print("Error creating Goodness of fit")
-                flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Missing Goodness of Fit (GOF) Value", "Missing bits of code in GSAS-II", DF_to_append=flags_for_user_DF)
+                Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(np.nan,np.nan,"Fitting", "Missing Goodness of Fit (GOF) Value", "Missing bits of code in GSAS-II", DF_to_append=Submit_dict[dataset_string]["Flags"])
             peaks_ok = True
 
         elif(fit_attempts >= fit_attempt_limit):
             print("\n\n Intensities and Positions are NOT all positive, HOWEVER iteration limit reached \n")
             peaks_ok = True
-            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=flags_for_user_DF)
+            Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(np.nan,np.nan,"Fitting", "Limit of Fitting attempts reached", "Adjust lattice spacing in .cif files", DF_to_append=Submit_dict[dataset_string]["Flags"])
 
         else:
             print("\n\n Intensities and Positions are NOT all positive, retrying \n")
             peaks_ok = False
-            flags_for_user_DF=flag_phase_fraction(np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=flags_for_user_DF)
+            Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(np.nan,np.nan,"Fitting", "Intensities and Positions are NOT all positive, retrying", "Retrying fitting" , DF_to_append=Submit_dict[dataset_string]["Flags"])
             # reset the peak list in the histogram to avoid appending during successive attempts
             hist.data['Peak List']['peaks']=[]
             # reset and repopulate the peak list
             peaks_list=theo_intensity_dict['two_theta']
 
 
+
+    #Copy the fit data
+    Submit_dict[dataset_string]["Peak_Fit_Data"]=hist.data
+
+    # Below are the array data
     two_theta = hist.data['data'][1][0]
     h_data = hist.data['data'][1][1]
     h_background = hist.data['data'][1][4]
     h_fit = hist.data['data'][1][3]
+
 
     #? Also fit the lortenzian (gam) component?
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter

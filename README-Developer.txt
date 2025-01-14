@@ -25,14 +25,14 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "Flags" 		*DataFrame*	(Comments/Flags for the user, fit issues, offset)
    -> "Range"	*list* [xmin, xmax]
    -> Histogram Data (raw data)
-   -> Le Bail Fit Data		(phase fractions, unit cell, fit values and uncertainties)
-   -> Fit Data
+   -> "Le_Bail_Data" *dict* Le Bail Fit Data		(phase fractions, unit cell, fit values and uncertainties)
+   -> "Peak_Fit_Data" *dict* GSAS-II format
    -> MCMC Uncertainty Inputs
    -> MCMC Distribution Data (8000 normalized intensities)
    -> Phase Fraction Data (8000 n_ints run through phase frac calc)
    -> Peak
     |
-    -> "Le_Bail_Peaks"	*DataFrame*	(LeBail Fit values, uncertainties)
+    -> "Le_Bail_Peaks"	*DataFrame*	(LeBail Fit values, uncertainties[where?])
     -> "Theoretical_Intensities" *DataFrame*
     -> Peak Fit (values, uncertainties)
     -> Gaussian Fit (values, uncertainties)

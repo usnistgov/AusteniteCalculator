@@ -69,7 +69,7 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     #hist.refine_peaks()
 
 
-def fit_peaks_LeBail_assist(hist, LeBail_peaks_list, Chebyschev_coeffiecients=5):
+def fit_peaks_LeBail_assist(hist, LeBail_peaks_DF, Chebyschev_coeffiecients=5):
     """Subroutine to fit data using peaks found from LeBail fitting
 
     Args:
@@ -83,6 +83,8 @@ def fit_peaks_LeBail_assist(hist, LeBail_peaks_list, Chebyschev_coeffiecients=5)
 
     """
     
+    ## SHOULD EXPORT THE UNCERTAINTIES OR RESET VALUES FOR SIG/GAM
+    
     print("Fitting peaks\n")
     # Set up background refinement
     #? Also maybe belongs in a function
@@ -91,9 +93,9 @@ def fit_peaks_LeBail_assist(hist, LeBail_peaks_list, Chebyschev_coeffiecients=5)
     hist.refine_peaks()
 
     # Add peak location and area
-    for i in range(len(LeBail_peaks_list['pos'])):
-        #print(LeBail_peaks_list['LeBail_Int'][i], LeBail_peaks_list['pos'][i])
-        hist.add_peak(LeBail_peaks_list['LeBail_Int'][i],ttheta=LeBail_peaks_list['pos'][i] )
+    for i in range(len(LeBail_peaks_DF['pos_LB'])):
+        #print(LeBail_peaks_DF['LeBail_Int'][i], LeBail_peaks_DF['pos'][i])
+        hist.add_peak(LeBail_peaks_DF['int_LB'][i],ttheta=LeBail_peaks_DF['pos_LB'][i] )
         
     # Zero, Refine with nothing fitting
     hist.set_peakFlags(area=False)
@@ -663,6 +665,10 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     
     
     Submit_dict[dataset_string]["Le_Bail_Peaks"]=LeBail_reflist_DF
+    
+
+    # Copy the fitted data as well.
+    Submit_dict[dataset_string]["Le_Bail_Data"]=hist.data
     #### Flags
 
     # Note the sample displacement
