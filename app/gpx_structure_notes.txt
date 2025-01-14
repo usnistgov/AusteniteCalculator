@@ -1,0 +1,107 @@
+Also see GSAS-II Data tree
+https://gsas-ii.readthedocs.io/en/latest/objvarorg.html#id7
+
+*************************
+
+gpx.data.keys()
+
+['Constraints', 'Controls', 'Covariance', 'Notebook', 'Restraints', 'Rigid bodies', 'Phases', 'PWDR E211110-AAC-001_019-000_exported.csv']
+
+
+['Controls']['PythonVersions'] *list* (GSAS python packages)
+
+*************************
+
+gpx.data['Covariance']['data'].keys()
+
+['varyListStart', 'depSigDict', 'Rvals', 'title', 'varyList', 'newAtomDict', 'sig', 'Lastshft', 'covMatrix', 'newCellDict', 'freshCOV', 'variables']
+
+
+*************************
+
+-> Wt fractions; values and uncertainties?
+gpx.data['Covariance']['data']['depSigDict'].keys()
+
+dict_keys(['0:0:WgtFrac', '1:0:WgtFrac', '1::A0', '0::A0', '0::A2', '1::A1', '1::A2', '0::A1', '1:0:Mustrain;i', '0:0:Mustrain;i', ':0:Back;1', ':0:Shift', ':0:Back;2', ':0:Back;0', ':0:Back;4', ':0:Back;3'])
+
+-> Yes, these are values and uncertainties
+-> But I don't know what the A0 means.  Should be lattice
+
+*************************
+
+gpx.data['Covariance']['data']['Rvals'].keys()
+dict_keys(['lamMax', 'SVD0', 'converged', 'DelChi2', 'chisq', 'Nobs', 'Nvars', 'Rwp', 'GOF', 'Max shft/sig', 'GOF0', 'Aborted', 'msg'])
+
+*************************
+
+gpx.data['Covariance']['data']['varyList'].keys()
+['0::A0', '1::A0', '0:0:Mustrain;i', '1:0:Mustrain;i', ':0:Back;0', ':0:Back;1', ':0:Back;2', ':0:Back;3', ':0:Back;4', ':0:Shift']
+
+*************************
+
+gpx.data['Covariance']['data'][ 'variables'].keys()
+array([ 7.74699299e-02,  1.21226978e-01,  3.56442390e+03,  2.76868272e+03,
+        1.22825001e+02, -7.10239926e+01,  3.47510297e+01, -1.28065110e+01,
+        5.25000655e+00,  1.77752387e+01])
+
+Numpy array of fitted values
+
+*************************
+
+gpx.data['Phases'].keys()
+dict_keys(['data', 'austenite-SRM487', 'ferrite-SRM487'])
+
+'data' is None (i.e. empty)
+
+*************************
+
+(Pdb) gpx.data['Phases']['austenite-SRM487'].keys()
+dict_keys(['ranId', 'General', 'Atoms', 'Drawing', 'Histograms', 'Pawley ref', 'RBModels', 'pId'])
+
+*************************
+
+(Pdb) gpx.data['Phases']['austenite-SRM487']['General'].keys()
+dict_keys(['Name', 'Type', 'Modulated', 'AtomPtrs', 'SGData', 'Cell', 'Pawley dmin', 'Data plot type', 'SH Texture', 'Super', 'AtomTypes', 'Isotopes', 'Isotope', 'POhkl', 'Map', 'Flip', 'doPawley', 'Pawley dmax', 'Pawley neg wt', '3Dproj', 'doDysnomia', 'MCSA controls', 'HydIds', 'Compare', 'NoAtoms', 'BondRadii', 'AngleRadii', 'vdWRadii', 'AtomMass', 'Color', 'Mydir', 'Z', 'F000X', 'F000N', 'Mass'])
+(Pdb) 
+
+*************************
+
+(Pdb) gpx.data['Phases']['austenite-SRM487']['General']['Cell']
+[True, 3.5928031145982575, 3.5928031145982575, 3.5928031145982575, 90.0, 90.0, 90.0, 46.37674411053888]
+
+-> Was refined, but uncertiainty not clear...
+-> Also calculates a volume, use this 
+
+*************************
+
+gpx.data['Phases']['austenite-SRM487']['General']['Mass']
+
+-> Calculates mass with the various elements.  So we can use this value
+
+*************************
+
+gpx.data['PWDR E211110-AAC-001_019-000_exported.csv'].keys()
+dict_keys(['Reflection Lists', 'Limits', 'data', 'Index Peak List', 'Comments', 'Unit Cells List', 'Sample Parameters', 'Peak List', 'Background', 'Instrument Parameters'])
+-> Already using reflection lists
+
+
+gpx.data['PWDR E211110-AAC-001_019-000_exported.csv']['data'][0] header iwth some info
+
+gpx.data['PWDR E211110-AAC-001_019-000_exported.csv']['data'][1] 6 x nrows data as np.masked array
+Looks like similar structure to other fit data
+(list) The data consist of a list of 6 np.arrays containing in order:
+
+    the x-postions (two-theta in degrees),
+
+    the intensity values (Yobs),
+
+    the weights for each Yobs value
+
+    the computed intensity values (Ycalc)
+
+    the background values
+
+    Yobs-Ycalc
+
+
+

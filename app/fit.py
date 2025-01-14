@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import math
 import json
+import os
 #from compute_results import flag_phase_fraction
 import compute_results
 
@@ -491,7 +492,7 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     return verify_list
 
 
-def fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,json_data,flags_for_user_DF,Chebyschev_coeffiecients=5):
+def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_coeffiecients=5):
 
 #datadir,workdir,xrdml_fname,instprm_fname,cif_fnames, flags_for_user_DF, Chebyschev_coeffiecients=5
 
@@ -529,22 +530,32 @@ def fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,j
 
     """
     
-    data_path_wrap = lambda fil: datadir + '/' + fil
-    save_wrap = lambda fil: workdir + '/' + fil
+    datadir=Submit_dict["File_Paths"]["Data_Directory"]
+    workdir=Submit_dict["File_Paths"]["Working_Directory"]
+    
+    xrdml_fname=Submit_dict["File_Paths"]["Diffraction_Filenames"][dataset_index]
+    instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
+    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
+    json_data=Submit_dict["Phase_Info"]["Crystal"]
+    
+    
+    #data_path_wrap = lambda fil: datadir + '/' + fil
+    #save_wrap = lambda fil: workdir + '/' + fil
     
     print("Fitting entire pattern\n")
     
-    gpx = G2sc.G2Project(newgpx=save_wrap('LeBail_fit.gpx'))
+    # Create a new project to avoid collision
+    gpx = G2sc.G2Project(newgpx=os.path.join(workdir,'LeBail_fit.gpx'))
     
 
     
     # Read in phases
     for phase_file in cif_fnames:
-        gpx.add_phase(data_path_wrap(phase_file),fmthint='CIF') # add a phase to the project
+        gpx.add_phase(os.path.join(datadir,phase_file),fmthint='CIF') # add a phase to the project
     
     # Read in histogram
-    hist = gpx.add_powder_histogram(data_path_wrap(xrdml_fname),
-                                    data_path_wrap(instprm_fname),
+    hist = gpx.add_powder_histogram(os.path.join(datadir,xrdml_fname),
+                                    os.path.join(datadir,instprm_fname),
                                     phases=gpx.phases(),databank=1, instbank=1)
 
 #    print("Histograms List: ")
@@ -626,15 +637,15 @@ def fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,j
             # Create a new data frame if it's the first phase
             if n==0:
                 LeBail_reflist_DF=pd.DataFrame(i.data["Reflection Lists"][phase.name]["RefList"],
-                 columns=['h','k','l','mul','d','pos','sig','gam',
-                 'F_obs_sq','F_calc_sq','phase','I_corr','Prfo','Trans','ExtP'])
+                 columns=['h_LB','k_LB','l_LB','mul_LB','d_LB','pos_LB','sig_LB','gam_LB',
+                 'F_obs_sq_LB','F_calc_sq_LB','phase_LB','I_corr_LB','Prfo_LB','Trans_LB','ExtP_LB'])
                 LeBail_reflist_DF[['Phase']] = phase.name
                 #print(LeBail_reflist_DF)
             # otherwise append
             else:
                 LeBail_reflist2_DF=pd.DataFrame(i.data["Reflection Lists"][phase.name]["RefList"],
-                 columns=['h','k','l','mul','d','pos','sig','gam',
-                 'F_obs_sq','F_calc_sq','phase','I_corr','Prfo','Trans','ExtP'])
+                 columns=['h_LB','k_LB','l_LB','mul_LB','d_LB','pos_LB','sig_LB','gam_LB',
+                 'F_obs_sq_LB','F_calc_sq_LB','phase_LB','I_corr_LB','Prfo_LB','Trans_LB','ExtP_LB'])
                 LeBail_reflist2_DF[['Phase']] = phase.name
                 LeBail_reflist_DF=pd.concat([LeBail_reflist_DF,LeBail_reflist2_DF],axis=0,ignore_index=True)
                 #print(LeBail_reflist_DF)
@@ -642,24 +653,29 @@ def fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,j
             
             
             
-    LeBail_reflist_DF = LeBail_reflist_DF.sort_values(by='pos')
+    LeBail_reflist_DF = LeBail_reflist_DF.sort_values(by='pos_LB')
     LeBail_reflist_DF = LeBail_reflist_DF.reset_index(drop=True)
     # Calculate an intensity
-    LeBail_reflist_DF['LeBail_Int']=LeBail_reflist_DF['I_corr']*LeBail_reflist_DF['F_calc_sq']
+    LeBail_reflist_DF['int_LB']=LeBail_reflist_DF['I_corr_LB']*LeBail_reflist_DF['F_calc_sq_LB']
 
-    print("Reflection List DataFrame")
+    print("Le Bail Reflection List DataFrame")
     print(LeBail_reflist_DF)
-            
+    
+    
+    Submit_dict[dataset_string]["Le_Bail_Peaks"]=LeBail_reflist_DF
     #### Flags
 
     # Note the sample displacement
     print("Sample Displacement Found")
-    flags_for_user_DF=compute_results.flag_phase_fraction(np.nan,
-    "Sample Displacement","A sample displacement (shift) value of: "+"{:.4f}".format(hist.data["Sample Parameters"]['Shift'][0])+" um was fit",
-    "Check goniometer alignment if this value is large",
-     DF_to_append=flags_for_user_DF)
+    Submit_dict[dataset_string]["Flags"]=compute_results.flag_phase_fraction("{:.4f}".format(hist.data["Sample Parameters"]['Shift'][0]),"micrometers", "Le Bail Fit", "A sample displacement (shift) value was fit", "Check goniometer alignment if this value is large", DF_to_append=Submit_dict[dataset_string]["Flags"])
+    
+    #flags_for_user_DF=compute_results.flag_phase_fraction(np.nan,
+    #"Sample Displacement","A sample displacement (shift) value of: "+"{:.4f}".format(hist.data["Sample Parameters"]['Shift'][0])+" um was fit",
+    #"Check goniometer alignment if this value is large",
+    # DF_to_append=flags_for_user_DF)
 
     # Note the microstrain?
+    # Reflist has things in terms of sig and gam!
     
     ## Save new peak_list
 #                    for n, phase in enumerate(Rowles_proj.phases()):
@@ -685,4 +701,21 @@ def fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,j
 #        #print("Unit Cell Volume: ", i.data["General"]["Cell"][7])
 
     print(" \n\n End of Rowles \n\n")
-    return(LeBail_reflist_DF.to_dict(), flags_for_user_DF)
+    
+    # Grab .lst file and parse?  Or add to data package?
+    # Also gpx.data() ?
+    # In gpx.data(), the WgtFrac is given, parameter 'depSigDict'
+    
+    
+    # Additional parameters to pull out
+    # mass, volume
+    # messages from the fitting
+    # weight fraction, convert?
+    # unit cell uncertinty (where?) - > values for A0 are reciprical metric tensors
+    #  But calculation doesn't work out as expected...
+    
+    # Seems like there's also a scaling factor somewhere?
+    
+    # Save the cif files for reuse?
+    
+    return(Submit_dict)

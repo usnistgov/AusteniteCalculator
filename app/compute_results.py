@@ -301,12 +301,12 @@ def compute_peak_fitting(G2sc,Submit_dict):
 
     """
 
-    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
     datadir=Submit_dict["File_Paths"]["Data_Directory"]
     workdir=Submit_dict["File_Paths"]["Working_Directory"]
+
     xrdml_fnames=Submit_dict["File_Paths"]["Diffraction_Filenames"]
-    instprm_fname=Submit_dict["File_Paths"]["Cif_Filenames"]
-    cif_fnames=Submit_dict["File_Paths"]["Instrument_Filename"]
+    instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
+    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
     json_data=Submit_dict["Phase_Info"]["Crystal"]
 
     print("Running peak fitting...")
@@ -469,7 +469,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     print(Submit_dict["File_Paths"])
     datadir=Submit_dict["File_Paths"]["Data_Directory"]
     workdir=Submit_dict["File_Paths"]["Working_Directory"]
-    cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
+
 
     xrdml_fname=Submit_dict["File_Paths"]["Diffraction_Filenames"][dataset_index]
     instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
@@ -502,8 +502,9 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     two_theta_range=hist.getdata('X')
     min_two_theta=min(two_theta_range)
     max_two_theta=max(two_theta_range)
-    Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(min_two_theta, "Read Data", "Min Range", "Check if this is the expected range")
-    Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(max_two_theta, "Read Data", "Max Range", "Check if this is the expected range", DF_to_append=Submit_dict[dataset_string]["Flags"])
+    Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(min_two_theta,"degees", "Read Data", "Min Range", "Check if this is the expected range")
+
+    Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(max_two_theta,"degees", "Read Data", "Max Range", "Check if this is the expected range", DF_to_append=Submit_dict[dataset_string]["Flags"])
     #print(min_two_theta,max_two_theta)
 
     # Read in json data
@@ -517,9 +518,8 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     
     # Maybe pass Chebyschev from json file?
 
-    breakpoint()
-
-    LeBail_reflection_list_dict, flags_for_user_DF=fit.fit_peaks_Rowles(datadir,workdir,G2sc,cif_fnames,xrdml_fname,instprm_fname,json_data, flags_for_user_DF, Chebyschev_coeffiecients=5)
+    Submit_dict=fit.fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index, Chebyschev_coeffiecients=5)
+   
 
     ########################################
     # Caculate the theoretical intensities from cif files
@@ -528,29 +528,33 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
 
     theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
 
-
+    # Update the peak positions from LeBail?
 
     # Check if these are still dataframes or dictionaries
     for i in range(len(cif_fnames)):
-        theo_intensity_dict[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
+        theo_intensity_DF[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
                                                          material=cif_fnames[i], \
                                                          cif_file=cif_fnames[i], \
                                                          instrument_calibration_file=instprm_fname, \
                                                          json_data=json_data, \
                                                          G2sc=G2sc, \
                                                          x_range=[min_two_theta,max_two_theta], \
-                                                         DataPathWrap=data_path_wrap, \
-                                                         SaveWrap=save_wrap, \
-                                                         flags_for_user_DF=flags_for_user_DF)
+                                                         data_dir=datadir, \
+                                                         work_dir=workdir, \
+                                                         flags_for_user_DF=Submit_dict[dataset_string]["Flags"])
+
+
 
     # Merge and sort the theoretical intensities
     #? Sort seems a kind of fragile way to align the data
-    theo_intensity_dict = pd.concat(list(theo_intensity_dict.values()),axis=0,ignore_index=True)
-    theo_intensity_dict = theo_intensity_dict.sort_values(by='two_theta')
-    theo_intensity_dict = theo_intensity_dict.reset_index(drop=True)
+    theo_intensity_DF = pd.concat(list(theo_intensity_DF.values()),axis=0,ignore_index=True)
+    theo_intensity_DF = theo_intensity_DF.sort_values(by='two_theta')
+    theo_intensity_DF = theo_intensity_DF.reset_index(drop=True)
     print("\n\n Theoretical Intensity Dataframe")
-    print(theo_intensity_dict)
-
+    print(theo_intensity_DF)
+    
+    Submit_dict[dataset_string]["Theoretical_Intensities"]=theo_intensity_DF
+    breakpoint()
     ########################################
     # Read in phase data
     ########################################
@@ -833,7 +837,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
 #####################################
 
 #####################################
-def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
+def flag_phase_fraction(value, unit, source, flag, suggestion, DF_to_append=None):
     """
     Adds notes and flags to austenite calculation.
 
@@ -851,9 +855,10 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     """
 
     print("Issue Flagged")
-    flags_dict = {"Value":[],"Source":[],"Flags":[],"Suggestions":[]};
+    flags_dict = {"Value":[],"Unit":[],"Source":[],"Flags":[],"Suggestions":[]};
 
     flags_dict["Value"].append(value)
+    flags_dict["Unit"].append(unit)
     flags_dict["Source"].append(source)
     flags_dict["Flags"].append(flag)
     flags_dict["Suggestions"].append(suggestion)
@@ -869,9 +874,7 @@ def flag_phase_fraction(value, source, flag, suggestion, DF_to_append=None):
     return flags_DF
 
 #####################################
-def get_theoretical_intensities(gpx_file_name,material,cif_file, \
-        instrument_calibration_file,json_data, \
-        x_range,G2sc,DataPathWrap,SaveWrap, flags_for_user_DF):
+def get_theoretical_intensities(gpx_file_name,material,cif_file, instrument_calibration_file,json_data, x_range,G2sc,data_dir,work_dir, flags_for_user_DF):
     """
     Function to calculate the theoretical intensities.
     Simulated diffraction profile calculated based on the .cif file and instrument parameter file
@@ -896,10 +899,10 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
     """
 
     # Create a GSAS-II project to save data to
-    gpx = G2sc.G2Project(newgpx=SaveWrap(gpx_file_name))
+    gpx = G2sc.G2Project(newgpx=os.path.join(work_dir,gpx_file_name))
 
     # Add a phase to the project from a .cif file
-    Phase = gpx.add_phase(DataPathWrap(cif_file), phasename=material,fmthint='CIF')
+    Phase = gpx.add_phase(os.path.join(data_dir,cif_file), phasename=material,fmthint='CIF')
 
     # Arbitrary scale factor.  Value chosen to provide reasonable signal to noise and comparison to input data.
     histogram_scale=100.
@@ -907,7 +910,7 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
     # add a simulated histogram and link it to the previous phase(s)
     # May need to make the two theta range and number of points variables
     hist1 = gpx.add_simulated_powder_histogram(material + " simulation",
-                DataPathWrap(instrument_calibration_file),x_range[0],x_range[1],Npoints=5000,
+                os.path.join(data_dir,instrument_calibration_file),x_range[0],x_range[1],Npoints=5000,
                 phases=gpx.phases(),scale=histogram_scale)
 
     # calculate simulated pattern and save file
@@ -923,7 +926,6 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, \
     theo_intensity_DF[['Phase']] = material
 
     # Add column for texture corrections
-
 
     # Read in from file if there's a 4th column
     if len(json_data[material])==4:

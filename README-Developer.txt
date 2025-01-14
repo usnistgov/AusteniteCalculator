@@ -14,32 +14,36 @@ Submission	*Dictionary*	(Container for all the items computed)
  -> "File_Paths"	*Dictionary*	(File/Folder paths)
     |
    -> "Data_Directory"		*String*
-   ->"Working_Directory"	*String*
-   ->"Cif_Filenames"		*List*
-   ->"Diffraction_Filenames" 	*List*
-   ->"Instrument_Filename"	*String*
-   ->"JSON_Filename"		*String*
+   -> "Working_Directory"	*String*
+   -> "Cif_Filenames"		*List*
+   -> "Diffraction_Filenames" 	*List*
+   -> "Instrument_Filename"	*String*
+   -> "JSON_Filename"		*String*
 
  -> Dataset
    |
    -> "Flags" 		*DataFrame*	(Comments/Flags for the user, fit issues, offset)
    -> Histogram Data (raw data)
+   -> Le Bail Fit Data		(phase fractions, unit cell, fit values and uncertainties)
    -> Fit Data
    -> MCMC Uncertainty Inputs
    -> MCMC Distribution Data (8000 normalized intensities)
    -> Phase Fraction Data (8000 n_ints run through phase frac calc)
    -> Peak
     |
-    -> LeBail Fit (values, uncertainties)
+    -> "Le_Bail_Peaks"	*DataFrame*	(LeBail Fit values, uncertainties)
+    -> "Theoretical_Intensities" *DataFrame*
     -> Peak Fit (values, uncertainties)
     -> Gaussian Fit (values, uncertainties)
-    -> Theoretical Intensities
+
     -> hkl, multiplicity
     -> Phase
     -> Crystallites Illuminated
 
 Mutability
 	dictionaries and DataFrames should be mutable, so you don't need to pass the object back from a function
+
+	-> Flags doesn't work this way, needed to pass them back...
 
 
 Flags syntax:
