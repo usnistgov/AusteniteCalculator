@@ -309,6 +309,8 @@ def compute_peak_fitting(G2sc,Submit_dict):
     cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
     json_data=Submit_dict["Phase_Info"]["Crystal"]
 
+
+
     print("Running peak fitting...")
     # Initialize dictionaries to store data returned from compute_results
     results_table = {}
@@ -326,6 +328,8 @@ def compute_peak_fitting(G2sc,Submit_dict):
     # Peak
 
     # Loop over files entered
+    # Considered moving theoretical intensities outside this loop,
+    # but need the range of the 2-theta data 
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
         dataset_string = 'Dataset_' + str(x + 1)
@@ -335,7 +339,7 @@ def compute_peak_fitting(G2sc,Submit_dict):
         print("Initializing dataset ", dataset_string)
         Submit_dict[dataset_string]={}
         
-        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_dict, user_flags_DF = compute( G2sc, Submit_dict, dataset_string, x)
+        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_DF, user_flags_DF = compute( G2sc, Submit_dict, dataset_string, x)
         #Use _ instead of : to avoid special characters in export
 
         breakpoint()
@@ -502,6 +506,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     two_theta_range=hist.getdata('X')
     min_two_theta=min(two_theta_range)
     max_two_theta=max(two_theta_range)
+    Submit_dict[dataset_string]["X_Range"]=[min_two_theta,max_two_theta]
     Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(min_two_theta,"degees", "Read Data", "Min Range", "Check if this is the expected range")
 
     Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(max_two_theta,"degees", "Read Data", "Max Range", "Check if this is the expected range", DF_to_append=Submit_dict[dataset_string]["Flags"])
@@ -526,44 +531,24 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     ########################################
     print("\n\n Calculate Theoretical Intensities\n")
 
-    theo_intensity_dict = {} # e.g. theo_intensity_dict['austenite-duplex.cif'] maps to austenite theoretical intensities
-
     # Update the peak positions from LeBail?
+    # Or could move this outside the dataset loop?
+        # Could move, but need X ranges, other information
 
-    # Check if these are still dataframes or dictionaries
-    for i in range(len(cif_fnames)):
-        theo_intensity_DF[cif_fnames[i]] = get_theoretical_intensities(gpx_file_name=cif_fnames[i] + '.gpx', \
-                                                         material=cif_fnames[i], \
-                                                         cif_file=cif_fnames[i], \
-                                                         instrument_calibration_file=instprm_fname, \
-                                                         json_data=json_data, \
-                                                         G2sc=G2sc, \
-                                                         x_range=[min_two_theta,max_two_theta], \
-                                                         data_dir=datadir, \
-                                                         work_dir=workdir, \
-                                                         flags_for_user_DF=Submit_dict[dataset_string]["Flags"])
-
-
-
-    # Merge and sort the theoretical intensities
-    #? Sort seems a kind of fragile way to align the data
-    theo_intensity_DF = pd.concat(list(theo_intensity_DF.values()),axis=0,ignore_index=True)
-    theo_intensity_DF = theo_intensity_DF.sort_values(by='two_theta')
-    theo_intensity_DF = theo_intensity_DF.reset_index(drop=True)
-    print("\n\n Theoretical Intensity Dataframe")
-    print(theo_intensity_DF)
+    Submit_dict=get_theoretical_intensities(G2sc, Submit_dict, dataset_string)
     
-    Submit_dict[dataset_string]["Theoretical_Intensities"]=theo_intensity_DF
-    breakpoint()
+    
     ########################################
     # Read in phase data
     ########################################
     print("\n\n Read in Phase Data\n")
 
+
+    #FIX!! probably restructure, may already exist?
     phases = {}
     a0 = {}
     for i in range(len(cif_fnames)):
-        phases[cif_fnames[i]] = get_phase(data_path_wrap(cif_fnames[i]), cif_fnames[i], gpx) # phase data
+        phases[cif_fnames[i]] = get_phase(os.path.join(datadir,cif_fnames[i]), cif_fnames[i], gpx) # phase data
         a0[cif_fnames[i]] = phases[cif_fnames[i]].data['General']['Cell'][1] # lattice parameter
 
     # Find the ka1 wavelength in the file
@@ -576,10 +561,10 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         print("using the Lam value, single wavelength")
     else:
         Ka1_wavelength=1.5405
-        flags_for_user_DF=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=flags_for_user_DF)
+        Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(0,"Histogram Data", "Assumed Cu single wavelength", "Check input file", DF_to_append=Submit_dict[dataset_string]["Flags"])
         print("No wavelength found, defaulting to Cu")
 
-    #breakpoint()
+    breakpoint()
 
     ########################################
     # use the theoretical intensities for peak fit location
@@ -873,8 +858,9 @@ def flag_phase_fraction(value, unit, source, flag, suggestion, DF_to_append=None
 
     return flags_DF
 
+
 #####################################
-def get_theoretical_intensities(gpx_file_name,material,cif_file, instrument_calibration_file,json_data, x_range,G2sc,data_dir,work_dir, flags_for_user_DF):
+def get_theoretical_intensities(G2sc, Submit_dict, dataset_string):
     """
     Function to calculate the theoretical intensities.
     Simulated diffraction profile calculated based on the .cif file and instrument parameter file
@@ -898,51 +884,73 @@ def get_theoretical_intensities(gpx_file_name,material,cif_file, instrument_cali
 
     """
 
-    # Create a GSAS-II project to save data to
-    gpx = G2sc.G2Project(newgpx=os.path.join(work_dir,gpx_file_name))
+    datadir=Submit_dict["File_Paths"]["Data_Directory"]
+    workdir=Submit_dict["File_Paths"]["Working_Directory"]
+    instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
+    json_data=Submit_dict["Phase_Info"]["Crystal"]
 
-    # Add a phase to the project from a .cif file
-    Phase = gpx.add_phase(os.path.join(data_dir,cif_file), phasename=material,fmthint='CIF')
+    theo_intensity_dict = {}
 
-    # Arbitrary scale factor.  Value chosen to provide reasonable signal to noise and comparison to input data.
-    histogram_scale=100.
+    for i in range(len(Submit_dict["File_Paths"]["Cif_Filenames"])):
+        cif_file=Submit_dict["File_Paths"]["Cif_Filenames"][i]
+        gpx_file_name=cif_file+'.gpx'
+        # Create a GSAS-II project to save data to
+        gpx = G2sc.G2Project(newgpx=os.path.join(workdir,gpx_file_name))
 
-    # add a simulated histogram and link it to the previous phase(s)
-    # May need to make the two theta range and number of points variables
-    hist1 = gpx.add_simulated_powder_histogram(material + " simulation",
-                os.path.join(data_dir,instrument_calibration_file),x_range[0],x_range[1],Npoints=5000,
-                phases=gpx.phases(),scale=histogram_scale)
+        # Add a phase to the project from a .cif file
+        Phase = gpx.add_phase(os.path.join(datadir,cif_file), phasename=cif_file,fmthint='CIF')
 
-    # calculate simulated pattern and save file
-    gpx.do_refinements()
-    gpx.save()
+        # Arbitrary scale factor.  Value chosen to provide reasonable signal to noise and comparison to input data.
+        histogram_scale=100.
 
-    # Extract some of the columns for the reflection list generated by the simulated histogram
-    # The description of the reflection list by column
-    # https://gsas-ii.readthedocs.io/en/latest/GSASIIobj.html#powderrefl-table
-    theo_intensity_DF = pd.DataFrame(hist1.data['Reflection Lists'][material]['RefList'][:,(0,1,2,3,5,9,11)],columns=['h','k','l','mul','two_theta','F_calc_sq','I_corr'])
+        # add a simulated histogram and link it to the previous phase(s)
+        # May need to make the two theta range and number of points variables
+        hist1 = gpx.add_simulated_powder_histogram(cif_file + " simulation",
+                    os.path.join(datadir,instprm_fname),Submit_dict[dataset_string]["X_Range"][0],Submit_dict[dataset_string]["X_Range"][1],Npoints=5000,
+                    phases=gpx.phases(),scale=histogram_scale)
 
-    theo_intensity_DF['R_calc']=theo_intensity_DF['I_corr']*theo_intensity_DF['F_calc_sq']
-    theo_intensity_DF[['Phase']] = material
+        # calculate simulated pattern and save file
+        gpx.do_refinements()
+        gpx.save()
 
-    # Add column for texture corrections
+        # Extract some of the columns for the reflection list generated by the simulated histogram
+        # The description of the reflection list by column
+        # https://gsas-ii.readthedocs.io/en/latest/GSASIIobj.html#powderrefl-table
+        theo_intensity_DF = pd.DataFrame(hist1.data['Reflection Lists'][cif_file]['RefList'][:,(0,1,2,3,5,9,11)],columns=['h_TI','k_TI','l_TI','mul_TI','pos_TI','F_calc_sq_TI','I_corr_TI'])
 
-    # Read in from file if there's a 4th column
-    if len(json_data[material])==4:
-        theo_intensity_DF['Texture Correction'] =json_data[material][3]
-    # Else, assume no texture
-    else:
-        theo_intensity_DF['Texture Correction'] =1
-        flags_for_user_DF=flag_phase_fraction(np.nan,"Theoretical Intensities", \
-         "No Texture Correction Applied", "Check normalized intensities" ,\
-          flags_for_user_DF)
+        theo_intensity_DF['R_TI']=theo_intensity_DF['I_corr_TI']*theo_intensity_DF['F_calc_sq_TI']
+        theo_intensity_DF[['Phase_TI']] = cif_file
+
+        # Add column for texture corrections
+
+        # Read in from file if there's a 4th column
+        if len(json_data[cif_file])==4:
+            theo_intensity_DF['Texture Correction'] =json_data[cif_file][3]
+        # Else, assume no texture
+        else:
+            theo_intensity_DF['Texture Correction'] =1
+            Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(cif_file,np.nan,\
+                "Theoretical Intensities",\
+                "No Texture Correction Applied",\
+                "Check normalized intensities",\
+                DF_to_append=Submit_dict[dataset_string]["Flags"])
 
 
-    # Remove any peaks that have zero theoretical intensity
-    # Ran into this for Example 06
-    theo_intensity_DF= theo_intensity_DF.loc[(theo_intensity_DF["R_calc"]>0)]
+        # Remove any peaks that have zero theoretical intensity
+        # FIX!! is this needed?  Reset to zero instead?
+        # Ran into this for Example 06
+        theo_intensity_DF= theo_intensity_DF.loc[(theo_intensity_DF['R_TI']>0)]
+        theo_intensity_dict[cif_file]=theo_intensity_DF
 
-    return theo_intensity_DF
+    theo_intensity_cat_DF = pd.concat(list(theo_intensity_dict.values()),axis=0,ignore_index=True)
+    theo_intensity_cat_DF = theo_intensity_cat_DF.sort_values(by='pos_TI')
+    theo_intensity_cat_DF = theo_intensity_cat_DF.reset_index(drop=True)
+    print("\n\n Theoretical Intensity Dataframe")
+    print(theo_intensity_cat_DF)
+    
+    Submit_dict[dataset_string]["Theoretical_Intensities"]=theo_intensity_cat_DF
+
+    return Submit_dict
 
 #####################################
 def get_phase(cif_wrap, phase_name, project):
