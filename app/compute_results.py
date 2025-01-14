@@ -329,7 +329,7 @@ def compute_peak_fitting(G2sc,Submit_dict):
 
     # Loop over files entered
     # Considered moving theoretical intensities outside this loop,
-    # but need the range of the 2-theta data 
+    # but need the range of the 2-theta data
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
         dataset_string = 'Dataset_' + str(x + 1)
@@ -339,75 +339,77 @@ def compute_peak_fitting(G2sc,Submit_dict):
         print("Initializing dataset ", dataset_string)
         Submit_dict[dataset_string]={}
         
-        fit_data, results_df, phase_frac_DF, two_theta, theo_intensity_DF, user_flags_DF = compute( G2sc, Submit_dict, dataset_string, x)
+        fit_data, Submit_dict = compute( G2sc, Submit_dict, dataset_string, x)
         #Use _ instead of : to avoid special characters in export
-
-        breakpoint()
 
         
         #store data in their respective dictionaries, with the keys being the current dataset(1,2,...) and the value being data
         #some are duplicated because they needed to be converted in multiple ways
-        results_table[dataset_string] = results_df
-        phase_frac[dataset_string] = phase_frac_DF
-        two_thetas[dataset_string] = two_theta.tolist()
-        ti_tables[dataset_string] = theo_intensity_dict
-        user_flags[dataset_string] = user_flags_DF
-        altered_results[dataset_string] = results_df
-        altered_phase[dataset_string] = phase_frac_DF
-        altered_ti[dataset_string] = theo_intensity_dict
-        fit_points[dataset_string] = fit_data
+        
+        # UNESSESSARY AFTER DATASTRUCTURE MERGE?
+#        results_table[dataset_string] = results_df
+#        phase_frac[dataset_string] = phase_frac_DF
+#        two_thetas[dataset_string] = two_theta.tolist()
+#        ti_tables[dataset_string] = theo_intensity_dict
+#        user_flags[dataset_string] = user_flags_DF
+#        altered_results[dataset_string] = results_df
+#        altered_phase[dataset_string] = phase_frac_DF
+#        altered_ti[dataset_string] = theo_intensity_dict
+#        fit_points[dataset_string] = fit_data
         print("Finish results for file ",x)
 
     # full results table
-    full_results_table = pd.concat(results_table,axis=0,ignore_index=True)
-    full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
-    full_results_table['Uncertainties due to Fitting'] = full_results_table['u_int_fit']/full_results_table['R_calc']
-    full_results_table['Uncertainties due to Counts'] = full_results_table['u_int_count']/full_results_table['R_calc']
-    u_int_fit_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
+#    full_results_table = pd.concat(results_table,axis=0,ignore_index=True)
+#    full_results_table = full_results_table.loc[full_results_table['Peak_Fit_Success'],:]
+#    full_results_table['Uncertainties due to Fitting'] = full_results_table['u_int_fit']/full_results_table['R_calc']
+#    full_results_table['Uncertainties due to Counts'] = full_results_table['u_int_count']/full_results_table['R_calc']
+#    u_int_fit_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
     # Don't convert to dict now...
     #u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(u_int_fit_table.round(6))
     # Retained during merge to check
     #full_results_table['Uncertainties due to Number of Crystals Diffracting'] = full_results_table['u_cryst_diff']
     #full_results_table = full_results_table.loc[:,['sample_index','Phase','Uncertainties due to Counts','Uncertainties due to Fitting']]
-    u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(full_results_table.round(6))
+    #u_int_fit_count_table_data, u_int_fit_count_table_columns = df_to_dict(full_results_table.round(6))
 
     print("Peak fitting complete")
 
-    full_results_table = full_results_table.round(4)
+#    full_results_table = full_results_table.round(4)
+#
+#    full_results_table = full_results_table.round({
+#        'pos_fit':2,
+#        'int_fit':0,
+#        'sig_fit':2,
+#        'gam_fit':2,
+#        'u_int_fit':2,
+#        'back_int_bound':0,
+#        'signal_to_noise':2,
+#        'u_int_count':2,
+#        'h':0,
+#        'k':0,
+#        'l':0,
+#        'mul':0,
+#        'two_theta':2,
+#        'F_calc_sq':0,
+#        'I_corr':0,
+#        'R_calc':0
+#    })
 
-    full_results_table = full_results_table.round({
-        'pos_fit':2,
-        'int_fit':0,
-        'sig_fit':2,
-        'gam_fit':2,
-        'u_int_fit':2,
-        'back_int_bound':0,
-        'signal_to_noise':2,
-        'u_int_count':2,
-        'h':0,
-        'k':0,
-        'l':0,
-        'mul':0,
-        'two_theta':2,
-        'F_calc_sq':0,
-        'I_corr':0,
-        'R_calc':0
-    })
+#    return {
+#        'results_table':results_table,
+#        'full_results_table':full_results_table,
+#        'phase_frac':phase_frac,
+#        'two_thetas':two_thetas,
+#        'user_flags':user_flags,
+#        'ti_tables':ti_tables,
+#        'altered_results':altered_results,
+#        'altered_phase':altered_phase,
+#        'altered_ti':altered_ti,
+#        'fit_points':fit_points,
+#        'u_int_fit_count_table_data':u_int_fit_count_table_data,
+#        'u_int_fit_count_table_columns':u_int_fit_count_table_columns
+#    }
 
-    return {
-        'results_table':results_table,
-        'full_results_table':full_results_table,
-        'phase_frac':phase_frac,
-        'two_thetas':two_thetas,
-        'user_flags':user_flags,
-        'ti_tables':ti_tables,
-        'altered_results':altered_results,
-        'altered_phase':altered_phase,
-        'altered_ti':altered_ti,
-        'fit_points':fit_points,
-        'u_int_fit_count_table_data':u_int_fit_count_table_data,
-        'u_int_fit_count_table_columns':u_int_fit_count_table_columns
-    }
+    return Submit_dict
 
 #####################################
 #### compute_peak_fitting() Utility Fuctions #####
@@ -594,6 +596,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     t_pos = 0
 
     # Currently the fit processes are a little different...
+    #CHECK - only used the first attempt so far...
     while not (peaks_ok):
         print("\n\n Fit attempt number ", fit_attempts," \n")
         if(fit_attempts == 0):
@@ -705,7 +708,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     #Copy the fit data
     Submit_dict[dataset_string]["Peak_Fit_Data"]=hist.data
 
-    # Below are the array data
+    # Below are the array data (still needed if we have the complete fit data?)
     two_theta = hist.data['data'][1][0]
     h_data = hist.data['data'][1][1]
     h_background = hist.data['data'][1][4]
@@ -714,6 +717,9 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
 
     #? Also fit the lortenzian (gam) component?
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
+
+    # ADD SIMPLE GAUSSIAN FITS
+
 
     ########################################
     # Merge experimental and theoretical data
@@ -796,31 +802,52 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     # Uses the sorting for alignment of rows.  Likely a better way and/or error checking needed
     #? Should the if/else be a try/except block?
     print("\n\n Concatenating Dataframes\n")
-    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,theo_intensity_dict),axis=1)
+    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,\
+        Submit_dict[dataset_string]["Theoretical_Intensities"]),axis=1)
+    DF_merged_fit_theo = pd.concat((DF_merged_fit_theo,\
+        Submit_dict[dataset_string]["Le_Bail_Peaks"]),axis=1)
+        
     DF_merged_fit_theo = DF_merged_fit_theo
-    DF_merged_fit_theo['n_int'] = (DF_merged_fit_theo['int_fit']/ \
+    DF_merged_fit_theo['n_int_fit'] = (DF_merged_fit_theo['int_fit']/ \
                                    (DF_merged_fit_theo['Texture Correction']* \
-                                   DF_merged_fit_theo['R_calc']))
+                                   DF_merged_fit_theo['R_TI']))
+    DF_merged_fit_theo['n_int_LB'] = (DF_merged_fit_theo['int_LB']/ \
+                                   (DF_merged_fit_theo['Texture Correction']* \
+                                   DF_merged_fit_theo['R_TI']))
+                                   
+    # uncertainties normalized by theoretical intensities
+    DF_merged_fit_theo['n_u_int_fit'] = (DF_merged_fit_theo['u_int_fit']/ \
+                                         DF_merged_fit_theo['R_TI'])
 
-    DF_merged_fit_theo['pos_diff'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['two_theta']
+    DF_merged_fit_theo['n_u_count_fit'] = (DF_merged_fit_theo['u_int_count']/ \
+                                         DF_merged_fit_theo['R_TI'])
+                                        
+    DF_merged_fit_theo['n_u_int_LB'] = (DF_merged_fit_theo['u_int_LB']/ \
+                                         DF_merged_fit_theo['R_TI'])
 
+    # Changes in the position fit
+    DF_merged_fit_theo['pos_diff_fit_TI'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['pos_TI']
+    DF_merged_fit_theo['pos_diff_LB_TI'] = DF_merged_fit_theo['pos_LB']-DF_merged_fit_theo['pos_TI']
+    DF_merged_fit_theo['pos_diff_fit_LB'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['pos_LB']
+
+    print(DF_merged_fit_theo)
+    print(DF_merged_fit_theo.columns)
+    Submit_dict[dataset_string]["Merged_Peaks"]=DF_merged_fit_theo
+    
+
+    
     ########################################
     # Calculate the phase fraction
     ########################################
-    print("\n\n Calculating Phase Fraction\n")
-    DF_phase_fraction,  flags_for_user_DF = calculate_phase_fraction(DF_merged_fit_theo, flags_for_user_DF)
+    print("\n\n Calculating Preliminary Phase Fraction\n")
+    Submit_dict = calculate_prelim_phase_fraction(Submit_dict,dataset_string)
 
+    # Maybe remove this later? Since it's rolled into Submit_dict
     print("\n\n Before fit data\n")
     fit_data = [h_data.tolist(), h_background.tolist(), h_fit.tolist()]
     print("\n\n After fit data\n")
 
-   #return a bunch of data in dataframes, plots are created dynamically
-    return (fit_data,
-            DF_merged_fit_theo,
-            DF_phase_fraction,
-            two_theta,
-            theo_intensity_dict,
-            flags_for_user_DF)
+    return (fit_data,Submit_dict)
 
 
 #####################################
@@ -976,7 +1003,7 @@ def get_phase(cif_wrap, phase_name, project):
 
 
 #####################################
-def calculate_phase_fraction(Merged_DF, flags_DF):
+def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
     """
     Use conventional mean and standard deviation caculations to determine phase fraction. Also includes rounding for display
     **Keep this function to get estimated phase fraction for crystallites illuminated before doing mcmc**
@@ -992,18 +1019,14 @@ def calculate_phase_fraction(Merged_DF, flags_DF):
     Raises:
     """
 
+    Merged_DF=Submit_dict[dataset_string]["Merged_Peaks"]
+
     # Extract all phases listed
     phase_list=Merged_DF['Phase'].unique()
     n_phases = len(phase_list)
 
     phase_fraction_DF = pd.DataFrame({
-        "Phase":phase_list,
-        "Phase_Fraction":[0]*n_phases,
-        "Phase_Fraction_StDev":[0]*n_phases,
-        "Number_hkls":[0]*n_phases,
-        "hkls":[np.nan]*n_phases,
-        "Mean_nint":[0]*n_phases,
-        "StDev_nint":[0]*n_phases
+        "Phase":phase_list
     })
 
     fraction_dict = {} # DN: not sure why we need this?
@@ -1012,7 +1035,7 @@ def calculate_phase_fraction(Merged_DF, flags_DF):
     for ii, phase in enumerate(phase_list):
         #print(phase)
 
-        Phase_DF=Merged_DF.loc[Merged_DF['Phase'] == phase][['h','k','l','n_int','Peak_Fit_Success']]
+        Phase_DF=Merged_DF.loc[Merged_DF['Phase'] == phase][['h_TI','k_TI','l_TI','n_int_fit','n_int_LB','Peak_Fit_Success']]
         print(Phase_DF)
         #print(Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean())
 
@@ -1026,23 +1049,30 @@ def calculate_phase_fraction(Merged_DF, flags_DF):
 #        phase_fraction_DF.loc[ii,"StDev_nint"] = Phase_DF['n_int'].std()
 #        phase_fraction_DF.loc[ii,"Number_hkls"] = len(Phase_DF['n_int'])
 
-        phase_fraction_DF.loc[ii,"Mean_nint"] =Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
-        phase_fraction_DF.loc[ii,"StDev_nint"] =Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].std()
-        phase_fraction_DF.loc[ii,"Number_hkls"] =len(Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)])
+        phase_fraction_DF.loc[ii,"Mean_nint_fit"] =Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
+        phase_fraction_DF.loc[ii,"StDev_nint_fit"] =Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)].std()
+        phase_fraction_DF.loc[ii,"Number_hkls_fit"] =len(Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)])
+
+        phase_fraction_DF.loc[ii,"Mean_nint_LB"] =Phase_DF['n_int_LB'].mean()
+        phase_fraction_DF.loc[ii,"StDev_nint_LB"] =Phase_DF['n_int_LB'].std()
+        phase_fraction_DF.loc[ii,"Number_hkls_LB"] =len(Phase_DF['n_int_LB'])
 
         #print("Add to fraction_dict")
         fraction_dict[phase]=phase_fraction_DF
 
-        if (phase_fraction_DF.loc[ii,"Number_hkls"] != len(Phase_DF['n_int'])):
-            flags_DF=flag_phase_fraction(np.nan,"Phase Fraction", ("Peaks that failed to fit in phase "+phase+" were removed"),
-             "Improve signal to noise, request assistance on fitting" , DF_to_append=flags_DF)
+        if (phase_fraction_DF.loc[ii,"Number_hkls_fit"] != len(Phase_DF['n_int_fit'])):
+            Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(np.nan,np.nan,"Prelim Phase Fraction", ("Peaks that failed to fit in phase "+phase+" were removed"),
+             "Improve signal to noise, request assistance on fitting" , DF_to_append=Submit_dict[dataset_string]["Flags"])
 
     # now, compute phase fraction
-    phase_fraction_DF["Phase_Fraction"]=phase_fraction_DF["Mean_nint"]/(phase_fraction_DF["Mean_nint"].sum())
-    phase_fraction_DF["Phase_Fraction_StDev"]=phase_fraction_DF["StDev_nint"]/(phase_fraction_DF["Mean_nint"].sum())
-    norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
+    phase_fraction_DF["Phase_Fraction_fit"]=phase_fraction_DF["Mean_nint_fit"]/(phase_fraction_DF["Mean_nint_fit"].sum())
+    phase_fraction_DF["Phase_Fraction_StDev_fit"]=phase_fraction_DF["StDev_nint_fit"]/(phase_fraction_DF["Mean_nint_fit"].sum())
+    
+    #norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
-
+    phase_fraction_DF["Phase_Fraction_LB"]=phase_fraction_DF["Mean_nint_LB"]/(phase_fraction_DF["Mean_nint_LB"].sum())
+    phase_fraction_DF["Phase_Fraction_StDev_LB"]=phase_fraction_DF["StDev_nint_LB"]/(phase_fraction_DF["Mean_nint_LB"].sum())
+    
 
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
     #                                  "Normalized Intensity Variation", phase, np.nan, DF_to_append=Uncertainty_DF)
@@ -1058,7 +1088,9 @@ def calculate_phase_fraction(Merged_DF, flags_DF):
     #print(fraction_dict)
     print(phase_fraction_DF)
 
-    return phase_fraction_DF, flags_DF
+    Submit_dict[dataset_string]["Prelim_Phase_Fraction"]=phase_fraction_DF
+
+    return Submit_dict
 
 #####################################
 #### Next functions in app.py, uncertain on use #####

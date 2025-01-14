@@ -659,7 +659,8 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     LeBail_reflist_DF = LeBail_reflist_DF.reset_index(drop=True)
     # Calculate an intensity
     LeBail_reflist_DF['int_LB']=LeBail_reflist_DF['I_corr_LB']*LeBail_reflist_DF['F_calc_sq_LB']
-
+    # Uncertainties based on sqrt of counts
+    LeBail_reflist_DF['u_int_LB']=LeBail_reflist_DF['int_LB']**0.5
     print("Le Bail Reflection List DataFrame")
     print(LeBail_reflist_DF)
     

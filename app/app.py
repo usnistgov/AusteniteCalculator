@@ -97,20 +97,17 @@ def submit():
     # probably need to merge dataframes later
     Submission["Phase_Info"]["Cell"] = compute_results.compute_cell_density(Submission)
 
-
-
     print("Running Peak Fitting")
-    pk_fit_res = compute_results.compute_peak_fitting(G2sc, Submission)
+    Submission = compute_results.compute_peak_fitting(G2sc, Submission)
 
     print("\n****************************************\n",Submission.keys())
-    print("\n*************\n",Submission)
-    #breakpoint()
+    # print("\n*************\n",Submission)
 
-    print("Computing peaks_dict")
-    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
+#    print("Computing peaks_dict")
+#    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
 
-    print("Gathering Summarized Phase Info")
-    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
+#    print("Gathering Summarized Phase Info")
+#    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
 
     print("Computing crystallites illuminated...")
     # Need to update the full results table, but issues with dict/DF 
