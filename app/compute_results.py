@@ -270,15 +270,15 @@ def compute_cell_density(Submit_dict):
     # cell volume should indicate it's the intial value
     cell_dens_dict={
         'scattering_dict':scattering_dict,
-        'atomic_masses_dict':atomic_masses_dict,
         'elem_fractions_dict':elem_fractions_dict,
-        'cell_volumes_dict':cell_volumes_dict,
-        'cell_masses_dict':cell_masses_dict
+        'unit_cell_volume_CIF':cell_volumes_dict,
+        'unit_cell_mass_CIF':cell_masses_dict
         }
-
-    cell_dens_DF = pd.DataFrame(data=cell_dens_dict)
+    
+    Submit_dict["Phase_Info"]["Atomic_Masses"]=pd.Series(atomic_masses_dict)
+    Submit_dict["Phase_Info"]["Unit_Cell"]=pd.DataFrame(cell_dens_dict)
     #return cell_dens_dict
-    return cell_dens_DF
+    return Submit_dict
 
 #####################################
 def compute_peak_fitting(G2sc,Submit_dict):
@@ -307,7 +307,7 @@ def compute_peak_fitting(G2sc,Submit_dict):
     xrdml_fnames=Submit_dict["File_Paths"]["Diffraction_Filenames"]
     instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
     cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
-    json_data=Submit_dict["Phase_Info"]["Crystal"]
+    json_data=Submit_dict["Phase_Info"]["Interaction_Parameters"]
 
 
 
@@ -330,9 +330,15 @@ def compute_peak_fitting(G2sc,Submit_dict):
     # Loop over files entered
     # Considered moving theoretical intensities outside this loop,
     # but need the range of the 2-theta data
+    # IF statement for XRD_SUM?
     for x in range(len(xrdml_fnames)):
         print("Compute results for file ",x)
         dataset_string = 'Dataset_' + str(x + 1)
+        
+        if x==0:
+            Submit_dict["File_Paths"]["Dataset_name"]=[dataset_string]
+        else:
+            Submit_dict["File_Paths"]["Dataset_name"].append(dataset_string)
         #results_df['sample_index'] = str(x + 1)
 
         # Changing to Submit_dict
@@ -480,7 +486,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     xrdml_fname=Submit_dict["File_Paths"]["Diffraction_Filenames"][dataset_index]
     instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
     cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
-    json_data=Submit_dict["Phase_Info"]["Crystal"]
+    json_data=Submit_dict["Phase_Info"]["Interaction_Parameters"]
 
     #Helper functions to create full path descriptions
     #data_path_wrap = lambda fil: datadir + '/' + fil
@@ -920,7 +926,7 @@ def get_theoretical_intensities(G2sc, Submit_dict, dataset_string):
     datadir=Submit_dict["File_Paths"]["Data_Directory"]
     workdir=Submit_dict["File_Paths"]["Working_Directory"]
     instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
-    json_data=Submit_dict["Phase_Info"]["Crystal"]
+    json_data=Submit_dict["Phase_Info"]["Interaction_Parameters"]
 
     theo_intensity_dict = {}
 
@@ -1036,6 +1042,15 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
         #print(phase)
 
         Phase_DF=Merged_DF.loc[Merged_DF['Phase'] == phase][['h_TI','k_TI','l_TI','n_int_fit','n_int_LB','Peak_Fit_Success']]
+        
+        
+        Phase_DF['unit_cell_volume_CIF']=Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_volume_CIF'].loc[phase+".cif"]
+ 
+        Phase_DF['unit_cell_mass_CIF']=Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_mass_CIF'].loc[phase+".cif"]
+        
+        Phase_DF['n_int_fit_volume']=Phase_DF['unit_cell_volume_CIF']*Phase_DF['n_int_fit']
+        Phase_DF['n_int_fit_mass']=Phase_DF['unit_cell_mass_CIF']*Phase_DF['n_int_fit']
+        
         print(Phase_DF)
         #print(Phase_DF['n_int'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean())
 
@@ -1049,13 +1064,16 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
 #        phase_fraction_DF.loc[ii,"StDev_nint"] = Phase_DF['n_int'].std()
 #        phase_fraction_DF.loc[ii,"Number_hkls"] = len(Phase_DF['n_int'])
 
-        phase_fraction_DF.loc[ii,"Mean_nint_fit"] =Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
-        phase_fraction_DF.loc[ii,"StDev_nint_fit"] =Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)].std()
+        phase_fraction_DF.loc[ii,"Mean_n_int_fit"] =Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
+        phase_fraction_DF.loc[ii,"Mean_n_int_fit_mass"] =Phase_DF['n_int_fit_mass'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
+        phase_fraction_DF.loc[ii,"Mean_n_int_fit_volume"] =Phase_DF['n_int_fit_volume'].loc[(Phase_DF["Peak_Fit_Success"]==True)].mean()
+        phase_fraction_DF.loc[ii,"StDev_n_int_fit"] =Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)].std()
         phase_fraction_DF.loc[ii,"Number_hkls_fit"] =len(Phase_DF['n_int_fit'].loc[(Phase_DF["Peak_Fit_Success"]==True)])
 
-        phase_fraction_DF.loc[ii,"Mean_nint_LB"] =Phase_DF['n_int_LB'].mean()
-        phase_fraction_DF.loc[ii,"StDev_nint_LB"] =Phase_DF['n_int_LB'].std()
+        phase_fraction_DF.loc[ii,"Mean_n_int_LB"] =Phase_DF['n_int_LB'].mean()
+        phase_fraction_DF.loc[ii,"StDev_n_int_LB"] =Phase_DF['n_int_LB'].std()
         phase_fraction_DF.loc[ii,"Number_hkls_LB"] =len(Phase_DF['n_int_LB'])
+
 
         #print("Add to fraction_dict")
         fraction_dict[phase]=phase_fraction_DF
@@ -1064,14 +1082,18 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
             Submit_dict[dataset_string]["Flags"]=flag_phase_fraction(np.nan,np.nan,"Prelim Phase Fraction", ("Peaks that failed to fit in phase "+phase+" were removed"),
              "Improve signal to noise, request assistance on fitting" , DF_to_append=Submit_dict[dataset_string]["Flags"])
 
+
     # now, compute phase fraction
-    phase_fraction_DF["Phase_Fraction_fit"]=phase_fraction_DF["Mean_nint_fit"]/(phase_fraction_DF["Mean_nint_fit"].sum())
-    phase_fraction_DF["Phase_Fraction_StDev_fit"]=phase_fraction_DF["StDev_nint_fit"]/(phase_fraction_DF["Mean_nint_fit"].sum())
-    
+    phase_fraction_DF["Phase_Fraction_fit"]=phase_fraction_DF["Mean_n_int_fit"]/(phase_fraction_DF["Mean_n_int_fit"].sum())
+    phase_fraction_DF["Phase_Fraction_StDev_fit"]=phase_fraction_DF["StDev_n_int_fit"]/(phase_fraction_DF["Mean_n_int_fit"].sum())
+        
+    phase_fraction_DF["Phase_Fraction_fit_mass"]=phase_fraction_DF["Mean_n_int_fit_mass"]/(phase_fraction_DF["Mean_n_int_fit_mass"].sum())
+    phase_fraction_DF["Phase_Fraction_fit_volume"]=phase_fraction_DF["Mean_n_int_fit_volume"]/(phase_fraction_DF["Mean_n_int_fit_volume"].sum())
+ 
     #norm_intensity_var=phase_fraction_DF.loc[phase_fraction_DF['Phase'] == phase]["Phase_Fraction_StDev"]
 
-    phase_fraction_DF["Phase_Fraction_LB"]=phase_fraction_DF["Mean_nint_LB"]/(phase_fraction_DF["Mean_nint_LB"].sum())
-    phase_fraction_DF["Phase_Fraction_StDev_LB"]=phase_fraction_DF["StDev_nint_LB"]/(phase_fraction_DF["Mean_nint_LB"].sum())
+    phase_fraction_DF["Phase_Fraction_LB"]=phase_fraction_DF["Mean_n_int_LB"]/(phase_fraction_DF["Mean_n_int_LB"].sum())
+    phase_fraction_DF["Phase_Fraction_StDev_LB"]=phase_fraction_DF["StDev_n_int_LB"]/(phase_fraction_DF["Mean_n_int_LB"].sum())
     
 
     #Uncertainty_DF=flag_phase_fraction(norm_intensity_var.values[0],
@@ -1084,10 +1106,10 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
     #? Maybe move rounding to display only?
     phase_fraction_DF = phase_fraction_DF.round(6)
 
-    print("Fraction Dictionary")
+    print("Phase Fraction Dictionary")
     #print(fraction_dict)
     print(phase_fraction_DF)
-
+    
     Submit_dict[dataset_string]["Prelim_Phase_Fraction"]=phase_fraction_DF
 
     return Submit_dict
@@ -1207,7 +1229,18 @@ def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_fr
 
     """
 
-
+    #REVISE:
+    # Convert preliminary phase fraction to units of volume
+    # Move interaction_vol code?
+    # For each phase:
+    #   Pull out the interaction parameters by phase
+    #   Read in peaks diffracting parameters
+    #   Check the number of layers
+    #   Area illuminated
+    #   Diffracting condition coverage (by peak)
+    #   Number diffracting (by peak)
+    #   Calculate uncertainty based on number diffracting (sqrt number)
+    #   Normalize value to scale with n_int (relative error?)
 
     crystallites_dict = {}
     #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
@@ -1267,6 +1300,170 @@ def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_fr
     #return crystallites_dict, results_table
     return {'crystallites_dict':crystallites_dict,
             'results_table':results_table}
+
+
+def compute_crystallites_illuminated2(Submit_dict):
+    """
+    #REVISE:
+    # Convert preliminary phase fraction to units of volume
+    # Move interaction_vol code?
+    # For each phase:
+    #   Pull out the interaction parameters by phase
+    #   Read in peaks diffracting parameters
+    #   Check the number of layers
+    #   Area illuminated
+    #   Diffracting condition coverage (by peak)
+    #   Number diffracting (by peak)
+    #   Calculate uncertainty based on number diffracting (sqrt number)
+    #   Normalize value to scale with n_int (relative error?)
+    """
+
+    #crystallites_dict = {}
+    #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
+
+    # add a try/except here to confirm the filenames match
+
+    #print("Peaks dictionary")
+    #print(peaks_dict)
+
+    #crystallites_uncertainties = {}
+
+
+    # Same dataset ok since the material is nominally the same?
+    # ["Phase_Info"]["Interaction_Parameters"]
+    
+
+    
+    # for each dataset
+    for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
+        print("Dataset: ", dataset)
+        # IF statement for XRD_SUM?
+        
+        #for each phase
+        for cif_name in Submit_dict["File_Paths"]["Cif_Filenames"]:
+            print("Phase: ", cif_name)
+            
+
+  
+            # Phase interaction information
+            # Estimated grain diameter from json_file in micrometers
+            powder_size=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][0]
+            # Estimated number of crystalites per powder particle
+            crystalites_per_particle=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][1]
+            # Estimated rocking angle (measure of crystal perfection)
+            d_t_half=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][2]
+ 
+            # Convert to area terms, follows nomenclature of ASTM E112
+            # Currently assumes spherical grains
+
+            # D_bar: mean spatial (volumetric) grain diameter
+            # l_bar: mean lineal intercept length
+            # A_bar: mean grain cross sectional area
+            # N_bar_A: number of grains per mm2 at 1X. (derived from A_bar)
+            
+            D_bar = powder_size/1000 # convert from micrometers to millimeters
+            l_bar= D_bar/1.5 #Inverse of ASTM E112 A2.9; mean lineal intercept length
+            A_bar = ((l_bar)**2)*(4/np.pi) # Inverse of ASTM E112 A2.8; average grain cross sectional area
+            N_bar_A = 1/A_bar # Inverse of ASTM E112 A2.7; number of grains per unit area
+
+            # Determine depth of penetration for volume illuminated
+            # NEED TERM FOR PENETRATION DEPTH
+            # FIX!
+            # FindMu?  or Centriod plot?
+            
+             # if the penetration depth is less than particle size, set layers=1
+            if l_bar<D_bar:
+                N_layers=1
+            # else find the number of layers illuminated
+            else:
+                N_layers=D_bar/l_bar
+
+            print("Number of layers: ", N_layers)
+            # Determine area illuminated
+            
+
+            # CHECK - Not currently using beam shape
+            raster_area_mm2=(Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_x']+\
+            Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])*\
+            (Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_y']+\
+            Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])
+            
+            print("Area illuminated: ", raster_area_mm2, "mm^2")
+            
+            breakpoint()
+            
+            phase_fraction = phase_frac
+
+    
+
+            N_illuminated=N_bar_A*raster_area_mm2*phase_fraction*crystalites_per_particle*N_layers
+
+                #For cases where more grains through the thickness are illuminated
+                #sample_thickness_mm=30
+                #N_l_bar=1/l_bar
+                #print(N_l_bar)
+
+                #print(N_bar_A,N_l_bar,raster_area_mm,sample_thickness_mm,phase_fraction,crystalites_per_particle)
+
+                #N_illuminated=N_bar_A*N_l_bar*raster_area_mm*sample_thickness_mm*phase_fraction*crystalites_per_particle
+                #print(N_illuminated)
+
+            delta_theta_half=(d_t_half)*(np.pi/180)
+                # print(d_t_half, delta_theta_half)
+                # gamma replaces H_R/L for 2D detector
+            gamma = (15)*(np.pi/180)
+
+
+            # still need peak data
+            for x in range(len(Submit_dict[dataset]["Merged_Peaks"].index)):
+            
+            
+
+
+                #print(D_bar,l_bar,A_bar, N_bar_A)
+                
+                
+
+                diffracting_fraction=((multiplicity/4*np.pi)*
+                                      (crystal_data['W_F']/crystal_data['L']+
+                                       delta_theta_half)*
+                                  (crystal_data['H_F']/crystal_data['L']+
+                                  crystal_data['H_R']/crystal_data['L'])*
+                                  (1/(2*(np.sin(theta_deg*np.pi/180)))))
+                        
+                
+                breakpoint()
+
+                num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(json_data,
+                    phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
+                    json_data[cif_name][0],
+                    json_data[cif_name][1],
+                    peak_data[x][1],
+                    peak_data[x][2],
+                    json_data[cif_name][2])
+                if cif_name in crystallites_dict.keys():
+                    crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
+                else:
+                    crystallites_dict[cif_name] = []
+                    crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
+
+                # add in uncertainties due to number crystallites diffracted
+                cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
+                row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
+
+                #append number of crystals to the database
+                results_table['Dataset_1'].num_cryst_diff.loc[row_bool] = crystallites_dict[cif_name][x][3]
+                #append sqrt of crystals to the database
+                results_table['Dataset_1'].sqrt_cryst_diff.loc[row_bool] = cd_uncert
+                # append n_int*sqrt/number to the database
+                # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
+                results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
+
+    #return crystallites_dict, results_table
+    return {'crystallites_dict':crystallites_dict,
+            'results_table':results_table}
+
+
 
 #####################################
 #### compute_crystallites_illuminated() Utility Fuctions #####

@@ -6,9 +6,16 @@ Submission	*Dictionary*	(Container for all the items computed)
 |
  -> "Version"		*DataFrame*	(Austenite Calculator Version)
  -> "Phase_Info"	*DataFrame*	(number, conversions, etc)
+ -> 
     |
-   -> "Crystal"		RENAME
-   -> "Cell"		RENAME
+
+   -> "Interaction_Parameters"		(currently has keys: 'austenite-SRM487.cif', 'ferrite-SRM487.cif', 'beam_shape', 'beam_size', 'raster_x', 'raster_y', 'sample_displacement', 'L', 'W_F', 'H_F', 'H_R'	.cif file rows have the powder size, number of particles, rocking angle
+
+   -> "Unit_Cell"		*DataFrame*  (currently has columns: ['scattering_dict', 'elem_fractions_dict',
+       'cell_volumes_dict', 'cell_masses_dict'] for rows of cif files
+   -> "Atomic_Masses"  		*DataFrame*  has 'atomic_masses_dict' for rows of elements listed
+
+
  -> Diffractometer Info (beam Shape, detector position)
  -> MCMC parameters
  -> "File_Paths"	*Dictionary*	(File/Folder paths)
@@ -19,6 +26,8 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "Diffraction_Filenames" 	*List*
    -> "Instrument_Filename"	*String*
    -> "JSON_Filename"		*String*
+   -> "Dataset_name"		*List*
+
 
  -> Dataset
    |
@@ -43,6 +52,8 @@ Submission	*Dictionary*	(Container for all the items computed)
     -> hkl, multiplicity
     -> Phase
     -> Crystallites Illuminated
+
+### Possible issue with phase names.  Sometimes from cif file name with extension, and sometimes from name given inside cif file...
 
 Mutability
 	dictionaries and DataFrames should be mutable, so you don't need to pass the object back from a function

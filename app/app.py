@@ -76,9 +76,10 @@ def submit():
 
     # Need to figure out how to merge crystal_data with phase info
     with open(os.path.join(datadir, json_fname), 'r') as f:
-        crystal_data = json.loads(f.read())
+        interaction_param_data = json.loads(f.read())
     Submission["Phase_Info"]={}
-    Submission["Phase_Info"]["Crystal"]=crystal_data
+    # was crystal
+    Submission["Phase_Info"]["Interaction_Parameters"]=interaction_param_data
     
     #Maybe these should be moved into .gather_example?
     Submission["File_Paths"]={}
@@ -95,7 +96,8 @@ def submit():
 
     print("Computing Cell Density")
     # probably need to merge dataframes later
-    Submission["Phase_Info"]["Cell"] = compute_results.compute_cell_density(Submission)
+    # Should I update this later?
+    Submission=compute_results.compute_cell_density(Submission)
 
     print("Running Peak Fitting")
     Submission = compute_results.compute_peak_fitting(G2sc, Submission)
@@ -112,12 +114,17 @@ def submit():
     print("Computing crystallites illuminated...")
     # Need to update the full results table, but issues with dict/DF 
  #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
-    cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
+#    cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
+
+    Submission = compute_results.compute_crystallites_illuminated2(Submission)
 
     print("Computing mass fraction and volume fracation conversion factors...")
     conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
                                                   cell_dens_res['cell_masses_dict'],
                                                   cell_dens_res['cell_volumes_dict'])
+
+    breakpoint()
+
 
     print("Running MCMC")
     mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)

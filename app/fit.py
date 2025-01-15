@@ -538,7 +538,7 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     xrdml_fname=Submit_dict["File_Paths"]["Diffraction_Filenames"][dataset_index]
     instprm_fname=Submit_dict["File_Paths"]["Instrument_Filename"]
     cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
-    json_data=Submit_dict["Phase_Info"]["Crystal"]
+    json_data=Submit_dict["Phase_Info"]["Interaction_Parameters"]
     
     
     #data_path_wrap = lambda fil: datadir + '/' + fil
