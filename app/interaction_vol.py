@@ -18,6 +18,7 @@ import numpy as np
 import plotly.utils as pltu
 from plotly.tools import mpl_to_plotly
 
+# AIM TO ONLY HAVE CODE FROM GSAS-II HERE
 
 getElSym = lambda sym: sym.split('+')[0].split('-')[0].capitalize()
 
@@ -251,131 +252,8 @@ def FPcalc(Orbs, KEv):
     
     return (FP, FPP, Mu)
 
-def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
-    '''
-    Find the absorbtion coefficient (mu) for each phase
-    
-    Args:
-        singular_elem_details: numbers about an element needed for the calculation
-        wavelengths: x-ray wavelengths
-        pack_fractions: Powder packing fraction for the material
-        cell_volume: Material cell volume
-
-    Returns:
-        ElemSymbol: this is singular_elem_details[0], the elemental symbol for this data
-        fps: f' for this element
-        fpps: f'' for this element
-        mu_converted: mu for this element, converted from barns/atom to cm 
-
-    Raises:
-        
-    '''
-    #print("Find Mu", wavelengths, pack_fraction, cell_volume)
-    fps = []
-    fpps = []
-    Es = []
-    Eres = 1.5e-4
-    Kev = 12.397639 
-    mu_list = []
-    for W in wavelengths: #for each wavelength in the instprm files
-        E = Kev/W              #maybe get this from instprm file(lam1 converted to energy: google it)
-        DE = E*Eres                         #smear by defined source resolution 
-        res1 = FPcalc(singular_elem_details[3],E+DE)
-        res2 = FPcalc(singular_elem_details[3],E-DE)
-        fps.append((res1[0]+res2[0])/2.0)
-        fpps.append((res1[1]+res2[1])/2.0)
-        Es.append(E)
-        mu_list.append(res1[2])
-        #print(W, res1, res2)
-    
-    #print("Mu list:", mu_list)
-    mu_avg = sum(mu_list)/len(mu_list) #self.Pack*muT/self.Volume conversion for barns to cm
-    mu_converted = (pack_fraction * mu_avg) / cell_volume
-    return [singular_elem_details[0], fps, fpps, mu_converted]
-
-def create_graph_data(peak_data, summarized_data):
-    '''
-    Create dataframes and centroid values used to plot the interaction volume
-    FIX - needs aggregate data for absorption, not just one phase.
-    CHECK - SRM example should have similar centriods for first peaks
-    
-    Args:
-       peak_data: Data for the current peak that is being graphed
-       summarized_data: A bit of a cheat, but data about the overall phase that the peak needs to know
-
-    Returns:
-        df_endpoints: endpoints of graph data created
-        df_mid: midpoints of graph data created
-        Centroid_x: centroid of depth data in x
-        Centroid_y: centroid of depth data in y
 
 
-    Raises:
-        
-    '''
-    Max_intensity_drop=1/1000
-    t_max_cm=(1/-summarized_data[2])*np.log(Max_intensity_drop) # change to mu_um?
-    t_max_um=t_max_cm*10000 # this would go away
-    print(t_max_um) 
-    I0=1000000
-    steps=25
-
-    x_list=np.linspace(0,t_max_um*np.cos(np.radians(peak_data[2])),num=steps)
-    y_list=np.linspace(0,-t_max_um*np.sin(np.radians(peak_data[2])),num=steps)
-    df_endpoints = pd.DataFrame(data={'x': x_list, 'y': y_list})
-    df_endpoints['length']=np.sqrt(df_endpoints['x']**2+df_endpoints['y']**2)
-    df_endpoints['I']=I0 * np.exp(-(summarized_data[2]/10000) * df_endpoints['length'])
-    x_mid=[]
-    y_mid=[]
-    delta_I=[]
-    for i in range(0,len(df_endpoints)-1):
-        #print(i)
-        x_mid.append((df_endpoints['x'].iloc[i]+df_endpoints['x'].iloc[i+1])/2)
-        y_mid.append((df_endpoints['y'].iloc[i]+df_endpoints['y'].iloc[i+1])/2)
-        delta_I.append(df_endpoints['I'].iloc[i]-df_endpoints['I'].iloc[i+1])
-    
-    df_mid = pd.DataFrame(data={'x_mid': x_mid, 'y_mid': y_mid, 'delta_I':delta_I})
-    # It's not clear to me how this should properly be calculated.  
-    # f_prime can occasionally take positive values at higher energies.
-    # That seems to imply a flourescing photon can cause additional scattering?
-
-    # For now I am using rule of mixtures with absolute values
-    df_mid['travel_dist']=np.sqrt(df_mid['x_mid']**2+df_mid['y_mid']**2)
-
-    df_mid['absorbed']=df_mid['delta_I']*(summarized_data[1]/(summarized_data[1]+abs(summarized_data[0])+peak_data[0]))
-    df_mid['anomalous']=df_mid['delta_I']*(abs(summarized_data[0])/(summarized_data[1]+abs(summarized_data[0])+peak_data[0]))
-    df_mid['scattered']=df_mid['delta_I']*(peak_data[0]/(summarized_data[1]+abs(summarized_data[0])+peak_data[0]))
-
-    #scattered, but not absorbed on return to the surface
-    df_mid['Escaped']=df_mid['scattered'] *  np.exp(-(summarized_data[2]/10000) * df_mid['travel_dist'])
-    df_mid['Escaped Index Sum']=df_mid['Escaped'].cumsum()
-    df_mid['RelativeEscaped']=df_mid['Escaped']/I0
-    
-    
-    Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
-    Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
-
-    print("df_mid")
-    print(df_mid)
-    print("50%: ",np.quantile(df_mid['Escaped'],.50))
-    print("end of df_mid")
-
-    # Not working right.  50% percentile should be centroid
-    # maybe have to sum to get the value?
-
-    print("100% counts sum: ",np.sum(df_mid['Escaped']))
-    print("90% counts sum: ",np.sum(df_mid['Escaped'])*.9)
-    print("50% counts sum: ",np.sum(df_mid['Escaped'])*.5)
-    print("10% counts sum: ",np.sum(df_mid['Escaped'])*.1)
-    print("5% counts sum: ",np.sum(df_mid['Escaped'])*.05)
-
-    # Use 5% instead of 95% since the values are negative?
-    # np.interp doesn't work on non-increasing functions, need to flip
-    percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
-
-    print("90% counts pos: ",percentile90_y)
-    
-    return [df_endpoints, df_mid, Centroid_x, Centroid_y, percentile90_y, peak_data[2]]
 
 #def transmission_mode_data(peak_data, summarized_data):
 

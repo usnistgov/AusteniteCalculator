@@ -20,7 +20,9 @@ import atmdata
 # prefer to use complete name rather than 'from' for readability
 import compute_uncertainties
 
-from interaction_vol import crystallites_illuminated_calc, findMu, getFormFactors, create_graph_data
+from interaction_vol import crystallites_illuminated_calc
+import interaction_vol as IV
+
 
 ########################################
 ########################################
@@ -171,6 +173,7 @@ def compute_cell_density(Submit_dict):
     elem_fractions_dict = {}
     cell_volumes_dict = {}
     cell_masses_dict = {}
+    average_scattering_dict = {}
 
     cif_fnames=Submit_dict["File_Paths"]["Cif_Filenames"]
 
@@ -243,11 +246,11 @@ def compute_cell_density(Submit_dict):
         cell_masses_dict[cif_fnames[x]] = cell_mass
         print(cell_mass, ' ', cell_masses_dict)
 
-        print("Begin Cell Density")
+        print("Begin Cell Density & Scattering values")
         cell_density = cell_mass/cell_volumes_dict[cif_fnames[x]]
         pack_fraction = crystal_density/cell_density
         #print(cell_density,pack_fraction)
-        elem_details = getFormFactors(elems_for_phase)
+        elem_details = IV.getFormFactors(elems_for_phase)
         #print(elem_details)
         scattering_nums = []
         for elem in elem_details:
@@ -264,21 +267,81 @@ def compute_cell_density(Submit_dict):
         scattering_dict[cif_fnames[x]] = scattering_nums
         elem_fractions_dict[cif_fnames[x]] = elem_fraction
 
+        print("Average properties by compostion")
+        for key, value in scattering_dict.items():
+            average_scattering_dict[key] = [0.0,0.0, 0.0]
+            current_fracs = elem_fractions_dict[key]
+            for i in range(len(value)):
+                average_scattering_dict[key][0] += (value[i][1] * current_fracs[i])
+                average_scattering_dict[key][1] += (value[i][2] * current_fracs[i])
+                average_scattering_dict[key][2] += (value[i][3] * current_fracs[i])
+    
+
+    # ADD a check if the absorbtion is different by phase,
+    # This indicates microabsorbtion could occur
+    
     print("Compute Cell Density Computation Complete")
 
-    # Maybe change name
+    # CHECK, change names?
+    # CHECK, convert to dataframes to reference by column name?
     # cell volume should indicate it's the intial value
     cell_dens_dict={
         'scattering_dict':scattering_dict,
         'elem_fractions_dict':elem_fractions_dict,
+        'average_scattering_dict':average_scattering_dict,
         'unit_cell_volume_CIF':cell_volumes_dict,
         'unit_cell_mass_CIF':cell_masses_dict
         }
+    
+
     
     Submit_dict["Phase_Info"]["Atomic_Masses"]=pd.Series(atomic_masses_dict)
     Submit_dict["Phase_Info"]["Unit_Cell"]=pd.DataFrame(cell_dens_dict)
     #return cell_dens_dict
     return Submit_dict
+
+#####################################
+def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
+    '''
+    Find the absorbtion coefficient (mu) for each phase
+    
+    Args:
+        singular_elem_details: numbers about an element needed for the calculation
+        wavelengths: x-ray wavelengths
+        pack_fractions: Powder packing fraction for the material
+        cell_volume: Material cell volume
+
+    Returns:
+        ElemSymbol: this is singular_elem_details[0], the elemental symbol for this data
+        fps: f' for this element
+        fpps: f'' for this element
+        mu_converted: mu for this element, converted from barns/atom to cm 
+
+    Raises:
+        
+    '''
+    #print("Find Mu", wavelengths, pack_fraction, cell_volume)
+    fps = []
+    fpps = []
+    Es = []
+    Eres = 1.5e-4
+    Kev = 12.397639 
+    mu_list = []
+    for W in wavelengths: #for each wavelength in the instprm files
+        E = Kev/W              #maybe get this from instprm file(lam1 converted to energy: google it)
+        DE = E*Eres                         #smear by defined source resolution 
+        res1 = IV.FPcalc(singular_elem_details[3],E+DE)
+        res2 = IV.FPcalc(singular_elem_details[3],E-DE)
+        fps.append((res1[0]+res2[0])/2.0)
+        fpps.append((res1[1]+res2[1])/2.0)
+        Es.append(E)
+        mu_list.append(res1[2])
+        #print(W, res1, res2)
+    
+    #print("Mu list:", mu_list)
+    mu_avg = sum(mu_list)/len(mu_list) #self.Pack*muT/self.Volume conversion for barns to cm
+    mu_converted = (pack_fraction * mu_avg) / cell_volume
+    return [singular_elem_details[0], fps, fpps, mu_converted]
 
 #####################################
 def compute_peak_fitting(G2sc,Submit_dict):
@@ -836,6 +899,11 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     DF_merged_fit_theo['pos_diff_LB_TI'] = DF_merged_fit_theo['pos_LB']-DF_merged_fit_theo['pos_TI']
     DF_merged_fit_theo['pos_diff_fit_LB'] = DF_merged_fit_theo['pos_fit']-DF_merged_fit_theo['pos_LB']
 
+    # merge hkl to string
+    DF_merged_fit_theo['hkl'] = DF_merged_fit_theo['h_TI'].astype(int).astype(str)+" "+\
+        DF_merged_fit_theo['k_TI'].astype(int).astype(str)+" "+\
+        DF_merged_fit_theo['l_TI'].astype(int).astype(str)
+
     print(DF_merged_fit_theo)
     print(DF_merged_fit_theo.columns)
     Submit_dict[dataset_string]["Merged_Peaks"]=DF_merged_fit_theo
@@ -843,10 +911,15 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
 
     
     ########################################
-    # Calculate the phase fraction
+    # Calculate preliminary phase fraction
     ########################################
     print("\n\n Calculating Preliminary Phase Fraction\n")
     Submit_dict = calculate_prelim_phase_fraction(Submit_dict,dataset_string)
+
+    ########################################
+    # Calculate specimen aggregate data
+    ########################################
+    Submit_dict = calculate_aggregate_data(Submit_dict,dataset_string)
 
     # Maybe remove this later? Since it's rolled into Submit_dict
     print("\n\n Before fit data\n")
@@ -1121,6 +1194,7 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
 #####################################
 def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict):
     """
+    DEPRICATED
     in app.py
     ??? Is it just collecting summary information?
     for what purpose ???
@@ -1162,10 +1236,90 @@ def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_d
         peaks_dict[row[1]['Phase']].append(current_peak)
 
     return peaks_dict
+    
+    
+#####################################
+def calculate_aggregate_data(Submit_dict,dataset):
+    """
+    Based off of the preliminary data, caculate some aggregate values 
+    
+    Store as dict
+    """
+
+
+    agg_f_prime=0
+    agg_f_doubleprime=0
+    agg_mu_cm=0
+    agg_phase_fraction_cell=0
+    agg_phase_fraction_vol=0
+    agg_phase_fraction_mass=0
+    agg_composition=np.zeros(len(Submit_dict["Phase_Info"]["Unit_Cell"]['elem_fractions_dict'][0])) #use the first row
+
+    print(Submit_dict[dataset]["Prelim_Phase_Fraction"].columns)
+    print(Submit_dict["Phase_Info"]["Unit_Cell"].columns)
+    ## Pull from preliminary phase fraction
+
+
+    for cif_fname in Submit_dict["File_Paths"]["Cif_Filenames"]:
+        print("Phase: ", cif_fname)
+        cif_name=cif_fname.split(".")[0]
+        
+        ## Phase fractions
+        phase_fraction_cell=float(Submit_dict[dataset]["Prelim_Phase_Fraction"]["Phase_Fraction_fit"].loc[Submit_dict[dataset]["Prelim_Phase_Fraction"]["Phase"]==cif_name])
+        phase_fraction_vol=float(Submit_dict[dataset]["Prelim_Phase_Fraction"]["Phase_Fraction_fit_volume"].loc[Submit_dict[dataset]["Prelim_Phase_Fraction"]["Phase"]==cif_name])
+        phase_fraction_mass=float(Submit_dict[dataset]["Prelim_Phase_Fraction"]["Phase_Fraction_fit_mass"].loc[Submit_dict[dataset]["Prelim_Phase_Fraction"]["Phase"]==cif_name])
+
+        ## Average scattering and absorbtion (volume)
+        # number of atoms in unit cell taken care of since volume phase is used
+        n_atoms=Submit_dict["Phase_Info"]["Unit_Cell"]['scattering_dict'].loc[cif_fname][0][4]
+        
+        f_prime=Submit_dict["Phase_Info"]["Unit_Cell"]['average_scattering_dict'][cif_fname][0]
+
+        f_doubleprime=Submit_dict["Phase_Info"]["Unit_Cell"]['average_scattering_dict'][cif_fname][1]
+
+        # I've assumed mu also needs to be multiplied by number of atoms
+        mu_cm=Submit_dict["Phase_Info"]["Unit_Cell"]['average_scattering_dict'][cif_fname][2]
+
+        ## Average composition (mass)
+        # FIX, need to make sure the elements match, not checking sorting
+        comp_array=np.array(Submit_dict["Phase_Info"]["Unit_Cell"]['elem_fractions_dict'].loc[cif_fname])*phase_fraction_mass
+
+        # print the values for the phase
+        print(cif_name,phase_fraction_cell,phase_fraction_vol,phase_fraction_mass,
+            f_prime,f_doubleprime,mu_cm,comp_array)
+    
+        # Aggregate the values
+        agg_phase_fraction_cell=phase_fraction_cell+agg_phase_fraction_cell
+        agg_phase_fraction_vol=phase_fraction_vol+agg_phase_fraction_vol
+        agg_phase_fraction_mass=phase_fraction_mass+agg_phase_fraction_mass
+        agg_f_prime=f_prime*n_atoms*phase_fraction_vol+agg_f_prime
+        agg_f_doubleprime=f_doubleprime*n_atoms*phase_fraction_vol+agg_f_doubleprime
+        agg_mu_cm=mu_cm*n_atoms*phase_fraction_vol+agg_mu_cm
+        agg_composition=comp_array+agg_composition
+
+
+    print("Aggregate Data")
+    print(agg_phase_fraction_cell,agg_phase_fraction_vol,agg_phase_fraction_mass,
+            agg_f_prime,agg_f_doubleprime,agg_mu_cm,agg_composition)
+        
+    Submit_dict[dataset]["Prelim_Aggregate_Data"]={
+        'agg_phase_fraction_cell':agg_phase_fraction_cell,
+        'agg_phase_fraction_vol':agg_phase_fraction_vol,
+        'agg_phase_fraction_mass':agg_phase_fraction_mass,
+        'agg_f_prime':agg_f_prime,
+        'agg_f_doubleprime':agg_f_doubleprime,
+        'agg_mu_cm':agg_mu_cm
+}
+    
+    
+    # Return updated submission
+    return Submit_dict
 
 #####################################
 def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict):
     """
+    DEPRICATED
+    
     in app.py
     ??? Is it just collecting summary information?
     What's returned is used as 'graph_data_dict', what for?
@@ -1183,6 +1337,8 @@ def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict
     Raises:
 
     """
+    
+    # MOVE this to the Submit_dict["Phase_Info"]["Unit_Cell"]
 
     summarized_phase_info = {}
     for key, value in scattering_dict.items():
@@ -1192,6 +1348,8 @@ def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict
             summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
             summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
             summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
+    
+            #Submit_dict['Phase_Info']['Unit_Cell']['scattering_dict']
 
     graph_data_dict = {}
     for key, value in peaks_dict.items():
@@ -1272,7 +1430,7 @@ def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_fr
             # this calculation is redundant, so we can potentially move outside the loop, but overhead is minimal in the meantime
             json_data = format_json_data(json_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
 
-            num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(json_data,
+            num_layer, num_ill, frac_difrac, num_difrac = IV.crystallites_illuminated_calc(json_data,
                 phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
                 json_data[cif_name][0],
                 json_data[cif_name][1],
@@ -1339,12 +1497,69 @@ def compute_crystallites_illuminated2(Submit_dict):
         print("Dataset: ", dataset)
         # IF statement for XRD_SUM?
         
+        
+        # pull out initial phase fraction for interaction volume
+        #phase_fraction=Submit_dict[dataset]['Prelim_Phase_Fraction']['Phase_Fraction_fit_volume'].loc[Submit_dict[dataset]['Prelim_Phase_Fraction']['Phase']==cif_name.split(".")[0]]
+
+        # Pull phase, two theta, multiplicity, hkl (string)
+        # Copying these should mean the indexing is the same
+        Submit_dict[dataset]["Interaction_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['pos_TI', 'mul_TI', 'Phase_TI','F_calc_sq_TI', 'hkl' ]]
+        
+        Submit_dict[dataset]["Interaction_Calc"]["Theta"]=Submit_dict[dataset]["Interaction_Calc"]['pos_TI']/2.0
+
+
+
+        print("Interaction_Calc Dataframe")
+        #print(Submit_dict[dataset]["Interaction_Calc"])
+        #print(Submit_dict["Phase_Info"]["Unit_Cell"])
+        
+        # Record the number of atoms per cell
+        Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"]=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"]=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]=np.nan
+
+        # populate f, f', f'' components
+        f_prime=Submit_dict[dataset]["Prelim_Aggregate_Data"]["agg_f_prime"]
+        f_doubleprime=Submit_dict[dataset]["Prelim_Aggregate_Data"]["agg_f_doubleprime"]
+        
+        Submit_dict[dataset]["Interaction_Calc"]["Agg_f_prime"]=f_prime
+        Submit_dict[dataset]["Interaction_Calc"]["Agg_f_doubleprime"]=f_doubleprime
+
+
+        
         #for each phase
         for cif_name in Submit_dict["File_Paths"]["Cif_Filenames"]:
             print("Phase: ", cif_name)
-            
 
-  
+            # Calculate the relative f, f', f'' components
+            atoms_per_cell=Submit_dict["Phase_Info"]["Unit_Cell"]["scattering_dict"][cif_name][0][4]
+            
+            Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_name]=atoms_per_cell
+ 
+            # CHECK, did F_calc_sq_TI already have the f' f'' terms subtracted?
+            
+            Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_name]=np.sqrt(Submit_dict[dataset]["Interaction_Calc"]["F_calc_sq_TI"])/Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"]
+
+            # Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or aborbed (f'')
+            #f_Total_Peak=f_0_Peak+f'+f''
+            
+            # CHECK It's not clear to me how this should properly be calculated.
+            # f_prime can occasionally take positive values at higher energies.
+            # That seems to imply a flourescing photon can cause additional scattering?
+            # should I leave it as squared?
+            
+            # CHECK - should I use the phase fraction and/or phase values for the intensity?
+            
+            Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"])+np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_prime"])+np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_doubleprime"])
+
+            Submit_dict[dataset]["Interaction_Calc"]["Scatter_Fraction"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"])/Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]
+
+            Submit_dict[dataset]["Interaction_Calc"]["Anomalous_Fraction"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_prime"])/Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]
+            
+            Submit_dict[dataset]["Interaction_Calc"]["Absorb_Fraction"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_doubleprime"])/Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]
+
+            # fill with correct values
+            
             # Phase interaction information
             # Estimated grain diameter from json_file in micrometers
             powder_size=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][0]
@@ -1366,21 +1581,6 @@ def compute_crystallites_illuminated2(Submit_dict):
             A_bar = ((l_bar)**2)*(4/np.pi) # Inverse of ASTM E112 A2.8; average grain cross sectional area
             N_bar_A = 1/A_bar # Inverse of ASTM E112 A2.7; number of grains per unit area
 
-            # Determine depth of penetration for volume illuminated
-            # NEED TERM FOR PENETRATION DEPTH
-            # FIX!
-            # FindMu?  or Centriod plot?
-            
-             # if the penetration depth is less than particle size, set layers=1
-            if l_bar<D_bar:
-                N_layers=1
-            # else find the number of layers illuminated
-            else:
-                N_layers=D_bar/l_bar
-
-            print("Number of layers: ", N_layers)
-            # Determine area illuminated
-            
 
             # CHECK - Not currently using beam shape
             raster_area_mm2=(Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_x']+\
@@ -1389,40 +1589,44 @@ def compute_crystallites_illuminated2(Submit_dict):
             Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])
             
             print("Area illuminated: ", raster_area_mm2, "mm^2")
-            
-            breakpoint()
-            
-            phase_fraction = phase_frac
 
-    
-
-            N_illuminated=N_bar_A*raster_area_mm2*phase_fraction*crystalites_per_particle*N_layers
-
-                #For cases where more grains through the thickness are illuminated
-                #sample_thickness_mm=30
-                #N_l_bar=1/l_bar
-                #print(N_l_bar)
-
-                #print(N_bar_A,N_l_bar,raster_area_mm,sample_thickness_mm,phase_fraction,crystalites_per_particle)
-
-                #N_illuminated=N_bar_A*N_l_bar*raster_area_mm*sample_thickness_mm*phase_fraction*crystalites_per_particle
-                #print(N_illuminated)
-
+            # convert the rocking angle to radians
             delta_theta_half=(d_t_half)*(np.pi/180)
                 # print(d_t_half, delta_theta_half)
-                # gamma replaces H_R/L for 2D detector
+                
+            # gamma replaces H_R/L for 2D detector
+            # FIX, where do these values come from?
             gamma = (15)*(np.pi/180)
 
+            #print(Submit_dict[dataset]["Interaction_Calc"])
 
             # still need peak data
             for x in range(len(Submit_dict[dataset]["Merged_Peaks"].index)):
             
-            
-
-
+                # Use Create Graph data
+                Submit_dict=create_cry_ill_graph_data(Submit_dict,dataset,cif_name)
+                
                 #print(D_bar,l_bar,A_bar, N_bar_A)
                 
+                # Determine depth of penetration for volume illuminated
+                # NEED TERM FOR PENETRATION DEPTH
+                # FIX!
+                # FindMu?  or Centriod plot?
                 
+                 # if the penetration depth is less than particle size, set layers=1
+                if l_bar<D_bar:
+                    N_layers=1
+                # else find the number of layers illuminated
+                else:
+                    N_layers=D_bar/l_bar
+
+                print("Number of layers: ", N_layers)
+                # Determine area illuminated
+                
+                N_illuminated=float(N_bar_A*raster_area_mm2*phase_fraction*crystalites_per_particle*N_layers)
+
+                #print(N_illuminated)
+                #breakpoint()
 
                 diffracting_fraction=((multiplicity/4*np.pi)*
                                       (crystal_data['W_F']/crystal_data['L']+
@@ -1434,7 +1638,7 @@ def compute_crystallites_illuminated2(Submit_dict):
                 
                 breakpoint()
 
-                num_layer, num_ill, frac_difrac, num_difrac = crystallites_illuminated_calc(json_data,
+                num_layer, num_ill, frac_difrac, num_difrac = IV.crystallites_illuminated_calc(json_data,
                     phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
                     json_data[cif_name][0],
                     json_data[cif_name][1],
@@ -1468,6 +1672,189 @@ def compute_crystallites_illuminated2(Submit_dict):
 #####################################
 #### compute_crystallites_illuminated() Utility Fuctions #####
 #####################################
+
+#####################################
+def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
+    '''
+    Create dataframes and centroid values used to plot the interaction volume
+    FIX - needs aggregate data for absorption, not just one phase.
+    CHECK - SRM example should have similar centriods for first peaks
+    
+    Args:
+       peak_data: Data for the current peak that is being graphed
+       summarized_data: A bit of a cheat, but data about the overall phase that the peak needs to know
+
+    Returns:
+        df_endpoints: endpoints of graph data created
+        df_mid: midpoints of graph data created
+        Centroid_x: centroid of depth data in x
+        Centroid_y: centroid of depth data in y
+
+
+    Raises:
+    
+        
+    '''
+    # referenced in compute_summarized_phase_info(scatter   ing_dict, elem_fractions, peaks_dict)
+    # element fractions
+    
+    ## Summarized data from compute_peaks_dict
+    ## peak_data referenced:
+    # peak_data[0] = F_calc_sq
+    # peak_data[1] = multiplicity
+    # peak_data[2] = theta (not two theta)
+    # peak_data[3] = FF (form factor)
+    
+    ## Summarized data from scattering_dict (element, element fraction?)
+    # This consolidated the scattering by element to match element fraction in phase
+    # summarized_data[0] = f'
+    # summarized_data[1] = f''
+    # summarized_data[2] = mu (cm-1 units)?
+    
+    # Set a maximum distance to calculate based on drop in intensity (counts)
+    Max_intensity_drop=1/1000
+    # Based on mu,
+    #t_max_cm=(1/-summarized_data[2])*np.log(Max_intensity_drop) # change to mu_um?
+    #t_max_um=t_max_cm*10000 # this would go away
+    #print(t_max_um)
+    I0=1000000
+    steps=25
+    Submit_dict[dataset]["Interaction_Plots"]={}
+    Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']
+    
+    t_max_um=(10000/-Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm'])*np.log(Max_intensity_drop)
+
+    #t_max_um*np.sin(np.radians(Submit_dict[dataset]["Interaction_Calc"]["Theta"]
+
+    print(Submit_dict[dataset]["Interaction_Calc"])
+
+    # Create separate arrays for each row.
+    # X is parallel the to incident beam
+    # Z is parallel to the sample surface and perpendicular to X
+    # FIX for transmission geometries
+    Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"]=np.linspace(0,t_max_um*np.cos(np.radians(Submit_dict[dataset]["Interaction_Calc"]["Theta"])),num=steps).transpose()
+    
+    Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"]=np.linspace(0,t_max_um*np.sin(np.radians(Submit_dict[dataset]["Interaction_Calc"]["Theta"])),num=steps).transpose()
+    
+    Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"]=np.sqrt(    Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"]**2+    Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"]**2)
+    
+    Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"]=I0 * np.exp(-(Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']/10000)*Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
+
+
+    print("Interaction calculation DataFrame")
+    print(Submit_dict[dataset]["Interaction_Calc"])
+    print("Interaction Plot X Array")
+    print(Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"])
+    print("Interaction Plot Y Array")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"])
+    print("Interaction Plot Path Length")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
+    print("Interaction Plot Intensity")
+    print(Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"])
+    
+
+    # Find midpoints
+   
+    
+    Submit_dict[dataset]["Interaction_Plots"] ["X_Midpoints"]=(Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"][:,1:] + Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"][:,:-1]) / 2
+ 
+    Submit_dict[dataset]["Interaction_Plots"] ["Z_Midpoints"]=(Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"][:,1:] + Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"][:,:-1]) / 2
+ 
+    Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"]=np.sqrt(    Submit_dict[dataset]["Interaction_Plots"]["X_Midpoints"]**2+    Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"]**2)
+
+    # subtraction ordered to result in positive values
+    Submit_dict[dataset]["Interaction_Plots"] ["Delta_I_Midpoints"]=( Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"][:,:-1] - Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"][:,1:] )
+
+    print("Interaction Plot X Array Midpoints")
+    print(Submit_dict[dataset]["Interaction_Plots"]["X_Midpoints"])
+    print("Interaction Plot Y Array Midpoints")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"])
+    print("Interaction Plot Path Length")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"])
+    print("Interaction Plot Change in Intensity") # was 'travel_dist'
+    print(Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"])
+
+
+    
+    #df_mid = pd.DataFrame(data={'x_mid': x_mid, 'y_mid': y_mid, 'delta_I':delta_I})
+    
+    # Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or aborbed (f'')
+    
+    # CHECK It's not clear to me how this should properly be calculated.
+    # f_prime can occasionally take positive values at higher energies.
+    # That seems to imply a flourescing photon can cause additional scattering?
+
+    # For now I am using rule of mixtures with absolute values
+    #df_mid['travel_dist']=np.sqrt(df_mid['x_mid']**2+df_mid['y_mid']**2)
+
+    # The order expected from pandas and numpy cause issues.  Transposes help
+    Submit_dict[dataset]["Interaction_Plots"]["Est_Absorbed"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Absorb_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
+    
+    Submit_dict[dataset]["Interaction_Plots"]["Est_Anomalous"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Anomalous_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
+    
+    Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Scatter_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
+ 
+ 
+    print("Interaction Plot Absorbed")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Absorbed"])
+    print("Interaction Plot Anomalous")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Anomalous"])
+    print("Interaction Plot Scattered")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"])
+ 
+    #scattered, but not absorbed on return to the surface
+    #df_mid['Escaped']=df_mid['scattered'] *  np.exp(-(summarized_data[2]/10000) * df_mid['travel_dist'])
+    
+    Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"]=Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"] * np.exp(-(Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']/10000)*Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"])
+    
+    # cumulative number of x-rays escaped to the surface
+    # CHECK axis
+    Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"]=np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1)
+    
+    #df_mid['RelativeEscaped']=df_mid['Escaped']/I0
+
+    print("Interaction Plot Escaped")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"])
+
+    print("Interaction Plot Index summation")
+    print(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"])
+    print(np.shape(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"]))
+    breakpoint()
+    
+    # Tried calculating a centroid, but that doesn't seem correct...
+    
+    #Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
+    #Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
+
+    #print("df_mid")
+    #print(df_mid)
+    #print("50%: ",np.quantile(df_mid['Escaped'],.50))
+    #print("end of df_mid")
+
+    # Not working right.  50% percentile should be centroid
+    # maybe have to sum to get the value?
+
+    #print("100% counts sum: ",np.sum(df_mid['Escaped']))
+    #print("90% counts sum: ",np.sum(df_mid['Escaped'])*.9)
+    #print("50% counts sum: ",np.sum(df_mid['Escaped'])*.5)
+    #print("10% counts sum: ",np.sum(df_mid['Escaped'])*.1)
+    #print("5% counts sum: ",np.sum(df_mid['Escaped'])*.05)
+
+    # Use 5% instead of 95% since the values are negative?
+    # np.interp doesn't work on non-increasing functions, need to flip
+    
+    # I think what's needed is a rolling sum along the Escaped fraction
+    # Then interpolate for a specific value along the Z axis
+    
+    percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
+
+
+
+    print("90% counts pos: ",percentile90_y)
+    
+    return [Submit_dict]
+
+
 
 def format_json_data(json_data,cif_name):
     """

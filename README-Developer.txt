@@ -13,6 +13,10 @@ Submission	*Dictionary*	(Container for all the items computed)
 
    -> "Unit_Cell"		*DataFrame*  (currently has columns: ['scattering_dict', 'elem_fractions_dict',
        'cell_volumes_dict', 'cell_masses_dict'] for rows of cif files
+	|
+	-> scattering_dict  *Series, by cif file* with list of lists with columns for elem_sym, f', f'', mu, number of atoms per cell
+	-> elem_fractions_dict list with the amount of each element
+
    -> "Atomic_Masses"  		*DataFrame*  has 'atomic_masses_dict' for rows of elements listed
 
 
@@ -37,21 +41,24 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "Le_Bail_Data" *dict* Le Bail Fit Data		(phase fractions, unit cell, fit values and uncertainties)
    -> "Peak_Fit_Data" *dict* GSAS-II format
    -> "Prelim_Phase_Fraction" *DataFrame*
+   -> "Prelim_Aggregate_Data" *Dict*
    -> MCMC Uncertainty Inputs
    -> MCMC Distribution Data (8000 normalized intensities)
    -> Phase Fraction Data (8000 n_ints run through phase frac calc)
-   -> Peak
+   -> Peak (row)
     |
     -> "Le_Bail_Peaks"	*DataFrame*	(LeBail Fit values, uncertainties[where?])
     -> "Theoretical_Intensities" *DataFrame*
-    -> "Merged_Peaks" *DataFrame 
+    -> "Merged_Peaks" *DataFrame*
 
     -> Peak Fit (values, uncertainties)
     -> Gaussian Fit (values, uncertainties)
     -> 
     -> hkl, multiplicity
     -> Phase
-    -> Crystallites Illuminated
+    -> "Interaction_Calc"  *DataFrame* interaction data by peak
+       ( to assemble interaction volume plots)
+    -> "Interaction_Plots"
 
 ### Possible issue with phase names.  Sometimes from cif file name with extension, and sometimes from name given inside cif file...
 
