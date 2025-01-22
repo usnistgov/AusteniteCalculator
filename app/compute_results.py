@@ -1364,103 +1364,9 @@ def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict
 
 
 
-#####################################
-def compute_crystallites_illuminated(json_data,peaks_dict,results_table,phase_frac):
-    """
-    in app.py
-    ??? Is it just collecting summary information?
-    What's returned is used as 'graph_data_dict', what for?
-    ADD
-
-    imports functions from interaction_vol
-
-    Parameters:
-        scattering_dict: ?
-        ADD
 
 
-    Returns:
-        ?:?
-        ADD
-
-    Raises:
-
-    """
-
-    #REVISE:
-    # Convert preliminary phase fraction to units of volume
-    # Move interaction_vol code?
-    # For each phase:
-    #   Pull out the interaction parameters by phase
-    #   Read in peaks diffracting parameters
-    #   Check the number of layers
-    #   Area illuminated
-    #   Diffracting condition coverage (by peak)
-    #   Number diffracting (by peak)
-    #   Calculate uncertainty based on number diffracting (sqrt number)
-    #   Normalize value to scale with n_int (relative error?)
-
-    crystallites_dict = {}
-    #run calculations for each peak of each phase, crystallites dict has keys for phases and values are [[]] with each inner list as a peak in that phase
-
-    # add a try/except here to confirm the filenames match
-
-    print("Peaks dictionary")
-    print(peaks_dict)
-
-    crystallites_uncertainties = {}
-
-    # initialize crystiallites diffracted counts to 0
-    for dname in results_table.keys():
-        results_table[dname]['num_cryst_diff'] = 0
-
-    # initialize crystiallites diffracted uncertainty to 0
-    for dname in results_table.keys():
-        results_table[dname]['sqrt_cryst_diff'] = 0
-
-    # initialize crystiallites diffracted uncertainty to 0
-    for dname in results_table.keys():
-        results_table[dname]['u_cryst_diff'] = 0
-
-    # Same dataset ok since the material is nominally the same?
-    for cif_name, peak_data in peaks_dict.items():
-        print("Phase: ", cif_name)
-        for x in range(len(peak_data)):
-
-            # this calculation is redundant, so we can potentially move outside the loop, but overhead is minimal in the meantime
-            json_data = format_json_data(json_data,cif_name) # <- adam may fix the formatting on the json files to make this not necessary
-
-            num_layer, num_ill, frac_difrac, num_difrac = IV.crystallites_illuminated_calc(json_data,
-                phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
-                json_data[cif_name][0],
-                json_data[cif_name][1],
-                peak_data[x][1],
-                peak_data[x][2],
-                json_data[cif_name][2])
-            if cif_name in crystallites_dict.keys():
-                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
-            else:
-                crystallites_dict[cif_name] = []
-                crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
-
-            # add in uncertainties due to number crystallites diffracted
-            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
-            row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
-
-            #append number of crystals to the database
-            results_table['Dataset_1'].num_cryst_diff.loc[row_bool] = crystallites_dict[cif_name][x][3]
-            #append sqrt of crystals to the database
-            results_table['Dataset_1'].sqrt_cryst_diff.loc[row_bool] = cd_uncert
-            # append n_int*sqrt/number to the database
-            # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
-            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
-
-    #return crystallites_dict, results_table
-    return {'crystallites_dict':crystallites_dict,
-            'results_table':results_table}
-
-
-def compute_crystallites_illuminated2(Submit_dict):
+def compute_crystallites_illuminated(Submit_dict):
     """
     #REVISE:
     # Convert preliminary phase fraction to units of volume
@@ -1491,65 +1397,91 @@ def compute_crystallites_illuminated2(Submit_dict):
     # ["Phase_Info"]["Interaction_Parameters"]
     
 
-    
     # for each dataset
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
         print("Dataset: ", dataset)
         # IF statement for XRD_SUM?
         
-        
-        # pull out initial phase fraction for interaction volume
-        #phase_fraction=Submit_dict[dataset]['Prelim_Phase_Fraction']['Phase_Fraction_fit_volume'].loc[Submit_dict[dataset]['Prelim_Phase_Fraction']['Phase']==cif_name.split(".")[0]]
-
         # Pull phase, two theta, multiplicity, hkl (string)
         # Copying these should mean the indexing is the same
         Submit_dict[dataset]["Interaction_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['pos_TI', 'mul_TI', 'Phase_TI','F_calc_sq_TI', 'hkl' ]]
         
+        # Create Theta column
         Submit_dict[dataset]["Interaction_Calc"]["Theta"]=Submit_dict[dataset]["Interaction_Calc"]['pos_TI']/2.0
 
+        # Interaction area calculations
+        # CHECK - Not currently using beam shape
+        raster_area_mm2=(Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_x']+\
+        Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])*\
+        (Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_y']+\
+        Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])
+        
+        print("Area illuminated: ", raster_area_mm2, "mm^2")
 
+        # gamma replaces H_R/L for 2D detector
+        # FIX, where do these values come from?
+        # -> I think 15 is the degree range of the 2D detector
+        # need option to read in from json file
+        gamma = (15)*(np.pi/180)
 
-        print("Interaction_Calc Dataframe")
+        #print("Interaction_Calc Dataframe")
         #print(Submit_dict[dataset]["Interaction_Calc"])
         #print(Submit_dict["Phase_Info"]["Unit_Cell"])
-        
-        # Record the number of atoms per cell
-        Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"]=np.nan
-        Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"]=np.nan
-        Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]=np.nan
 
-        # populate f, f', f'' components
+        # populate f', f'' components
         f_prime=Submit_dict[dataset]["Prelim_Aggregate_Data"]["agg_f_prime"]
         f_doubleprime=Submit_dict[dataset]["Prelim_Aggregate_Data"]["agg_f_doubleprime"]
         
         Submit_dict[dataset]["Interaction_Calc"]["Agg_f_prime"]=f_prime
         Submit_dict[dataset]["Interaction_Calc"]["Agg_f_doubleprime"]=f_doubleprime
 
-
+        # placeholder for scattering data
+        Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"]=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"]=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]=np.nan
         
+        # placeholder for est phase fraction
+        Submit_dict[dataset]["Interaction_Calc"]['Phase_Fraction_fit_mass']=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]['Phase_Fraction_fit_volume']=np.nan
+
+        # placeholders for interaction parameters
+        Submit_dict[dataset]["Interaction_Calc"]["Powder_Size_um"]=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]["Crystals_Per_Particle"]=np.nan
+        Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_deg"]=np.nan
+
+
         #for each phase
-        for cif_name in Submit_dict["File_Paths"]["Cif_Filenames"]:
-            print("Phase: ", cif_name)
+        for cif_fname in Submit_dict["File_Paths"]["Cif_Filenames"]:
+            print("Phase: ", cif_fname)
+            cif_name=cif_fname.split(".")[0]
 
-            # Calculate the relative f, f', f'' components
-            atoms_per_cell=Submit_dict["Phase_Info"]["Unit_Cell"]["scattering_dict"][cif_name][0][4]
+            # add preliminary phase fractions
+            phase_fraction_mass=float(Submit_dict[dataset]["Prelim_Phase_Fraction"]['Phase_Fraction_fit_mass'].loc[Submit_dict[dataset]["Prelim_Phase_Fraction"]['Phase']==cif_name])
+            phase_fraction_vol=float(Submit_dict[dataset]["Prelim_Phase_Fraction"]['Phase_Fraction_fit_volume'].loc[Submit_dict[dataset]["Prelim_Phase_Fraction"]['Phase']==cif_name])
             
-            Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_name]=atoms_per_cell
+            Submit_dict[dataset]["Interaction_Calc"]['Phase_Fraction_fit_mass'].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=phase_fraction_mass
  
-            # CHECK, did F_calc_sq_TI already have the f' f'' terms subtracted?
+            Submit_dict[dataset]["Interaction_Calc"]['Phase_Fraction_fit_volume'].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=phase_fraction_vol
+ 
+            # Calculate the relative f, f', f'' components
+            atoms_per_cell=Submit_dict["Phase_Info"]["Unit_Cell"]["scattering_dict"][cif_fname][0][4]
             
-            Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_name]=np.sqrt(Submit_dict[dataset]["Interaction_Calc"]["F_calc_sq_TI"])/Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"]
+            Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=atoms_per_cell
+             
+            # CHECK, did F_calc_sq_TI already have the f' f'' terms subtracted?
+            Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=np.sqrt(Submit_dict[dataset]["Interaction_Calc"]["F_calc_sq_TI"])/Submit_dict[dataset]["Interaction_Calc"]["Atoms_Per_Cell"]
 
+             
             # Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or aborbed (f'')
             #f_Total_Peak=f_0_Peak+f'+f''
-            
+        
             # CHECK It's not clear to me how this should properly be calculated.
             # f_prime can occasionally take positive values at higher energies.
             # That seems to imply a flourescing photon can cause additional scattering?
             # should I leave it as squared?
             
             # CHECK - should I use the phase fraction and/or phase values for the intensity?
-            
+
             Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"])+np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_prime"])+np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_doubleprime"])
 
             Submit_dict[dataset]["Interaction_Calc"]["Scatter_Fraction"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["f_0_Peak"])/Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]
@@ -1558,114 +1490,123 @@ def compute_crystallites_illuminated2(Submit_dict):
             
             Submit_dict[dataset]["Interaction_Calc"]["Absorb_Fraction"]=np.abs(Submit_dict[dataset]["Interaction_Calc"]["Agg_f_doubleprime"])/Submit_dict[dataset]["Interaction_Calc"]["f_Total_Peak"]
 
-            # fill with correct values
-            
             # Phase interaction information
+            
             # Estimated grain diameter from json_file in micrometers
-            powder_size=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][0]
+            powder_size=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_fname][0]
             # Estimated number of crystalites per powder particle
-            crystalites_per_particle=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][1]
+            crystalites_per_particle=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_fname][1]
             # Estimated rocking angle (measure of crystal perfection)
-            d_t_half=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_name][2]
+            d_t_half=Submit_dict["Phase_Info"]["Interaction_Parameters"][cif_fname][2]
+
+            Submit_dict[dataset]["Interaction_Calc"]["Powder_Size_um"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=powder_size
+
+            Submit_dict[dataset]["Interaction_Calc"]["Crystals_Per_Particle"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=crystalites_per_particle
+
+            Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_deg"].loc[Submit_dict[dataset]["Interaction_Calc"]["Phase_TI"]==cif_fname]=d_t_half
+
+
+
+        #<- outside of phase calculation
+
+        # Create the graph data
+        Submit_dict=create_cry_ill_graph_data(Submit_dict,dataset)
+
+        #print(Submit_dict[dataset]["Interaction_Calc"])
+        #print(Submit_dict[dataset]["Interaction_Calc"].keys())
+        #print(Submit_dict[dataset]["Interaction_Calc"]['Phase_Fraction_fit_mass'])
+
+        # Convert to area terms, follows nomenclature of ASTM E112
+        # Currently assumes spherical grains
+
+        # D_bar: mean spatial (volumetric) grain diameter
+        # l_bar: mean lineal intercept length
+        # A_bar: mean grain cross sectional area
+        # N_bar_A: number of grains per mm2 at 1X. (derived from A_bar)
+        
+        #D_bar = powder_size/1000 # convert from micrometers to millimeters
+        #l_bar= D_bar/1.5 #Inverse of ASTM E112 A2.9; mean lineal intercept length
+        #A_bar = ((l_bar)**2)*(4/np.pi) # Inverse of ASTM E112 A2.8; average grain cross sectional area
+        #N_bar_A = 1/A_bar # Inverse of ASTM E112 A2.7; number of grains per unit area
+
+        Submit_dict[dataset]["Interaction_Calc"]["D_bar_mm"]=Submit_dict[dataset]["Interaction_Calc"]["Powder_Size_um"]/1000
+
+        Submit_dict[dataset]["Interaction_Calc"]["l_bar_mm"]=Submit_dict[dataset]["Interaction_Calc"]["D_bar_mm"]/1.5
+
+        Submit_dict[dataset]["Interaction_Calc"]["l_bar_um"]=Submit_dict[dataset]["Interaction_Calc"]["l_bar_mm"]*1000
+
+        Submit_dict[dataset]["Interaction_Calc"]["A_bar_mm2"]=(Submit_dict[dataset]["Interaction_Calc"]["l_bar_mm"]**2)*(4/np.pi)
+
+        Submit_dict[dataset]["Interaction_Calc"]["N_bar_mm2"]=1/(Submit_dict[dataset]["Interaction_Calc"]["A_bar_mm2"])
+
+        # convert the rocking angle to radians
+        #delta_theta_half=(d_t_half)
+            # print(d_t_half, delta_theta_half)
+        Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_rad"]=Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_deg"]*(np.pi/180)
+        
+        # use powder size and 95pct, 50 pct, centroid for number of layers
+        # np.ceil for rounding
+
+        # Number of layers
+        Submit_dict[dataset]["Interaction_Calc"]["N_Layers_50pct"]=np.ceil(Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"]/Submit_dict[dataset]["Interaction_Calc"]["l_bar_um"])
+        
+        Submit_dict[dataset]["Interaction_Calc"]["N_Layers_95pct"]=np.ceil(Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"]/Submit_dict[dataset]["Interaction_Calc"]["l_bar_um"])
+
+        # Number of crystallites illuminated
+        Submit_dict[dataset]["Interaction_Calc"]["N_illuminated_50pct"]=(raster_area_mm2*Submit_dict[dataset]["Interaction_Calc"]["N_bar_mm2"]*Submit_dict[dataset]["Interaction_Calc"]["Phase_Fraction_fit_volume"]*Submit_dict[dataset]["Interaction_Calc"]["Crystals_Per_Particle"]*Submit_dict[dataset]["Interaction_Calc"]["N_Layers_50pct"])
+        
+        Submit_dict[dataset]["Interaction_Calc"]["N_illuminated_95pct"]=(raster_area_mm2*Submit_dict[dataset]["Interaction_Calc"]["N_bar_mm2"]*Submit_dict[dataset]["Interaction_Calc"]["Phase_Fraction_fit_volume"]*Submit_dict[dataset]["Interaction_Calc"]["Crystals_Per_Particle"]*Submit_dict[dataset]["Interaction_Calc"]["N_Layers_95pct"])
+        
+        #(N_bar_A**phase_fraction*crystalites_per_particle*N_layers)
+
+        #    diffracting_fraction=((multiplicity/4*np.pi)*
+        #                          (crystal_data['W_F']/crystal_data['L']+
+        #                           delta_theta_half)*
+        #                      (crystal_data['H_F']/crystal_data['L']+
+        #                      crystal_data['H_R']/crystal_data['L'])*
+        #                      (1/(2*(np.sin(theta_deg*np.pi/180)))))
+        Submit_dict[dataset]["Interaction_Calc"]["Diffracting_Fraction"]=\
+            ((Submit_dict[dataset]["Interaction_Calc"]["mul_TI"]/4*np.pi)*\
+            ((Submit_dict["Phase_Info"]["Interaction_Parameters"]['W_F']/\
+            Submit_dict["Phase_Info"]["Interaction_Parameters"]['L'])+\
+            Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_rad"])*\
+            ((Submit_dict["Phase_Info"]["Interaction_Parameters"]['H_F']/\
+            Submit_dict["Phase_Info"]["Interaction_Parameters"]['L'])+\
+            (Submit_dict["Phase_Info"]["Interaction_Parameters"]['H_R']/\
+            Submit_dict["Phase_Info"]["Interaction_Parameters"]['L']))*\
+            (1/(2*(np.sin(Submit_dict[dataset]["Interaction_Calc"]["Theta"]*np.pi/180)))))
  
-            # Convert to area terms, follows nomenclature of ASTM E112
-            # Currently assumes spherical grains
-
-            # D_bar: mean spatial (volumetric) grain diameter
-            # l_bar: mean lineal intercept length
-            # A_bar: mean grain cross sectional area
-            # N_bar_A: number of grains per mm2 at 1X. (derived from A_bar)
-            
-            D_bar = powder_size/1000 # convert from micrometers to millimeters
-            l_bar= D_bar/1.5 #Inverse of ASTM E112 A2.9; mean lineal intercept length
-            A_bar = ((l_bar)**2)*(4/np.pi) # Inverse of ASTM E112 A2.8; average grain cross sectional area
-            N_bar_A = 1/A_bar # Inverse of ASTM E112 A2.7; number of grains per unit area
+        Submit_dict[dataset]["Interaction_Calc"]["N_Diffracting_50pct"]=Submit_dict[dataset]["Interaction_Calc"]["Diffracting_Fraction"]*Submit_dict[dataset]["Interaction_Calc"]["N_illuminated_50pct"]
 
 
-            # CHECK - Not currently using beam shape
-            raster_area_mm2=(Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_x']+\
-            Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])*\
-            (Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_y']+\
-            Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])
-            
-            print("Area illuminated: ", raster_area_mm2, "mm^2")
+        Submit_dict[dataset]["Interaction_Calc"]["N_Diffracting_95pct"]=Submit_dict[dataset]["Interaction_Calc"]["Diffracting_Fraction"]*Submit_dict[dataset]["Interaction_Calc"]["N_illuminated_95pct"]
 
-            # convert the rocking angle to radians
-            delta_theta_half=(d_t_half)*(np.pi/180)
-                # print(d_t_half, delta_theta_half)
-                
-            # gamma replaces H_R/L for 2D detector
-            # FIX, where do these values come from?
-            gamma = (15)*(np.pi/180)
+        Submit_dict[dataset]["Interaction_Calc"]["u_N_Diffracting_50pct"]=np.sqrt(Submit_dict[dataset]["Interaction_Calc"]["N_Diffracting_50pct"])
 
-            #print(Submit_dict[dataset]["Interaction_Calc"])
+        Submit_dict[dataset]["Interaction_Calc"]["u_N_Diffracting_95pct"]=np.sqrt(Submit_dict[dataset]["Interaction_Calc"]["N_Diffracting_95pct"])
 
-            # still need peak data
-            for x in range(len(Submit_dict[dataset]["Merged_Peaks"].index)):
-            
-                # Use Create Graph data
-                Submit_dict=create_cry_ill_graph_data(Submit_dict,dataset,cif_name)
-                
-                #print(D_bar,l_bar,A_bar, N_bar_A)
-                
-                # Determine depth of penetration for volume illuminated
-                # NEED TERM FOR PENETRATION DEPTH
-                # FIX!
-                # FindMu?  or Centriod plot?
-                
-                 # if the penetration depth is less than particle size, set layers=1
-                if l_bar<D_bar:
-                    N_layers=1
-                # else find the number of layers illuminated
-                else:
-                    N_layers=D_bar/l_bar
+        #print(Submit_dict[dataset]["Interaction_Calc"])
+        #print(Submit_dict[dataset]["Interaction_Calc"].keys())
+        #print(Submit_dict[dataset]["Interaction_Calc"][['l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2']])
+        #breakpoint()
 
-                print("Number of layers: ", N_layers)
-                # Determine area illuminated
-                
-                N_illuminated=float(N_bar_A*raster_area_mm2*phase_fraction*crystalites_per_particle*N_layers)
 
-                #print(N_illuminated)
-                #breakpoint()
+ 
 
-                diffracting_fraction=((multiplicity/4*np.pi)*
-                                      (crystal_data['W_F']/crystal_data['L']+
-                                       delta_theta_half)*
-                                  (crystal_data['H_F']/crystal_data['L']+
-                                  crystal_data['H_R']/crystal_data['L'])*
-                                  (1/(2*(np.sin(theta_deg*np.pi/180)))))
-                        
-                
-                breakpoint()
-
-                num_layer, num_ill, frac_difrac, num_difrac = IV.crystallites_illuminated_calc(json_data,
-                    phase_frac['Dataset_1'].loc[phase_frac['Dataset_1']['Phase'] == cif_name, 'Phase_Fraction'].values[0],
-                    json_data[cif_name][0],
-                    json_data[cif_name][1],
-                    peak_data[x][1],
-                    peak_data[x][2],
-                    json_data[cif_name][2])
-                if cif_name in crystallites_dict.keys():
-                    crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
-                else:
-                    crystallites_dict[cif_name] = []
-                    crystallites_dict[cif_name].append([num_layer, num_ill, frac_difrac, num_difrac])
-
-                # add in uncertainties due to number crystallites diffracted
-                cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
-                row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
-
-                #append number of crystals to the database
-                results_table['Dataset_1'].num_cryst_diff.loc[row_bool] = crystallites_dict[cif_name][x][3]
-                #append sqrt of crystals to the database
-                results_table['Dataset_1'].sqrt_cryst_diff.loc[row_bool] = cd_uncert
-                # append n_int*sqrt/number to the database
-                # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
-                results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
+            # add in uncertainties due to number crystallites diffracted
+#            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
+#            row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
+#
+#            #append number of crystals to the database
+#            results_table['Dataset_1'].num_cryst_diff.loc[row_bool] = crystallites_dict[cif_name][x][3]
+#            #append sqrt of crystals to the database
+#            results_table['Dataset_1'].sqrt_cryst_diff.loc[row_bool] = cd_uncert
+#            # append n_int*sqrt/number to the database
+#            # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
+#            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
 
     #return crystallites_dict, results_table
-    return {'crystallites_dict':crystallites_dict,
-            'results_table':results_table}
+    return Submit_dict
 
 
 
@@ -1674,7 +1615,7 @@ def compute_crystallites_illuminated2(Submit_dict):
 #####################################
 
 #####################################
-def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
+def create_cry_ill_graph_data(Submit_dict,dataset):
     '''
     Create dataframes and centroid values used to plot the interaction volume
     FIX - needs aggregate data for absorption, not just one phase.
@@ -1741,16 +1682,16 @@ def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
     Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"]=I0 * np.exp(-(Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']/10000)*Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
 
 
-    print("Interaction calculation DataFrame")
-    print(Submit_dict[dataset]["Interaction_Calc"])
-    print("Interaction Plot X Array")
-    print(Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"])
-    print("Interaction Plot Y Array")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"])
-    print("Interaction Plot Path Length")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
-    print("Interaction Plot Intensity")
-    print(Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"])
+    #print("Interaction calculation DataFrame")
+    #print(Submit_dict[dataset]["Interaction_Calc"])
+    #print("Interaction Plot X Array")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"])
+    #print("Interaction Plot Y Array")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"])
+    #print("Interaction Plot Path Length")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
+    #print("Interaction Plot Intensity")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"])
     
 
     # Find midpoints
@@ -1765,14 +1706,14 @@ def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
     # subtraction ordered to result in positive values
     Submit_dict[dataset]["Interaction_Plots"] ["Delta_I_Midpoints"]=( Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"][:,:-1] - Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"][:,1:] )
 
-    print("Interaction Plot X Array Midpoints")
-    print(Submit_dict[dataset]["Interaction_Plots"]["X_Midpoints"])
-    print("Interaction Plot Y Array Midpoints")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"])
-    print("Interaction Plot Path Length")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"])
-    print("Interaction Plot Change in Intensity") # was 'travel_dist'
-    print(Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"])
+    #print("Interaction Plot X Array Midpoints")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["X_Midpoints"])
+    #print("Interaction Plot Y Array Midpoints")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"])
+    #print("Interaction Plot Path Length")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"])
+    #print("Interaction Plot Change in Intensity") # was 'travel_dist'
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"])
 
 
     
@@ -1795,12 +1736,12 @@ def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
     Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Scatter_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
  
  
-    print("Interaction Plot Absorbed")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Absorbed"])
-    print("Interaction Plot Anomalous")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Anomalous"])
-    print("Interaction Plot Scattered")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"])
+    #print("Interaction Plot Absorbed")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Absorbed"])
+    #print("Interaction Plot Anomalous")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Anomalous"])
+    #print("Interaction Plot Scattered")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"])
  
     #scattered, but not absorbed on return to the surface
     #df_mid['Escaped']=df_mid['scattered'] *  np.exp(-(summarized_data[2]/10000) * df_mid['travel_dist'])
@@ -1813,18 +1754,22 @@ def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
     
     #df_mid['RelativeEscaped']=df_mid['Escaped']/I0
 
-    print("Interaction Plot Escaped")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"])
+    #print("Interaction Plot Escaped")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"])
 
-    print("Interaction Plot Index summation")
-    print(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"])
-    print(np.shape(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"]))
-    breakpoint()
+    #print("Interaction Plot Index summation")
+    #print(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"])
+    #print(np.shape(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"]))
+
     
     # Tried calculating a centroid, but that doesn't seem correct...
     
     #Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
     #Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
+
+    # Z centroid (works)
+
+    Submit_dict[dataset]["Interaction_Calc"]["Z_Centroid_Depth_um"]=np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"]*Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"],axis=1)/np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1)
 
     #print("df_mid")
     #print(df_mid)
@@ -1846,13 +1791,31 @@ def create_cry_ill_graph_data(Submit_dict,dataset,cif_name):
     # I think what's needed is a rolling sum along the Escaped fraction
     # Then interpolate for a specific value along the Z axis
     
-    percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
 
-
-
-    print("90% counts pos: ",percentile90_y)
+    Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"]=np.nan
+    Submit_dict[dataset]["Interaction_Calc"]["68pct_Escaped_Depth_um"]=np.nan
+    Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"]=np.nan
+    for i in np.arange(len(np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1))):
     
-    return [Submit_dict]
+        # need to flip to get the values to be increasing
+        # Also need the cumulative sum
+
+        Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"].iloc[i]= np.interp((np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])*.5), np.cumsum(np.flip(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])), np.flip(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"][i]))
+ 
+        # 1 sigma
+        Submit_dict[dataset]["Interaction_Calc"]["68pct_Escaped_Depth_um"].iloc[i]= np.interp((np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])*.3173), np.cumsum(np.flip(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])), np.flip(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"][i]))
+ 
+        # ~2 sigma, 0.05 for depth at which 95% penetration
+        Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"].iloc[i]= np.interp((np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])*.05), np.cumsum(np.flip(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])), np.flip(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"][i]))
+ 
+    #  percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
+
+
+
+    #print("90% counts pos: ",percentile90_y)
+    print(Submit_dict[dataset]["Interaction_Calc"])
+    #breakpoint()
+    return Submit_dict
 
 
 

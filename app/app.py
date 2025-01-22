@@ -117,12 +117,12 @@ def submit():
  #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 #    cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 
-    Submission = compute_results.compute_crystallites_illuminated2(Submission)
+    Submission = compute_results.compute_crystallites_illuminated(Submission)
 
-    print("Computing mass fraction and volume fracation conversion factors...")
-    conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
-                                                  cell_dens_res['cell_masses_dict'],
-                                                  cell_dens_res['cell_volumes_dict'])
+    #print("Computing mass fraction and volume fracation conversion factors...")
+    #conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
+    #                                              cell_dens_res['cell_masses_dict'],
+    #                                              cell_dens_res['cell_volumes_dict'])
 
     breakpoint()
 
