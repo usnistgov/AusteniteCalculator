@@ -12,6 +12,7 @@ import os
 import io
 import base64
 import re
+import logging
 
 # user created
 import plot_utils
@@ -35,8 +36,13 @@ import GSASIIpath
 #try:
 #    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
 #except Exception: #GSAS raises an execption if unable to connect to svn
-#    print("Unable to update, using whichever version is installed")
+#    logger.info("Unable to update, using whichever version is installed")
 
+# set up logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='app_logs.log', encoding='utf-8', level=logging.INFO)
+
+# set up app
 app = Flask(__name__)
 
 @app.route("/",methods=['GET'])
@@ -47,7 +53,7 @@ def index():
 def submit():
 
     req = request.get_json()
-    print(req)
+    logger.info(req)
 
     # dictionary to hold error logs
     error_dict = {'file_upload':False,
@@ -95,37 +101,37 @@ def submit():
         error_dict['crystal_data'] = type(e).__name__ + ': ' + str(e)
 
 
-    print("Collecting Version information")
+    logger.info("Collecting Version information")
     try:
         version_DF = compute_results.version_summary()
     except Exception as e: 
         error_dict['version'] = type(e).__name__ + ': ' + str(e)
 
-    print("Computing Cell Density")
+    logger.info("Computing Cell Density")
     try:
         cell_dens_res = compute_results.compute_cell_density(cif_fnames,datadir,instprm_fname)
     except Exception as e: 
         error_dict['cell_density'] = type(e).__name__ + ': ' + str(e)
 
-    print("Running Peak Fitting")
+    logger.info("Running Peak Fitting")
     try:
         pk_fit_res = compute_results.compute_peak_fitting(datadir,workdir,xrdml_fnames,instprm_fname,cif_fnames,crystal_data,G2sc)
     except Exception as e: 
         error_dict['peak_fitting'] = type(e).__name__ + ': ' + str(e)
 
-    print("Computing peaks_dict")
+    logger.info("Computing peaks_dict")
     try:
         peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
     except Exception as e: 
         error_dict['peak_dict'] = type(e).__name__ + ': ' + str(e)
 
-    print("Gathering Summarized Phase Info")
+    logger.info("Gathering Summarized Phase Info")
     try:
         graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
     except Exception as e: 
         error_dict['phase_info'] = type(e).__name__ + ': ' + str(e)
 
-    print("Computing crystallites illuminated...")
+    logger.info("Computing crystallites illuminated...")
     # Need to update the full results table, but issues with dict/DF 
  #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
     try:
@@ -133,7 +139,7 @@ def submit():
     except Exception as e: 
         error_dict['crystallites_illuminated'] = type(e).__name__ + ': ' + str(e)
 
-    print("Computing mass fraction and volume fracation conversion factors...")
+    logger.info("Computing mass fraction and volume fracation conversion factors...")
     try:
         conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
                                                     cell_dens_res['cell_masses_dict'],
@@ -142,7 +148,7 @@ def submit():
         error_dict['conversions'] = type(e).__name__ + ': ' + str(e)
 
 
-    print("Running MCMC")
+    logger.info("Running MCMC")
     try:
         mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
     except Exception as e: 
