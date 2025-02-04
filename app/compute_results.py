@@ -487,6 +487,7 @@ def compute_peak_fitting(G2sc,Submit_dict):
 #####################################
 def df_to_dict(df):
     """
+    Depricated?
     Function for converting a pandas dataframe to a python dictionary. Need a dictionary for dash data_table
     
     ? Replate with .to_dict?
@@ -799,6 +800,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     #? Similarly, sort here seems like a fragile way to align the data.
 
     #Puzzled why we had recopied things before...
+    # FIX - use a pandas merge function
     DF_merged_fit_theo = t_peaks.copy(deep=True)
 
     if fit_type=="LeBail":
@@ -1191,52 +1193,7 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
 #### Next functions in app.py, uncertain on use #####
 #####################################
 
-#####################################
-def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict):
-    """
-    DEPRICATED
-    in app.py
-    ??? Is it just collecting summary information?
-    for what purpose ???
-    ADD
 
-    Parameters:
-        cif_fnames: cif file names
-        ADD
-
-
-    Returns:
-        ?:?
-        ADD
-
-    Raises:
-
-    """
-
-    
-    
-    peaks_dict = {}
-    for phase_name in cif_fnames:
-        peaks_dict[phase_name] = []
-
-    # Peak dictionary includes F value, multiplicity, theta position, F_squared value
-    # doesn't seem like the values are quite right... AC 3 Mar 2023
-    for row in results_table['Dataset_1'].iterrows():
-        current_peak = []
-        current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
-        current_peak.append(row[1]['mul'])
-        current_peak.append(row[1]['pos_fit']/2)
-        final_FF = 0.0
-        for elem in scattering_dict[row[1]['Phase']]:
-            count = 0
-            FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
-            final_FF += FF * elem_fractions_dict[row[1]['Phase']][count]
-            count += 1
-        current_peak.append(final_FF)
-        peaks_dict[row[1]['Phase']].append(current_peak)
-
-    return peaks_dict
-    
     
 #####################################
 def calculate_aggregate_data(Submit_dict,dataset):
@@ -1315,53 +1272,6 @@ def calculate_aggregate_data(Submit_dict,dataset):
     # Return updated submission
     return Submit_dict
 
-#####################################
-def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict):
-    """
-    DEPRICATED
-    
-    in app.py
-    ??? Is it just collecting summary information?
-    What's returned is used as 'graph_data_dict', what for?
-    ADD
-
-    Parameters:
-        scattering_dict: ?
-        ADD
-
-
-    Returns:
-        ?:?
-        ADD
-
-    Raises:
-
-    """
-    
-    # MOVE this to the Submit_dict["Phase_Info"]["Unit_Cell"]
-
-    summarized_phase_info = {}
-    for key, value in scattering_dict.items():
-        summarized_phase_info[key] = [0.0,0.0, 0.0]
-        current_fracs = elem_fractions_dict[key]
-        for i in range(len(value)):
-            summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
-            summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
-            summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
-    
-            #Submit_dict['Phase_Info']['Unit_Cell']['scattering_dict']
-
-    graph_data_dict = {}
-    for key, value in peaks_dict.items():
-        current_summarized_data = summarized_phase_info[key]
-        graph_data_dict[key] = []
-        for peak in value:
-            data_list = create_graph_data(peak, current_summarized_data)
-            graph_data_dict[key].append(data_list)
-        #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
-
-    return graph_data_dict
-
 
 
 
@@ -1404,6 +1314,8 @@ def compute_crystallites_illuminated(Submit_dict):
         
         # Pull phase, two theta, multiplicity, hkl (string)
         # Copying these should mean the indexing is the same
+        # CHECK - why not just do everything in Merged_Peaks?
+        
         Submit_dict[dataset]["Interaction_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['pos_TI', 'mul_TI', 'Phase_TI','F_calc_sq_TI', 'hkl' ]]
         
         # Create Theta column
@@ -1590,8 +1502,26 @@ def compute_crystallites_illuminated(Submit_dict):
         #print(Submit_dict[dataset]["Interaction_Calc"][['l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2']])
         #breakpoint()
 
+        # Merge the Interaction_Calc and Merged_Peaks
+        Submit_dict[dataset]["Merged_Peaks"]=Submit_dict[dataset]["Merged_Peaks"].merge(Submit_dict[dataset]["Interaction_Calc"], on=['pos_TI', 'mul_TI', 'Phase_TI','F_calc_sq_TI', 'hkl' ])
 
- 
+        
+        # Add a column for the uncertainty in number diffracting
+        # normalized by the normalized intensities
+        # CHECK - use just the fit n_int, or average?
+        
+        Submit_dict[dataset]["Merged_Peaks"]["n_u_N_Diffracting_95pct"]=\
+            (Submit_dict[dataset]["Merged_Peaks"]["u_N_Diffracting_95pct"]/Submit_dict[dataset]["Merged_Peaks"]["N_Diffracting_95pct"])*Submit_dict[dataset]["Merged_Peaks"]["n_int_fit"]
+        
+        Submit_dict[dataset]["Merged_Peaks"]["n_u_N_Diffracting_50pct"]=\
+            (Submit_dict[dataset]["Merged_Peaks"]["u_N_Diffracting_50pct"]/Submit_dict[dataset]["Merged_Peaks"]["N_Diffracting_50pct"])*Submit_dict[dataset]["Merged_Peaks"]["n_int_fit"]
+
+        
+        print("Merged Peaks with Interaction Merged in")
+        print(Submit_dict[dataset]["Merged_Peaks"].columns)
+        print(Submit_dict[dataset]["Interaction_Calc"].columns)
+        
+        breakpoint()
 
             # add in uncertainties due to number crystallites diffracted
 #            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
@@ -1606,6 +1536,9 @@ def compute_crystallites_illuminated(Submit_dict):
 #            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
 
     #return crystallites_dict, results_table
+    
+    
+    
     return Submit_dict
 
 
@@ -1818,9 +1751,10 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     return Submit_dict
 
 
-
+#####################################
 def format_json_data(json_data,cif_name):
     """
+    Depricated?
     Reformats the crystal data objects from json to expected types.
 
     Args:
@@ -1849,6 +1783,7 @@ def format_json_data(json_data,cif_name):
 #####################################
 def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
     """
+    Depricated?
     in app.py
     ??? Maybe merge with Computing Cell Density step?
     ADD
@@ -1884,6 +1819,38 @@ def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
 
     return outdf
 
+
+#####################################
+def prep_mcmc():
+    """
+    Pull aggregate data from the peak fits to populate the mcmc modelling 
+    """
+
+    # Pick which peak data to include in aggregation
+    
+    # Which fits were successful
+        #Check 2 theta, sig, gam, n_int values for consistency
+    
+    # Normalize based on R, or R*Texture?
+        # likely R*Texture for consistency ot match n_int
+    
+    # median values? or mean?
+        # This was just in the representation in the table of the uncertainty estimates
+    
+    # average over fitting type? - depends on if we think there are more or this is fairly comprehensive
+    # CHECK - David, how to do this right
+    # will need to edit stan code, could get a phase fraction for each method
+    # linear pooling, assumes each are equally reliable
+
+    # Stan should have the phase based u_ values?
+        # no, it's calculated by each peak
+    
+    # Stan limits to positive values for n_int?
+        # Yes, this is the lower=0 statements
+
+    # Create a sum Dataset? https://stackoverflow.com/questions/25057835/get-the-mean-across-multiple-pandas-dataframes
+
+#####################################
 def run_mcmc(results_table,number_mcmc_runs,conversions):
 
     """
@@ -2391,6 +2358,99 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
 
 
 
+
+#####################################
+def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict):
+    """
+    DEPRICATED
+    in app.py
+    ??? Is it just collecting summary information?
+    for what purpose ???
+    ADD
+
+    Parameters:
+        cif_fnames: cif file names
+        ADD
+
+
+    Returns:
+        ?:?
+        ADD
+
+    Raises:
+
+    """
+
+    
+    
+    peaks_dict = {}
+    for phase_name in cif_fnames:
+        peaks_dict[phase_name] = []
+
+    # Peak dictionary includes F value, multiplicity, theta position, F_squared value
+    # doesn't seem like the values are quite right... AC 3 Mar 2023
+    for row in results_table['Dataset_1'].iterrows():
+        current_peak = []
+        current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
+        current_peak.append(row[1]['mul'])
+        current_peak.append(row[1]['pos_fit']/2)
+        final_FF = 0.0
+        for elem in scattering_dict[row[1]['Phase']]:
+            count = 0
+            FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
+            final_FF += FF * elem_fractions_dict[row[1]['Phase']][count]
+            count += 1
+        current_peak.append(final_FF)
+        peaks_dict[row[1]['Phase']].append(current_peak)
+
+    return peaks_dict
+    
+#####################################
+def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict):
+    """
+    DEPRICATED
+    
+    in app.py
+    ??? Is it just collecting summary information?
+    What's returned is used as 'graph_data_dict', what for?
+    ADD
+
+    Parameters:
+        scattering_dict: ?
+        ADD
+
+
+    Returns:
+        ?:?
+        ADD
+
+    Raises:
+
+    """
+    
+    # MOVE this to the Submit_dict["Phase_Info"]["Unit_Cell"]
+
+    summarized_phase_info = {}
+    for key, value in scattering_dict.items():
+        summarized_phase_info[key] = [0.0,0.0, 0.0]
+        current_fracs = elem_fractions_dict[key]
+        for i in range(len(value)):
+            summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
+            summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
+            summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
+    
+            #Submit_dict['Phase_Info']['Unit_Cell']['scattering_dict']
+
+    graph_data_dict = {}
+    for key, value in peaks_dict.items():
+        current_summarized_data = summarized_phase_info[key]
+        graph_data_dict[key] = []
+        for peak in value:
+            data_list = create_graph_data(peak, current_summarized_data)
+            graph_data_dict[key].append(data_list)
+        #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
+
+    return graph_data_dict
 
 
 

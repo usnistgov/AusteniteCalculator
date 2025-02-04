@@ -49,7 +49,8 @@ Submission	*Dictionary*	(Container for all the items computed)
     |
     -> "Le_Bail_Peaks"	*DataFrame*	(LeBail Fit values, uncertainties[where?])
     -> "Theoretical_Intensities" *DataFrame*
-    -> "Merged_Peaks" *DataFrame*
+    -> t_peaks *Dataframe* 		(hist peak list from peak fit algorithm)
+    -> "Merged_Peaks" *DataFrame*	(merge of hist peak list, theoretical intensities, Le Bail peaks)
 
     -> Peak Fit (values, uncertainties)
     -> Gaussian Fit (values, uncertainties)

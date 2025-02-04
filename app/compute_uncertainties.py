@@ -141,7 +141,7 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         # stan
 
         #check OS to determine which stan executable to use
-        # Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
+        # CHECK - Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
         
         if sys.platform.startswith('win'): # windows -- have not tested this in a while
             #Untested
@@ -160,6 +160,11 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
         model = CmdStanModel(stan_file='../stan_files/one_sample.stan')
         #model = CmdStanModel(exe_file=exe_file)
 
+        # N is the number of peaks being passed
+        # Stan does the calculation for each peak (not Monte Carlo)
+        
+        # phase_mu is a representation of the population of average normalized intensity values caculated for each phase N_phases which comes from the variaition of each peak N [ii in loop]
+        
         stan_data = {
             "N":mydf.shape[0],
             "N_phases":len(np.unique(mydf.phases)),
