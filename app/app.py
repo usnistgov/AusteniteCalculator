@@ -54,6 +54,8 @@ def submit():
 
     if req['radioValue'] == 'uploaded_files':
 
+    # FIX - return state of Sum checkbox
+
         datadir = '../server_datadir'
         cif_fnames = list(req['fileUploads']['cif-file'].keys())
         workdir = '../server_workdir'
@@ -125,11 +127,13 @@ def submit():
     #                                              cell_dens_res['cell_volumes_dict'])
 
     # ADD option for summation
-
-    breakpoint()
-
+    # FIX - hardcoded for now
+    sum_checkbox=False
 
     print("Running MCMC")
+    Submission = compute_results.run_mcmc2(Submission,sum_checkbox,number_mcmc_runs=1000)
+
+    breakpoint()
     mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
 
     # combine all results into a dictionary to send to browser

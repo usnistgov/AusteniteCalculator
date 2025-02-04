@@ -1521,7 +1521,7 @@ def compute_crystallites_illuminated(Submit_dict):
         print(Submit_dict[dataset]["Merged_Peaks"].columns)
         print(Submit_dict[dataset]["Interaction_Calc"].columns)
         
-        breakpoint()
+        #breakpoint()
 
             # add in uncertainties due to number crystallites diffracted
 #            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
@@ -1885,6 +1885,45 @@ def run_mcmc(results_table,number_mcmc_runs,conversions):
     pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
 
     return mcmc_df_dict, param_table, pf_table
+
+#####################################
+def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
+
+    """
+    *ADD*
+
+    Parameters:
+        results_table: from crystallites illuminated
+        number_mcmc_runs: number of mcmc posterior samples
+        conversions: dict containing conversion factors for each phase, for mass and volume
+
+    imports from compute_uncertainties
+
+    Returns:
+        dictionary: contains a dataframe and parameter table
+        |
+
+    Raises:
+
+
+    """
+
+
+
+    #results_table_df = pd.concat(results_table,axis=0).reset_index()
+    Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+    
+    mcmc_df_dict = compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000)
+    unique_phases = np.unique(results_table_df.Phase)
+    param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
+
+    # mcmc_df_dict.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
+    print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
+    print(mcmc_df.info(memory_usage=True))
+
+    pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
+
+    return Submit_dict
 
 #####################################
 #### run_mcmc() Utility Fuctions ####
