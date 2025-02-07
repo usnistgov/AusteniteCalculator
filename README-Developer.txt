@@ -50,6 +50,11 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "MCMC_Result_Mass" *DataFrame* columns for each phase, with estimated phase fraction by mass of unit cells
    -> "MCMC_Result_Volume" *DataFrame* columns for each phase, with estimated phase fraction by volume of unit cells
    -> "Uncert_Source_Summary" *DataFrame* rows for each phase, with aggregate uncertainties
+   -> "Phase_Fraction_Result_Number" *DataFrame* rows for each phase
+   -> "Phase_Fraction_Result_Mass" *DataFrame* rows for each phase
+   -> "Phase_Fraction_Result_Volume" *DataFrame* rows for each phase
+
+
 
    -> Phase Fraction Data (8000 n_ints run through phase frac calc)
    -> Peak (row)
