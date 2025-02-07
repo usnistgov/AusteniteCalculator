@@ -307,12 +307,17 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
 #            })
 
             #n_u_ is the uncertainty normalized by the I/R (normalized intensity)
+            # FIX - add peak fit success
             Submit_dict[dataset]["MCMC_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['int_fit', 'R_TI', 'n_int_fit', 'n_u_int_fit', 'n_u_count_fit','n_u_N_Diffracting_95pct','Phase','pos_fit', 'hkl'  ]]
 
 
             Submit_dict[dataset]["MCMC_Calc"]['sample_id']=dataset_number
             # create numeric phase id's
             Submit_dict[dataset]["MCMC_Calc"]['phase_id'] = 0
+            
+            # CHECK - any way the order gets changed in the phases?
+            # Can we just use the row as the MCMC id, or do we need the name?
+            # also check Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_mass_CIF']
             unique_phases = np.unique(Submit_dict[dataset]["MCMC_Calc"]["Phase"])
 
             for ii, pn in enumerate(unique_phases):
@@ -388,23 +393,67 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
             print(fit)
             #breakpoint()
 
+            #Add to submission
             Submit_dict[dataset]["MCMC_Data"] = fit.draws_pd()
+            print("Raw MCMC fit Data")
+            print(Submit_dict[dataset]["MCMC_Data"])
+            
             print(Submit_dict[dataset]["MCMC_Data"].info(memory_usage=True))
 
-            Submit_dict[dataset]["MCMC_Data"].drop(inplace=True,columns = Submit_dict[dataset]["MCMC_Data"].columns[Submit_dict[dataset]["MCMC_Data"].columns.str.contains("(__)|(effect)",regex=True)])
+            #Submit_dict[dataset]["MCMC_Data"].drop(inplace=True,columns = Submit_dict[dataset]["MCMC_Data"].columns[Submit_dict[dataset]["MCMC_Data"].columns.str.contains("(__)|(effect)",regex=True)])
 
+            
+            # FIX - move these to a function?
+            # Results as number of unit cells
             phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
             
-            # CHECK - not sure what this does
+            # phase_mu is in terms of the normalized intensities
+            # to convert to a phase fraction, need to sum the normalized intensities
             ni_sum = np.sum(phase_cols,axis=1)
             for i in range(phase_cols.shape[1]):
                 phase_cols.iloc[:,i] = phase_cols.iloc[:,i]/ni_sum
 
-            Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")] = phase_cols
 
+            Submit_dict[dataset]["MCMC_Result_Number"] = phase_cols
 
-            # FIX - ADD conversions here?
+            # Results as mass of unit cells
+            
+            mass_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
+            
+            # CHECK - may be fragile to assumed order
+            for i in range(mass_cols.shape[1]):
+                mass_cols.iloc[:,i] = mass_cols.iloc[:,i]*Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_mass_CIF'][i]
+            mass_sum = np.sum(mass_cols,axis=1)
+            for i in range(mass_cols.shape[1]):
+                mass_cols.iloc[:,i] = mass_cols.iloc[:,i]/mass_sum
+
+            Submit_dict[dataset]["MCMC_Result_Mass"] = mass_cols
+
+            # Results as volume of unit cells
+            
+            volume_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
+            
+            # CHECK - may be fragile to assumed order
+            for i in range(volume_cols.shape[1]):
+                volume_cols.iloc[:,i] = volume_cols.iloc[:,i]*Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_volume_CIF'][i]
+            volume_sum = np.sum(volume_cols,axis=1)
+            for i in range(volume_cols.shape[1]):
+                volume_cols.iloc[:,i] = volume_cols.iloc[:,i]/volume_sum
+
+            Submit_dict[dataset]["MCMC_Result_Volume"] = volume_cols
+
+            print("MCMC Fit data after data reduction")
+            print(Submit_dict[dataset]["MCMC_Result_Number"])
+            print(Submit_dict[dataset]["MCMC_Result_Mass"])
+            print(Submit_dict[dataset]["MCMC_Result_Volume"])
+
+            #Submit_dict[dataset]["MCMC_Data"]=compute_conversion_mcmc_dfs2(Submit_dict[dataset]["MCMC_Data"])
+
+            #breakpoint()
             # FIX - ADD Phase parameter table here?
+            
+            Submit_dict = generate_param_table2(Submit_dict,dataset,unique_phases)
+            Submit_dict = generate_pf_table2(Submit_dict,dataset,unique_phases)
 
     ### Code for the multiple sample case
         
@@ -531,6 +580,97 @@ def generate_pf_table(mcmc_df_dict,unique_phase_names):
 
     return pf_table
 
+def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
+    """
+    *ADD*
+
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+
+    Returns:
+        | *ADD*
+        |
+
+    Raises:
+
+
+    """
+    #full_dict = {}
+
+    # Number of unit cells
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({ "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)})
+
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.0455,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.3173,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.5,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.6827,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.9545,axis=0)
+   
+   
+    # Mass of unit cells
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]=pd.DataFrame({ "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Mass"],axis=0)})
+
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.0455,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.3173,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],.5,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.6827,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.9545,axis=0)
+  
+  
+    # Volume of unit cells
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]=pd.DataFrame({ "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Volume"],axis=0)})
+
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.0455,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.3173,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],.5,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.6827,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.9545,axis=0)
+    
+    #print(np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.50,axis=0))
+    #print(np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.05,axis=0))
+
+
+
+    #Submit_dict[dataset]["MCMC_Result_Number"]
+    print(Submit_dict[dataset]["Phase_Fraction_Result_Number"])
+    print(Submit_dict[dataset]["Phase_Fraction_Result_Mass"])
+    print(Submit_dict[dataset]["Phase_Fraction_Result_Volume"])
+    #breakpoint()
+#
+#    for conversion_name in mcmc_df_dict.keys():
+#
+#        #mcmc_df = pd.DataFrame(mcmc_df_dict[conversion_name])
+#
+#        mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
+#        n_phase = mu_res.shape[1]
+#        quantiles = np.zeros((n_phase,2))
+#
+#        # table to store phase fraction estimates and 95% credible intervals
+#        pf_table = pd.DataFrame({
+#            'Phase':unique_phase_names,
+#            'Phase Fraction Estimate':0.0,
+#            'Phase Fraction (Lower 95%)':0.0,
+#            'Phase Fraction (Upper 95%)':0.0
+#        })
+#
+#        for j,ph in enumerate(unique_phase_names):
+#
+#            quantiles[j,:] = np.quantile(mu_res[:,j],(.025,.975))
+#
+#            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction Estimate'] = np.mean(mu_res[:,j])
+#            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Lower 95%)'] = np.quantile(mu_res[:,j],.025)
+#            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Upper 95%)'] = np.quantile(mu_res[:,j],.975)
+#
+#        full_dict[conversion_name] = pf_table
+#        pf_table['Conversion Type'] = conversion_name
+#
+#    pf_table = pd.concat(full_dict,ignore_index=True)
+
+    return Submit_dict
+
+
 def generate_param_table(mcmc_df,unique_phase_names,results_table):
     """
 
@@ -600,3 +740,112 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
 
 
     return param_table
+
+def generate_param_table2(Submit_dict,dataset,unique_phase_names):
+    """
+
+    CHECK - Is this still a useful table?  It doesn't seem to have the MCMC data.
+
+    *ADD*
+
+    Parameters:
+        mu_samps: *ADD*
+        conversion_vec: *ADD*
+
+
+    Returns:
+        | A pandas DataFrame with rows for each phase.
+        | Columns for each source of variability
+
+    Raises:
+
+    """
+    #mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
+    n_phase = len(unique_phase_names)
+    
+    # FIX for multiple samples
+    #multiple_samples = 'sigma_sample' in mcmc_df.columns
+
+    # table to hold parameter estimates for sources of uncertainty
+    # FIX - rename to add note on median value
+    # was param_table
+    # CHECK renamed to match variable names, maybe better to make
+    Submit_dict[dataset]["Uncert_Source_Summary"] = pd.DataFrame({
+        'Phase':unique_phase_names,
+        'Mean_n_int_fit':np.zeros(n_phase),
+        'Mean_sigma_exp':np.zeros(n_phase),
+        'Median_n_u_count_fit':np.zeros(n_phase),
+        'Median_n_u_int_fit':np.zeros(n_phase),
+        'Median_n_u_N_Diffracting_95pct':np.zeros(n_phase)
+    })
+
+    print(Submit_dict[dataset]["Uncert_Source_Summary"])
+
+
+    # FIX for multiple samples
+    #if multiple_samples:
+    #    Submit_dict[dataset]["Uncert_Source_Summary"]['Sample Variability'] = np.zeros(n_phase)
+
+    #results_table = results_table.loc[results_table['Peak_Fit_Success'],:]
+
+
+
+    for ii,ph in enumerate(unique_phase_names):
+        
+        # NEED TO USE THIS LATER
+
+
+        # mean normalized intensity
+        #mean_ph=0
+        #subset_table=results_table.loc[:,['Phase','n_int']]
+        # need to add 'float' to keep a dataframe from being returned,
+        # which breaks the datatype
+        
+        # fill mean n_int_fit
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_n_int_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_int_fit'].mean())
+        
+        #mean_ph=float(subset_table.loc[subset_table['Phase']==ph,'n_int'].mean())
+        #param_table.loc[param_table['Phase'] == ph, 'Mean Normalized Intensity'] = mean_ph
+        
+        # sigma_exp
+        # ADD!
+        
+        
+        #t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
+        #param_table.loc[param_table['Phase'] == ph, 'Experimental Error Variability'] = np.mean(t_sigexp_samps)
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].mean())
+        
+
+
+        # median values
+        
+        # fill median X-ray Count Variability n_u_count_fit
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_count_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_count_fit'].mean())
+        
+        #dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
+        #param_table.loc[param_table['Phase'] == ph, 'X-ray Count Variability'] = np.median(dummy)
+
+        # fill median X-ray Count Variability n_u_count_fit
+        # CHECK was Parameter Fit Variability  is that still captured???
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_int_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_int_fit'].mean())
+
+        #dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
+        #param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
+
+        # fill median X-ray Count Variability n_u_count_fit
+        # CHECK was Parameter Fit Variability  is that still captured???
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_N_Diffracting_95pct'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_N_Diffracting_95pct'].mean())
+
+        # crystallites diffracted
+        #dummy = results_table.loc[results_table['Phase'] == ph,'u_cryst_diff']/results_table.loc[results_table['Phase'] == ph,'R_calc']
+        #param_table.loc[param_table['Phase'] == ph, 'Crystallites Diffracted Variability'] = np.median(dummy)
+
+    # FIX for multiple samples
+    #if multiple_samples:
+    #    param_table.loc[:,'Sample Variability'] = np.mean(mcmc_df['sigma_sample'])
+
+    print("Uncertainty Source Summary")
+    print(Submit_dict[dataset]["Uncert_Source_Summary"])
+    #breakpoint()
+
+    return Submit_dict

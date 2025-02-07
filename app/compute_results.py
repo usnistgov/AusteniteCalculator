@@ -1911,17 +1911,24 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
 
 
     #results_table_df = pd.concat(results_table,axis=0).reset_index()
+    
+    # FIX - Maybe run_mcmc2 gets replaced with run_stan2?
+    # otherwise were looping on datasets a few times
     Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
     
-    mcmc_df_dict = compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000)
-    unique_phases = np.unique(results_table_df.Phase)
-    param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
+    breakpoint()
+    #mcmc_df_dict = compute_conversion_mcmc_dfs2(mcmc_df,conversions,n_keep=1000)
+    #unique_phases = np.unique(results_table_df.Phase)
+    
+    # Moved parameter table and phase fraction table inside run_stan2
+    # This way we only loop over the data set once
+    #param_table = compute_uncertainties.generate_param_table2(mcmc_df,unique_phases,results_table_df)
 
     # mcmc_df_dict.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
-    print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
-    print(mcmc_df.info(memory_usage=True))
+    #print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
+    #print(mcmc_df.info(memory_usage=True))
 
-    pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
+    #pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
 
     return Submit_dict
 
@@ -1929,9 +1936,11 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
 #### run_mcmc() Utility Fuctions ####
 #####################################
 
+#####################################
 def compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000):
 
     """
+    Depricated?
     Takes in results from compute_uncertainties.run_stan() and computes conversions for mass frac and volume frac
     """
     
@@ -1958,6 +1967,32 @@ def compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000):
         'vol_frac_dict':vol_frac_df.to_dict(orient='list')
     })
 
+#####################################
+def compute_conversion_mcmc_dfs2(mcmc_df):
+
+    """
+    Depricated?
+    Takes in results from compute_uncertainties.run_stan() and computes conversions for mass frac and volume frac
+    """
+    
+    inds_to_keep = np.random.choice(np.arange(mcmc_df.shape[0]),size=n_keep,replace=False)
+
+    number_cell_samples = mcmc_df.loc[inds_to_keep,mcmc_df.columns.str.contains("phase_mu")]
+
+    
+    mass_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['mass_conversion'])/np.sum(x*np.array(conversions['mass_conversion'])),
+                                                  axis=1,
+                                                  raw=True)
+    
+    vol_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['volume_conversion'])/np.sum(x*np.array(conversions['volume_conversion'])),
+                                                 axis=1,
+                                                 raw=True)
+    
+    #number_cell_samples['conversion_type'] = 'Number Cells'
+    #mass_frac_df['conversion_type'] = 'Mass Fraction'
+    #vol_frac_df['conversion_type'] = 'Volume Fraction'
+
+    return mcmc_df
 
 def version_summary():
     import GSASIIpath

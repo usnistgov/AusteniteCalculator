@@ -114,10 +114,17 @@ def submit():
 #    print("Gathering Summarized Phase Info")
 #    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
 
+    # needs to be after peak fitting to use the estimated volume fraction
+    # So there will be two separate loops for all of the datasets
     print("Computing crystallites illuminated...")
-    # Need to update the full results table, but issues with dict/DF 
+    
+    # Need to update the full results table, but issues with dict/DF
  #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 #    cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
+
+    # ADD option for summation
+    # FIX - hardcoded for now
+    sum_checkbox=False
 
     Submission = compute_results.compute_crystallites_illuminated(Submission)
 
@@ -126,15 +133,14 @@ def submit():
     #                                              cell_dens_res['cell_masses_dict'],
     #                                              cell_dens_res['cell_volumes_dict'])
 
-    # ADD option for summation
-    # FIX - hardcoded for now
-    sum_checkbox=False
 
     print("Running MCMC")
     Submission = compute_results.run_mcmc2(Submission,sum_checkbox,number_mcmc_runs=1000)
 
+
+    #mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
+
     breakpoint()
-    mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
 
     # combine all results into a dictionary to send to browser
     # param_table has the uncertainty parameters from mcmc result

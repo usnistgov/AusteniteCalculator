@@ -17,6 +17,8 @@ Submission	*Dictionary*	(Container for all the items computed)
 	-> scattering_dict  *Series, by cif file* with list of lists with columns for elem_sym, f', f'', mu, number of atoms per cell
 	-> elem_fractions_dict list with the amount of each element
 
+	-> 'unit_cell_volume_CIF' *DataFrame* with the volumes for each unit cell from the CIF file	
+	-> 'unit_cell_mass_CIF' *DataFrame* with the mass for each unit cell from the CIF file
    -> "Atomic_Masses"  		*DataFrame*  has 'atomic_masses_dict' for rows of elements listed
 
 
@@ -42,8 +44,13 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "Peak_Fit_Data" *dict* GSAS-II format
    -> "Prelim_Phase_Fraction" *DataFrame*
    -> "Prelim_Aggregate_Data" *Dict*
-   -> MCMC Uncertainty Inputs
-   -> MCMC Distribution Data (8000 normalized intensities)
+   -> "MCMC_Calc"  *DataFrame*  MCMC Uncertainty Inputs, values copied from Merged_Peaks
+   -> "MCMC_Data" *DataFrame*, columns of sigma_exp[n] and phase_mu[n] for n phases MCMC Distribution Data (8000 normalized intensities)
+   -> "MCMC_Result_Number" *DataFrame* columns for each phase, with estimated phase fraction by number of unit cells
+   -> "MCMC_Result_Mass" *DataFrame* columns for each phase, with estimated phase fraction by mass of unit cells
+   -> "MCMC_Result_Volume" *DataFrame* columns for each phase, with estimated phase fraction by volume of unit cells
+   -> "Uncert_Source_Summary" *DataFrame* rows for each phase, with aggregate uncertainties
+
    -> Phase Fraction Data (8000 n_ints run through phase frac calc)
    -> Peak (row)
     |
