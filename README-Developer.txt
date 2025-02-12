@@ -38,7 +38,7 @@ Submission	*Dictionary*	(Container for all the items computed)
  -> Dataset
    |
    -> "Flags" 		*DataFrame*	(Comments/Flags for the user, fit issues, offset)
-   -> "Range"	*list* [xmin, xmax]
+   -> "X_Range"	*list* [xmin, xmax]
    -> Histogram Data (raw data)
    -> "Le_Bail_Data" *dict* Le Bail Fit Data		(phase fractions, unit cell, fit values and uncertainties)
    -> "Peak_Fit_Data" *dict* GSAS-II format
