@@ -56,8 +56,8 @@ function createRawIntensityPlot(all_results,div_id,dataset_name) {
 function createFittedIntensityPlot(all_results,div_id,dataset_name) {
     // Raw data
     var trace1 = {
-        x: all_results.two_thetas[dataset_name],
-        y: all_results.fit_points[dataset_name][0],
+        x: all_results[dataset_name].two_thetas,
+        y: all_results[dataset_name].raw_intensity_data,
         type: 'scatter',
         mode: 'lines+markers',
         name: 'Data',
@@ -65,15 +65,25 @@ function createFittedIntensityPlot(all_results,div_id,dataset_name) {
             color: 'rgb(0, 0, 0)',
                 }
     };
-    // Fit data
+    // Le Bail fit
     var trace2 = {
-        x: all_results.two_thetas[dataset_name],
-        y: all_results.fit_points[dataset_name][2],
+        x: all_results[dataset_name].two_thetas,
+        y: all_results[dataset_name].Le_Bail_fit,
         type: 'scatter',
-        name: 'Fit'
+        name: 'Le Bail Fit',
+        color: customColorScale[0]
+    };
+
+    // Peak fit
+    var trace3 = {
+        x: all_results[dataset_name].two_thetas,
+        y: all_results[dataset_name].Peak_fit,
+        type: 'scatter',
+        name: 'Peak Fit',
+        color: customColorScale[1]
     };
       
-    var data = [trace1,trace2];
+    var data = [trace1,trace2,trace3];
 
     var layout = {
         title: 'Fitted Intensities',
