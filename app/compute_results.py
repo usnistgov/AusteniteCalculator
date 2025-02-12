@@ -2294,16 +2294,20 @@ def package_for_export(Submit_dict):
         
         ## Normalized Intensity
         # Two Theta (per fit?), n_int, Phase, Fit Type,
+        # CHECK - add fit success?
         
-        # Mean values for n_int, phase, fit type
+        all_results[dataset_name]['n_int_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','n_int_fit', 'n_int_LB' ]]
+        
+        # Mean values for n_int, phase, fit type ?  Aggreated elsewhere
+
         
         ## Difference in Two Theta
         # Two Theta per fit,
-        
+
+        all_results[dataset_name]['pos_diff_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB' ]]
+
         ## Tables
         # Split, just export HTML
-
-
 
         # Table for Theoretical Intnesities
         all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False)
