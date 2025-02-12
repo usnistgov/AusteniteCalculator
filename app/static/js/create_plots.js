@@ -22,8 +22,8 @@ customColorScale = [
 function createRawIntensityPlot(all_results,div_id,dataset_name) {
 
     var trace1 = {
-        x: all_results.two_thetas[dataset_name],
-        y: all_results.fit_points[dataset_name][0],
+        x: all_results[dataset_name].two_thetas,
+        y: all_results[dataset_name].raw_intensity_data,
         type: 'scatter',
         mode: 'markers',
         name: 'Data',
