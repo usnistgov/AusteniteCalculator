@@ -40,7 +40,8 @@ import GSASIIpath
 
 # set up logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='app_logs.log', encoding='utf-8', level=logging.INFO)
+log_buffer = io.StringIO()
+logging.basicConfig(stream=log_buffer,encoding='utf-8', level=logging.INFO)
 
 # set up app
 app = Flask(__name__)
@@ -153,6 +154,10 @@ def submit():
         mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
     except Exception as e: 
         error_dict['mcmc'] = type(e).__name__ + ': ' + str(e)
+
+    log_text = log_buffer.getvalue()
+
+    breakpoint()
 
     if any(error_dict.values()):
 
