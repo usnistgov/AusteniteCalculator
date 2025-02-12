@@ -2303,11 +2303,10 @@ def package_for_export(Submit_dict):
         
         ## Difference in Two Theta
         # Two Theta per fit,
-
         all_results[dataset_name]['pos_diff_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB' ]]
 
-        ## Tables
-        # Split, just export HTML
+        ### Tables
+        # Split large table into different tables, just export HTML
 
         # Table for Theoretical Intnesities
         all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False)
@@ -2318,7 +2317,7 @@ def package_for_export(Submit_dict):
   
         # Table for Uncertainty Metrics
         # FIX - figure out which ones and add more
-         all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit', 'u_int_fit','u_int_LB' ]].to_html(justify='left', index=False)
+        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit', 'u_int_fit','u_int_LB' ]].to_html(justify='left', index=False)
  
         # Pull from:
         #Submit_dict["Dataset_1"]["Merged_Peaks"].columns
@@ -2344,21 +2343,43 @@ def package_for_export(Submit_dict):
 #       'n_u_N_Diffracting_95pct', 'n_u_N_Diffracting_50pct'],        
         
         
-         ###### Phase Fraction Tab
-         #-> Add Dataset drop down for data set
-         # Pick unit
+        ###### Phase Fraction Tab
+        #-> Add Dataset drop down for data set
+        # Pick unit
          
-         # Pull from:
-         #Submit_dict["Dataset_1"]["MCMC_Result_Number"] histogram
+        # Pull from:
+        #Submit_dict["Dataset_1"]["MCMC_Result_Number"] histogram
+        
+        ### Plots
+        # send data for all three, selection occurs in javascript
+        all_results[dataset_name]["phase_fraction_number_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Number"]
+        
+        all_results[dataset_name]["phase_fraction_mass_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Mass"]
+        
+        all_results[dataset_name]["phase_fraction_volume_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Volume"]
 
-        #"Uncert_Source_Summary"
-        #"Phase_Fraction_Result_Number"
+        ### Tables
+        # send data for all three, selection occurs in javascript
+        all_results[dataset_name]["phase_fraction_number_html"]=Submit_dict[dataset_name]["Phase_Fraction_Result_Number"].to_html(justify='left', index=False)
+        
+        all_results[dataset_name]["phase_fraction_mass_html"]=Submit_dict[dataset_name]["Phase_Fraction_Result_Mass"].to_html(justify='left', index=False)
+        
+        all_results[dataset_name]["phase_fraction_volume_html"]=Submit_dict[dataset_name]["Phase_Fraction_Result_Volume"].to_html(justify='left', index=False)
+        
+        # Summary of uncertainties, all normalized
+        all_results[dataset_name]["uncertainty_summary_html"]=Submit_dict[dataset_name]["Uncert_Source_Summary"].to_html(justify='left', index=False)
+        
+        
+        
+        # Put uncertainties for each peak on this tab?
+        # Or does that belong with the normalizied intensities?
+        #
+        
+        # Flags for the user
+        all_results[dataset_name]["flags_html"]=Submit_dict[dataset_name]["Flags"].to_html(justify='left', index=False)
+        
 
-        # Put uncertainties for each peak here?
-
-        # WHERE DO FLAGS GO?
-
-        ###### Inveractino Volume
+        ###### Inveraction Volume
         # Select Dataset, Phase, Peak (hkl)
         
         # Row from #Submit_dict["Dataset_1"]["Merged_Peaks"]
