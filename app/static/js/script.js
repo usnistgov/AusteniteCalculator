@@ -76,6 +76,8 @@ async function fetchData() {
         })
     });
 
+    // json response from app.py 'submit()'
+    // called the same variable 'all_results', but not defined that way
     all_results = await response.json();
 
     // update form selects for dataset number

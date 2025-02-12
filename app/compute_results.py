@@ -1916,7 +1916,7 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
     # otherwise were looping on datasets a few times
     Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
     
-    breakpoint()
+    #breakpoint()
     #mcmc_df_dict = compute_conversion_mcmc_dfs2(mcmc_df,conversions,n_keep=1000)
     #unique_phases = np.unique(results_table_df.Phase)
     
@@ -2242,6 +2242,117 @@ def process_data_input(use_default_files,
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_data
 
+def package_for_export(Submit_dict):
+    """
+    Repackage selected data for json export
+    Data structures need to be either html tables or dictionaries
+    
+    
+    """
+    
+    # Initialize dictionary
+    
+    all_results = {}
+       
+    ########
+    ##### Repackage for export
+    #######
+    
+    # Version Table as HTML
+    all_results['version_html']=Submit_dict["Version"].to_html(justify='left', index=False),
+    
+    # Unique phases
+    
+    
+    for dataset_name in Submit_dict['File_Paths']['Dataset_name']:
+        all_results[dataset_name]={}
+        
+        ####  Intensity plot Tab
+        #-> "Le_Bail_Data"
+        #-> "Peak_Fit_Data"
+        # ADD Gaussian
+
+        all_results[dataset_name]['two_thetas']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][0]
+        
+        # Measured Intensity data
+        all_results[dataset_name]['raw_intensity_data']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][1]
+
+        # Le Bail Fitted data
+        all_results[dataset_name]['Le_Bail_fit']=Submit_dict['Dataset_1']["Le_Bail_Data"]['data'][1][3]
+    
+        # Individual Peak Fit
+        all_results[dataset_name]['Peak_fit']=Submit_dict['Dataset_1']["Peak_Fit_Data"]['data'][1][3]
+
+
+
+        ###### Normailzed Intensities Tab
+        
+        ### Plots
+        
+        ## Normalized Intensity
+        # Two Theta (per fit?), n_int, Phase, Fit Type,
+        
+        # Mean values for n_int, phase, fit type
+        
+        ## Difference in Two Theta
+        # Two Theta per fit,
+        
+        ## Tables
+        # Split, just export HTML
+        # Table for Theoretical Intnesities
+        # Table for Fit values
+        # Table for Uncertainty Metrics
+        
+        # Pull from:
+        #Submit_dict["Dataset_1"]["Merged_Peaks"].columns
+        #Index(['pos_fit', 'int_fit', 'sig_fit', 'gam_fit', 'Peak_Fit_Success',
+#       'u_pos_fit', 'u_int_fit', 'back_int_bound', 'signal_to_noise',
+#       'u_int_count', 'rel_int_fit', 'rel_int_count', 'h_TI', 'k_TI', 'l_TI',
+#       'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Phase_TI',
+#       'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB',
+#       'pos_LB', 'sig_LB', 'gam_LB', 'F_obs_sq_LB', 'F_calc_sq_LB', 'phase_LB',
+#       'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'Phase', 'int_LB',
+#       'u_int_LB', 'n_int_fit', 'n_int_LB', 'n_u_int_fit', 'n_u_count_fit',
+#       'n_u_int_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB',
+#       'hkl', 'Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell',
+#       'f_0_Peak', 'f_Total_Peak', 'Phase_Fraction_fit_mass',
+#       'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle',
+#       'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction',
+#       'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um',
+#       '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm',
+#       'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad',
+#       'N_Layers_50pct', 'N_Layers_95pct', 'N_illuminated_50pct',
+#       'N_illuminated_95pct', 'Diffracting_Fraction', 'N_Diffracting_50pct',
+#       'N_Diffracting_95pct', 'u_N_Diffracting_50pct', 'u_N_Diffracting_95pct',
+#       'n_u_N_Diffracting_95pct', 'n_u_N_Diffracting_50pct'],        
+        
+        
+         ###### Phase Fraction Tab
+         #-> Add Dataset drop down for data set
+         # Pick unit
+         
+         # Pull from:
+         #Submit_dict["Dataset_1"]["MCMC_Result_Number"] histogram
+
+        #"Uncert_Source_Summary"
+        #"Phase_Fraction_Result_Number"
+
+        # Put uncertainties for each peak here?
+
+        # WHERE DO FLAGS GO?
+
+        ###### Inveractino Volume
+        # Select Dataset, Phase, Peak (hkl)
+        
+        # Row from #Submit_dict["Dataset_1"]["Merged_Peaks"]
+        
+        # Row from "Interaction_Plots"
+
+
+    # So access will be all_results[Dataset].variable
+
+    return all_results
+
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
     *DEPRICATED? or just not currently supported*
@@ -2420,6 +2531,9 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
 
     fit.fit_instprm_file(hist, peaks_list)
     hist.SaveProfile("created_instprm")
+
+
+
 
 
 

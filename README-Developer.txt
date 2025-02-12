@@ -35,7 +35,7 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "Dataset_name"		*List*
 
 
- -> Dataset
+ -> Dataset *Dictionary*
    |
    -> "Flags" 		*DataFrame*	(Comments/Flags for the user, fit issues, offset)
    -> "X_Range"	*list* [xmin, xmax]

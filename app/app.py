@@ -140,7 +140,10 @@ def submit():
 
     #mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
 
+    all_results=compute_results.package_for_export(Submission)
+
     breakpoint()
+ 
 
     # combine all results into a dictionary to send to browser
     # param_table has the uncertainty parameters from mcmc result

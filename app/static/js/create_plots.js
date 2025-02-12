@@ -106,6 +106,10 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_num) {
     // loop through unique phases
     for(let i = 0; i < all_results.unique_phases.length; i++) {
 
+    // loop through fit types
+    // use different marker styles for fit type and phase?
+    // would be good be consistent for phase
+
         // loop through Phase column for matches to current phase
         for(let j = 0; j < all_results.results_table.Phase.length; j++) {
             
