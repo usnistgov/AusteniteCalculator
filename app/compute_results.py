@@ -2260,7 +2260,7 @@ def package_for_export(Submit_dict):
     #######
     
     # Version Table as HTML
-    all_results['version_html']=Submit_dict["Version"].to_html(justify='left', index=False),
+    all_results['version_html']=Submit_dict["Version"].to_html(justify='left', index=False)
     
     # Unique phases
     all_results['unique_phases']=list(Submit_dict['Phase_Info']["Phase_list"])
@@ -2277,16 +2277,16 @@ def package_for_export(Submit_dict):
         #-> "Peak_Fit_Data"
         # ADD Gaussian
 
-        all_results[dataset_name]['two_thetas']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][0]
+        all_results[dataset_name]['two_thetas']=list(Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][0])
         
         # Measured Intensity data
-        all_results[dataset_name]['raw_intensity_data']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][1]
+        all_results[dataset_name]['raw_intensity_data']=list(Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][1])
 
         # Le Bail Fitted data
-        all_results[dataset_name]['Le_Bail_fit']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][3]
+        all_results[dataset_name]['Le_Bail_fit']=list(Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][3])
     
         # Individual Peak Fit
-        all_results[dataset_name]['Peak_fit']=Submit_dict[dataset_name]["Peak_Fit_Data"]['data'][1][3]
+        all_results[dataset_name]['Peak_fit']=list(Submit_dict[dataset_name]["Peak_Fit_Data"]['data'][1][3])
 
         ###### Normailzed Intensities Tab
         
@@ -2302,10 +2302,20 @@ def package_for_export(Submit_dict):
         
         ## Tables
         # Split, just export HTML
+
+
+
         # Table for Theoretical Intnesities
-        # Table for Fit values
+        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False)
+  
+        # Table for Fit values  
+        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','phase_LB','hkl','pos_TI', 'pos_LB','pos_fit', 'int_LB','int_fit','sig_fit','sig_LB', 'gam_fit','gam_LB', 'n_int_fit', 'n_int_LB' ]].to_html(justify='left', index=False)
+  
+  
         # Table for Uncertainty Metrics
-        
+        # FIX - figure out which ones and add more
+         all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit', 'u_int_fit','u_int_LB' ]].to_html(justify='left', index=False)
+ 
         # Pull from:
         #Submit_dict["Dataset_1"]["Merged_Peaks"].columns
         #Index(['pos_fit', 'int_fit', 'sig_fit', 'gam_fit', 'Peak_Fit_Success',
