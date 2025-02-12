@@ -208,6 +208,7 @@ function incidentAnglePlot(all_results) {
 
 /**
  * Return the Phase Fraction Plot as a plotly object
+ * CHECK - do we want to pass the 8000 MCMC runs, or bin ahead of time?
  *
  * @param [dict] all_results : dictionary with data
  * @param [str] div_id : ID for which division?

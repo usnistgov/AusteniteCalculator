@@ -2269,6 +2269,16 @@ def package_for_export(Submit_dict):
     # FIX - add this to compute
     all_results['fit_types']=["_LB","_fit"]
     
+    # Need length of arrays for javascript
+    all_results['n_datasets']=len(Submit_dict['File_Paths']['Dataset_name'])
+    
+    all_results['n_phases']=len(all_results['unique_phases'])
+    
+    # CHECK - kind of kludgy
+    first_dataset_name=Submit_dict['File_Paths']['Dataset_name'][0]
+    all_results['n_peaks']=len(Submit_dict[first_dataset_name]["Merged_Peaks"])
+ 
+ 
     for dataset_name in Submit_dict['File_Paths']['Dataset_name']:
         all_results[dataset_name]={}
         
@@ -2296,14 +2306,14 @@ def package_for_export(Submit_dict):
         # Two Theta (per fit?), n_int, Phase, Fit Type,
         # CHECK - add fit success?
         
-        all_results[dataset_name]['n_int_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','n_int_fit', 'n_int_LB' ]]
+        all_results[dataset_name]['n_int_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','n_int_fit', 'n_int_LB' ]].to_dict(orient='list')
         
         # Mean values for n_int, phase, fit type ?  Aggreated elsewhere
 
         
         ## Difference in Two Theta
         # Two Theta per fit,
-        all_results[dataset_name]['pos_diff_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB' ]]
+        all_results[dataset_name]['pos_diff_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB' ]].to_dict(orient='list')
 
         ### Tables
         # Split large table into different tables, just export HTML
@@ -2352,11 +2362,11 @@ def package_for_export(Submit_dict):
         
         ### Plots
         # send data for all three, selection occurs in javascript
-        all_results[dataset_name]["phase_fraction_number_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Number"]
+        all_results[dataset_name]["phase_fraction_number_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Number"].to_dict(orient='list')
         
-        all_results[dataset_name]["phase_fraction_mass_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Mass"]
+        all_results[dataset_name]["phase_fraction_mass_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Mass"].to_dict(orient='list')
         
-        all_results[dataset_name]["phase_fraction_volume_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Volume"]
+        all_results[dataset_name]["phase_fraction_volume_plot_data"]=Submit_dict[dataset_name]["MCMC_Result_Volume"].to_dict(orient='list')
 
         ### Tables
         # send data for all three, selection occurs in javascript

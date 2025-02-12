@@ -85,7 +85,7 @@ async function fetchData() {
     let normalized_intensity_plot_select = document.getElementById("normalized-intensity-plots-select");
     let cryst_illum_data_select = document.getElementById("cryst-illum-select-dataset");
 
-    const n_dsets = all_results.n_dsets;
+    const n_dsets = all_results.n_datasets;
     let dset_select_arr = [intensity_plots_select, normalized_intensity_plot_select, cryst_illum_data_select];
 
     for(let i = 0; i < n_dsets; i++) {
@@ -103,7 +103,7 @@ async function fetchData() {
 
     // update form selects for phase
     let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
-    const n_phases = all_results.unique_phases.length;
+    const n_phases = all_results.n_phases;
     
     for(let i = 0; i < n_phases; i++) {
         let new_option = document.createElement("option");
@@ -113,16 +113,17 @@ async function fetchData() {
 
     // update form selects for peak
     let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
-    let n_peaks = all_results.results_table.Phase.length;
+    let n_peaks = all_results.n_peaks;
 
-    for(let i = 0; i < n_peaks; i++) {
-        if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
-            let new_option = document.createElement("option");
-            new_option.textContent = (i + 1).toString();
-            cryst_illum_peak_select.appendChild(new_option);
-        }
-
-    }
+// FIX - when we get crystallites illuinated
+//    for(let i = 0; i < n_peaks; i++) {
+//        if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
+//            let new_option = document.createElement("option");
+//            new_option.textContent = (i + 1).toString();
+//            cryst_illum_peak_select.appendChild(new_option);
+//        }
+//
+//    }
 
     // intensities plots
     let dsetName = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)

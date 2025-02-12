@@ -143,7 +143,7 @@ def submit():
     all_results=compute_results.package_for_export(Submission)
 
     print(all_results.keys())
-    breakpoint()
+    #breakpoint()
  
 
     # combine all results into a dictionary to send to browser
