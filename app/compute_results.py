@@ -1104,6 +1104,7 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
 
     # Extract all phases listed
     phase_list=Merged_DF['Phase'].unique()
+    Submit_dict['Phase_Info']["Phase_list"]=phase_list
     n_phases = len(phase_list)
 
     phase_fraction_DF = pd.DataFrame({
@@ -2262,7 +2263,11 @@ def package_for_export(Submit_dict):
     all_results['version_html']=Submit_dict["Version"].to_html(justify='left', index=False),
     
     # Unique phases
+    all_results['unique_phases']=list(Submit_dict['Phase_Info']["Phase_list"])
     
+    # Fit Types
+    # FIX - add this to compute
+    all_results['fit_types']=["_LB","_fit"]
     
     for dataset_name in Submit_dict['File_Paths']['Dataset_name']:
         all_results[dataset_name]={}
@@ -2278,12 +2283,10 @@ def package_for_export(Submit_dict):
         all_results[dataset_name]['raw_intensity_data']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][1]
 
         # Le Bail Fitted data
-        all_results[dataset_name]['Le_Bail_fit']=Submit_dict['Dataset_1']["Le_Bail_Data"]['data'][1][3]
+        all_results[dataset_name]['Le_Bail_fit']=Submit_dict[dataset_name]["Le_Bail_Data"]['data'][1][3]
     
         # Individual Peak Fit
-        all_results[dataset_name]['Peak_fit']=Submit_dict['Dataset_1']["Peak_Fit_Data"]['data'][1][3]
-
-
+        all_results[dataset_name]['Peak_fit']=Submit_dict[dataset_name]["Peak_Fit_Data"]['data'][1][3]
 
         ###### Normailzed Intensities Tab
         

@@ -142,6 +142,7 @@ def submit():
 
     all_results=compute_results.package_for_export(Submission)
 
+    print(all_results.keys())
     breakpoint()
  
 
@@ -150,31 +151,32 @@ def submit():
     # pf_table has the phase fraction with conversions
     # results_table is the combined fit and theoretical data
     # mcmc_df are all the simulated phase fractions (by unit cell)
-    all_results = {'conversion_table':conversions.to_dict(orient='list'),
-                   'version_html':version_DF.to_html(justify='left', index=False),
-                   'two_thetas':pk_fit_res['two_thetas'],
-                   'fit_points':pk_fit_res['fit_points'],
-                   'cryst_ill_res':cryst_ill_res['crystallites_dict'],
-                   #'cryst_ill_res':cryst_ill_res,
-                   # issues since user flags are per data set
-                   #'user_flags':pk_fit_res['user_flags'],
-                   # Create dictionary of html tables
-                   # Have it be a choice of the which dataset
-                   #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
-                   'param_table':param_table.to_dict(orient='list'),
-                   'param_table_html':param_table.to_html(justify='left'),
-                   'pf_table':pf_table.to_dict(orient='list'),
-                   'pf_table_html':pf_table.to_html(justify='left', index=False),
-                   'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
-                   # changing to pass to full results, now a dict
-                   #'results_table':pk_fit_res['full_results_table'],
-                   'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
-                   # Issues with structure of graph_data_table
-                   # Maybe due to pandas dataframes nested inside
-                   #'graph_data_table':graph_data_dict,
-                   'mcmc_dict':mcmc_df_dict,
-                   'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
-                   'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
+    
+#    all_results = {'conversion_table':conversions.to_dict(orient='list'),
+#                   'version_html':version_DF.to_html(justify='left', index=False),
+#                   'two_thetas':pk_fit_res['two_thetas'],
+#                   'fit_points':pk_fit_res['fit_points'],
+#                   'cryst_ill_res':cryst_ill_res['crystallites_dict'],
+#                   #'cryst_ill_res':cryst_ill_res,
+#                   # issues since user flags are per data set
+#                   #'user_flags':pk_fit_res['user_flags'],
+#                   # Create dictionary of html tables
+#                   # Have it be a choice of the which dataset
+#                   #'user_flags_html':pk_fit_res['user_flags'].to_html(justify='left'),
+#                   'param_table':param_table.to_dict(orient='list'),
+#                   'param_table_html':param_table.to_html(justify='left'),
+#                   'pf_table':pf_table.to_dict(orient='list'),
+#                   'pf_table_html':pf_table.to_html(justify='left', index=False),
+#                   'results_table':pk_fit_res['full_results_table'].to_dict(orient='list'),
+#                   # changing to pass to full results, now a dict
+#                   #'results_table':pk_fit_res['full_results_table'],
+#                   'results_table_html':pk_fit_res['full_results_table'].to_html(justify='left'),
+#                   # Issues with structure of graph_data_table
+#                   # Maybe due to pandas dataframes nested inside
+#                   #'graph_data_table':graph_data_dict,
+#                   'mcmc_dict':mcmc_df_dict,
+#                   'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
+#                   'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
 
     # quick and dirty way to export all
     #with open("export-all.json", "w") as outfile:

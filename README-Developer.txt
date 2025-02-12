@@ -20,7 +20,7 @@ Submission	*Dictionary*	(Container for all the items computed)
 	-> 'unit_cell_volume_CIF' *DataFrame* with the volumes for each unit cell from the CIF file	
 	-> 'unit_cell_mass_CIF' *DataFrame* with the mass for each unit cell from the CIF file
    -> "Atomic_Masses"  		*DataFrame*  has 'atomic_masses_dict' for rows of elements listed
-
+   -> "Phase_list"  *list* list of unique phases
 
  -> Diffractometer Info (beam Shape, detector position)
  -> MCMC parameters
