@@ -28,24 +28,24 @@ normalized_intensities_plot_select.addEventListener("change", function() {
     // This uses the same pattern as script.js
 
     createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',this.selectedIndex+1);
-})
-
-// Theoretical Intensities Table
-//all_results[dataset_name]['Theo_n_int_html']
-normalized_intensities_plot_select.addEventListener("change", function() {
-
-    // This function plots the dataset based on which is selcted in this.selectedIndex
-    // This uses the same pattern as script.js
-
+    
+    // Theoretical Intensities Table
+    //all_results[dataset_name]['Theo_n_int_html']
     create_Theo_Int_Table(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+    
+    // Fit values Table
+    // all_results[dataset_name]['Fit_n_int_html']
+    create_Theo_Int_table(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+
+    // Uncertainty metrics Table
+    // all_results[dataset_name]['Uncertainties_n_int_html']
+    
 })
 
 
-// Fit values Table
-// all_results[dataset_name]['Fit_n_int_html']
 
-// Uncertainty metrics Table
-// all_results[dataset_name]['Uncertainties_n_int_html']
+
+
 
 
 

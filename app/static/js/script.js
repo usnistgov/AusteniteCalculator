@@ -132,9 +132,10 @@ async function fetchData() {
     
     
     // Normalized intensity plots
-    //createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',intensity_plots_select.selectedIndex+1);
+    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName);
     
-    create_Theo_Int_Table(all_results,'normalized-intensities-plot',dsetName)
+    create_Theo_Int_table(all_results,'normalized-intensities-plot',dsetName)
+    create_Fit_n_int_table(all_results,'normalized-intensities-plot',dsetName)
     
     // Phase fraction plots
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number');

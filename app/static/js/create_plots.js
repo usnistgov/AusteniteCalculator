@@ -104,59 +104,98 @@ function createFittedIntensityPlot(all_results,div_id,dataset_name) {
  *
  * @returns {Plotly.newPlot()} Types and descriptions are both supported.
  */
-function createNormalizedIntensityPlot(all_results,div_id,dataset_num) {
+function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
     
     var data = [];
 
-    let t_x = [];
-    let t_y = [];
-
-    let phase_mean = 0;
-
-    // loop through unique phases
-    for(let i = 0; i < all_results.unique_phases.length; i++) {
 
     // loop through fit types
     // use different marker styles for fit type and phase?
     // would be good be consistent for phase
+    
+    let t_2theta = [];
+    let t_LB = [];
+    let t_fit = [];
+    
+    let phase_mean = 0;
+
+    // loop through unique phases
+    
+    for(let i = 0; i < all_results['unique_phases'].length; i++) {
 
         // loop through Phase column for matches to current phase
-        for(let j = 0; j < all_results.results_table.Phase.length; j++) {
-            
-            if( (all_results.results_table.Phase[j] == all_results.unique_phases[i]) && 
-                (all_results.results_table.sample_index[j] == dataset_num) ) {
-                t_x.push(all_results.results_table.pos_fit[j]);
-                t_y.push(all_results.results_table.n_int[j]);
+        // Also loop through all datasets?[j]
+        for(let j = 0; j < all_results[dataset_name]['n_int_plot_data']['Phase'].length; j++) {
+ 
+            // CHECK - May only work for single dataset
+             if(all_results[dataset_name]['n_int_plot_data']['Phase'][j] == all_results['unique_phases'][i])  {
+                t_2theta.push(all_results[dataset_name]['n_int_plot_data']['pos_TI'][j]);
+                t_LB.push(all_results[dataset_name]['n_int_plot_data']['n_int_LB'][j]);
+                t_fit.push(all_results[dataset_name]['n_int_plot_data']['n_int_fit'][j]);
             }
+ 
+            //if( (all_results['n_int_plot_data']['Phase'][j] == all_results['unique_phases'][i]) &&
+             //   (all_results['n_int_plot_data'].sample_index[j] == dataset_num) ) {
+             //   t_x.push(all_results['n_int_plot_data'].pos_fit[j]);
+             //   t_y.push(all_results['n_int_plot_data'].n_int[j]);
+           // }
 
         }
 
         data.push({
-            x: t_x,
-            y: t_y,
+            x: t_2theta,
+            y: t_LB,
             mode:'markers',
             type: 'scatter',
-            name: all_results.unique_phases[i],
+            name: all_results['unique_phases'][i]+' Le Bail',
             marker: {
-                color: customColorScale[i]
+                color: customColorScale[i],
+                symbol: "circle"
             }
         });
-
-        phase_mean = math.sum(t_y)/t_y.length;
 
         data.push({
-            x: [math.min(all_results.results_table.pos_fit),math.max(all_results.results_table.pos_fit)],
-            y: [phase_mean, phase_mean],
-            name: all_results.unique_phases[i],
+            x: t_2theta,
+            y: t_fit,
+            mode:'markers',
+            type: 'scatter',
+            name: all_results['unique_phases'][i]+' Peak Fit',
+            marker: {
+                color: customColorScale[i],
+                symbol: "square"
+            }
+        });
+
+        phase_mean_LB = math.sum(t_LB)/t_LB.length;
+        phase_mean_fit = math.sum(t_fit)/t_fit.length;
+
+
+        data.push({
+            x: [math.min(all_results[dataset_name]['n_int_plot_data']['pos_TI']),math.max(all_results[dataset_name]['n_int_plot_data']['pos_TI'])],
+            y: [phase_mean_LB, phase_mean_LB],
+            name: all_results['unique_phases'][i]+' Le Bail',
             mode: 'lines',
+            line: {dash: 'solid'},
             marker: {
                 color: customColorScale[i]
             }
         });
+        
+        data.push({
+            x: [math.min(all_results[dataset_name]['n_int_plot_data']['pos_TI']),math.max(all_results[dataset_name]['n_int_plot_data']['pos_TI'])],
+            y: [phase_mean_fit, phase_mean_fit],
+            name: all_results['unique_phases'][i]+' Peak Fit',
+            mode: 'lines',
+            line: {dash: 'dash'},
+            marker: {
+                color: customColorScale[i]
+            }
+        });
+        
 
-        t_x = [];
-        t_y = [];
-
+        t_2theta = [];
+        t_LB = [];
+        t_fit = [];
     }
     
     // Add mean lines
