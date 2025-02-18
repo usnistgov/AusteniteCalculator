@@ -43,7 +43,7 @@
       </li>
 
       <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" type="button" href="#file-creation-cryst-tab">File Creation (Crystallites Illuminated)</button>
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#crystallites-illuminated-tab">Crystallites Illuminated</button>
       </li>
 
       <li class="nav-item">
@@ -193,8 +193,8 @@
         <br>
         <h4>Raw and Fitted Diffraction Data</h4>
         <div class="col-2">
-          <label for="intensity-plots-select" class="form-label">Which Dataset</label>
-            <select class="form-select" id="intensity-plots-select">
+          <label for="intensity-plots-dataset-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="intensity-plots-dataset-select">
             </select>
         </div>
 
@@ -207,7 +207,7 @@
             <div id='fitted-intensity-plot'></div>
           </div>
         </div>
-        
+        <!--  CHECK - is this the best placement, or should this go on another tab? -->
         <br>
         <h6>Notes for User on Austenite Calculation</h6>
         <div class="row">
@@ -240,7 +240,11 @@
           <table id="results-table" class="table" style="white-space:nowrap"></table>
         </div>
 
-
+        <br>
+        <h6>Calculated Values for Theoretical Intensities per Peak</h6>
+        <div class="row">
+          <table id='Theo-Int-table' class="table" style="white-space:nowrap"></table>
+        </div>        
 
 
 
@@ -285,7 +289,7 @@
       </div>
 
   <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
-      <div class="tab-pane" id="file-creation-cryst-tab">
+      <div class="tab-pane" id="#crystallites-illuminated-tab">
         <br>
 
         <div class="col-3">
@@ -319,6 +323,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/create_plots.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/create_tables.js') }}"></script>
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
   <script src="{{ url_for('static', filename='js/aux_file_downloads.js') }}"></script>
   <script src="{{ url_for('static', filename='js/pf_conversion_and_sample_reactivity.js') }}"></script>

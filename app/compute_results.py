@@ -2319,7 +2319,7 @@ def package_for_export(Submit_dict):
         # Split large table into different tables, just export HTML
 
         # Table for Theoretical Intnesities
-        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False)
+        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
         # Table for Fit values  
         all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','phase_LB','hkl','pos_TI', 'pos_LB','pos_fit', 'int_LB','int_fit','sig_fit','sig_LB', 'gam_fit','gam_LB', 'n_int_fit', 'n_int_LB' ]].to_html(justify='left', index=False)
@@ -2378,7 +2378,6 @@ def package_for_export(Submit_dict):
         
         # Summary of uncertainties, all normalized
         all_results[dataset_name]["uncertainty_summary_html"]=Submit_dict[dataset_name]["Uncert_Source_Summary"].to_html(justify='left', index=False)
-        
         
         
         # Put uncertainties for each peak on this tab?

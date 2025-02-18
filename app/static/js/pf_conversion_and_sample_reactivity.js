@@ -1,3 +1,58 @@
+/*  **************************
+ Intensity Plots Tab - Form Selection for Dataset
+ Events also called in script.js
+****************************  */
+let intensity_plots_select = document.getElementById("intensity-plots-dataset-select");
+
+intensity_plots_select.addEventListener("change", function() {
+
+    // This function plots the dataset based on which is selcted in this.selectedIndex
+    // This uses the same pattern as script.js
+    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
+
+    createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
+    createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
+})
+
+/*  **************************
+ Normalized Intensity Tab - Form Selection for Dataset
+ Events also called in script.js to set inital values
+****************************  */
+
+// Normalized Itensities Plot
+let normalized_intensities_plot_select = document.getElementById("normalized-intensity-plots-select");
+
+normalized_intensities_plot_select.addEventListener("change", function() {
+
+    // This function plots the dataset based on which is selcted in this.selectedIndex
+    // This uses the same pattern as script.js
+
+    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+})
+
+// Theoretical Intensities Table
+//all_results[dataset_name]['Theo_n_int_html']
+normalized_intensities_plot_select.addEventListener("change", function() {
+
+    // This function plots the dataset based on which is selcted in this.selectedIndex
+    // This uses the same pattern as script.js
+
+    create_Theo_Int_Table(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+})
+
+
+// Fit values Table
+// all_results[dataset_name]['Fit_n_int_html']
+
+// Uncertainty metrics Table
+// all_results[dataset_name]['Uncertainties_n_int_html']
+
+
+
+/*  **************************
+ Phase Fraction Tab - Form Selection for Conversion Type
+ Events also called in script.js
+****************************  */
 let conversion_select = document.getElementById("conversion-select");
 
 // below this needs to be changed
@@ -25,29 +80,6 @@ conversion_select.addEventListener("change", function() {
     
 })
 
-let intensity_plots_select = document.getElementById("intensity-plots-select");
-
-intensity_plots_select.addEventListener("change", function() {
-
-    // This function plots the dataset based on which is selcted in this.selectedIndex
-    // This uses the same pattern as script.js
-    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
-
-    createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
-    createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
-})
-
-let normalized_intensities_plot_select = document.getElementById("normalized-intensity-plots-select");
-
-normalized_intensities_plot_select.addEventListener("change", function() {
-
-    // This function plots the dataset based on which is selcted in this.selectedIndex
-    // This uses the same pattern as script.js
-
-    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',this.selectedIndex+1);
-
-
-})
 
 
  // update form selects for peak

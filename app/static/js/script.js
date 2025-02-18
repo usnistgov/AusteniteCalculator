@@ -81,7 +81,7 @@ async function fetchData() {
     all_results = await response.json();
 
     // update form selects for dataset number
-    let intensity_plots_select = document.getElementById("intensity-plots-select");
+    let intensity_plots_select = document.getElementById("intensity-plots-dataset-select");
     let normalized_intensity_plot_select = document.getElementById("normalized-intensity-plots-select");
     let cryst_illum_data_select = document.getElementById("cryst-illum-select-dataset");
 
@@ -100,7 +100,7 @@ async function fetchData() {
         }
 
     }
-
+    // Crystallites Illuminated Tab
     // update form selects for phase
     let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
     const n_phases = all_results.n_phases;
@@ -125,11 +125,18 @@ async function fetchData() {
 //
 //    }
 
-    // intensities plots
+    // Intensity 2-theta plots
     let dsetName = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
-    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',intensity_plots_select.selectedIndex+1);
+    
+    
+    // Normalized intensity plots
+    //createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',intensity_plots_select.selectedIndex+1);
+    
+    create_Theo_Int_Table(all_results,'normalized-intensities-plot',dsetName)
+    
+    // Phase fraction plots
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number');
 
     // cryst illum table
@@ -143,7 +150,8 @@ async function fetchData() {
     document.getElementById('version-table').innerHTML=version_table_html;
 
 
-    // User Flags table
+    // User Flags table  ["flags_html"]
+    // Now also variable by dataset
     // const user_flags_html = all_results.user_flags_html;
     // document.getElementById('user-flags-table').innerHTML=user_flags_html;
 

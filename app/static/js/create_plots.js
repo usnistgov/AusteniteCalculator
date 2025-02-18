@@ -14,8 +14,8 @@ customColorScale = [
  * Return the Raw Intenisty Plot as a plotly object
  *
  * @param [dict] all_results : dictionary with data
- * @param [str] div_id : ID for which division?
- * @param [num] dataset_name :
+ * @param [str] div_id : ID for division index.html
+ * @param [num] dataset_name : variable for the dataset number
  *
  * @returns {Plotly.newPlot()} Types and descriptions are both supported.
  */
@@ -48,8 +48,8 @@ function createRawIntensityPlot(all_results,div_id,dataset_name) {
  * Return the Raw Intenisty and Fitted Data Plot as a plotly object
  *
  * @param [dict] all_results : dictionary with data
- * @param [str] div_id : ID for which division?
- * @param [num] dataset_name :
+ * @param [str] div_id : ID for division index.html
+ * @param [num] dataset_name : variable for the dataset number
  *
  * @returns {Plotly.newPlot()} Types and descriptions are both supported.
  */
