@@ -214,6 +214,53 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
     Plotly.newPlot(div_id, data, layout);
 }
 
+/**
+ * Return the Phase Fraction Plot as a plotly object
+ * CHECK - do we want to pass the 8000 MCMC runs, or bin ahead of time?
+ *
+ * @param [dict] all_results : dictionary with data
+ * @param [str] div_id : ID for which division?
+ *
+ * @returns {Plotly.newPlot()} Types and descriptions are both supported.
+ */
+function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_name) {
+
+    let mcmc_res = null;
+
+    if(which_conversion == 'number') {
+        mcmc_res = all_results[dataset_name]["phase_fraction_number_plot_data"];
+    
+    } else if(which_conversion == 'mass') {
+        mcmc_res = all_results[dataset_name]["phase_fraction_mass_plot_data"];
+
+    } else if(which_conversion == 'volume') {
+        mcmc_res = all_results[dataset_name]["phase_fraction_volume_plot_data"];
+    } else {
+        return(null)
+    }
+    
+    let data = [];
+
+    for(let i = 0; i < all_results.unique_phases.length; i++) {
+
+    // Changed to 100 bins from 80
+        data.push({
+            x:mcmc_res['phase_mu['.concat(i+1).concat(']')],
+            type:'histogram',
+            opacity:0.6,
+            name: all_results.unique_phases[i],
+            nbinsx: 100
+        })
+
+    }
+
+    let layout = {
+        barmode: 'overlay'
+    }
+
+    Plotly.newPlot(div_id, data, layout);
+
+};
 
 /**
  * Return the Diffracted Counts vs Z depth as a plotly object
@@ -245,49 +292,4 @@ function incidentAnglePlot(all_results) {
 
 }
 
-/**
- * Return the Phase Fraction Plot as a plotly object
- * CHECK - do we want to pass the 8000 MCMC runs, or bin ahead of time?
- *
- * @param [dict] all_results : dictionary with data
- * @param [str] div_id : ID for which division?
- *
- * @returns {Plotly.newPlot()} Types and descriptions are both supported.
- */
-function createPhaseFractionPlot(all_results,div_id,which_conversion) {
 
-    let mcmc_res = null;
-
-    if(which_conversion == 'number') {
-        mcmc_res = all_results.mcmc_dict['number_cells_dict'];
-    
-    } else if(which_conversion == 'mass') {
-        mcmc_res = all_results.mcmc_dict['mass_frac_dict'];
-
-    } else if(which_conversion == 'volume') {
-        mcmc_res = all_results.mcmc_dict['vol_frac_dict'];
-    } else {
-        return(null)
-    }
-    
-    let data = [];
-
-    for(let i = 0; i < all_results.unique_phases.length; i++) {
-
-        data.push({
-            x:mcmc_res['phase_mu['.concat(i+1).concat(']')],
-            type:'histogram',
-            opacity:0.6,
-            name: all_results.unique_phases[i],
-            nbinsx: 80
-        })
-
-    }
-
-    let layout = {
-        barmode: 'overlay'
-    }
-
-    Plotly.newPlot(div_id, data, layout);
-
-};

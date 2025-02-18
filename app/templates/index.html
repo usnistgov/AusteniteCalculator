@@ -222,7 +222,7 @@
   <!-- Normalized Intensity Tab -->
       <div class="tab-pane" id="normalized-int-tab">
   
-        <h2>Normalized Intensities</h6>
+        <h2>Normalized Intensities</h2>
         <div class="col-2">
           <label for="normalized-intensity-plots-select" class="form-label">Which Dataset</label>
             <select class="form-select" id="normalized-intensity-plots-select"></select>
@@ -236,13 +236,13 @@
 
 
         <br>
-        <h4>Calculated Values for Theoretical Intensities per Peak</h6>
+        <h4>Calculated Values for Theoretical Intensities per Peak</h4>
         <div class="row">
           <table id='Theo-Int-table' class="table" style="white-space:nowrap"></table>
         </div>        
 
         <br>
-        <h4>Fit Values per Peak</h6>
+        <h4>Fit Values per Peak</h4>
         <div class="row">
           <table id='Fit-n-int-table' class="table" style="white-space:nowrap"></table>
         </div>
@@ -255,14 +255,14 @@
   <!-- Phase Fraciton Tab -->
       <div class="tab-pane" id="phase-frac-tab">
 
-        <br>
-
-        <div class="row">
-          <h4>Phase Fraction Histogram</h4>
-          <div id="phase-fraction-plot"></div>
+        <h2>Phase Fraction</h2>
+        <div class="col-2">
+          <label for="phase-fraction-plots-dataset-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="phase-fraction-plots-dataset-select"></select>
         </div>
 
         <br>
+
         <div class="row">
           <div class="col-3">
           <h6>Choose Units to Display Phase Fraction Histogram:</h6>
@@ -272,6 +272,12 @@
             <option value="3">Volume Fraction</option>
           </select>
           </div>
+        </div>
+
+        <br>
+        <div class="row">
+          <h4>Phase Fraction Histogram</h4>
+          <div id="phase-fraction-plot"></div>
         </div>
 
         <br>

@@ -45,17 +45,18 @@ normalized_intensities_plot_select.addEventListener("change", function() {
 
 
 
-
-
-
-
 /*  **************************
  Phase Fraction Tab - Form Selection for Conversion Type
  Events also called in script.js
 ****************************  */
+let phase_fraction_plots_dataset_select = document.getElementById("phase-fraction-plots-dataset-select");
 let conversion_select = document.getElementById("conversion-select");
 
+
 // below this needs to be changed
+phase_fraction_plots_dataset_select.addEventListener("change", function() {
+    dataset_name=this.selectedIndex+1
+
 conversion_select.addEventListener("change", function() {
     console.log("event triggered");
 
@@ -75,9 +76,8 @@ conversion_select.addEventListener("change", function() {
             conversion_option = 'volume';
             break;
     }
-
-    createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option);
-    
+    createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
+  })
 })
 
 

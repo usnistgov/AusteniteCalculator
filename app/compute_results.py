@@ -2322,7 +2322,7 @@ def package_for_export(Submit_dict):
         all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
         # Table for Fit values  
-        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit', 'int_LB','int_fit','sig_fit','sig_LB', 'gam_fit','gam_LB', 'n_int_fit', 'n_int_LB' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
+        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit', 'int_LB','int_fit','sig_LB','sig_fit','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
   
   
         # Table for Uncertainty Metrics
