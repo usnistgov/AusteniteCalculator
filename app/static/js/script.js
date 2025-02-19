@@ -106,9 +106,45 @@ async function fetchData() {
         }
 
     }
+
+    // ***** About Tab
+    // version summary table
+    const version_table_html = all_results.version_html;
+    document.getElementById('version-table').innerHTML=version_table_html;
+
+    // ***** Intensity Plots Tab Initialization
+    // Choose dataset
+    let dsetName_IntPlotTab = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
+    // Create plots
+    createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName_IntPlotTab);
+    createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName_IntPlotTab);
+    // Create User Flags table
+    create_flags_table(all_results,'user-flags-table',dsetName_IntPlotTab);
+    
+    
+    // ***** Normalized Intensity Tab Initialization
+    // CHECK - do we want one for each type of fitting, or combined?
+    let dsetName_NormIntTab = 'Dataset_'.concat(normalized_intensity_plot_select.selectedIndex+1)
+    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName_NormIntTab);
+    
+    create_Theo_Int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
+    create_Fit_n_int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
+    
+    // ***** Phase Fraction Tab Initialization
+    let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
+    createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
+    create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);
+    create_uncert_source_summary_table(all_results,'uncert-table',dsetName_PhaseFracTab);
+    
+    // *****  Crystallites Illuminated Tab Initialization
+    // createCrystIllumTable()
+
     // Crystallites Illuminated Tab
+    // Selecty by dataset
+    let dsetName_CrysIllTab = 'Dataset_'.concat(cryst_illum_data_select.selectedIndex+1);
     // update form selects for phase
     let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
+    
     const n_phases = all_results.n_phases;
     
     for(let i = 0; i < n_phases; i++) {
@@ -131,57 +167,24 @@ async function fetchData() {
 //
 //    }
 
-    // About Tab
-    // version summary table
-    const version_table_html = all_results.version_html;
-    document.getElementById('version-table').innerHTML=version_table_html;
-
-
-
-    // Intensity Plots Tab
-    let dsetName_IntPlotTab = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
-    createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName_IntPlotTab);
-    createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName_IntPlotTab);
-    create_flags_table(all_results,'user-flags-table',dsetName_IntPlotTab);
-    
-    
-    // Normalized Intensity Tab
-    // CHECK - do we want one for each type of fitting, or combined?
-    let dsetName_NormIntTab = 'Dataset_'.concat(normalized_intensity_plot_select.selectedIndex+1)
-    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName_NormIntTab);
-    
-    create_Theo_Int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
-    create_Fit_n_int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
-    
-    // Phase Fraction Tab
-    let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
-    createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
-    create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);
-    create_uncert_source_summary_table(all_results,'uncert-table',dsetName_PhaseFracTab);
-    // cryst illum Tab
-   // createCrystIllumTable()
-
     // tables
     // ??? Why call these 'table' if they are html?  Confusing with app.py
 
 
 
-    // User Flags table  ["flags_html"]
-    // Now also variable by dataset
-    // const user_flags_html = all_results.user_flags_html;
-    // document.getElementById('user-flags-table').innerHTML=user_flags_html;
+
 
     // results table
-    const results_table_html = all_results.results_table_html;
-    document.getElementById('results-table').innerHTML=results_table_html;
+    //const results_table_html = all_results.results_table_html;
+    //document.getElementById('results-table').innerHTML=results_table_html;
 
     // uncertainties table
-    const uncert_table_html = all_results.param_table_html;
-    document.getElementById('uncert-table').innerHTML=uncert_table_html;
+    //const uncert_table_html = all_results.param_table_html;
+    //document.getElementById('uncert-table').innerHTML=uncert_table_html;
 
     // pf table
-    const pf_table_html = all_results.pf_table_html;
-    document.getElementById('pf-table').innerHTML=pf_table_html;
+    //const pf_table_html = all_results.pf_table_html;
+    //document.getElementById('pf-table').innerHTML=pf_table_html;
 
     changeTab();
     hideLoading();
