@@ -100,7 +100,10 @@
               <input type="file" class="form-control" id="cryst-illum-file">
             </div>
           
-
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="sum_checkbox" name="sum_checkbox">
+              <label class="form-check-label" for="sum_checkbox">Sum Individual Files?</label>
+            </div>
             
             <h6>Option 2: Use Example Files</h6>
 
@@ -145,10 +148,6 @@
           </span>
         </div>
         
-        <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="sum_checkbox" name="sum_checkbox" value="sum_datafiles">
-              <label class="form-check-label" for="sum_checkbox">Sum Individual Files?</label>
-            </div>
 
         <br>
 
@@ -209,7 +208,7 @@
         </div>
         <!--  CHECK - is this the best placement, or should this go on another tab? -->
         <br>
-        <h6>Notes for User on Austenite Calculation</h6>
+        <h4>Notes for User on Austenite Calculation</h4>
         <div class="row">
           <table id="user-flags-table" class="table" style="white-space:nowrap"></table>
         </div>
@@ -229,26 +228,22 @@
         </div>
 
         <br>
-        <h4>Normalized Intensities and Calculated Values per Peak</h4>
+        <h4>Normalized Intensities per Peak Plot</h4>
         <div class="row">
           <div id='normalized-intensities-plot'></div>
         </div>
-
-
+     
         <br>
-        <h4>Calculated Values for Theoretical Intensities per Peak</h4>
-        <div class="row">
-          <table id='Theo-Int-table' class="table" style="white-space:nowrap"></table>
-        </div>        
-
-        <br>
-        <h4>Fit Values per Peak</h4>
+        <h4>Fit Values per Peak Summary Table</h4>
         <div class="row">
           <table id='Fit-n-int-table' class="table" style="white-space:nowrap"></table>
         </div>
 
-
-
+        <br>
+        <h4>Calculated Theoretical Intensities per Peak</h4>
+        <div class="row">
+          <table id='Theo-Int-table' class="table" style="white-space:nowrap"></table>
+        </div>   
 
       </div>
         
@@ -276,13 +271,13 @@
 
         <br>
         <div class="row">
-          <h4>Phase Fraction Values (different units)</h4>
+          <h4>Phase Fraction Values (select units)</h4>
           <table id="pf-table" class="table" style="white-space:nowrap"></table>
         </div>
 
         <br>
         <div class="row">
-          <h4>Phase Fraction Histogram</h4>
+          <h4>Phase Fraction Histogram (select units)</h4>
           <div id="phase-fraction-plot"></div>
         </div>
 

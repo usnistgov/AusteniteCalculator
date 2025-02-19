@@ -63,6 +63,10 @@ async function fetchData() {
     // Gather data to submit
     const radioValue = document.querySelector('input[name="default-file-radio"]:checked'); 
 
+    // FIX - add button for sum files
+    // currently returns 'on' even when the box is not checked...
+    //const SumCheck = document.querySelector('input[name="sum_checkbox"]');
+
     console.log(radioValue.value);
 
     const response = await fetch('/submit', {
@@ -72,6 +76,7 @@ async function fetchData() {
         },
         body: JSON.stringify({
             radioValue:radioValue.value,
+            // SumCheck:SumCheck.value,
             fileUploads:fileUploads
         })
     });
@@ -137,6 +142,7 @@ async function fetchData() {
     let dsetName_IntPlotTab = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName_IntPlotTab);
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName_IntPlotTab);
+    create_flags_table(all_results,'user-flags-table',dsetName_IntPlotTab);
     
     
     // Normalized Intensity Tab

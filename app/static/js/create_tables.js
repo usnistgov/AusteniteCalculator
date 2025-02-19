@@ -11,6 +11,13 @@ customColorScale = [
     '#9467bd'
 ]
 
+// Flags for users Table
+//all_results[dataset_name]["flags_html"]
+function create_flags_table(all_results,div_id,dataset_name) {
+    const flags_table_html = all_results[dataset_name]["flags_html"];
+    document.getElementById('user-flags-table').innerHTML=flags_table_html;
+}
+
 // Theoretical Intensities Table
 //all_results[dataset_name]['Theo_n_int_html']
 function create_Theo_Int_table(all_results,div_id,dataset_name) {

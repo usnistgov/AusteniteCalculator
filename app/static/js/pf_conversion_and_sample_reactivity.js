@@ -12,6 +12,7 @@ intensity_plots_select.addEventListener("change", function() {
 
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
+    create_flags_table(all_results,'user-flags-table',dsetName);
 })
 
 /*  **************************
