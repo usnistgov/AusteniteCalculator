@@ -150,7 +150,8 @@ async function fetchData() {
     // Phase Fraction Tab
     let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
-
+    create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);
+    create_uncert_source_summary_table(all_results,'uncert-table',dsetName_PhaseFracTab);
     // cryst illum Tab
    // createCrystIllumTable()
 

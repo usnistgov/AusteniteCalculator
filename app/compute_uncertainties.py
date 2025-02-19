@@ -600,7 +600,7 @@ def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
     #full_dict = {}
 
     # Number of unit cells
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({ "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)})
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({"Phase":unique_phase_names, "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)})
 
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.0455,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.3173,axis=0)
@@ -610,7 +610,7 @@ def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
    
    
     # Mass of unit cells
-    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]=pd.DataFrame({ "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Mass"],axis=0)})
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]=pd.DataFrame({"Phase":unique_phase_names, "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Mass"],axis=0)})
 
     Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.0455,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.3173,axis=0)
@@ -620,7 +620,7 @@ def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
   
   
     # Volume of unit cells
-    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]=pd.DataFrame({ "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Volume"],axis=0)})
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]=pd.DataFrame({"Phase":unique_phase_names, "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Volume"],axis=0)})
 
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.0455,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.3173,axis=0)

@@ -243,6 +243,7 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_nam
 
     for(let i = 0; i < all_results.unique_phases.length; i++) {
 
+    // Histogram
     // Changed to 100 bins from 80
         data.push({
             x:mcmc_res['phase_mu['.concat(i+1).concat(']')],
@@ -251,6 +252,8 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_nam
             name: all_results.unique_phases[i],
             nbinsx: 100
         })
+
+    // Add mean, sigma lines?  Need to pass data or recompute?
 
     }
 

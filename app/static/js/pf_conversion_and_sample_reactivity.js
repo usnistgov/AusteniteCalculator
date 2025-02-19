@@ -56,13 +56,21 @@ let conversion_select = document.getElementById("conversion-select");
 // below this needs to be changed
 phase_fraction_plots_dataset_select.addEventListener("change", function() {
     dataset_name=this.selectedIndex+1
+    
+    //    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
+    
+    createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
+    create_uncert_source_summary_table(all_results,'uncert-table',dataset_name);
+})
 
 conversion_select.addEventListener("change", function() {
     console.log("event triggered");
 
     let cs = document.getElementById('conversion-select');
     let conversion_option = cs.options[cs.options.selectedIndex].innerText;
-
+    
+    let dataset_name = 'Dataset_'.concat(phase_fraction_plots_dataset_select.selectedIndex+1)
+    
     switch(conversion_option) {
         case "Number of Unit Cells":
             conversion_option = 'number';
@@ -77,8 +85,9 @@ conversion_select.addEventListener("change", function() {
             break;
     }
     createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
-  })
+    create_phase_fraction_value_table(all_results,'pf-table',conversion_option,dataset_name);
 })
+
 
 
 
