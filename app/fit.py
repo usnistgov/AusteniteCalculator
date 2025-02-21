@@ -726,3 +726,256 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     # Save the cif files for reuse?
     
     return(Submit_dict)
+
+
+# Fit using only gaussians
+
+### Added for phase fraction calculations
+
+import scipy.optimize as opt
+import scipy.integrate as sciint
+def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
+    '''
+    Use a simple gaussian and linear fit to approximate the curves
+    Also use the edges of the gaussian to sum the counts with no peak structure assumed
+    
+
+
+    '''
+
+    TwoTheta_plot=[]
+    Gaussian_plot=[]
+    Submit_dict[dataset_string]["Gaussian_Data"]={}
+
+    for index, pos_value in enumerate(Submit_dict[dataset_string]['Le_Bail_Peaks']['pos_LB']):
+
+        # sigma values are in centi-degrees, so need to divide by 100
+        sig_value=Submit_dict[dataset_string]['Le_Bail_Peaks']['sig_LB'].iloc[index]/100
+        int_value=Submit_dict[dataset_string]['Le_Bail_Peaks']['int_LB'].iloc[index]
+        print(pos_value, sig_value,int_value)
+        
+        # [1][0] is the position of the two theta values
+        data_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value)
+        # using 3* the sig_value since Le Bail tends to make the window small
+        # and to take a larger view for fitting
+        # FIX - need a larger value for right window, with the ka1/ka2 split
+        left_window_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value-3*sig_value)
+        right_window_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value+4*sig_value)
+ 
+        print(left_window_index,data_index,right_window_index)
+        
+        #FIX - Need a way to mark when there's overlaps between peaks
+        
+        print(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][1][left_window_index:right_window_index])
+        
+        TwoTheta_window=Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0][left_window_index:right_window_index]
+        Intensity_window=Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][1][left_window_index:right_window_index]
+
+        slope_approx=(Intensity_window[-1] - Intensity_window[0])/ (TwoTheta_window[-1]-TwoTheta_window[0])
+        intercept_approx=Intensity_window[0]-slope_approx*TwoTheta_window[0]
+        
+        # Need the sig_value back in centidegrees?
+        #scale_value=int_value/(sig_value*100*np.sqrt(2*np.pi))
+        
+        scale_value=np.max(Intensity_window)-0.5*(Intensity_window[0]+Intensity_window[-1])
+        
+        initial_guess=[scale_value, pos_value, 2*sig_value,slope_approx,intercept_approx]
+        print("Initial Guess: \n", initial_guess)
+        
+        
+        try:
+            popt, pcov = opt.curve_fit(gauss, TwoTheta_window,
+                               Intensity_window, p0 = initial_guess )
+            print("Fitted Values:")
+            print(popt,"\n")
+            #print(pcov)
+            print(np.sqrt(np.diagonal(pcov)))
+            print(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4]))
+            Integ_fit=sciint.trapz(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4]))
+            Integ_data=sciint.trapz(Intensity_window)
+            Integ_background=sciint.trapz(background(TwoTheta_window,popt[3],popt[4]))
+            Integ_peak_fit=Integ_fit-Integ_background
+            Integ_peak_data=Integ_data-Integ_background
+            print("Integrated Values:")
+            print(Integ_fit,Integ_background,Integ_peak_fit)
+            print(Integ_data,Integ_background,Integ_peak_data)
+        except:
+            print("Fitting Error at: {:5.2f}".format(initial_guess[1]))
+        
+        # extend, not append
+        TwoTheta_plot.extend(list(TwoTheta_window))
+        Gaussian_plot.extend(list(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4])))
+                             
+        # Save the fit values to plot
+        print("Compare values: ")
+        print(int_value, Integ_peak_fit,Integ_peak_data)
+        #Submit_dict[dataset_string][t_peaks]
+        print("**************************************\n\n")
+        
+        # These values aren't really close to the Le Bail data...
+    
+        # Sorted list needed for plotting?
+        #https://www.geeksforgeeks.org/python-sort-list-according-to-other-list-order/
+        # Create dictionary to map 'order' to their indices
+        #order_dict = {value: index for index, value in enumerate(order)}
+
+        # Sort 'a' based on 'order' using the dictionary
+        #sorted_list = sorted(a, key=lambda x: order_dict[x])
+        #print(sorted_list)
+    
+    Submit_dict[dataset_string]["Gaussian_Data"]['data']=[TwoTheta_plot,Gaussian_plot]
+        
+#    breakpoint()
+#
+#    #psi30-phi0
+#    peak_list=[["A200",300,[1e7,50.5, .2, -3e4, 5e6],  5, int(10/0.02)  ],
+#               ["F200",1000,[1e8,65,  .2, -3e4, 5e6],   5, int(10/0.02)  ],
+#               ["A220",1450,[1e7,74.5,.2, -3e4, 5e6], 5, int(10/0.02)  ],
+#               ["F211",1900,[1e8,82.5,.2, -3e4, 5e6], 5, int(10/0.02)  ],
+#               ["A311",2300,[1e7,90.5,.2, -3e4, 5e6],  5, int(6/0.02)  ],
+#               ["A222",2650,[1e7,95.3,.4, -3e4, 5e6],   5, int(3/0.02)  ],
+#               ["F220",2700,[2e7,99,  .2, -3e4, 5e6], 5, int(10/0.02)  ],
+#               ["F310",3600,[5e8,116, .4, -3e4, 5e6], 5, int(12/0.02)  ]                     ]
+#
+#
+#
+#
+#    summary_DF=pd.DataFrame(columns=['Peak Name','Position','Fit Int','Data Int','Sigma','Background Int'])
+#
+#    for i in range(len(peak_list)):
+#
+#        peak_name=save_name_base+"_"+peak_list[i][0]
+#        print("Peak: ", peak_list[i][0])
+#        start_x=peak_list[i][1]
+#        initial_guess=peak_list[i][2]
+#        sigma_stop=peak_list[i][3]
+#        window_size=int(peak_list[i][4]*0.02)
+#        window=peak_list[i][4]
+#
+#
+#
+#    #########
+#
+#        # restrict data to an angular window (degrees 2 theta)
+#        data1D_DF_Deg_Window=data1D_DF.iloc[start_x:(start_x+window)]
+#
+#        baf.save_1D_plot_scatter(save_dir,(peak_name+"Deg_Win"),data1D_DF_Deg_Window,
+#                                title='{} Raw Data, {:d} deg range'.format(peak_name,window_size))
+#
+#        (popt_Deg_Window, pcov_Deg_Window)=baf.fit_gauss(data1D_DF_Deg_Window, initial_guess)
+#
+#        baf.save_1D_plot_fit(save_dir,(peak_name+"Deg_Win"),data1D_DF_Deg_Window, popt_Deg_Window,
+#                                title='{}Gaussian fit, {:d} deg range'.format(peak_name,window_size))
+#
+#        #breakpoint()
+#
+#        # restrict data further to a window bounded by Gaussian width
+#
+#        Sig_Window=np.where(np.logical_and(data1D_DF["Two Theta"]>=popt_Deg_Window[1]-sigma_stop*popt_Deg_Window[2],data1D_DF["Two Theta"]<=popt_Deg_Window[1]+sigma_stop*popt_Deg_Window[2]))
+#
+#        data1D_DF_Sig_Window=data1D_DF.iloc[Sig_Window]
+#
+#        baf.save_1D_plot_scatter(save_dir,(peak_name+"Sig_Win"),data1D_DF_Sig_Window,
+#                                title='{} Raw Data, {:d} sig range'.format(peak_name,sigma_stop))
+#
+#        #print("Sigma Window: \n", Sig_Window)
+#
+#        (popt_Sig_Window, pcov_Sig_Window)=baf.fit_gauss(data1D_DF_Sig_Window, popt_Deg_Window)
+#
+#        baf.save_1D_plot_fit(save_dir,(peak_name+"Sig_Win"),data1D_DF_Sig_Window, popt_Sig_Window,
+#                                title='{} Gaussian fit, {:d} sig range'.format(peak_name,sigma_stop))
+#
+#        # Only pick the left and right bounds
+#
+#        Sig_Left_Window=np.where(np.logical_and(data1D_DF["Two Theta"]>=popt_Deg_Window[1]-(sigma_stop)*popt_Deg_Window[2],data1D_DF["Two Theta"]<=popt_Deg_Window[1]-(sigma_stop-1)*popt_Deg_Window[2]))
+#
+#        Sig_Right_Window=np.where(np.logical_and(data1D_DF["Two Theta"]>=popt_Deg_Window[1]+(sigma_stop-1)*popt_Deg_Window[2],data1D_DF["Two Theta"]<=popt_Deg_Window[1]+(sigma_stop)*popt_Deg_Window[2]))
+#
+#        #print(Sig_Left_Window, Sig_Right_Window)
+#
+#        #print("Edge Window: \n", np.concatenate((Sig_Left_Window, Sig_Right_Window), axis=None))
+#
+#        data1D_DF_BG_Window=data1D_DF.iloc[np.concatenate(([Sig_Left_Window,Sig_Right_Window]), axis=None)]
+#
+#        baf.save_1D_plot_scatter(save_dir,(peak_name+"BG"),data1D_DF_BG_Window,
+#                                title='{} Raw Data, {:d} sig range'.format(peak_name,sigma_stop))
+#
+#        (popt_BG_Window, pcov_BG_Window)=baf.fit_background(data1D_DF_BG_Window, [popt_Deg_Window[3],popt_Deg_Window[4]] )
+#
+#
+#        baf.save_1D_plot_fit2(save_dir,(peak_name+"Sig_Win_BG"),data1D_DF_Sig_Window, popt_Sig_Window,popt_BG_Window,
+#                                title='{} Gaussian fit, {:d} sig range'.format(peak_name,sigma_stop))
+#            
+#
+#    #    baf.save_1D_plot_fit(save_dir,'test5',data1D_DF_Sig_Window,
+#    #                         [popt_Sig_Window[0],popt_Sig_Window[1],popt_Sig_Window[2],
+#    #                         popt_BG_Window[0],popt_BG_Window[1]],
+#    #                            title='Gaussian fit, {:d} sig range'.format(sigma_stop))
+#
+#
+#        summary_row=baf.fit_summary(data1D_DF_Sig_Window, popt_Sig_Window, popt_BG_Window)
+#        #print(summary_row)
+#        
+#        #breakpoint()
+#        
+#        summary_DF.loc[len(summary_DF)]=[peak_list[i][0]]+summary_row
+#
+#        #X=hist.data['data'][1][0][start_x:(start_x+window)]
+#        #Y=hist.data['data'][1][1][start_x:(start_x+window)]
+#        #
+#        #
+#        #plt.figure(figsize=[10,8])
+#        #plt.title('Raw Data, 10 deg range')
+#        #plt.scatter(X, Y,color='k',label='Data')
+#        ##plt.xlim(78,86)
+#        #plt.legend()
+#        #plt.show()
+#
+#
+#        #baf.background
+#
+#    print(summary_DF)
+#    
+    
+    
+    return(Submit_dict)
+
+
+
+# Irritatingly, there's no clean way to just fit a normal distribution without defining it...
+
+# See https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
+# https://stackoverflow.com/questions/76137714/trying-to-fit-a-gaussian-with-scipy
+
+
+## Helper functions
+def background(x,  m, b):
+    '''
+    Linear fit of XRD background data.  
+    Using a small range, so a more advanced function is not needed
+    
+    x: x axis of data
+    m: slope of line
+    b: constant value of line
+    '''
+    return m*x + b
+
+def gauss(x, A,mu, sigma, m, b):
+    '''
+    Combined Gaussian and linear fit of XRD background data.  
+    Using a small range, so a more advanced function is not needed
+    Does not capture the Lorentzian tails well
+    
+    x: x axis of data
+    A: Scale factor
+    mu: Center of distribution
+    sigma: width of distribution
+    m: slope of line
+    b: constant value of line
+    '''
+    return (A/(sigma*np.sqrt(2.0*np.pi)))*np.exp((-(x-mu)**2)/(2.0*sigma**2)) + m*x + b
+
+###
+
+
+

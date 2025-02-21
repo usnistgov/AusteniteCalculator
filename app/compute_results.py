@@ -789,7 +789,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     #? There's a way to keep the fit sig values, instead of having them reset to the instrument parameter
 
     # ADD SIMPLE GAUSSIAN FITS
-
+    Submit_dict=fit.fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index)
 
     ########################################
     # Merge experimental and theoretical data
@@ -2297,7 +2297,14 @@ def package_for_export(Submit_dict):
     
         # Individual Peak Fit
         all_results[dataset_name]['Peak_fit']=list(Submit_dict[dataset_name]["Peak_Fit_Data"]['data'][1][3])
+        
+        
+        # Single Gaussian Fit
+        all_results[dataset_name]['Gaussian_fit_two_thetas'] =list(Submit_dict[dataset_name]["Gaussian_Data"]['data'][0])
 
+        all_results[dataset_name]['Gaussian_fit'] =list(Submit_dict[dataset_name]["Gaussian_Data"]['data'][1])
+
+        #breakpoint()
         ###### Normailzed Intensities Tab
         
         ### Plots
