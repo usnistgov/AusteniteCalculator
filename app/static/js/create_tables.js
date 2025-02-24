@@ -62,3 +62,11 @@ function create_uncert_source_summary_table(all_results,div_id,dataset_name) {
     const uncert_source_summary_table_html = all_results[dataset_name]["uncertainty_summary_html"];
     document.getElementById('uncert-table').innerHTML=uncert_source_summary_table_html;
 }
+
+
+// Interaction Volume Table
+// all_results[dataset_name]['Interaction_Volume_html']
+function create_interaction_volume_table(all_results,div_id,dataset_name) {
+    const interaction_volume_table_html = all_results[dataset_name]['Interaction_Volume_html'];
+    document.getElementById('interaction-volume-table').innerHTML=interaction_volume_table_html;
+}

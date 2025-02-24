@@ -141,8 +141,11 @@ async function fetchData() {
     // createCrystIllumTable()
 
     // Crystallites Illuminated Tab
-    // Selecty by dataset
+    // Select by dataset
     let dsetName_CrysIllTab = 'Dataset_'.concat(cryst_illum_data_select.selectedIndex+1);
+    create_interaction_volume_table(all_results,'interaction-volume-table',dsetName_CrysIllTab);
+    
+    
     // update form selects for phase
     let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
     

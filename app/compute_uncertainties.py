@@ -286,8 +286,12 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
     # multiple files without sum button -> run as multiple_samples
 
     #if there is only 1 file
+    if sum_checkbox==True:
+        print("Sum Checkbox")
+        breakpoint()
 
-    if len(Submit_dict["File_Paths"]["Dataset_name"])==1 or sum_checkbox==True:
+    #if there is only 1 file
+    elif len(Submit_dict["File_Paths"]["Dataset_name"])==1 and sum_checkbox==False:
         # for each dataset
         for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
             dataset_number=dataset.split("_")[1]
@@ -600,33 +604,34 @@ def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
     #full_dict = {}
 
     # Number of unit cells
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({"Phase":unique_phase_names, "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)})
 
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.0455,axis=0)
+
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({"Phase":unique_phase_names,"Neg_2sigma":np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.0455,axis=0)})
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.3173,axis=0)
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.5,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Mean"]=np.nanmean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.6827,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.9545,axis=0)
-   
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.5,axis=0)
    
     # Mass of unit cells
-    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]=pd.DataFrame({"Phase":unique_phase_names, "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Mass"],axis=0)})
 
-    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.0455,axis=0)
+
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]=pd.DataFrame({"Phase":unique_phase_names, "Neg_2sigma":np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.0455,axis=0)})
     Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.3173,axis=0)
-    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],.5,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Mean"]=np.nanmean(Submit_dict[dataset]["MCMC_Result_Mass"],axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.6827,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],0.9545,axis=0)
-  
+    Submit_dict[dataset]["Phase_Fraction_Result_Mass"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Mass"],.5,axis=0)
   
     # Volume of unit cells
-    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]=pd.DataFrame({"Phase":unique_phase_names, "Mean":np.mean(Submit_dict[dataset]["MCMC_Result_Volume"],axis=0)})
 
-    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Neg_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.0455,axis=0)
+
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]=pd.DataFrame({"Phase":unique_phase_names,"Neg_2sigma":np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.0455,axis=0)})
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.3173,axis=0)
-    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],.5,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Mean"]=np.nanmean(Submit_dict[dataset]["MCMC_Result_Volume"],axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.6827,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.9545,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],.5,axis=0)
     
     #print(np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.50,axis=0))
     #print(np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.05,axis=0))

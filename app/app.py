@@ -122,7 +122,7 @@ def submit():
 
     # ADD option for summation
     # FIX - hardcoded for now
-    sum_checkbox=False
+    #sum_checkbox=False
 
     Submission = compute_results.compute_crystallites_illuminated(Submission)
 
@@ -133,7 +133,7 @@ def submit():
 
 
     print("Running MCMC")
-    Submission = compute_results.run_mcmc2(Submission,sum_checkbox,number_mcmc_runs=1000)
+    Submission = compute_results.run_mcmc2(Submission,req['sumFiles'],number_mcmc_runs=1000)
 
 
     #mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)

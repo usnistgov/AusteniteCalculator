@@ -1914,6 +1914,9 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
     #results_table_df = pd.concat(results_table,axis=0).reset_index()
     
     # FIX - Maybe run_mcmc2 gets replaced with run_stan2?
+    # use this to split what gets run - single, multi, sum
+    
+    
     # otherwise were looping on datasets a few times
     Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
     
@@ -2304,6 +2307,10 @@ def package_for_export(Submit_dict):
 
         all_results[dataset_name]['Gaussian_fit'] =list(Submit_dict[dataset_name]["Gaussian_Data"]['data'][1])
 
+        # Flags for the user
+        all_results[dataset_name]["flags_html"]=Submit_dict[dataset_name]["Flags"].to_html(justify='left', index=False)
+
+
         #breakpoint()
         ###### Normailzed Intensities Tab
         
@@ -2391,12 +2398,13 @@ def package_for_export(Submit_dict):
         # Or does that belong with the normalizied intensities?
         #
         
-        # Flags for the user
-        all_results[dataset_name]["flags_html"]=Submit_dict[dataset_name]["Flags"].to_html(justify='left', index=False)
+
         
 
         ###### Inveraction Volume
         # Select Dataset, Phase, Peak (hkl)
+        
+        all_results[dataset_name]['Interaction_Volume_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','N_Layers_95pct', 'N_illuminated_95pct','Diffracting_Fraction','N_Diffracting_95pct', 'Powder_Size_um','l_bar_um','95pct_Escaped_Depth_um' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
         
         # Row from #Submit_dict["Dataset_1"]["Merged_Peaks"]
         
