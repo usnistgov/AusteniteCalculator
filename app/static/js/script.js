@@ -62,6 +62,7 @@ async function fetchData() {
 
     // Gather data to submit
     const radioValue = document.querySelector('input[name="default-file-radio"]:checked'); 
+    const sum_files = document.getElementById('sum_checkbox').checked
 
     // FIX - add button for sum files
     // currently returns 'on' even when the box is not checked...
@@ -76,7 +77,7 @@ async function fetchData() {
         },
         body: JSON.stringify({
             radioValue:radioValue.value,
-            // SumCheck:SumCheck.value,
+            sumFiles:sum_files,
             fileUploads:fileUploads
         })
     });
@@ -158,14 +159,14 @@ async function fetchData() {
     let n_peaks = all_results.n_peaks;
 
 // FIX - when we get crystallites illuinated
-//    for(let i = 0; i < n_peaks; i++) {
-//        if(all_results.results_table.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
-//            let new_option = document.createElement("option");
-//            new_option.textContent = (i + 1).toString();
-//            cryst_illum_peak_select.appendChild(new_option);
-//        }
-//
-//    }
+    // for(let i = 0; i < n_peaks; i++) {
+    //     if(all_results.Dataset_1.Phase[i] == cryst_illum_phase_select.options[cryst_illum_phase_select.options.selectedIndex].innerText) {
+    //         let new_option = document.createElement("option");
+    //         new_option.textContent = (i + 1).toString();
+    //         cryst_illum_peak_select.appendChild(new_option);
+    //     }
+
+    // }
 
     // tables
     // ??? Why call these 'table' if they are html?  Confusing with app.py

@@ -51,15 +51,8 @@ def submit():
 
     req = request.get_json()
     print(req)
-
-    # FIX - return state of Sum checkbox
-    # Currently it's not returning the value correctly from html/javascript
-    # hardcoded for testing
-    req['SumCheck']=True
     
     if req['radioValue'] == 'uploaded_files':
-
-
 
         datadir = '../server_datadir'
         cif_fnames = list(req['fileUploads']['cif-file'].keys())
