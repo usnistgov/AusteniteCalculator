@@ -114,8 +114,8 @@ def gather_example(example_name):
 
     elif example_name == "Example99":
         datadir = '../ExampleData/Example99'
-        #cif_fnames = ['Austenite_QP_AC.cif','Ferrite_QP_AC.cif']
-        cif_fnames = ['Austenite_TRIP_DP_AC.cif','Ferrite_TRIP_DP_AC.cif']
+        cif_fnames = ['Austenite_QP_AC.cif','Ferrite_QP_AC.cif']
+        #cif_fnames = ['Austenite_TRIP_DP_AC.cif','Ferrite_TRIP_DP_AC.cif']
         workdir = '../server_workdir'
         all_files = pd.Series(os.listdir(datadir))
         #xrdml_fnames = ['E240828-MRC-001-QP-02p0strain_norm_mask_1D_sum_scaled.csv']
@@ -124,10 +124,22 @@ def gather_example(example_name):
         #xrdml_fnames = ['E240828-MRC-004-QP-09p5strain_norm_mask_1D_sum_scaled.csv']
         #xrdml_fnames = ['E231218-AAC-102-QP-3_norm_mask_1D_sum_scaled.csv']
         #xrdml_fnames = ['E231218-AAC-103-QP-5_norm_mask_1D_sum_scaled.csv']
-        xrdml_fnames = ['E231220-AAC-215-TRIPDP-8p5_norm_mask_1D_sum_scaled.csv']
-        instprm_fname = 'E240828-MRC-000.instprm'
-        #json_fname = 'QP-E240828.json'
-        json_fname = 'TRIP_DP.json'
+        #xrdml_fnames = ['E231220-AAC-215-TRIPDP-8p5_norm_mask_1D_sum_scaled.csv']
+        
+        # Test of Hex
+        #xrdml_fnames = ['E241106-AAC-013-QP-psi0-phi0_norm_mask_1D_sum.csv']
+        #xrdml_fnames = ['E241106-AAC-013-QP-psi30-phi0_norm_mask_1D_sum.csv']
+        #xrdml_fnames = ['E241106-AAC-013-QP-psi30-phi60_norm_mask_1D_sum.csv']
+        #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi30_norm_mask_1D_sum.csv']
+        #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
+        
+        # Test of fitting
+        xrdml_fnames = ['SimpleGauss.csv']
+        
+        
+        instprm_fname = 'E240828-MRC-000.instprm' # check if updates are needed
+        json_fname = 'QP-E241101.json'
+        #json_fname = 'TRIP_DP.json'
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
@@ -906,6 +918,10 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         DF_merged_fit_theo['k_TI'].astype(int).astype(str)+" "+\
         DF_merged_fit_theo['l_TI'].astype(int).astype(str)
 
+    # Merge Gaussian Data
+    DF_merged_fit_theo=DF_merged_fit_theo.merge(Submit_dict[dataset_string]["Gaussian_Peaks"], on=['pos_LB','sig_LB','int_LB'])
+
+    # print data to terminal
     print(DF_merged_fit_theo)
     print(DF_merged_fit_theo.columns)
     Submit_dict[dataset_string]["Merged_Peaks"]=DF_merged_fit_theo
@@ -1015,7 +1031,10 @@ def get_theoretical_intensities(G2sc, Submit_dict, dataset_string):
         Phase = gpx.add_phase(os.path.join(datadir,cif_file), phasename=cif_file,fmthint='CIF')
 
         # Arbitrary scale factor.  Value chosen to provide reasonable signal to noise and comparison to input data.
-        histogram_scale=100.
+        
+        #histogram_scale=100.
+        # Use value from Le Bail Fit
+        histogram_scale=Submit_dict[dataset_string]["Le_Bail_Scale"]
 
         # add a simulated histogram and link it to the previous phase(s)
         # May need to make the two theta range and number of points variables
@@ -1909,32 +1928,111 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
 
     """
 
-
-
-    #results_table_df = pd.concat(results_table,axis=0).reset_index()
-    
-    # FIX - Maybe run_mcmc2 gets replaced with run_stan2?
     # use this to split what gets run - single, multi, sum
-    
-    
-    # otherwise were looping on datasets a few times
-    Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
-    
-    #breakpoint()
-    #mcmc_df_dict = compute_conversion_mcmc_dfs2(mcmc_df,conversions,n_keep=1000)
-    #unique_phases = np.unique(results_table_df.Phase)
-    
-    # Moved parameter table and phase fraction table inside run_stan2
-    # This way we only loop over the data set once
-    #param_table = compute_uncertainties.generate_param_table2(mcmc_df,unique_phases,results_table_df)
+       
 
-    # mcmc_df_dict.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
-    #print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
-    #print(mcmc_df.info(memory_usage=True))
+    # 3 different cases:
+    # single file -> run as one_sample
+    # multiple files with sum button -> run as one_sample for each
+    # multiple files without sum button -> run as multiple_samples
 
-    #pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
+    # multiple files with sum button -> run as one_sample for each    
+    if sum_checkbox==True:
+        print("Sum Checkbox")
+        # Create summed data
+        Submit_dict=create_summed_dataset(Submit_dict)
+        #breakpoint()
+        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+ 
+    # single file -> run as one_sample
+    elif len(Submit_dict["File_Paths"]["Dataset_name"])==1 and sum_checkbox==False:
+        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+    
+    # multiple files without sum button -> run as multiple_samples
 
     return Submit_dict
+
+def create_summed_dataset(Submit_dict):
+    """
+    Create a summed dataset
+    
+    Need "Merged_Peaks"
+    """
+    print(Submit_dict["File_Paths"]["Dataset_name"])
+
+    dataset0=Submit_dict["File_Paths"]["Dataset_name"][0]
+
+    # Create a new empty dataframe
+    # use nan or 0?
+    Summed_Merged_Peaks_DF = pd.DataFrame(0, index=Submit_dict[dataset0]['Merged_Peaks'].index, columns=Submit_dict[dataset0]['Merged_Peaks'].columns)
+    
+    # Drop string columns
+    Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
+ 
+    # somehow all data types are coming back as int
+    #print(list(Summed_Merged_Peaks_DF.dtypes))
+    #print(Summed_Merged_Peaks_DF.dtypes[Summed_Merged_Peaks_DF.dtypes != 'int64'])
+    #breakpoint()
+    for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
+        # Sum columns
+        # Can't sum strings...
+        temp_DF = Submit_dict[dataset]['Merged_Peaks'].drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
+        
+        Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.add(temp_DF, fill_value=0)
+
+
+    #Strings
+    #'Phase_TI','phase_LB','Phase','hkl',
+
+    # Include string columns
+    Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.join(Submit_dict[dataset0]['Merged_Peaks'][['Phase_TI','phase_LB','Phase','hkl']])
+
+
+
+    
+    # For columns were the average is needed
+    # Divide by successful peak fits
+    
+    
+    #Sum
+    #'int_fit','Peak_Fit_Success', 'F_obs_sq_LB', 'F_calc_sq_LB', 'int_LB', 'int_G', 'int_TR',
+
+
+    #Recalc
+
+    #'u_pos_fit', 'u_int_fit','u_int_count','rel_int_fit','rel_int_count','u_int_LB', 'n_int_fit', 'n_int_LB', 'n_u_int_fit', 'n_u_count_fit', 'n_u_int_LB', 'N_illuminated_50pct', 'N_illuminated_95pct', 'N_Diffracting_50pct', 'N_Diffracting_95pct', 'u_N_Diffracting_50pct', 'u_N_Diffracting_95pct', 'n_u_N_Diffracting_95pct', 'n_u_N_Diffracting_50pct'
+
+
+    # FIX - Adjust 'Peak_Fit_Success' column in calculate
+    #Summed_Merged_Peaks_DF["n_sucessful_fits"]=len(Submit_dict["File_Paths"]["Dataset_name"])
+
+    #Average (Divide)
+    # 'pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction'
+    
+    
+
+    # df[['A', 'B', 'C']] = df[['A', 'B', 'C']].div(df['D'], axis=0)
+    Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']]=Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']].div(Summed_Merged_Peaks_DF['Peak_Fit_Success'], axis=0)
+
+    # FIX - Redo uncertainty calculations
+
+    #print(Summed_Merged_Peaks_DF)
+    #breakpoint()
+    
+    # Append to records
+    Submit_dict["File_Paths"]["Dataset_name"].extend(["Dataset_sum"])
+    Submit_dict["Dataset_sum"]={}
+    Submit_dict["Dataset_sum"]['Merged_Peaks']=Summed_Merged_Peaks_DF
+    
+    # FIX - Need similar data for summed
+    # just copying to test
+    Submit_dict["Dataset_sum"]["Le_Bail_Data"]=Submit_dict[dataset0]["Le_Bail_Data"]
+    Submit_dict["Dataset_sum"]["Peak_Fit_Data"]=Submit_dict[dataset0]["Peak_Fit_Data"]
+    Submit_dict["Dataset_sum"]["Gaussian_Data"]=Submit_dict[dataset0]["Gaussian_Data"]
+    Submit_dict["Dataset_sum"]["Flags"]=Submit_dict[dataset0]["Flags"]
+    
+    return Submit_dict
+
 
 #####################################
 #### run_mcmc() Utility Fuctions ####
@@ -2332,12 +2430,12 @@ def package_for_export(Submit_dict):
         ### Tables
         # Split large table into different tables, just export HTML
 
-        # Table for Theoretical Intnesities
-        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
         # Table for Fit values  
-        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit', 'int_LB','int_fit','sig_LB','sig_fit','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
-  
+        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit','pos_G', 'int_LB','int_fit','int_G','int_TR', 'sig_LB','sig_fit','sig_G','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
+
+        # Table for Theoretical Intnesities
+        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
         # Table for Uncertainty Metrics
         # FIX - figure out which ones and add more

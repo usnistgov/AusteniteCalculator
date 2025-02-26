@@ -670,7 +670,12 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
 
     # Copy the fitted data as well.
     Submit_dict[dataset_string]["Le_Bail_Data"]=hist.data
+    
+    # Copy the scale value for use in Theoretical Intensity values
+    Submit_dict[dataset_string]["Le_Bail_Scale"] = hist.data["Sample Parameters"]['Scale'][0]
+
     #### Flags
+    #breakpoint()
 
     # Note the sample displacement
     print("Sample Displacement Found")
@@ -747,6 +752,13 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     Gaussian_plot=[]
     Submit_dict[dataset_string]["Gaussian_Data"]={}
 
+    Submit_dict[dataset_string]["Gaussian_Peaks"]=Submit_dict[dataset_string]['Le_Bail_Peaks'][['pos_LB','sig_LB','int_LB']]
+
+    pos_G_list=[]
+    sig_G_list=[]
+    int_G_list=[]
+    int_trap_list=[]
+
     for index, pos_value in enumerate(Submit_dict[dataset_string]['Le_Bail_Peaks']['pos_LB']):
 
         # sigma values are in centi-degrees, so need to divide by 100
@@ -799,12 +811,28 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
             print("Integrated Values:")
             print(Integ_fit,Integ_background,Integ_peak_fit)
             print(Integ_data,Integ_background,Integ_peak_data)
+
+            # extend, not append
+            TwoTheta_plot.extend(list(TwoTheta_window))
+            Gaussian_plot.extend(list(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4])))
         except:
             print("Fitting Error at: {:5.2f}".format(initial_guess[1]))
-        
-        # extend, not append
-        TwoTheta_plot.extend(list(TwoTheta_window))
-        Gaussian_plot.extend(list(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4])))
+            popt=[np.nan,np.nan,np.nan,np.nan,np.nan]
+            Integ_fit=np.nan
+            Integ_data=np.nan
+            Integ_background=np.nan
+            Integ_peak_fit=np.nan
+            Integ_peak_data=np.nan
+            
+            TwoTheta_plot.extend([pos_value])
+            Gaussian_plot.extend([0])
+
+        pos_G_list.extend([popt[1]])
+        # multiply by 100 to make comparible in centi-degrees
+        sig_G_list.extend([popt[2]*100])
+        int_G_list.extend([Integ_peak_fit])
+        int_trap_list.extend([Integ_peak_data])
+
                              
         # Save the fit values to plot
         print("Compare values: ")
@@ -823,6 +851,16 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
         #sorted_list = sorted(a, key=lambda x: order_dict[x])
         #print(sorted_list)
     
+    
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["pos_G"]=pos_G_list
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["sig_G"]=sig_G_list
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["int_G"]=int_G_list
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["int_TR"]=int_trap_list
+    print("\n*************************************")
+    print("Gaussian Fit data")
+    print(Submit_dict[dataset_string]["Gaussian_Peaks"])
+    
+    #Submit_dict[dataset_string]["Gaussian_Peaks"]
     Submit_dict[dataset_string]["Gaussian_Data"]['data']=[TwoTheta_plot,Gaussian_plot]
         
 #    breakpoint()

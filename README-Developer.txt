@@ -41,7 +41,10 @@ Submission	*Dictionary*	(Container for all the items computed)
    -> "X_Range"	*list* [xmin, xmax]
    -> Histogram Data (raw data)
    -> "Le_Bail_Data" *dict* Le Bail Fit Data		(phase fractions, unit cell, fit values and uncertainties)
+   -> "Le_Bail_Scale" *float* scale from LeBail fit, used for Theoretical intensities.
    -> "Peak_Fit_Data" *dict* GSAS-II format
+   -> "Gaussian_Data" *dict* Gaussian Fit Data		(phase fractions, unit cell, fit values and uncertainties)
+   -> "Gaussian_Peaks" *dataframe* Gaussian Fit Peak Data
    -> "Prelim_Phase_Fraction" *DataFrame*
    -> "Prelim_Aggregate_Data" *Dict*
    -> "MCMC_Calc"  *DataFrame*  MCMC Uncertainty Inputs, values copied from Merged_Peaks
