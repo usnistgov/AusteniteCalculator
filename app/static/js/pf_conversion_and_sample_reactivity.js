@@ -8,7 +8,8 @@ intensity_plots_select.addEventListener("change", function() {
 
     // This function plots the dataset based on which is selcted in this.selectedIndex
     // This uses the same pattern as script.js
-    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
+    // let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
+    let dsetName = all_results.dataset_names[this.selectedIndex].toString()
 
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName);
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName);
@@ -24,19 +25,19 @@ intensity_plots_select.addEventListener("change", function() {
 let normalized_intensities_plot_select = document.getElementById("normalized-intensity-plots-select");
 
 normalized_intensities_plot_select.addEventListener("change", function() {
-
+    dataset_name=all_results.dataset_names[this.selectedIndex].toString()
     // This function plots the dataset based on which is selcted in this.selectedIndex
     // This uses the same pattern as script.js
 
-    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+    createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dataset_name);
     
     // Theoretical Intensities Table
     //all_results[dataset_name]['Theo_n_int_html']
-    create_Theo_Int_Table(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+    create_Theo_Int_table(all_results,'Theo-Int-table',dataset_name);
     
     // Fit values Table
     // all_results[dataset_name]['Fit_n_int_html']
-    create_Theo_Int_table(all_results,'normalized-intensities-plot',this.selectedIndex+1);
+    create_Fit_n_int_table(all_results,'Fit-n-int-table',dataset_name);
 
     // Uncertainty metrics Table
     // all_results[dataset_name]['Uncertainties_n_int_html']
@@ -56,12 +57,16 @@ let conversion_select = document.getElementById("conversion-select");
 
 // below this needs to be changed
 phase_fraction_plots_dataset_select.addEventListener("change", function() {
-    dataset_name=this.selectedIndex+1
+    dataset_name=all_results.dataset_names[this.selectedIndex].toString()
     
+    let cs = document.getElementById('conversion-select');
+    let conversion_option = cs.options[cs.options.selectedIndex].innerText;
     //    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
     
+    create_phase_fraction_value_table(all_results,'pf-table',conversion_option,dataset_name);
     createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
     create_uncert_source_summary_table(all_results,'uncert-table',dataset_name);
+
 })
 
 conversion_select.addEventListener("change", function() {
@@ -70,8 +75,8 @@ conversion_select.addEventListener("change", function() {
     let cs = document.getElementById('conversion-select');
     let conversion_option = cs.options[cs.options.selectedIndex].innerText;
     
-    let dataset_name = 'Dataset_'.concat(phase_fraction_plots_dataset_select.selectedIndex+1)
-    
+    //let dataset_name = 'Dataset_'.concat(phase_fraction_plots_dataset_select.selectedIndex+1)
+    let dsetName = all_results.dataset_names[phase_fraction_plots_dataset_select.selectedIndex].toString()
     switch(conversion_option) {
         case "Number of Unit Cells":
             conversion_option = 'number';
@@ -85,8 +90,9 @@ conversion_select.addEventListener("change", function() {
             conversion_option = 'volume';
             break;
     }
-    createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
     create_phase_fraction_value_table(all_results,'pf-table',conversion_option,dataset_name);
+    createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
+    create_uncert_source_summary_table(all_results,'uncert-table',dataset_name);
 })
 
 
@@ -121,6 +127,7 @@ conversion_select.addEventListener("change", function() {
  
 // add in cryst illum table
 // note, this currently looks only in Dataset 1, since cryst_illum_res does not seem to have a dataset attribute
+// FIX - reactivity not working for dataset selection
 function createCrystIllumTable() {
 
     let div = document.getElementById("cryst-illum-table-div");

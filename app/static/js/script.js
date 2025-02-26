@@ -95,13 +95,16 @@ async function fetchData() {
     const n_dsets = all_results.n_datasets;
     let dset_select_arr = [intensity_plots_select, normalized_intensity_plot_select,phase_fraction_dataset_plot_select, cryst_illum_data_select];
 
+    // Create the dropdown list for datasets
+    
     for(let i = 0; i < n_dsets; i++) {
 
         for(let j = 0; j < dset_select_arr.length; j++) {
             
             let new_option = document.createElement("option");
             new_option.value = i + 1;
-            new_option.textContent = (i + 1).toString();
+            //new_option.textContent = (i + 1).toString();
+            new_option.textContent = all_results.dataset_names[i].toString();
             dset_select_arr[j].appendChild(new_option);
 
         }
@@ -115,7 +118,9 @@ async function fetchData() {
 
     // ***** Intensity Plots Tab Initialization
     // Choose dataset
-    let dsetName_IntPlotTab = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
+    //let dsetName_IntPlotTab = 'Dataset_'.concat(intensity_plots_select.selectedIndex+1)
+    let dsetName_IntPlotTab = all_results.dataset_names[intensity_plots_select.selectedIndex].toString()
+    
     // Create plots
     createRawIntensityPlot(all_results,'raw-intensity-plot',dsetName_IntPlotTab);
     createFittedIntensityPlot(all_results,'fitted-intensity-plot',dsetName_IntPlotTab);
@@ -125,14 +130,17 @@ async function fetchData() {
     
     // ***** Normalized Intensity Tab Initialization
     // CHECK - do we want one for each type of fitting, or combined?
-    let dsetName_NormIntTab = 'Dataset_'.concat(normalized_intensity_plot_select.selectedIndex+1)
+    //let dsetName_NormIntTab = 'Dataset_'.concat(normalized_intensity_plot_select.selectedIndex+1)
+    let dsetName_NormIntTab = all_results.dataset_names[normalized_intensity_plot_select.selectedIndex].toString()
     createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName_NormIntTab);
     
     create_Theo_Int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
     create_Fit_n_int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
     
     // ***** Phase Fraction Tab Initialization
-    let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
+    //let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
+    let dsetName_PhaseFracTab = all_results.dataset_names[phase_fraction_dataset_plot_select.selectedIndex].toString()
+    
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
     create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);
     create_uncert_source_summary_table(all_results,'uncert-table',dsetName_PhaseFracTab);
@@ -142,7 +150,9 @@ async function fetchData() {
 
     // Crystallites Illuminated Tab
     // Select by dataset
-    let dsetName_CrysIllTab = 'Dataset_'.concat(cryst_illum_data_select.selectedIndex+1);
+    //let dsetName_CrysIllTab = 'Dataset_'.concat(cryst_illum_data_select.selectedIndex+1);
+    let dsetName_CrysIllTab = all_results.dataset_names[cryst_illum_data_select.selectedIndex].toString()
+
     create_interaction_volume_table(all_results,'interaction-volume-table',dsetName_CrysIllTab);
     
     

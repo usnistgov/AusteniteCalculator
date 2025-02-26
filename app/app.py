@@ -180,8 +180,6 @@ def submit():
     #with open("export-all.json", "w") as outfile:
     #    json.dump(all_results, outfile)
     
-    #breakpoint()
-    
     return jsonify(all_results)
 
 @app.route("/instprm_json",methods=["POST"])

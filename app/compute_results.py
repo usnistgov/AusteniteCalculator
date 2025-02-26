@@ -133,8 +133,10 @@ def gather_example(example_name):
         #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi30_norm_mask_1D_sum.csv']
         #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
         
+        xrdml_fnames = ['E241106-AAC-013-QP-psi30-phi0_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi30-phi60_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi54-phi30_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
+        
         # Test of fitting
-        xrdml_fnames = ['SimpleGauss.csv']
+        #xrdml_fnames = ['SimpleGauss.csv']
         
         
         instprm_fname = 'E240828-MRC-000.instprm' # check if updates are needed
@@ -785,7 +787,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
             # reset and repopulate the peak list
             peaks_list=theo_intensity_dict['two_theta']
 
-
+    check_fit_success_reply = fit.check_fit_success(t_pos, t_int, t_sigma, t_gamma)
 
     #Copy the fit data
     Submit_dict[dataset_string]["Peak_Fit_Data"]=hist.data
@@ -827,9 +829,20 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         # Add error message
         print("fit_type Error")
 
-
+    # check_fit_success (was create_verify_list response)
+    # FIX - need to address the fitting loops
     DF_merged_fit_theo["Peak_Fit_Success"]= peak_verify
     DF_merged_fit_theo["Peak_Fit_Success"] = DF_merged_fit_theo["Peak_Fit_Success"].astype('bool')
+    
+    
+    # FIX - gives SyntaxError: JSON.parse: unexpected character at line 76334 column 9 of the JSON data
+    # Used in calculate_prelim_phase_fraction, create_summed_dataset, package_for_export
+    
+    #DF_merged_fit_theo["Peak_Fit_Success"]= check_fit_success_reply
+    #DF_merged_fit_theo["Peak_Fit_Success"] = DF_merged_fit_theo["Peak_Fit_Success"].astype('bool')
+
+    
+
 
     ##### Extract uncertainties from the fitting process
     u_pos_fit_list=[]
@@ -2374,11 +2387,16 @@ def package_for_export(Submit_dict):
     all_results['n_datasets']=len(Submit_dict['File_Paths']['Dataset_name'])
     
     all_results['n_phases']=len(all_results['unique_phases'])
-    
+ 
+    # Dataset name list
+    all_results['dataset_names']=list(Submit_dict["File_Paths"]["Dataset_name"])
+
+ 
     # CHECK - kind of kludgy
     first_dataset_name=Submit_dict['File_Paths']['Dataset_name'][0]
     all_results['n_peaks']=len(Submit_dict[first_dataset_name]["Merged_Peaks"])
- 
+
+
  
     for dataset_name in Submit_dict['File_Paths']['Dataset_name']:
         all_results[dataset_name]={}
@@ -2435,7 +2453,7 @@ def package_for_export(Submit_dict):
         all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit','pos_G', 'int_LB','int_fit','int_G','int_TR', 'sig_LB','sig_fit','sig_G','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
 
         # Table for Theoretical Intnesities
-        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
+        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction','fit_success_G','Peak_Fit_Success']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
         # Table for Uncertainty Metrics
         # FIX - figure out which ones and add more

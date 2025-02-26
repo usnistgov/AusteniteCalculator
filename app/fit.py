@@ -453,17 +453,33 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
     return DF
 
 def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
+    """
+    CHECK - best structure?
+    """
     verify_list = np.empty(t_pos.shape[0])
 
     max_int = 0
     for x in range(t_pos.shape[0]):
         if(t_int[x] > t_int[max_int]):
             max_int = x
+        
         if(t_int[x] < 0):
             verify_list[x] = False
         else:
             verify_list[x] = True
             print("All Intensities Positive")
+            
+#        if(t_sigma[x] < 0):
+#            verify_list[x] = False
+#        else:
+#            verify_list[x] = True
+#            print("All Sigma Values Positive")
+#
+#        if(t_gamma[x] < 0):
+#            verify_list[x] = False
+#        else:
+#            verify_list[x] = True
+#            print("All Gamma Values Positive")
 
 #    temp_sig = []
  #   temp_gam = []
@@ -491,6 +507,25 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
       #      verify_list[x] = False
     
     #print(verify_list)
+    return verify_list
+
+def check_fit_success(t_pos, t_int, t_sigma, t_gamma):
+    """
+    Duplicative, but need to fix fitting loops
+    """
+    verify_list = np.empty(t_pos.shape[0])
+
+    max_int = 0
+    for x in range(t_pos.shape[0]):
+        if(t_int[x] > t_int[max_int]):
+            max_int = x
+        
+        if((t_int[x] < 0) or (t_sigma[x] < 0) or (t_gamma[x] < 0)):
+            verify_list[x] = False
+        else:
+            verify_list[x] = True
+
+    print(verify_list)
     return verify_list
 
 
@@ -758,6 +793,7 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     sig_G_list=[]
     int_G_list=[]
     int_trap_list=[]
+    fit_success_G_list=[]
 
     for index, pos_value in enumerate(Submit_dict[dataset_string]['Le_Bail_Peaks']['pos_LB']):
 
@@ -808,6 +844,8 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
             Integ_background=sciint.trapz(background(TwoTheta_window,popt[3],popt[4]))
             Integ_peak_fit=Integ_fit-Integ_background
             Integ_peak_data=Integ_data-Integ_background
+            
+            fit_success_G=True
             print("Integrated Values:")
             print(Integ_fit,Integ_background,Integ_peak_fit)
             print(Integ_data,Integ_background,Integ_peak_data)
@@ -823,7 +861,7 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
             Integ_background=np.nan
             Integ_peak_fit=np.nan
             Integ_peak_data=np.nan
-            
+            fit_success_G=False
             TwoTheta_plot.extend([pos_value])
             Gaussian_plot.extend([0])
 
@@ -832,7 +870,7 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
         sig_G_list.extend([popt[2]*100])
         int_G_list.extend([Integ_peak_fit])
         int_trap_list.extend([Integ_peak_data])
-
+        fit_success_G_list.extend([fit_success_G])
                              
         # Save the fit values to plot
         print("Compare values: ")
@@ -856,6 +894,7 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     Submit_dict[dataset_string]["Gaussian_Peaks"]["sig_G"]=sig_G_list
     Submit_dict[dataset_string]["Gaussian_Peaks"]["int_G"]=int_G_list
     Submit_dict[dataset_string]["Gaussian_Peaks"]["int_TR"]=int_trap_list
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["fit_success_G"]=fit_success_G_list
     print("\n*************************************")
     print("Gaussian Fit data")
     print(Submit_dict[dataset_string]["Gaussian_Peaks"])
