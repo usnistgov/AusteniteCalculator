@@ -19,7 +19,7 @@ import compute_results
 import compute_uncertainties
 
 if platform.system() == 'Linux':
-    sys.path.insert(0,'/root/g2full/GSASII/')
+    sys.path.insert(0,'/root/g2full/GSAS-II/GSASII/')
     inside_docker = True
 
 elif re.search('creuzige',os.getcwd()):
