@@ -63,6 +63,13 @@ function create_uncert_source_summary_table(all_results,div_id,dataset_name) {
     document.getElementById('uncert-table').innerHTML=uncert_source_summary_table_html;
 }
 
+// Uncertainty Sources by Peak
+//all_results[dataset_name]["uncertainty_summary_html"]
+function create_uncert_source_peak_table(all_results,div_id,dataset_name) {
+    const uncert_source_peak_table_html = all_results[dataset_name]["Uncertainties_n_int_html"];
+    document.getElementById('uncert-peak-table').innerHTML=uncert_source_peak_table_html;
+}
+
 
 // Interaction Volume Table
 // all_results[dataset_name]['Interaction_Volume_html']

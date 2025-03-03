@@ -1000,23 +1000,24 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
 
 
         # median values
+        # FIX - these were coded as mean values, why?
         
         # fill median X-ray Count Variability n_u_count_fit
-        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_count_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_count_fit'].mean())
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_count_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_count_fit'].median())
         
         #dummy = results_table.loc[results_table['Phase'] == ph,'u_int_count']/results_table.loc[results_table['Phase'] == ph,'R_calc']
         #param_table.loc[param_table['Phase'] == ph, 'X-ray Count Variability'] = np.median(dummy)
 
         # fill median X-ray Count Variability n_u_count_fit
         # CHECK was Parameter Fit Variability  is that still captured???
-        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_int_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_int_fit'].mean())
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_int_fit'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_int_fit'].median())
 
         #dummy = results_table.loc[results_table['Phase'] == ph,'u_int_fit']/results_table.loc[results_table['Phase'] == ph,'R_calc']
         #param_table.loc[param_table['Phase'] == ph, 'Parameter Fit Variability'] = np.median(dummy)
 
         # fill median X-ray Count Variability n_u_count_fit
         # CHECK was Parameter Fit Variability  is that still captured???
-        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_N_Diffracting_95pct'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_N_Diffracting_95pct'].mean())
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_n_u_N_Diffracting_95pct'][ii]=float(Submit_dict[dataset]["Merged_Peaks"].loc[Submit_dict[dataset]["Merged_Peaks"]['Phase']==ph,'n_u_N_Diffracting_95pct'].median())
 
         # crystallites diffracted
         #dummy = results_table.loc[results_table['Phase'] == ph,'u_cryst_diff']/results_table.loc[results_table['Phase'] == ph,'R_calc']

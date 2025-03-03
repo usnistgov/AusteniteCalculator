@@ -794,6 +794,8 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     int_G_list=[]
     int_trap_list=[]
     fit_success_G_list=[]
+    int_G_total_list=[]
+    int_G_bg_list=[]
 
     for index, pos_value in enumerate(Submit_dict[dataset_string]['Le_Bail_Peaks']['pos_LB']):
 
@@ -807,8 +809,9 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
         # using 3* the sig_value since Le Bail tends to make the window small
         # and to take a larger view for fitting
         # FIX - need a larger value for right window, with the ka1/ka2 split
-        left_window_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value-3*sig_value)
-        right_window_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value+4*sig_value)
+        # Was 3/4, increased to check fitting
+        left_window_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value-5*sig_value)
+        right_window_index=np.searchsorted(Submit_dict[dataset_string]['Le_Bail_Data']['data'][1][0],pos_value+6*sig_value)
  
         print(left_window_index,data_index,right_window_index)
         
@@ -839,9 +842,11 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
             #print(pcov)
             print(np.sqrt(np.diagonal(pcov)))
             print(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4]))
-            Integ_fit=sciint.trapz(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4]))
-            Integ_data=sciint.trapz(Intensity_window)
-            Integ_background=sciint.trapz(background(TwoTheta_window,popt[3],popt[4]))
+            # need to include the x axis
+            # Values are off by Factor of 100, others report in centideg
+            Integ_fit=sciint.trapz(gauss(TwoTheta_window,popt[0],popt[1],popt[2],popt[3],popt[4]),x=TwoTheta_window)
+            Integ_data=sciint.trapz(Intensity_window,x=TwoTheta_window)
+            Integ_background=sciint.trapz(background(TwoTheta_window,popt[3],popt[4]),x=TwoTheta_window)
             Integ_peak_fit=Integ_fit-Integ_background
             Integ_peak_data=Integ_data-Integ_background
             
@@ -868,8 +873,10 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
         pos_G_list.extend([popt[1]])
         # multiply by 100 to make comparible in centi-degrees
         sig_G_list.extend([popt[2]*100])
-        int_G_list.extend([Integ_peak_fit])
-        int_trap_list.extend([Integ_peak_data])
+        int_G_list.extend([Integ_peak_fit*100])
+        int_G_total_list.extend([Integ_fit*100])
+        int_G_bg_list.extend([Integ_background*100])
+        int_trap_list.extend([Integ_peak_data*100])
         fit_success_G_list.extend([fit_success_G])
                              
         # Save the fit values to plot
@@ -889,10 +896,12 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
         #sorted_list = sorted(a, key=lambda x: order_dict[x])
         #print(sorted_list)
     
-    
+
     Submit_dict[dataset_string]["Gaussian_Peaks"]["pos_G"]=pos_G_list
     Submit_dict[dataset_string]["Gaussian_Peaks"]["sig_G"]=sig_G_list
     Submit_dict[dataset_string]["Gaussian_Peaks"]["int_G"]=int_G_list
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["int_G_total"]=int_G_total_list
+    Submit_dict[dataset_string]["Gaussian_Peaks"]["int_G_bg"]=int_G_bg_list
     Submit_dict[dataset_string]["Gaussian_Peaks"]["int_TR"]=int_trap_list
     Submit_dict[dataset_string]["Gaussian_Peaks"]["fit_success_G"]=fit_success_G_list
     print("\n*************************************")
@@ -901,7 +910,10 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     
     #Submit_dict[dataset_string]["Gaussian_Peaks"]
     Submit_dict[dataset_string]["Gaussian_Data"]['data']=[TwoTheta_plot,Gaussian_plot]
-        
+    
+    print("Test Export")
+    print(TwoTheta_plot)
+    print(Gaussian_plot)
 #    breakpoint()
 #
 #    #psi30-phi0

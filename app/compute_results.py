@@ -117,7 +117,7 @@ def gather_example(example_name):
         cif_fnames = ['Austenite_QP_AC.cif','Ferrite_QP_AC.cif']
         #cif_fnames = ['Austenite_TRIP_DP_AC.cif','Ferrite_TRIP_DP_AC.cif']
         workdir = '../server_workdir'
-        all_files = pd.Series(os.listdir(datadir))
+        #all_files = pd.Series(os.listdir(datadir))
         #xrdml_fnames = ['E240828-MRC-001-QP-02p0strain_norm_mask_1D_sum_scaled.csv']
         #xrdml_fnames = ['E240828-MRC-003-QP-06p5strain_norm_mask_1D_sum_scaled.csv']
         #xrdml_fnames = ['E240828-MRC-002-QP-08p3strain_norm_mask_1D_sum_scaled.csv']
@@ -134,14 +134,20 @@ def gather_example(example_name):
         #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
         
         xrdml_fnames = ['E241106-AAC-013-QP-psi30-phi0_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi30-phi60_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi54-phi30_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
-        
-        # Test of fitting
-        #xrdml_fnames = ['SimpleGauss.csv']
-        
-        
+
         instprm_fname = 'E240828-MRC-000.instprm' # check if updates are needed
         json_fname = 'QP-E241101.json'
         #json_fname = 'TRIP_DP.json'
+
+        # Test of fitting
+      
+        #datadir = '../ExampleData/Example99/FitCheck'
+        #cif_fnames = ['austenite-FeOnly.cif','ferrite-FeOnly.cif']
+        #workdir = '../server_workdir'
+        #xrdml_fnames = ['Fe-Gaussian-only-2col.csv']
+        #xrdml_fnames = ['Fe-Gaussian-only-HighBG-2col.csv']
+        #instprm_fname = 'Fe-Gaussian-only.instprm' # check if updates are needed
+        #json_fname = 'Fe-Gaussian-only.json'
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
@@ -2450,14 +2456,11 @@ def package_for_export(Submit_dict):
 
   
         # Table for Fit values  
-        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit','pos_G', 'int_LB','int_fit','int_G','int_TR', 'sig_LB','sig_fit','sig_G','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
+        all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit','pos_G', 'int_LB','int_fit','int_G','int_TR',"int_G_bg","int_G_total", 'sig_LB','sig_fit','sig_G','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
 
         # Table for Theoretical Intnesities
         all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction','fit_success_G','Peak_Fit_Success']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
-        # Table for Uncertainty Metrics
-        # FIX - figure out which ones and add more
-        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit', 'u_int_fit','u_int_LB' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
  
         # Pull from:
         #Submit_dict["Dataset_1"]["Merged_Peaks"].columns
@@ -2508,7 +2511,10 @@ def package_for_export(Submit_dict):
         
         # Summary of uncertainties, all normalized
         all_results[dataset_name]["uncertainty_summary_html"]=Submit_dict[dataset_name]["Uncert_Source_Summary"].to_html(justify='left', index=False)
-        
+ 
+        # Table for Uncertainty Metrics
+        # FIX - figure out which ones and add more
+        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit','n_u_count_fit', 'u_int_fit','n_u_int_fit','u_int_LB','n_u_int_LB' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.4f' % x)
         
         # Put uncertainties for each peak on this tab?
         # Or does that belong with the normalizied intensities?
