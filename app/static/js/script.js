@@ -144,7 +144,8 @@ async function fetchData() {
     createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
     create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);
     create_uncert_source_summary_table(all_results,'uncert-table',dsetName_PhaseFracTab);
-    
+    create_uncert_source_peak_table(all_results,'uncert-table',dsetName_PhaseFracTab);
+ 
     // *****  Crystallites Illuminated Tab Initialization
     // createCrystIllumTable()
 

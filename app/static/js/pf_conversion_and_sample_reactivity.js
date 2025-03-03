@@ -76,7 +76,7 @@ conversion_select.addEventListener("change", function() {
     let conversion_option = cs.options[cs.options.selectedIndex].innerText;
     
     //let dataset_name = 'Dataset_'.concat(phase_fraction_plots_dataset_select.selectedIndex+1)
-    let dsetName = all_results.dataset_names[phase_fraction_plots_dataset_select.selectedIndex].toString()
+    let dataset_name = all_results.dataset_names[phase_fraction_plots_dataset_select.selectedIndex].toString()
     switch(conversion_option) {
         case "Number of Unit Cells":
             conversion_option = 'number';
@@ -93,6 +93,7 @@ conversion_select.addEventListener("change", function() {
     create_phase_fraction_value_table(all_results,'pf-table',conversion_option,dataset_name);
     createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
     create_uncert_source_summary_table(all_results,'uncert-table',dataset_name);
+    create_uncert_source_peak_table(all_results,'uncert-table',dataset_name);
 })
 
 
