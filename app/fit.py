@@ -509,24 +509,18 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     #print(verify_list)
     return verify_list
 
-def check_fit_success(t_pos, t_int, t_sigma, t_gamma):
+def check_fit_success(Merged_Peaks_DF):
     """
-    Duplicative, but need to fix fitting loops
+    May be duplicative of create_verify_list, but need to fix fitting loops
+    
     """
-    verify_list = np.empty(t_pos.shape[0])
-
-    max_int = 0
-    for x in range(t_pos.shape[0]):
-        if(t_int[x] > t_int[max_int]):
-            max_int = x
-        
-        if((t_int[x] < 0) or (t_sigma[x] < 0) or (t_gamma[x] < 0)):
-            verify_list[x] = False
-        else:
-            verify_list[x] = True
-
-    print(verify_list)
-    return verify_list
+    #breakpoint()
+    
+    
+    # Check if the fitted intensity uncertinaty is less than 10X the median value
+    Merged_Peaks_DF["Peak_Fit_Success2"]=Merged_Peaks_DF['n_u_int_fit'] < 10* np.median(Merged_Peaks_DF['n_u_int_fit'])
+    
+    return Merged_Peaks_DF
 
 
 def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_coeffiecients=5):

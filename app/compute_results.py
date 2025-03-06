@@ -132,9 +132,16 @@ def gather_example(example_name):
         #xrdml_fnames = ['E241106-AAC-013-QP-psi30-phi60_norm_mask_1D_sum.csv']
         #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi30_norm_mask_1D_sum.csv']
         #xrdml_fnames = ['E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
-        
+
+        #Q&P
         xrdml_fnames = ['E241106-AAC-013-QP-psi30-phi0_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi30-phi60_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi54-phi30_norm_mask_1D_sum.csv', 'E241106-AAC-013-QP-psi54-phi90_norm_mask_1D_sum.csv']
 
+        #TRIPDP
+        #xrdml_fnames = ['QS250228-AAC-201-TRIPDP-psi30-phi0_norm_mask_1D_sum.csv', 'QS250228-AAC-201-TRIPDP-psi30-phi60_norm_mask_1D_sum.csv', 'QS250228-AAC-201-TRIPDP-psi54-phi30_norm_mask_1D_sum.csv', 'QS250228-AAC-201-TRIPDP-psi54-phi90_norm_mask_1D_sum.csv']
+        # Third file has issues...
+        #xrdml_fnames = ['QS250228-AAC-201-TRIPDP-psi30-phi0_norm_mask_1D_sum.csv', 'QS250228-AAC-201-TRIPDP-psi30-phi60_norm_mask_1D_sum.csv',  'QS250228-AAC-201-TRIPDP-psi54-phi90_norm_mask_1D_sum.csv']
+ 
+        #QS250228-AAC-201-TRIPDP-
         instprm_fname = 'E240828-MRC-000.instprm' # check if updates are needed
         json_fname = 'QP-E241101.json'
         #json_fname = 'TRIP_DP.json'
@@ -793,8 +800,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
             # reset and repopulate the peak list
             peaks_list=theo_intensity_dict['two_theta']
 
-    check_fit_success_reply = fit.check_fit_success(t_pos, t_int, t_sigma, t_gamma)
-
+  
     #Copy the fit data
     Submit_dict[dataset_string]["Peak_Fit_Data"]=hist.data
 
@@ -888,7 +894,6 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         # Add error message
         print("fit_type Error")
 
-
     #DF_merged_fit_theo['u_int_count']=DF_merged_fit_theo['int_fit']**0.5
 
     DF_merged_fit_theo = DF_merged_fit_theo.sort_values('pos_fit')
@@ -945,6 +950,10 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     print(DF_merged_fit_theo.columns)
     Submit_dict[dataset_string]["Merged_Peaks"]=DF_merged_fit_theo
     
+    # Checking fit success outside of fitting loop
+    # FIX
+    Submit_dict[dataset_string]["Merged_Peaks"] = fit.check_fit_success(Submit_dict[dataset_string]["Merged_Peaks"])
+
 
     
     ########################################
@@ -1976,6 +1985,7 @@ def create_summed_dataset(Submit_dict):
     Create a summed dataset
     
     Need "Merged_Peaks"
+    CHECK - how will fit respond if the fit success is different by peak
     """
     print(Submit_dict["File_Paths"]["Dataset_name"])
 
@@ -2442,7 +2452,9 @@ def package_for_export(Submit_dict):
         # Two Theta (per fit?), n_int, Phase, Fit Type,
         # CHECK - add fit success?
         
-        all_results[dataset_name]['n_int_plot_data']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'pos_TI','n_int_fit', 'n_int_LB' ]].to_dict(orient='list')
+        # USE MCMC since that excludes poorly fit data
+        # May want to
+        all_results[dataset_name]['n_int_plot_data']=Submit_dict[dataset_name]["MCMC_Calc"][['Phase','hkl', 'pos_TI','n_int_fit', 'n_int_LB' ]].to_dict(orient='list')
         
         # Mean values for n_int, phase, fit type ?  Aggreated elsewhere
 
@@ -2459,7 +2471,7 @@ def package_for_export(Submit_dict):
         all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit','pos_G', 'int_LB','int_fit','int_G','int_TR',"int_G_bg","int_G_total", 'sig_LB','sig_fit','sig_G','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
 
         # Table for Theoretical Intnesities
-        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction','fit_success_G','Peak_Fit_Success']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
+        all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction','fit_success_G','Peak_Fit_Success','Peak_Fit_Success2']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
  
         # Pull from:
@@ -2514,7 +2526,7 @@ def package_for_export(Submit_dict):
  
         # Table for Uncertainty Metrics
         # FIX - figure out which ones and add more
-        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit','n_u_count_fit', 'u_int_fit','n_u_int_fit','u_int_LB','n_u_int_LB' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.4f' % x)
+        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit','n_u_count_fit', 'u_int_fit','n_u_int_fit','u_int_LB','n_u_int_LB' ]].to_html(justify='left', index=False, float_format=lambda x: '%.4e' % x)
         
         # Put uncertainties for each peak on this tab?
         # Or does that belong with the normalizied intensities?

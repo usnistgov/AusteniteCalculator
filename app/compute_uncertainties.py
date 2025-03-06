@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from cmdstanpy import CmdStanModel
 import sys
+import compute_results
 
 
 
@@ -288,7 +289,22 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         
         #n_u_ is the uncertainty normalized by the I/R (normalized intensity)
         # FIX - add peak fit success
-        Submit_dict[dataset]["MCMC_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['int_fit', 'R_TI', 'n_int_fit', 'n_u_int_fit', 'n_u_count_fit','n_u_N_Diffracting_95pct','Phase','pos_fit', 'hkl'  ]]
+        Submit_dict[dataset]["MCMC_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['int_fit', 'R_TI', 'n_int_fit', 'n_u_int_fit', 'n_u_count_fit','n_u_N_Diffracting_95pct','Phase','pos_fit', 'hkl','Peak_Fit_Success2','pos_TI','n_int_LB'  ]]
+
+        # Drop any rows where the fit was not successful
+        #breakpoint()
+        rows_to_drop = Submit_dict[dataset]["MCMC_Calc"][Submit_dict[dataset]["MCMC_Calc"]['Peak_Fit_Success2'] == False]
+        # drop in place
+        Submit_dict[dataset]["MCMC_Calc"].drop(rows_to_drop.index, inplace=True)
+
+        print("Included in MCMC Calc")
+        print(Submit_dict[dataset]["MCMC_Calc"])
+        # ADD FLAGS
+        Submit_dict[dataset]["Flags"]=compute_results.flag_phase_fraction(rows_to_drop[['Phase','hkl']].to_string(header=False, index=False,index_names=False),np.nan,\
+                "MCMC Caculation",\
+                "Removed Peaks where fit uncertainty was 10X the median value",\
+                "Check fit and signal to noise",\
+                DF_to_append=Submit_dict[dataset]["Flags"])
 
 
         Submit_dict[dataset]["MCMC_Calc"]['sample_id']=dataset_number
