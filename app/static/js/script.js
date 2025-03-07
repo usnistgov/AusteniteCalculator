@@ -152,25 +152,32 @@ async function fetchData() {
     // Crystallites Illuminated Tab
     // Select by dataset
     //let dsetName_CrysIllTab = 'Dataset_'.concat(cryst_illum_data_select.selectedIndex+1);
-    let dsetName_CrysIllTab = all_results.dataset_names[cryst_illum_data_select.selectedIndex].toString()
+    let dsetName_CrysIllTab = all_results.dataset_names[cryst_illum_data_select.selectedIndex].toString();
 
     create_interaction_volume_table(all_results,'interaction-volume-table',dsetName_CrysIllTab);
-    
+
     
     // update form selects for phase
-    let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
+    //let cryst_illum_phase_select = document.getElementById('cryst-illum-select-phase');
+    let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak-index');
     
-    const n_phases = all_results.n_phases;
+    //i<all_results[dsetName_CrysIllTab]['Interaction_Volume_html']["Peak Index"].length
+    for(let i = 0; i < all_results[dsetName_CrysIllTab]["Peak_index_list"].length; i++){
     
-    for(let i = 0; i < n_phases; i++) {
-        let new_option = document.createElement("option");
-        new_option.textContent = all_results.unique_phases[i];
-        cryst_illum_phase_select.appendChild(new_option);
+        let peak_option = document.createElement("option");
+        //new_option.textContent = (i + 1).toString();
+        //["Peak Index"][i]
+        peak_option.textContent = all_results[dsetName_CrysIllTab]["Peak_index_list"][i].toString();
+        cryst_illum_peak_select.appendChild(peak_option);
+
     }
 
+    createIncidentAnglePlot(all_results,'incident-angle-plot',dsetName_CrysIllTab,0);
+    createZDepthPlot(all_results,'z-depth-histogram-plot',dsetName_CrysIllTab,0);
+
     // update form selects for peak
-    let cryst_illum_peak_select = document.getElementById('cryst-illum-select-peak');
-    let n_peaks = all_results.n_peaks;
+
+    //let n_peaks = all_results.n_peaks;
 
 // FIX - when we get crystallites illuinated
     // for(let i = 0; i < n_peaks; i++) {

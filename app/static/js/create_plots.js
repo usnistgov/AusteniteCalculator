@@ -290,7 +290,7 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_nam
  *
  * @returns {Plotly.newPlot()} Types and descriptions are both supported.
  */
-function createZDepthPlot(all_results) {
+function createZDepthPlot(all_results,div_id,dataset_name,peak_index) {
     
     // html has Select Dataset, Phase, Peak
     
@@ -303,12 +303,179 @@ function createZDepthPlot(all_results) {
     //all_results['graph_data_table'][phase][index of peak list][0] or [1], both pandas dataframes.  [0] just x,y,Length, Intensity,
     // [1] is midpoints,
     
+    var data = [{
+
+        type: 'bar',
+        x: all_results[dataset_name]["Z_Depth_plot_data"]['Escaped'][peak_index],
+        y: all_results[dataset_name]["Z_Depth_plot_data"]['Z_Depth'][peak_index],
+        orientation: 'h',
+        marker: {
+            color: 'rgb(0, 0, 0)'
+            },
+        name: 'X-rays escaped',
+
+    }];
+
+    data.push({
+            x: [all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][0][peak_index], all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][1][peak_index]],
+            y: [all_results[dataset_name]["Z_Depth_plot_data"]['95pct_Bound'][0][peak_index], all_results[dataset_name]["Z_Depth_plot_data"]['95pct_Bound'][1][peak_index]],
+            name: '95% Bound',
+            mode: 'lines',
+            line: {dash: 'dashdot'},
+            color: 'rgb(255, 0, 0)',
+            
+    });
+
+    data.push({
+            x: [all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][0][peak_index], all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][1][peak_index]],
+            y: [all_results[dataset_name]["Z_Depth_plot_data"]['68pct_Bound'][0][peak_index], all_results[dataset_name]["Z_Depth_plot_data"]['68pct_Bound'][1][peak_index]],
+            name: '68% Bound',
+            mode: 'lines',
+            line: {dash: 'dash'},
+            color: 'rgb(0, 255, 0)',
+            
+    });
+    
+    data.push({
+            x: [all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][0][peak_index], all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][1][peak_index]],
+            y: [all_results[dataset_name]["Z_Depth_plot_data"]['50pct_Bound'][0][peak_index], all_results[dataset_name]["Z_Depth_plot_data"]['50pct_Bound'][1][peak_index]],
+            name: '50% Bound',
+            mode: 'lines',
+            line: {dash: 'dot'},
+            color: 'rgb(0, 0, 255)',
+            
+    });    
+
+
+    var layout = {
+        title: 'X-rays Escaped vs. Z Depth (assumed x-ray flux of 1 000 000)',
+        xaxis: {title: 'X-rays Escaped [counts]'},
+        yaxis: {title: 'Z [um]'},
+        // Shapes for bounding lines
+//        shapes: [
+//    {
+//
+//      type: 'line',
+//      x0: all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][0][peak_index],
+//      y0: all_results[dataset_name]["Z_Depth_plot_data"]['95pct_Bound'][0][peak_index],
+//      x1: all_results[dataset_name]["Z_Depth_plot_data"]['Count_Bound'][1][peak_index],
+//      y1: all_results[dataset_name]["Z_Depth_plot_data"]['95pct_Bound'][1][peak_index],
+//      line: {
+//        color: 'rgb(255, 0, 0)',
+//        width: 3,
+//        dash: 'dashdot'
+//      }
+//    },
+
+//    {
+//      type: 'line',
+//      x0: 2,
+//      y0: 2,
+//      x1: 5,
+//      y1: 2,
+//      line: {
+//        color: 'rgb(50, 171, 96)',
+//        width: 4,
+//        dash: 'dashdot'
+//      }
+//    },
+//
+//
+//    //Line Diagonal
+//    {
+//      type: 'line',
+//      x0: 4,
+//      y0: 0,
+//      x1: 6,
+//      y1: 2,
+//      line: {
+//        color: 'rgb(128, 0, 128)',
+//        width: 4,
+//        dash: 'dot'
+//      }
+//    }
+//  ]
+        
+        
+      };
+    
+    Plotly.newPlot(div_id, data, layout);
+
+    
+    
 }
 
-function incidentAnglePlot(all_results) {
 
+/**
+ * Return the Incident Xrays in an X vs Z depth as a plotly object
+ *
+ * @param [dict] all_results : dictionary with data
+ * @param [str] div_id : ID for which division?
+ * @param [num] dataset_name :
+ * @param [num] peak_index : Index of the peak to plot
+ *
+ * @returns {Plotly.newPlot()} Types and descriptions are both supported.
+ */
+function createIncidentAnglePlot(all_results,div_id,dataset_name,peak_index) {
+    // Show the incident beam and the angle into the surface
     // info probably in all_results.results_table and all_results.crystallites_dict
+    var trace1 = {
+        x: all_results[dataset_name]["Incident_Angle_plot_data"]['I_X_Endpoints'][peak_index],
+        y: all_results[dataset_name]["Incident_Angle_plot_data"]['I_Z_Endpoints'][peak_index],
+        type: 'scatter',
+        mode: 'lines',
+        line: {dash: 'solid'},
+        name: 'Line of Incident X-rays',
+        marker: {
+            color: 'rgb(0, 0, 0)',
+                }
+    };
+    // Penetrating X-rays
+    var trace2 = {
+        x: all_results[dataset_name]["Incident_Angle_plot_data"]['P_X_Endpoints'][peak_index],
+        y: all_results[dataset_name]["Incident_Angle_plot_data"]['P_Z_Endpoints'][peak_index],
+        type: 'scatter',
+        mode: 'lines',
+        line: {dash: 'dash'},
+        name: 'Line of Penetrating X-rays',
+        marker: {
+            color: 'rgb(128, 128, 128)',
+                }
+    };
+    // Diffracted X-rays
+    var trace3 = {
+        x: all_results[dataset_name]["Incident_Angle_plot_data"]['D_X_Endpoints'][peak_index],
+        y: all_results[dataset_name]["Incident_Angle_plot_data"]['D_Z_Endpoints'][peak_index],
+        type: 'scatter',
+        mode: 'lines',
+        line: {dash: 'dot'},
+        name: 'Line of Diffracting X-rays',
+        marker: {
+            color: 'rgb(190, 190, 190)',
+                }
+    };
+    // Need a consistent box, otherwise plot autoscales
+    var trace4 = {
+        x: all_results[dataset_name]["Incident_Angle_plot_data"]['X_Bounds'],
+        y: all_results[dataset_name]["Incident_Angle_plot_data"]['Z_Bounds'],
+        type: 'scatter',
+        mode: 'markers',
+        name: '',
+        marker: {
+            color: 'rgb(255, 255, 255)',
+                }
+    };
+
+    var data = [trace1,trace2,trace3,trace4 ];
+
+    // FIX - the aspect ratio isn't staying fixed...
+    var layout = {
+        title: 'Incident X-ray and ',
+        xaxis: {title: 'X [um]'},
+        yaxis: {title: 'Z [um]'},
+        aspectmode: "cube"
+      };
+    
+    Plotly.newPlot(div_id, data, layout);
 
 }
-
-

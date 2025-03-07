@@ -1791,9 +1791,45 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
  
     #  percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
 
+    ########################
+    ##### Return values as a list for json export
+    ########################
 
+    ## Incident x-ray plot
 
+    Submit_dict[dataset]["Incident_Angle_plot_data"]={}
+    # Incident x-rays
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['I_X_Endpoints']=(-1*Submit_dict[dataset]["Interaction_Plots"]['X_Endpoints']).tolist()
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['I_Z_Endpoints']=(Submit_dict[dataset]["Interaction_Plots"]['Z_Endpoints']).tolist()
+    # Penetrating x-rays
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['P_X_Endpoints']=(Submit_dict[dataset]["Interaction_Plots"]['X_Endpoints']).tolist()
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['P_Z_Endpoints']=(-1*Submit_dict[dataset]["Interaction_Plots"]['Z_Endpoints']).tolist()
+    # Diffracted x-rays
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['D_X_Endpoints']=(Submit_dict[dataset]["Interaction_Plots"]['X_Endpoints']).tolist()
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['D_Z_Endpoints']=(Submit_dict[dataset]["Interaction_Plots"]['Z_Endpoints']).tolist()
+ 
+    # Plot bounding box to keep from rescaling
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['X_Bounds']=[np.max(Submit_dict[dataset]["Interaction_Plots"]['X_Endpoints']),-np.max(Submit_dict[dataset]["Interaction_Plots"]['X_Endpoints'])]
+    Submit_dict[dataset]["Incident_Angle_plot_data"]['Z_Bounds']=[np.max(Submit_dict[dataset]["Interaction_Plots"]['Z_Endpoints']),-np.max(Submit_dict[dataset]["Interaction_Plots"]['Z_Endpoints'])]
+    #, 'Z_Endpoints', 'Path_Length_Endpoints', 'I_Endpoints', 'X_Midpoints', 'Z_Midpoints', 'Path_Length_Midpoints', 'Delta_I_Midpoints', 'Est_Absorbed', 'Est_Anomalous', 'Est_Scattered', 'Est_Escaped', 'Escaped Index Sum']
+
+    ## Z Depth histogram plot
+    
+    Submit_dict[dataset]["Z_Depth_plot_data"]={}
+    Submit_dict[dataset]["Z_Depth_plot_data"]['Escaped']=Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"].tolist()
+    Submit_dict[dataset]["Z_Depth_plot_data"]['Z_Depth']=(-1*Submit_dict[dataset]["Interaction_Plots"] ["Z_Midpoints"]).tolist()
+
+    # Lines for depth
+    Submit_dict[dataset]["Z_Depth_plot_data"]['Count_Bound']=[np.min( Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1).tolist(), np.max( Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1).tolist()]
+    
+    Submit_dict[dataset]["Z_Depth_plot_data"]['95pct_Bound']=[(-1*Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"]).tolist(),(-1*Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"]).tolist()]
+
+    Submit_dict[dataset]["Z_Depth_plot_data"]['68pct_Bound']=[(-1*Submit_dict[dataset]["Interaction_Calc"]["68pct_Escaped_Depth_um"]).tolist(),(-1*Submit_dict[dataset]["Interaction_Calc"]["68pct_Escaped_Depth_um"]).tolist()]
+    
+    Submit_dict[dataset]["Z_Depth_plot_data"]['50pct_Bound']=[(-1*Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"]).tolist(),(-1*Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"]).tolist()]
+        
     #print("90% counts pos: ",percentile90_y)
+    print("Interaction Graph Data")
     print(Submit_dict[dataset]["Interaction_Calc"])
     #breakpoint()
     return Submit_dict
@@ -2538,8 +2574,24 @@ def package_for_export(Submit_dict):
         ###### Inveraction Volume
         # Select Dataset, Phase, Peak (hkl)
         
-        all_results[dataset_name]['Interaction_Volume_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','N_Layers_95pct', 'N_illuminated_95pct','Diffracting_Fraction','N_Diffracting_95pct', 'Powder_Size_um','l_bar_um','95pct_Escaped_Depth_um' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
+        ## Incident x-ray plot
         
+        all_results[dataset_name]['Interaction_Volume_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','N_Layers_95pct', 'N_illuminated_95pct','Diffracting_Fraction','N_Diffracting_95pct', 'Powder_Size_um','l_bar_um','95pct_Escaped_Depth_um' ]]
+        
+        all_results[dataset_name]['Interaction_Volume_html']["Peak Index"]=all_results[dataset_name]['Interaction_Volume_html'].index
+ 
+        all_results[dataset_name]["Peak_index_list"]=all_results[dataset_name]['Interaction_Volume_html']["Peak Index"].tolist()
+ 
+        all_results[dataset_name]['Interaction_Volume_html']=all_results[dataset_name]['Interaction_Volume_html'].to_html(justify='left', index=True, float_format=lambda x: '%10.2f' % x)
+        
+        
+        all_results[dataset_name]["Incident_Angle_plot_data"]=Submit_dict[dataset_name]["Incident_Angle_plot_data"]
+        
+
+        ## Z Depth plots
+        
+        all_results[dataset_name]["Z_Depth_plot_data"]=Submit_dict[dataset_name]["Z_Depth_plot_data"]
+
         # Row from #Submit_dict["Dataset_1"]["Merged_Peaks"]
         
         # Row from "Interaction_Plots"
