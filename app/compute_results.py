@@ -889,7 +889,8 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         DF_merged_fit_theo=fit.fit_background(DF_merged_fit_theo,hist, peaks_list)
         # p 362 Klug & Alexander "X-Ray Diffraction proceedures"
         # 2* background since I have just the peak values in the int_fit
-        DF_merged_fit_theo['u_int_count']=np.sqrt(2*DF_merged_fit_theo['back_int_bound']+DF_merged_fit_theo['int_fit'])
+        # CHECK - use abs value for back_int_bound, sometimes ends up negative?
+        DF_merged_fit_theo['u_int_count']=np.sqrt(2*np.abs(DF_merged_fit_theo['back_int_bound'])+np.abs(DF_merged_fit_theo['int_fit']))
     else:
         # Add error message
         print("fit_type Error")
@@ -2043,6 +2044,10 @@ def create_summed_dataset(Submit_dict):
         # Can't sum strings...
         temp_DF = Submit_dict[dataset]['Merged_Peaks'].drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
         
+        # FIX - set rows/columns to zero if the fit was not successful
+        #https://stackoverflow.com/questions/55321563/drop-pandas-row-by-name-keep-index-intact
+        temp_DF = temp_DF[temp_DF['Peak_Fit_Success2'] ==True ]
+        
         Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.add(temp_DF, fill_value=0)
 
 
@@ -2074,10 +2079,11 @@ def create_summed_dataset(Submit_dict):
     #Average (Divide)
     # 'pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction'
     
+    # FIX - get a divide by zero error
+    Summed_Merged_Peaks_DF['Peak_Fit_Success3']=Summed_Merged_Peaks_DF['Peak_Fit_Success2']+0.001
     
-
     # df[['A', 'B', 'C']] = df[['A', 'B', 'C']].div(df['D'], axis=0)
-    Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']]=Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']].div(Summed_Merged_Peaks_DF['Peak_Fit_Success'], axis=0)
+    Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']]=Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']].div(Summed_Merged_Peaks_DF['Peak_Fit_Success3'], axis=0)
 
     # FIX - Redo uncertainty calculations
 
@@ -2094,7 +2100,10 @@ def create_summed_dataset(Submit_dict):
     Submit_dict["Dataset_sum"]["Le_Bail_Data"]=Submit_dict[dataset0]["Le_Bail_Data"]
     Submit_dict["Dataset_sum"]["Peak_Fit_Data"]=Submit_dict[dataset0]["Peak_Fit_Data"]
     Submit_dict["Dataset_sum"]["Gaussian_Data"]=Submit_dict[dataset0]["Gaussian_Data"]
+    Submit_dict["Dataset_sum"]["Incident_Angle_plot_data"]=Submit_dict[dataset0]["Incident_Angle_plot_data"]
+    Submit_dict["Dataset_sum"]["Z_Depth_plot_data"]=Submit_dict[dataset0]["Z_Depth_plot_data"]
     Submit_dict["Dataset_sum"]["Flags"]=Submit_dict[dataset0]["Flags"]
+    
     
     return Submit_dict
 

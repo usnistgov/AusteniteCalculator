@@ -518,8 +518,34 @@ def check_fit_success(Merged_Peaks_DF):
     
     
     # Check if the fitted intensity uncertinaty is less than 10X the median value
-    Merged_Peaks_DF["Peak_Fit_Success2"]=Merged_Peaks_DF['n_u_int_fit'] < 10* np.median(Merged_Peaks_DF['n_u_int_fit'])
+    Merged_Peaks_DF["Peak_Fit_Success_n_u_int"]=Merged_Peaks_DF['n_u_int_fit'] < 10* np.median(Merged_Peaks_DF['n_u_int_fit'])
+
+    # Check if the ratio of Le Bail and Peak fit normalized intensities
+    # is less than 10X the median value
+    # ADD? - similar for intensity, sigma, gamma?
+
+    Merged_Peaks_DF['n_int_LB/fit']= (Merged_Peaks_DF['n_int_LB']/Merged_Peaks_DF['n_int_fit'])
+    Merged_Peaks_DF["Peak_Fit_Success_n_int"]= (Merged_Peaks_DF['n_int_LB/fit'] > (0.10* np.median(Merged_Peaks_DF['n_int_LB/fit']))) & (Merged_Peaks_DF['n_int_LB/fit'] < (10* np.median(Merged_Peaks_DF['n_int_LB/fit'])))
+
+    # need to check positive or negative, but 'or' doesn't work.  need '|'
+    # Should be done as an and
+    # Also use and to retain prior values of True (1) or False (0)
     
+    # Sigma
+    Merged_Peaks_DF['sig_LB/fit']= (Merged_Peaks_DF['sig_LB']/Merged_Peaks_DF['sig_fit'])
+    Merged_Peaks_DF["Peak_Fit_Success_sig"]=( Merged_Peaks_DF['sig_LB/fit'] > (0.10* np.median(Merged_Peaks_DF['sig_LB/fit']))) & (Merged_Peaks_DF['sig_LB/fit'] < (10* np.median(Merged_Peaks_DF['sig_LB/fit'])))
+ 
+    # Gamma
+    Merged_Peaks_DF['gam_LB/fit']= np.abs(Merged_Peaks_DF['gam_LB']/Merged_Peaks_DF['gam_fit'])
+    Merged_Peaks_DF["Peak_Fit_Success_gam"]=(Merged_Peaks_DF['gam_LB/fit'] > (0.10* np.median(Merged_Peaks_DF['gam_LB/fit']))) & (Merged_Peaks_DF['gam_LB/fit'] < (10* np.median(Merged_Peaks_DF['gam_LB/fit'])))
+ 
+    # Intensity
+    Merged_Peaks_DF['int_LB/fit']= (Merged_Peaks_DF['int_LB']/Merged_Peaks_DF['int_fit'])
+    Merged_Peaks_DF["Peak_Fit_Success_int"]=(Merged_Peaks_DF['int_LB/fit'] > (0.10* np.median(Merged_Peaks_DF['int_LB/fit']))) & (Merged_Peaks_DF['int_LB/fit'] < (10* np.median(Merged_Peaks_DF['int_LB/fit'])))
+
+    Merged_Peaks_DF["Peak_Fit_Success2"]=(Merged_Peaks_DF["Peak_Fit_Success_n_u_int"])&(Merged_Peaks_DF["Peak_Fit_Success_n_int"])&(Merged_Peaks_DF["Peak_Fit_Success_sig"])&(Merged_Peaks_DF["Peak_Fit_Success_gam"])&(Merged_Peaks_DF["Peak_Fit_Success_int"])
+    # (Merged_Peaks_DF["Peak_Fit_Success2"])&
+
     return Merged_Peaks_DF
 
 
