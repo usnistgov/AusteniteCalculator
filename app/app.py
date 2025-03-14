@@ -12,6 +12,8 @@ import os
 import io
 import base64
 import re
+import pickle
+import time
 
 # user created
 import plot_utils
@@ -180,6 +182,17 @@ def submit():
     #with open("export-all.json", "w") as outfile:
     #    json.dump(all_results, outfile)
     
+    # Export all data (Submission) to file
+    # the json file where the output must be stored
+    
+
+    timestamp=time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
+    
+    with open('Submission'+timestamp+'.pickle', 'wb') as f:
+        pickle.dump(Submission, f, protocol=4)
+    with open('Results'+timestamp+'.pickle', 'wb') as f:
+        pickle.dump(all_results, f, protocol=4)
+  
     return jsonify(all_results)
 
 @app.route("/instprm_json",methods=["POST"])
