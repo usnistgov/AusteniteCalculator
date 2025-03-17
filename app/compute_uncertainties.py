@@ -799,11 +799,11 @@ def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
     # Number of unit cells
 
 
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({"Phase":unique_phase_names,"Neg_2sigma":np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.0455,axis=0)})
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.3173,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({"Phase":unique_phase_names,"Neg_2sigma":np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.02275,axis=0)})
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.1587,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Mean"]=np.nanmean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.6827,axis=0)
-    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.9545,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.8413,axis=0)
+    Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.97725,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.5,axis=0)
    
     # Mass of unit cells
