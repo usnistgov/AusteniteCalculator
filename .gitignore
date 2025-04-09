@@ -6,6 +6,11 @@
 app/GenerateJson.py
 app/sample.json
 app/sample2.json
+app/dependency-graph.py
+app/export-all.json
+app/test*
+app/calculator_report*
+app/Exports/*
 ExampleData/CompositionCalculations/*
 ExampleData/Example01A/Diagnostic/*
 ExampleData/Example03A/Diagnostic/*
@@ -49,7 +54,5 @@ stan_files/multiple_samples-*
 stan_files/one_sample-*
 stan_files/multiple_samples
 stan_files/one_sample
-app/dependency-graph.py
-app/export-all.json
-app/test*
+
 
