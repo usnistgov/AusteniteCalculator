@@ -157,13 +157,12 @@ def submit():
 
     log_text = log_buffer.getvalue()
 
-    breakpoint()
-
     if any(error_dict.values()):
 
         all_results = {
             'errors':True,
-            'error_dict':error_dict
+            'error_dict':error_dict,
+            'logs':log_text
         }
 
     else:
@@ -197,7 +196,8 @@ def submit():
                         #'graph_data_table':graph_data_dict,
                         'mcmc_dict':mcmc_df_dict,
                         'unique_phases':np.unique(pk_fit_res['full_results_table'].Phase).tolist(),
-                        'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0]}
+                        'n_dsets':np.unique(pk_fit_res['full_results_table'].sample_index).shape[0],
+                        'logs':log_text}
 
         # quick and dirty way to export all
         #with open("export-all.json", "w") as outfile:

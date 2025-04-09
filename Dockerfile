@@ -12,8 +12,8 @@ RUN apt-get install libglu1-mesa-dev -y
 RUN apt-get install freeglut3-dev -y 
 RUN apt-get install mesa-common-dev -y
 RUN printf %s 'y\n12\n5\n' | apt-get install libgtk2.0-0
-RUN curl https://subversion.xray.aps.anl.gov/admin_pyGSAS/downloads/gsas2full-Latest-Linux-x86_64.sh > /tmp/gsas2full-Latest-Linux-x86_64.sh
-RUN bash /tmp/gsas2full-Latest-Linux-x86_64.sh -b -p ~/g2full
+RUN curl -L https://github.com/AdvancedPhotonSource/GSAS-II-buildtools/releases/download/v1.0.1/gsas2full-Latest-Linux-x86_64.sh > /tmp/g2full.sh
+RUN bash /tmp/g2full.sh -b -p ~/g2full
 
 # project folder
 RUN mkdir /root/AustCalc
