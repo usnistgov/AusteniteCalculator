@@ -25,6 +25,7 @@ sphinx_docs/build
 sphinx_docs/build/.DS_Store
 sphinx_docs/.DS_Store
 ExampleScripts/cif_composition_simulations.ipynb
+ExampleScripts/Simple*
 *.pyc
 *.bak*
 *.lst
@@ -50,3 +51,5 @@ stan_files/multiple_samples
 stan_files/one_sample
 app/dependency-graph.py
 app/export-all.json
+app/test*
+
