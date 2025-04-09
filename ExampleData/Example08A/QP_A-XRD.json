@@ -1,0 +1,12 @@
+{
+    "austenite-FeOnly.cif": [1,1,1,[0.2262, 1.2892, 3.0134, 0.6514, 0.2262]],
+    "ferrite-FeOnly.cif": [15,10,1,[0.3950, 1.5308, 1.4621, 0.3950]],
+    "beam_shape": "circle",
+    "beam_size": 1,
+    "raster_x": 0,
+    "raster_y": 0,
+    "L": 200,
+    "W_F": 1,
+    "H_F": 1,
+    "H_R": 5
+}
