@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Austenite Calculator</title>
+  <!-- Latest compiled and minified CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <script src='https://cdn.plot.ly/plotly-2.32.0.min.js'></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.0.3/math.js" integrity="sha512-lAVGwhTndbBUjJlN0Lq4BNuOP0lpuGA9OUCA9bxRZrsehpmkiv8BcYdp91ON3XqJHWmVURGTw1d1W3LCr1k/1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!--<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>-->
+</head>
+  
+
+<body>
+
+  <div class="container-fluid">
+    <br>
+    <h1>Austenite Calculator</h1>
+    <br>
+    <ul class="nav nav-tabs">
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#about-tab">About</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" type="button" href="#data-upload-tab">Data Upload</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#intensity-plots-tab" id="intensity-plots-tab-button">Intensity Plots</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#normalized-int-tab">Normalized Intensity</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#phase-frac-tab">Phase Fraction</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#crystallites-illuminated-tab">Crystallites Illuminated</button>
+      </li>
+
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#file-creation-instrpm-json-tab">File Creation (instprm and json)</button>
+      </li>
+
+    </ul>
+
+    <div class="tab-content">
+  <!-- About Tab -->
+      <div class="tab-pane" id="about-tab">
+        <br>
+        The Austenite Calculator is a super cool app. 
+        It helps you estimate and quantify uncertainty of the various phases in your material.
+        <br>
+        <h4>Version Summary (Only populated after running analysis)</h4>
+        <div class="row">
+          <table id="version-table" class="table" style="white-space:nowrap"></table>
+        </div>
+        
+      </div>
+      
+      
+      
+  <!-- Data Upload Tab -->
+      <div class="tab-pane container active" id="data-upload-tab">
+        <br>
+        <div class="row">
+
+          <span class="border-start">
+          <h4>Step 1: Data Selection</h4>
+          <p>Use the buttons below to upload your .xrdml and .instprm files. Alternatively, click the "Use Default Files" button below to use a sample set of files.</p>
+          
+          <div class="col-6">
+            <h6>Option 1: Upload Custom Files</h6>
+
+            <div class="mb-3">
+              <label for="xrdml-files" class="form-label">X-Ray Diffraction File (.csv, .xrdml, etc.)</label>
+              <input type="file" class="form-control" id="xrdml-files" multiple>
+            </div>
+          
+            <div class="mb-3">
+              <label for="instprm-file" class="form-label">Instrument Parameter File (.instprm)</label>
+              <input type="file" class="form-control" id="instprm-file">
+            </div>
+
+            <div class="mb-3">
+              <label for="cif-file" class="form-label">Crystallographic Information Files (.cif)</label>
+              <input type="file" class="form-control" id="cif-file" multiple>
+            </div>
+
+            <div class="mb-3">
+              <label for="cryst-illum-file" class="form-label">Crystallites Illuminated JSON (.json) - see \'File Creation\' Tab</label>
+              <input type="file" class="form-control" id="cryst-illum-file">
+            </div>
+          
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="sum_checkbox" name="sum_checkbox">
+              <label class="form-check-label" for="sum_checkbox">Sum Individual Files?</label>
+            </div>
+            
+            <h6>Option 2: Use Example Files</h6>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="uploaded_files" checked> 
+              <label class="form-check-label" for="radio1"> Use Files Uploaded from Option 1</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio2" name="default-file-radio" value="Example05"> 
+              <label class="form-check-label" for="radio2">Example 5 (Single Sample)</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example09A_subset"> 
+              <label class="form-check-label" for="radio3">Example 09A (Multiple Samples)</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="radio4" name="default-file-radio" value="Example99">
+              <label class="form-check-label" for="radio4">Example 99 (Testing)</label>
+            </div>
+
+            <br>
+          </div>
+          </span>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <span class="border-start">
+          <h4>Step 2: Statistical Inference Options</h4>
+          <div class="col-6">
+            <label for="num-mcmc" class="form-label">Number of MCMC samples:</label>
+            <select class="form-select" id="num-mcmc">
+              <option>1000 (Testing Only)</option>
+              <option>4000</option>
+              <option>8000</option>
+            </select>
+          </div>
+          </span>
+        </div>
+        
+
+        <br>
+
+        <span class="border-start">
+        <div class="row">
+          
+          <div class="col-6">
+            
+            <h4>Step 3: Submit</h4>
+            <p>When your data selections have been made, click the button below to run the analysis.</p>
+
+          </div>
+        </div>
+
+        <br>
+
+        <div class="row">
+
+          <div class="col-1">
+            <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+          </div>
+
+          <div class="col-6">
+            <div id="loading-indicator" style="display:none">
+              <div class="d-flex align-items-center">
+                Running Submission... Please wait while results are computed... &nbsp; &nbsp;
+                <div class="spinner-border ml-auto" role="status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </span> 
+
+        <br>
+        <br>
+      </div>
+      
+  <!-- Intensity Plots Tab -->
+      <div class="tab-pane" id="intensity-plots-tab">
+
+        <br>
+        <h4>Raw and Fitted Diffraction Data</h4>
+        <div class="col-2">
+          <label for="intensity-plots-dataset-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="intensity-plots-dataset-select">
+            </select>
+        </div>
+
+        <div class="row">
+          <div class="col-5">
+            <div id='raw-intensity-plot'></div>
+          </div>
+          
+          <div class="col-5">
+            <div id='fitted-intensity-plot'></div>
+          </div>
+        </div>
+        <!--  CHECK - is this the best placement, or should this go on another tab? -->
+        <br>
+        <h4>Notes for User on Austenite Calculation</h4>
+        <div class="row">
+          <table id="user-flags-table" class="table" style="white-space:nowrap"></table>
+        </div>
+        
+      <br>
+      <br>
+      <br>
+        
+      </div>
+  <!-- Normalized Intensity Tab -->
+      <div class="tab-pane" id="normalized-int-tab">
+  
+        <h2>Normalized Intensities</h2>
+        <div class="col-2">
+          <label for="normalized-intensity-plots-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="normalized-intensity-plots-select"></select>
+        </div>
+
+        <br>
+        <h4>Normalized Intensities per Peak Plot</h4>
+        <div class="row">
+          <div id='normalized-intensities-plot'></div>
+        </div>
+     
+        <br>
+        <h4>Fit Values per Peak Summary Table</h4>
+        <div class="row">
+          <table id='Fit-n-int-table' class="table" style="white-space:nowrap"></table>
+        </div>
+
+        <br>
+        <h4>Calculated Theoretical Intensities per Peak</h4>
+        <div class="row">
+          <table id='Theo-Int-table' class="table" style="white-space:nowrap"></table>
+        </div>   
+
+      </div>
+        
+  <!-- Phase Fraciton Tab -->
+      <div class="tab-pane" id="phase-frac-tab">
+
+        <h2>Phase Fraction</h2>
+        <div class="col-2">
+          <label for="phase-fraction-plots-dataset-select" class="form-label">Which Dataset</label>
+            <select class="form-select" id="phase-fraction-plots-dataset-select"></select>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <div class="col-3">
+          <h6>Choose Units to Display Phase Fraction Histogram:</h6>
+          <select class="form-select" aria-label="Default select example" id="conversion-select">
+            <option selected value="1">Number of Unit Cells</option>
+            <option value="2">Mass Fraction</option>
+            <option value="3">Volume Fraction</option>
+          </select>
+          </div>
+        </div>
+
+        <br>
+        <div class="row">
+          <h4>Phase Fraction Values (select units)</h4>
+          <table id="pf-table" class="table" style="white-space:nowrap"></table>
+        </div>
+
+        <br>
+        <div class="row">
+          <h4>Phase Fraction Histogram (select units)</h4>
+          <div id="phase-fraction-plot"></div>
+        </div>
+
+        <br>
+
+        <div class="row">
+          <h4>Sources of Uncertainty (scaled by normalized intensity)</h4>
+          <table id="uncert-table" class="table" style="white-space:nowrap"></table>
+        </div>
+
+        <div class="row">
+          <h4>Sources of Uncertainty (per peak, Exponential Notation)</h4>
+          <table id="uncert-peak-table" class="table" style="white-space:nowrap"></table>
+        </div>
+
+      </div>
+
+  <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
+      <div class="tab-pane" id="crystallites-illuminated-tab">
+        <br>
+
+        <div class="col-2">
+          <p>Select Dataset:</p>
+          <label for="cryst-illum-select-dataset" class="form-label">Which Dataset</label>
+          <select class="form-select" aria-label="Select Dataset:" id="cryst-illum-select-dataset">
+          </select>
+          <br>
+          
+        <div class="row">
+          <h4>Interaction Volume Table</h4>
+          <table id="interaction-volume-table" class="table" style="white-space:nowrap"></table>
+        </div>
+     
+
+          <p>Select Peak Index</p>
+          <select class="form-select" aria-label="Select Peak:" id="cryst-illum-select-peak-index">
+          </select>
+          <br>
+        </div>
+
+        <br>
+        <div class="row">
+          <h4>Z Depth Histogram Plot</h4>
+          <div id="z-depth-histogram-plot"></div>
+        </div>
+
+        <br>
+        <div class="row">
+          <h4>Incident Angle Plot</h4>
+          <div id="incident-angle-plot"></div>
+        </div>
+
+          <!--<p>Select Phase:</p>
+          <select class="form-select" aria-label="Select Phase:" id="cryst-illum-select-phase">
+          </select>
+          <br>  No longer select phase -->
+
+        <!-- <div id="cryst-illum-table-div"></div>  -->
+
+      </div>
+
+  <!-- Combined file creation tab -->
+      <div class="tab-pane" id="file-creation-instrpm-json-tab">
+        <br>
+        <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
+      </div>
+    </div>
+  
+  </div>
+
+  <script src="{{ url_for('static', filename='js/create_plots.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/create_tables.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/aux_file_downloads.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pf_conversion_and_sample_reactivity.js') }}"></script>
+
+</body>
+
+</html>

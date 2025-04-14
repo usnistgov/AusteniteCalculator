@@ -1,3 +1,0 @@
-#PWDR CW x-ray simulation Peak List 
-#wavelength =   1.540500
-#      pos        dsp        esd          int        esd        sig        gam       FWHM

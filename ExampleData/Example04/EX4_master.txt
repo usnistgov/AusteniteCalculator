@@ -1,8 +1,0 @@
-1
-Phase: ferrite-PureFe.cif
-Phase_Fraction: 1.0
-Phase_Fraction_StDev: 0.43
-Number_hkls: 4
-hkls: 
-Mean_nint: 0.213
-StDev_nint: 0.92
