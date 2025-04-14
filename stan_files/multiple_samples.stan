@@ -20,15 +20,15 @@ parameters {
     real<lower=0> sigma_sample; // variability from sample to sample for each phase
     vector<lower=0>[N_phases] sigma_exp; // experimental error, varies w/ phase
     vector<lower=0>[N_phases] phase_mu; // phase means
-    real<lower=0> sample_effect[N_samples, N_phases]; // effect for each phase and sample combo
+    array[N_samples, N_phases] real sample_effect; // effect for each phase and sample combo
 }
 
 model {
 
     // priors
-    // based on recommendations from https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations 
-    sigma_sample ~ student_t(4,0,prior_sample_scale);
-    sigma_exp ~ student_t(4,0,prior_exp_scale); // half-t4 or normal
+    // based on recommendations from stan github https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations 
+    sigma_sample ~ student_t(10,0,prior_sample_scale);
+    sigma_exp ~ student_t(10,0,prior_exp_scale); 
     phase_mu ~ normal(prior_location,prior_scale*2); // truncated normals
 
     // likelihood
