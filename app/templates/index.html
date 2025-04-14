@@ -12,7 +12,7 @@
   <!--<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>-->
 </head>
-  
+
 
 <body>
 
@@ -50,25 +50,29 @@
         <button class="nav-link" data-bs-toggle="tab" type="button" href="#file-creation-instrpm-json-tab">File Creation (instprm and json)</button>
       </li>
 
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#error-tab" id="error-tab-button">Error Log</button>
+      </li>
+
     </ul>
 
     <div class="tab-content">
-  <!-- About Tab -->
+      <!-- About Tab -->
       <div class="tab-pane" id="about-tab">
         <br>
-        The Austenite Calculator is a super cool app. 
+        The Austenite Calculator is a super cool app.
         It helps you estimate and quantify uncertainty of the various phases in your material.
         <br>
         <h4>Version Summary (Only populated after running analysis)</h4>
         <div class="row">
           <table id="version-table" class="table" style="white-space:nowrap"></table>
         </div>
-        
+
       </div>
-      
-      
-      
-  <!-- Data Upload Tab -->
+
+
+
+      <!-- Data Upload Tab -->
       <div class="tab-pane container active" id="data-upload-tab">
         <br>
         <div class="row">
@@ -76,49 +80,49 @@
           <span class="border-start">
           <h4>Step 1: Data Selection</h4>
           <p>Use the buttons below to upload your .xrdml and .instprm files. Alternatively, click the "Use Default Files" button below to use a sample set of files.</p>
-          
+
           <div class="col-6">
             <h6>Option 1: Upload Custom Files</h6>
 
             <div class="mb-3">
               <label for="xrdml-files" class="form-label">X-Ray Diffraction File (.csv, .xrdml, etc.)</label>
-              <input type="file" class="form-control" id="xrdml-files" multiple>
+              <input type="file" class="form-control" id="xrdml-files" accept=".csv, .xrdml" multiple>
             </div>
-          
+
             <div class="mb-3">
               <label for="instprm-file" class="form-label">Instrument Parameter File (.instprm)</label>
-              <input type="file" class="form-control" id="instprm-file">
+              <input type="file" class="form-control" id="instprm-file" accept=".instprm">
             </div>
 
             <div class="mb-3">
               <label for="cif-file" class="form-label">Crystallographic Information Files (.cif)</label>
-              <input type="file" class="form-control" id="cif-file" multiple>
+              <input type="file" class="form-control" id="cif-file" accept=".cif" multiple>
             </div>
 
             <div class="mb-3">
               <label for="cryst-illum-file" class="form-label">Crystallites Illuminated JSON (.json) - see \'File Creation\' Tab</label>
-              <input type="file" class="form-control" id="cryst-illum-file">
+              <input type="file" class="form-control" id="cryst-illum-file" accept=".json">
             </div>
-          
+
             <div class="form-check">
               <input type="checkbox" class="form-check-input" id="sum_checkbox" name="sum_checkbox">
               <label class="form-check-label" for="sum_checkbox">Sum Individual Files?</label>
             </div>
-            
+
             <h6>Option 2: Use Example Files</h6>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="uploaded_files" checked> 
+              <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="uploaded_files" checked>
               <label class="form-check-label" for="radio1"> Use Files Uploaded from Option 1</label>
             </div>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio2" name="default-file-radio" value="Example05"> 
+              <input type="radio" class="form-check-input" id="radio2" name="default-file-radio" value="Example05">
               <label class="form-check-label" for="radio2">Example 5 (Single Sample)</label>
             </div>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example09A_subset"> 
+              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example09A_subset">
               <label class="form-check-label" for="radio3">Example 09A (Multiple Samples)</label>
             </div>
 
@@ -147,15 +151,15 @@
           </div>
           </span>
         </div>
-        
+
 
         <br>
 
         <span class="border-start">
         <div class="row">
-          
+
           <div class="col-6">
-            
+
             <h4>Step 3: Submit</h4>
             <p>When your data selections have been made, click the button below to run the analysis.</p>
 
@@ -180,13 +184,13 @@
           </div>
         </div>
 
-      </span> 
+      </span>
 
         <br>
         <br>
       </div>
-      
-  <!-- Intensity Plots Tab -->
+
+        <!-- Intensity Plots Tab -->
       <div class="tab-pane" id="intensity-plots-tab">
 
         <br>
@@ -201,7 +205,7 @@
           <div class="col-5">
             <div id='raw-intensity-plot'></div>
           </div>
-          
+
           <div class="col-5">
             <div id='fitted-intensity-plot'></div>
           </div>
@@ -212,15 +216,15 @@
         <div class="row">
           <table id="user-flags-table" class="table" style="white-space:nowrap"></table>
         </div>
-        
+
       <br>
       <br>
       <br>
-        
+
       </div>
-  <!-- Normalized Intensity Tab -->
+      <!-- Normalized Intensity Tab -->
       <div class="tab-pane" id="normalized-int-tab">
-  
+
         <h2>Normalized Intensities</h2>
         <div class="col-2">
           <label for="normalized-intensity-plots-select" class="form-label">Which Dataset</label>
@@ -232,7 +236,7 @@
         <div class="row">
           <div id='normalized-intensities-plot'></div>
         </div>
-     
+
         <br>
         <h4>Fit Values per Peak Summary Table</h4>
         <div class="row">
@@ -243,11 +247,11 @@
         <h4>Calculated Theoretical Intensities per Peak</h4>
         <div class="row">
           <table id='Theo-Int-table' class="table" style="white-space:nowrap"></table>
-        </div>   
+        </div>
 
       </div>
-        
-  <!-- Phase Fraciton Tab -->
+
+      <!-- Phase Fraciton Tab -->
       <div class="tab-pane" id="phase-frac-tab">
 
         <h2>Phase Fraction</h2>
@@ -295,8 +299,10 @@
 
       </div>
 
+
   <!-- PLACE FOR CRYSTALLITES ILLUMINATED -->
       <div class="tab-pane" id="crystallites-illuminated-tab">
+
         <br>
 
         <div class="col-2">
@@ -305,12 +311,12 @@
           <select class="form-select" aria-label="Select Dataset:" id="cryst-illum-select-dataset">
           </select>
           <br>
-          
+
         <div class="row">
           <h4>Interaction Volume Table</h4>
           <table id="interaction-volume-table" class="table" style="white-space:nowrap"></table>
         </div>
-     
+
 
           <p>Select Peak Index</p>
           <select class="form-select" aria-label="Select Peak:" id="cryst-illum-select-peak-index">
@@ -339,13 +345,24 @@
 
       </div>
 
-  <!-- Combined file creation tab -->
+      <!-- Combined file creation tab -->
       <div class="tab-pane" id="file-creation-instrpm-json-tab">
         <br>
         <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
       </div>
+
+      <!-- Error tab -->
+      <div class="tab-pane" id="error-tab">
+        <div>
+          <br>
+          <h4>Error log:</h4>
+          <ul id="error-list">
+
+          </ul>
+        </div>
+      </div>
     </div>
-  
+
   </div>
 
   <script src="{{ url_for('static', filename='js/create_plots.js') }}"></script>

@@ -14,6 +14,7 @@ import base64
 import re
 import pickle
 import time
+import logging
 
 # user created
 import plot_utils
@@ -37,8 +38,14 @@ import GSASIIpath
 #try:
 #    GSASIIpath.svnUpdateDir(version=5300,verbose=True)
 #except Exception: #GSAS raises an execption if unable to connect to svn
-#    print("Unable to update, using whichever version is installed")
+#    logger.info("Unable to update, using whichever version is installed")
 
+# set up logger
+logger = logging.getLogger(__name__)
+log_buffer = io.StringIO()
+logging.basicConfig(stream=log_buffer,encoding='utf-8', level=logging.INFO)
+
+# set up app
 app = Flask(__name__)
 
 @app.route("/",methods=['GET'])
@@ -53,36 +60,60 @@ def submit():
 
     req = request.get_json()
     print(req)
-    
+    logger.info(req)
+
+    # dictionary to hold error logs
+    error_dict = {'file_upload':False,
+                  'interaction_param_data':False,  # CHECKED
+                    'Version':False, #Checked
+                    'cell_density':False,
+                    'peak_fitting':False,
+                    'peak_dict':False,
+                    'phase_info':False,
+                    'crystallites_illuminated':False,
+                    'conversions':False,
+                    'mcmc':False}
+
     if req['radioValue'] == 'uploaded_files':
 
-        datadir = '../server_datadir'
-        cif_fnames = list(req['fileUploads']['cif-file'].keys())
-        workdir = '../server_workdir'
-        xrdml_fnames = list(req['fileUploads']['xrdml-files'].keys())
-        instprm_fname = list(req['fileUploads']['instprm-file'].keys())[0]
-        json_fname = list(req['fileUploads']['cryst-illum-file'].keys())[0]
+        try:
+            datadir = '../server_datadir'
+            cif_fnames = list(req['fileUploads']['cif-file'].keys())
+            workdir = '../server_workdir'
+            xrdml_fnames = list(req['fileUploads']['xrdml-files'].keys())
+            instprm_fname = list(req['fileUploads']['instprm-file'].keys())[0]
+            json_fname = list(req['fileUploads']['cryst-illum-file'].keys())[0]
 
-        # loop through all file types
-        for file_type in req['fileUploads'].keys():
+            # loop through all file types
+            for file_type in req['fileUploads'].keys():
 
-            # loop through all files in the file type
-            for file in req['fileUploads'][file_type].keys():
+                # loop through all files in the file type
+                for file in req['fileUploads'][file_type].keys():
 
-                # write file with the file name 
-                with open(datadir + '/' + file,'w') as f:
-                    f.write(req['fileUploads'][file_type][file])
+                    # write file with the file name
+                    with open(datadir + '/' + file,'w') as f:
+                        f.write(req['fileUploads'][file_type][file])
+
+        except Exception as e:
+            error_dict['file_upload'] = type(e).__name__ + ': ' + str(e)
 
     else:
         datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
 
+
     # Need to figure out how to merge crystal_data with phase info
-    with open(os.path.join(datadir, json_fname), 'r') as f:
-        interaction_param_data = json.loads(f.read())
+    try:
+        with open(os.path.join(datadir, json_fname), 'r') as f:
+            interaction_param_data = json.loads(f.read())
+
+    except Exception as e:
+        error_dict['interaction_param_data'] = type(e).__name__ + ': ' + str(e)
+
+
     Submission["Phase_Info"]={}
     # was crystal
     Submission["Phase_Info"]["Interaction_Parameters"]=interaction_param_data
-    
+
     #Maybe these should be moved into .gather_example?
     Submission["File_Paths"]={}
     Submission["File_Paths"]["Data_Directory"]=datadir
@@ -92,17 +123,38 @@ def submit():
     Submission["File_Paths"]["Instrument_Filename"]=instprm_fname
     Submission["File_Paths"]["JSON_Filename"]=json_fname
 
+    # pased in, not used?
+    #logger.info("Gathering Summarized Phase Info")
+    #try:
+    #    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
+    #except Exception as e:
+    #    error_dict['phase_info'] = type(e).__name__ + ': ' + str(e)
+
 
     print("Collecting Version information")
-    Submission["Version"] = compute_results.version_summary()
+    logger.info("Collecting Version information")
+    try:
+        Submission["Version"] = compute_results.version_summary()
+    except Exception as e:
+        error_dict['Version'] = type(e).__name__ + ': ' + str(e)
+
 
     print("Computing Cell Density")
+    logger.info("Computing Cell Density")
     # probably need to merge dataframes later
     # Should I update this later?
-    Submission=compute_results.compute_cell_density(Submission)
+    try:
+        Submission=compute_results.compute_cell_density(Submission)
+    except Exception as e:
+        error_dict['cell_density'] = type(e).__name__ + ': ' + str(e)
+
 
     print("Running Peak Fitting")
-    Submission = compute_results.compute_peak_fitting(G2sc, Submission)
+    logger.info("Running Peak Fitting")
+    try:
+        Submission = compute_results.compute_peak_fitting(G2sc, Submission)
+    except Exception as e:
+        error_dict['peak_fitting'] = type(e).__name__ + ': ' + str(e)
 
     print("\n****************************************\n",Submission.keys())
     # print("\n*************\n",Submission)
@@ -111,13 +163,20 @@ def submit():
 #    print("Computing peaks_dict")
 #    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
 
+    # Pased in, not currently used?
+    #logger.info("Computing peaks_dict")
+    #try:
+    #    peaks_dict = compute_results.compute_peaks_dict(cif_fnames,pk_fit_res['results_table'],cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'])
+    #except Exception as e:
+    #    error_dict['peak_dict'] = type(e).__name__ + ': ' + str(e)
+
 #    print("Gathering Summarized Phase Info")
 #    graph_data_dict = compute_results.compute_summarized_phase_info(cell_dens_res['scattering_dict'],cell_dens_res['elem_fractions_dict'],peaks_dict)
 
     # needs to be after peak fitting to use the estimated volume fraction
     # So there will be two separate loops for all of the datasets
     print("Computing crystallites illuminated...")
-    
+
     # Need to update the full results table, but issues with dict/DF
  #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
 #    cryst_ill_res = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
@@ -126,7 +185,16 @@ def submit():
     # FIX - hardcoded for now
     #sum_checkbox=False
 
-    Submission = compute_results.compute_crystallites_illuminated(Submission)
+    logger.info("Computing crystallites illuminated...")
+    # Need to update the full results table, but issues with dict/DF
+ #   cryst_ill_res, pk_fit_res['full_results_table'] = compute_results.compute_crystallites_illuminated(crystal_data,peaks_dict,pk_fit_res['results_table'],pk_fit_res['phase_frac'])
+    try:
+        Submission = compute_results.compute_crystallites_illuminated(Submission)
+    except Exception as e:
+        error_dict['crystallites_illuminated'] = type(e).__name__ + ': ' + str(e)
+
+
+
 
     #print("Computing mass fraction and volume fracation conversion factors...")
     #conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
@@ -134,24 +202,62 @@ def submit():
     #                                              cell_dens_res['cell_volumes_dict'])
 
     #breakpoint()
-    print("Running MCMC")
-    Submission = compute_results.run_mcmc2(Submission,req['sumFiles'],number_mcmc_runs=1000)
+    # paseted in, may not need
+    #logger.info("Computing mass fraction and volume fracation conversion factors...")
+    #try:
+    #    conversions = compute_results.get_conversions(pk_fit_res['phase_frac'],
+    #                                                cell_dens_res['cell_masses_dict'],
+    #                                                cell_dens_res['cell_volumes_dict'])
+    #except Exception as e:
+    #    error_dict['conversions'] = type(e).__name__ + ': ' + str(e)
 
+
+
+    print("Running MCMC")
+    logger.info("Running MCMC")
+    try:
+        Submission = compute_results.run_mcmc2(Submission,req['sumFiles'],number_mcmc_runs=1000)
+    except Exception as e:
+        error_dict['mcmc'] = type(e).__name__ + ': ' + str(e)
+
+    log_text = log_buffer.getvalue()
 
     #mcmc_df_dict, param_table, pf_table = compute_results.run_mcmc(pk_fit_res['results_table'],number_mcmc_runs=1000,conversions=conversions)
 
-    all_results=compute_results.package_for_export(Submission)
+    if any(error_dict.values()):
+
+        all_results = {
+            'errors':True,
+            'error_dict':error_dict,
+            'logs':log_text
+        }
+
+    else:
+        # combine all results into a dictionary to send to browser
+        # param_table has the uncertainty parameters from mcmc result
+        # pf_table has the phase fraction with conversions
+        # results_table is the combined fit and theoretical data
+        # mcmc_df are all the simulated phase fractions (by unit cell)
+
+        all_results=compute_results.package_for_export(Submission)
+
+        all_results['errors']=False
+        all_results['error_dict']=error_dict
+        all_results['logs']=log_text
+
+
+
 
     print(all_results.keys())
     #breakpoint()
- 
+
 
     # combine all results into a dictionary to send to browser
     # param_table has the uncertainty parameters from mcmc result
     # pf_table has the phase fraction with conversions
     # results_table is the combined fit and theoretical data
     # mcmc_df are all the simulated phase fractions (by unit cell)
-    
+
 #    all_results = {'conversion_table':conversions.to_dict(orient='list'),
 #                   'version_html':version_DF.to_html(justify='left', index=False),
 #                   'two_thetas':pk_fit_res['two_thetas'],
@@ -181,18 +287,23 @@ def submit():
     # quick and dirty way to export all
     #with open("export-all.json", "w") as outfile:
     #    json.dump(all_results, outfile)
-    
+
     # Export all data (Submission) to file
     # the json file where the output must be stored
-    
+
 
     timestamp=time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
-    
+
     with open('Submission'+timestamp+'.pickle', 'wb') as f:
         pickle.dump(Submission, f, protocol=4)
     with open('Results'+timestamp+'.pickle', 'wb') as f:
         pickle.dump(all_results, f, protocol=4)
-  
+
+
+        # quick and dirty way to export all
+        #with open("export-all.json", "w") as outfile:
+        #    json.dump(all_results, outfile)
+
     return jsonify(all_results)
 
 @app.route("/instprm_json",methods=["POST"])
