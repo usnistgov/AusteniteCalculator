@@ -43,7 +43,7 @@ import GSASIIpath
 # set up logger
 logger = logging.getLogger(__name__)
 log_buffer = io.StringIO()
-logging.basicConfig(stream=log_buffer,encoding='utf-8', level=logging.INFO)
+logging.basicConfig(stream=log_buffer, level=logging.INFO)
 
 # set up app
 app = Flask(__name__)
