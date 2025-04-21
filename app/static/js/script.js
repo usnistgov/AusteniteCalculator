@@ -184,7 +184,7 @@ async function fetchData() {
         // ***** Normalized Intensity Tab Initialization
         // CHECK - do we want one for each type of fitting, or combined?
         //let dsetName_NormIntTab = 'Dataset_'.concat(normalized_intensity_plot_select.selectedIndex+1)
-        let dsetName_NormIntTab = all_results.dataset_names[normalized_intensity_plot_select.selectedIndex].toString()
+        let dsetName_NormIntTab = all_results.dataset_names[normalized_intensity_plot_select.selectedIndex].toString();
         createNormalizedIntensityPlot(all_results,'normalized-intensities-plot',dsetName_NormIntTab);
 
         create_Theo_Int_table(all_results,'normalized-intensities-plot',dsetName_NormIntTab)
@@ -192,7 +192,7 @@ async function fetchData() {
 
         // ***** Phase Fraction Tab Initialization
         //let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
-        let dsetName_PhaseFracTab = all_results.dataset_names[phase_fraction_dataset_plot_select.selectedIndex].toString()
+        let dsetName_PhaseFracTab = all_results.dataset_names[phase_fraction_dataset_plot_select.selectedIndex].toString();
 
         createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
         create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);

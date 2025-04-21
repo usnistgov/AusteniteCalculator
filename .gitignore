@@ -54,5 +54,5 @@ stan_files/multiple_samples-*
 stan_files/one_sample-*
 stan_files/multiple_samples
 stan_files/one_sample
-
+docker_command_for_dev_env.sh
 

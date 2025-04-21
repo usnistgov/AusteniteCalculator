@@ -224,7 +224,9 @@ function createNormalizedIntensityPlot(all_results,div_id,dataset_name) {
     var layout = {
         title: 'Normalized Intensities',
         xaxis: {title: 'Two Theta'},
-        yaxis: {title: 'Normalized Intensity'}
+        yaxis: {title: 'Normalized Intensity'},
+        height: 400,
+        width: 800
     };
 
     Plotly.newPlot(div_id, data, layout);
@@ -274,7 +276,9 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_nam
     }
 
     let layout = {
-        barmode: 'overlay'
+        barmode:'overlay',
+        height:400,
+        width:1000
     }
 
     Plotly.newPlot(div_id, data, layout);
@@ -351,6 +355,8 @@ function createZDepthPlot(all_results,div_id,dataset_name,peak_index) {
         title: 'X-rays Escaped vs. Z Depth (assumed x-ray flux of 1 000 000)',
         xaxis: {title: 'X-rays Escaped [counts]'},
         yaxis: {title: 'Z [um]'},
+        height: 400,
+        width: 800
         // Shapes for bounding lines
 //        shapes: [
 //    {
@@ -473,7 +479,9 @@ function createIncidentAnglePlot(all_results,div_id,dataset_name,peak_index) {
         title: 'Incident X-ray and ',
         xaxis: {title: 'X [um]'},
         yaxis: {title: 'Z [um]'},
-        aspectmode: "cube"
+        aspectmode: "cube",
+        width: 800,
+        height: 400
       };
     
     Plotly.newPlot(div_id, data, layout);
