@@ -228,6 +228,9 @@ async function fetchData() {
         createIncidentAnglePlot(all_results,'incident-angle-plot',dsetName_CrysIllTab,0);
         createZDepthPlot(all_results,'z-depth-histogram-plot',dsetName_CrysIllTab,0);
 
+        let server_logs_div = document.getElementById('server-logs');
+        server_logs_div.innerHTML = all_results.logs;
+
         // update form selects for peak
 
         //let n_peaks = all_results.n_peaks;
