@@ -278,7 +278,8 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_nam
     let layout = {
         barmode:'overlay',
         height:400,
-        width:1000
+        width:1000,
+        xaxis: {range: [0, 1]},
     }
 
     Plotly.newPlot(div_id, data, layout);
@@ -480,8 +481,14 @@ function createIncidentAnglePlot(all_results,div_id,dataset_name,peak_index) {
         xaxis: {title: 'X [um]'},
         yaxis: {title: 'Z [um]'},
         aspectmode: "cube",
-        width: 800,
-        height: 400
+        width: 600,
+        height: 600,
+        showlegend: true,
+        legend: {
+            x: 0,
+            xanchor: 'left',
+            y: 0
+                }
       };
     
     Plotly.newPlot(div_id, data, layout);
