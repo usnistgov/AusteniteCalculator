@@ -2600,7 +2600,8 @@ def package_for_export(Submit_dict):
         ## Z Depth plots
         
         all_results[dataset_name]["Z_Depth_plot_data"]=Submit_dict[dataset_name]["Z_Depth_plot_data"]
-
+        all_results[dataset_name]["Z_Depth_plot_min"]=np.array(Submit_dict[dataset_name]["Z_Depth_plot_data"]['Z_Depth']).min()
+        breakpoint()
         # Row from #Submit_dict["Dataset_1"]["Merged_Peaks"]
         
         # Row from "Interaction_Plots"

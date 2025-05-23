@@ -357,7 +357,9 @@ function createZDepthPlot(all_results,div_id,dataset_name,peak_index) {
         xaxis: {title: 'X-rays Escaped [counts]'},
         yaxis: {title: 'Z [um]'},
         height: 400,
-        width: 800
+        width: 800,
+        // Use a consistent Z range
+        yaxis: {range: [all_results[dataset_name]["Z_Depth_plot_min"], 0 ]}
         // Shapes for bounding lines
 //        shapes: [
 //    {
@@ -475,7 +477,6 @@ function createIncidentAnglePlot(all_results,div_id,dataset_name,peak_index) {
 
     var data = [trace1,trace2,trace3,trace4 ];
 
-    // FIX - the aspect ratio isn't staying fixed...
     var layout = {
         title: 'Incident X-ray and ',
         xaxis: {title: 'X [um]'},
