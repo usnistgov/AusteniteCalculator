@@ -74,6 +74,7 @@ def submit():
                     'conversions':False,
                     'mcmc':False}
 
+    # upload user files if indicated to do so
     if req['radioValue'] == 'uploaded_files':
 
         try:
@@ -97,6 +98,7 @@ def submit():
         except Exception as e:
             error_dict['file_upload'] = type(e).__name__ + ': ' + str(e)
 
+    # otherwise, prepare an example file for analysis
     else:
         datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
 
@@ -244,9 +246,6 @@ def submit():
         all_results['errors']=False
         all_results['error_dict']=error_dict
         all_results['logs']=log_text
-
-
-
 
     print(all_results.keys())
     #breakpoint()
