@@ -53,7 +53,7 @@ function create_phase_fraction_value_table(all_results,div_id,conversion_type,da
     }
     
     
-    document.getElementById('pf-table').innerHTML=phase_fraction_value_html;
+    document.getElementById(div_id).innerHTML=phase_fraction_value_html;
 }
 
 // Uncertainty Sources Summary

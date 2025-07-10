@@ -2422,8 +2422,6 @@ def package_for_export(Submit_dict):
     """
     Repackage selected data for json export
     Data structures need to be either html tables or dictionaries
-    
-    
     """
     
     # Initialize dictionary
@@ -2487,8 +2485,6 @@ def package_for_export(Submit_dict):
         # Flags for the user
         all_results[dataset_name]["flags_html"]=Submit_dict[dataset_name]["Flags"].to_html(justify='left', index=False)
 
-
-        #breakpoint()
         ###### Normailzed Intensities Tab
         
         ### Plots
@@ -2601,7 +2597,6 @@ def package_for_export(Submit_dict):
         
         all_results[dataset_name]["Z_Depth_plot_data"]=Submit_dict[dataset_name]["Z_Depth_plot_data"]
         all_results[dataset_name]["Z_Depth_plot_min"]=np.array(Submit_dict[dataset_name]["Z_Depth_plot_data"]['Z_Depth']).min()
-        breakpoint()
         # Row from #Submit_dict["Dataset_1"]["Merged_Peaks"]
         
         # Row from "Interaction_Plots"
