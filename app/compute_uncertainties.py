@@ -314,11 +314,23 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         # CHECK - any way the order gets changed in the phases?
         # Can we just use the row as the MCMC id, or do we need the name?
         # also check Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_mass_CIF']
-        unique_phases = np.unique(Submit_dict[dataset]["MCMC_Calc"]["Phase"])
+        
+        
+        #unique_phases = np.unique(Submit_dict[dataset]["MCMC_Calc"]["Phase"])
 
-        for ii, pn in enumerate(unique_phases):
-            Submit_dict[dataset]["MCMC_Calc"].loc[Submit_dict[dataset]["MCMC_Calc"]["Phase"] == pn,'phase_id'] = ii+1
+        #for ii, pn in enumerate(unique_phases):
+        #    Submit_dict[dataset]["MCMC_Calc"].loc[Submit_dict[dataset]["MCMC_Calc"]["Phase"] == pn,'phase_id'] = ii+1
+        
+        unique_phases=[]
+        # Read from unit cell list for order
+        for index, cif_fname in enumerate(Submit_dict["Phase_Info"]["Unit_Cell"].index):
+            cif_name=cif_fname.split('.')[0]
+            Submit_dict[dataset]["MCMC_Calc"].loc[Submit_dict[dataset]["MCMC_Calc"]["Phase"] == cif_name,'phase_id'] = index+1
+            #print(index, cif_fname)
+            #print(cif_name, index+1)
+            unique_phases.append(cif_name)
 
+        Submit_dict["Phase_Info"]["Unit_Cell"].index
 
         # compute Bayesian prior distributions
         # prior_sample_scale for variation between multiple xrd scans
@@ -414,6 +426,8 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
 
         # Results as mass of unit cells
         
+        
+        # extract the phase_mu columns and store
         mass_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
         
         # CHECK - may be fragile to assumed order
