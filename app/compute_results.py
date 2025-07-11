@@ -70,11 +70,13 @@ def gather_example(example_name):
 
     elif example_name == 'Example05':
         datadir = '../ExampleData/Example05'
-        cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
+        #cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
+        cif_fnames = ['ferrite-SRM487.cif','austenite-SRM487.cif']
         workdir = '../server_workdir'
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
-        json_fname = 'Example05.json'
+        #json_fname = 'Example05.json'
+        json_fname = 'Example05-switch.json'
 
     elif example_name == "Example06":
         datadir = '../ExampleData/Example06'
