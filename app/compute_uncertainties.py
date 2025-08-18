@@ -665,10 +665,11 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
         Submit_dict = generate_param_table2(Submit_dict,dataset,unique_phases)
         Submit_dict = generate_pf_table2(Submit_dict,dataset,unique_phases)
 
+    ####################################
     ### Code for the multiple sample case
-        
+    ####################################
     ### FIX, with restructuing of code, this is non-trivial
-        
+    ####################################
     #elif len(results_table) > 1:
 
     # check OS to determine which stan executable to use
