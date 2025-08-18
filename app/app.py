@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, send_file
 import pandas as pd
 import numpy as np
 import json
+import secrets
+import tempfile
+import zipfile
 #import matplotlib.pyplot as plt
 #import plotly
 #import plotly.express as px
@@ -47,6 +50,7 @@ logging.basicConfig(stream=log_buffer, level=logging.INFO)
 
 # set up app
 app = Flask(__name__)
+app.secret_key = "super_secret_key"
 
 @app.route("/",methods=['GET'])
 def index():
@@ -303,6 +307,18 @@ def submit():
         #with open("export-all.json", "w") as outfile:
         #    json.dump(all_results, outfile)
 
+    user_id = secrets.token_hex(6)
+    temp_dir = tempfile.mkdtemp(prefix='session_' + user_id, dir="/tmp")
+    session["download_id"] = temp_dir
+
+    fp = os.path.join(temp_dir,'Submission.pickle')
+    with open(fp,'wb') as f:
+        pickle.dump(Submission, f, protocol=4)
+
+    fp = os.path.join(temp_dir,'all_results.pickle')
+    with open(fp,'wb') as f:
+        pickle.dump(all_results, f, protocol=4)
+
     return jsonify(all_results)
 
 @app.route("/instprm_json",methods=["POST"])
@@ -314,6 +330,25 @@ def instprm_json():
 def cryst():
     request_var = request.get_json()
     return "The value you submitted to the cryst route is " + request_var['var']
+
+@app.route("/download",methods=['GET'])
+def download():
+
+    temp_dir = session.get("download_id")
+
+    if not temp_dir or not os.path.exists(temp_dir):
+        return "No file to download", 404
+    
+    zip_path = tempfile.mktemp(suffix=".zip", dir="/tmp")
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                abs_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_path, temp_dir)
+                zipf.write(abs_path, rel_path)
+
+    return send_file(zip_path, as_attachment=True, download_name="files.zip")
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0',port=8050,debug=True)
