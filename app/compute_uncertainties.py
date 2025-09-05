@@ -492,11 +492,13 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
 
     """
-
+    # breakpoint()
     # 3 different cases:
     # single file -> run as one_sample
     # multiple files with sum button -> run as one_sample for each
     # multiple files without sum button -> run as multiple_samples
+
+    ## COLLECT DATA FROM EACH DATASET, save as 'MCMC_Calc_cache'
 
     # for each dataset
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
@@ -518,40 +520,62 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
         #n_u_ is the uncertainty normalized by the I/R (normalized intensity)
         # FIX - add peak fit success
-        Submit_dict[dataset]["MCMC_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['int_fit', 'R_TI', 'n_int_fit', 'n_u_int_fit', 'n_u_count_fit','n_u_N_Diffracting_95pct','Phase','pos_fit', 'hkl'  ]]
+        Submit_dict[dataset]["MCMC_Calc_cache"]=Submit_dict[dataset]["Merged_Peaks"][['int_fit', 'R_TI', 'n_int_fit', 'n_u_int_fit', 'n_u_count_fit','n_u_N_Diffracting_95pct','Phase','pos_fit', 'hkl'  ]]
 
-
-        Submit_dict[dataset]["MCMC_Calc"]['sample_id']=dataset_number
-        # create numeric phase id's
-        Submit_dict[dataset]["MCMC_Calc"]['phase_id'] = 0
+        ## create sample_id variable
+        Submit_dict[dataset]["MCMC_Calc_cache"]['sample_id']=dataset_number
+        
+        ## initialize numeric phase id's
+        Submit_dict[dataset]["MCMC_Calc_cache"]['phase_id'] = 0
         
         # CHECK - any way the order gets changed in the phases?
         # Can we just use the row as the MCMC id, or do we need the name?
         # also check Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_mass_CIF']
-        unique_phases = np.unique(Submit_dict[dataset]["MCMC_Calc"]["Phase"])
+        unique_phases = np.unique(Submit_dict[dataset]["MCMC_Calc_cache"]["Phase"])
 
         for ii, pn in enumerate(unique_phases):
-            Submit_dict[dataset]["MCMC_Calc"].loc[Submit_dict[dataset]["MCMC_Calc"]["Phase"] == pn,'phase_id'] = ii+1
+            Submit_dict[dataset]["MCMC_Calc_cache"].loc[Submit_dict[dataset]["MCMC_Calc_cache"]["Phase"] == pn,'phase_id'] = ii+1
 
-
-        # compute Bayesian prior distributions
+        # compute Bayesian prior distributions inside each dataset
+        
         # prior_sample_scale for variation between multiple xrd scans
-        prior_sample_scale = np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])
+        prior_sample_scale = np.std(Submit_dict[dataset]["MCMC_Calc_cache_cache"]["n_int_fit"])
 
         # prior_exp_scale = variation based on peak to peak variation
-        prior_exp_scale = np.mean(Submit_dict[dataset]["MCMC_Calc"].groupby(['sample_id','phase_id'])["n_int_fit"].std())
+        prior_exp_scale = np.mean(Submit_dict[dataset]["MCMC_Calc_cache"].groupby(['sample_id','phase_id'])["n_int_fit"].std())
         
         # prior_location is the inital location (value) of the data
-        prior_location = np.array(Submit_dict[dataset]["MCMC_Calc"].groupby('phase_id')["n_int_fit"].mean())
+        prior_location = np.array(Submit_dict[dataset]["MCMC_Calc_cache"].groupby('phase_id')["n_int_fit"].mean())
 
         print("Bayesian Prior Estimates")
         print("Prior sample scale: {}".format(prior_sample_scale))
         print("Prior exp scale: {}".format(prior_exp_scale))
         print("Prior location: {}".format(prior_location))
-        print("Prior scale: {}".format(np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])))
+        print("Prior scale: {}".format(np.std(Submit_dict[dataset]["MCMC_Calc_cache"]["n_int_fit"])))
 
+        ### Additional values needed for Multiple samples
+
+        ## N_samples (number of datasets)
+        Submit_dict[dataset]["MCMC_Calc_cache"]['N_samples']=len(Submit_dict["File_Paths"]["Dataset_name"])
+        ## N_sample_phases (???)
+        
+        ## group (dataset ID)
+        
+        ## phase_sample_id (???)
+
+        ## prior_sample_scale
 
         # stan for one sample
+
+        ## EXIT DATASET LOOP
+        
+        ##### STILL NEED TO SAVE BY DATASET
+        ##### OTHERWISE THIS WILL BREAK ELSEWHERE
+        
+        # if first dataset, create "MCMC_Calc"
+        
+        
+        # else append
 
         #check OS to determine which stan executable to use
         # CHECK - Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
@@ -665,12 +689,17 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
         Submit_dict = generate_param_table2(Submit_dict,dataset,unique_phases)
         Submit_dict = generate_pf_table2(Submit_dict,dataset,unique_phases)
 
+
+
     ####################################
-    ### Code for the multiple sample case
+    ### Prior Code for the multiple sample case
     ####################################
     ### FIX, with restructuing of code, this is non-trivial
+    ### Use for reference, fix using the one sample code above
     ####################################
     #elif len(results_table) > 1:
+
+
 
     # check OS to determine which stan executable to use
     # Should this be a try/except block?    https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
