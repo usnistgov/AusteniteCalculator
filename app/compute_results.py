@@ -2139,28 +2139,36 @@ def create_multi_dataset(Submit_dict):
 
     # Don't need merged peaks, but will need MCMC
 
-    # Data and description
-    N_list=[] # number of peaks in the dataset
-    N_samples_list=[] # number of samples (i.e. datasets)
-    N_phases_list=[] # number of phases analyzed 
-    N_phase_samples_list=[] # number of concatenated of phase and sample (2 phases, 2 samples would be 1,2,3,4)
-    Y_list=[] # normalized intensities for each peak
-    phase_list=[] # which phase each peak corresponds to (numeric)
-    group_list=[] # sample id (dataset number)
-    phase_sample_id_list=[] # phase and sample id number -> concatenation of phase and sample (2 phases, 2 samples would be 1,2,3,4)
+    # Data and description with examples
+    N_list=[] # number of peaks in the all of the datasets (#=30 if 10 peaks per 3 samples)
+    N_samples_list=[] # number of samples (i.e. datasets) (#=3 for 3 datasets)
+    N_phases_list=[] # number of phases analyzed  (#=2 for 2 phases)
+    N_phase_samples_list=[] # number of concatenated of phase and sample (#=6; 2 phases, 3 samples would be 1,2,3,4,5,6)
+    
+    Y_list=[] # stan vector array of normalized intensities for each peak (len=30)
+    phase_list=[] # stan array which phase number each peak corresponds to (numeric) (len=30)
+    group_list=[] # stan array which sample id (dataset number) each peak corresponds to (numeric) (len=30)
+    phase_sample_id_list=[] # stan array which phase and sample id number -> concatenation of phase and sample (2 phases, 3 samples would be number 1,2,3,4,5,6) (len=30)
     
     #### ASK
-    prior_scale_list=[] # Standard deviation of normalized intensities (single value? - seems wrong)
-    prior_sample_scale_list=[] # seems to be the same as prior_scale?
+    ## Since these are 'prior' values, it's ok-ish to have a larger value (upper bound)
+    ## prior_scale and prior_sample_scale use the same value of the standard deviation
+    ## of all the normalized intensities
+    
+    ## The posteriors should settle to what the data leads to, so an upper bound
+    ## is a conservative choice
+    prior_scale_list=[] # stan real Standard deviation of normalized intensities
+    prior_sample_scale_list=[] # stan real same as prior_scale?
     prior_exp_scale_list=[] # Mean of the standard deviation of normalized intensities grouped by phase_id and sample_id (single value? - seems better than prior_scale_list?)
     
     
-    prior_location_list=[] # Array by phase with mean n_int_fit
-    u_int_fit_list=[] # uncertainties in normalized intensities for each peak, based on fit uncertainty
-    u_int_count_list=[] # uncertainties in normalized intensities for each peak, based on counting statistics
-    u_cryst_diff_list=[] # uncertainties in normalized intensities for each peak, based on number of grains illuminated
-
-    ## Fuzzy on the structure - ASK
+    prior_location_list=[] # Array by phase (size 1x2) with mean n_int_fit
+    u_int_fit_list=[] # stan vector array uncertainties in normalized intensities for each peak, based on fit uncertainty (len=30)
+    u_int_count_list=[] #stan vector array uncertainties in normalized intensities for each peak, based on counting statistics (len=30)
+    u_cryst_diff_list=[] # stan vector arrayuncertainties in normalized intensities for each peak, based on number of grains illuminated (len=30)
+    
+    ### Stan notes
+    ## T-4 has a heavier tail than the half normal
 
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
         
