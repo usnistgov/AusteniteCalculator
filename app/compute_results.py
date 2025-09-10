@@ -2206,12 +2206,12 @@ def create_multi_dataset(Submit_dict):
             Z_Depth_multi_dict.update(Submit_dict[dataset]["Z_Depth_plot_data"])
             
         
-
+    
     # create lists from columns
     Y_list=list(MCMC_Calc_multi_DF["n_int_fit"])
     phase_list=list(MCMC_Calc_multi_DF['phase_id'])
     # recast group as ints instead of strings
-    group_list=list(map(int,MCMC_Calc_multi_DF['sample_id']))
+    group_list=MCMC_Calc_multi_DF['sample_id'].astype(int).tolist()
     phase_sample_id_list=list(MCMC_Calc_multi_DF['phase_sample_id'])
     
     #u or n_u here?

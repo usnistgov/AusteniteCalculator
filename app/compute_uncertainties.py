@@ -410,6 +410,11 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
 
         #Submit_dict[dataset]["MCMC_Data"].drop(inplace=True,columns = Submit_dict[dataset]["MCMC_Data"].columns[Submit_dict[dataset]["MCMC_Data"].columns.str.contains("(__)|(effect)",regex=True)])
 
+        print("Mean phase_mu")
+        print(Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")].mean())
+
+        print("Median phase_mu")
+        print(Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")].median())
         
         # FIX - move these to a function?
         # Results as number of unit cells
@@ -547,8 +552,22 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
  
     print(Submit_dict[dataset]["MCMC_Data"].info(memory_usage=True))
 
+    # Not clear if mean or median should be used
+    print("Mean phase_mu")
+    print(Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")].mean())
+
+    print("Median phase_mu")
+    print(Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")].median())
+
+    print("Mean sigma_sample")
+    print(Submit_dict[dataset]["MCMC_Data"]['sigma_sample'].mean())
+
+    print("Median sigma_sample")
+    print(Submit_dict[dataset]["MCMC_Data"]['sigma_sample'].median())
+
     #mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
+    #breakpoint()
     phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
     
     ni_sum = np.sum(phase_cols,axis=1)
@@ -837,6 +856,8 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
     
     # FIX for multiple samples
     #multiple_samples = 'sigma_sample' in mcmc_df.columns
+    
+    # ADD phase_mu
 
     # table to hold parameter estimates for sources of uncertainty
     # FIX - rename to add note on median value
@@ -879,14 +900,22 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
         #mean_ph=float(subset_table.loc[subset_table['Phase']==ph,'n_int'].mean())
         #param_table.loc[param_table['Phase'] == ph, 'Mean Normalized Intensity'] = mean_ph
         
+        # Should we add median phase_mu?
+        
         # sigma_exp
         # ADD!
         
         
         #t_sigexp_samps = mcmc_df['sigma_exp[' + str(ii+1) + ']']
         #param_table.loc[param_table['Phase'] == ph, 'Experimental Error Variability'] = np.mean(t_sigexp_samps)
-        Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].mean())
         
+        # Not clear if mean or median should be used
+
+        #Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].mean())
+        
+        #Try as median since it will be less of an outlier
+        #RENAME if we keep this
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].median())
 
 
         # median values
