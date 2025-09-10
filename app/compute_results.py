@@ -2137,144 +2137,136 @@ def create_multi_dataset(Submit_dict):
 
     dataset0=Submit_dict["File_Paths"]["Dataset_name"][0]
 
-    # Don't need merged peaks, but will need MCMC
+    # Don't need merged peaks, but will need MCMC_Calc and which rows are dropped
+    # See run_stan2
+    
+    #breakpoint()
 
+    ###### Values, not needed as a list
     # Data and description with examples
-    N_list=[] # number of peaks in the all of the datasets (#=30 if 10 peaks per 3 samples)
-    N_samples_list=[] # number of samples (i.e. datasets) (#=3 for 3 datasets)
-    N_phases_list=[] # number of phases analyzed  (#=2 for 2 phases)
-    N_phase_samples_list=[] # number of concatenated of phase and sample (#=6; 2 phases, 3 samples would be 1,2,3,4,5,6)
-    
-    Y_list=[] # stan vector array of normalized intensities for each peak (len=30)
-    phase_list=[] # stan array which phase number each peak corresponds to (numeric) (len=30)
-    group_list=[] # stan array which sample id (dataset number) each peak corresponds to (numeric) (len=30)
-    phase_sample_id_list=[] # stan array which phase and sample id number -> concatenation of phase and sample (2 phases, 3 samples would be number 1,2,3,4,5,6) (len=30)
-    
-    #### ASK
+    # N # number of peaks in the all of the datasets (#=30 if 10 peaks per 3 samples)
+    # N_samples # number of samples (i.e. datasets) (#=3 for 3 datasets)
+    # N_phases # number of phases analyzed  (#=2 for 2 phases)
+    # N_phase_samples # number of concatenated of phase and sample (#=6; 2 phases, 3 samples would be 1,2,3,4,5,6)
+
+    #### Bayesian Prior values
     ## Since these are 'prior' values, it's ok-ish to have a larger value (upper bound)
     ## prior_scale and prior_sample_scale use the same value of the standard deviation
     ## of all the normalized intensities
     
     ## The posteriors should settle to what the data leads to, so an upper bound
     ## is a conservative choice
-    prior_scale_list=[] # stan real Standard deviation of normalized intensities
-    prior_sample_scale_list=[] # stan real same as prior_scale?
-    prior_exp_scale_list=[] # Mean of the standard deviation of normalized intensities grouped by phase_id and sample_id (single value? - seems better than prior_scale_list?)
+    #prior_location # Array by phase (size 1x2) with mean n_int_fit
+    #prior_scale # stan real Standard deviation of normalized intensities
+    #prior_sample_scale # stan real Same as prior_scale
+    #prior_exp_scale # Mean of the standard deviation of normalized intensities grouped by phase_id and sample_id
     
-    
-    prior_location_list=[] # Array by phase (size 1x2) with mean n_int_fit
-    u_int_fit_list=[] # stan vector array uncertainties in normalized intensities for each peak, based on fit uncertainty (len=30)
-    u_int_count_list=[] #stan vector array uncertainties in normalized intensities for each peak, based on counting statistics (len=30)
-    u_cryst_diff_list=[] # stan vector arrayuncertainties in normalized intensities for each peak, based on number of grains illuminated (len=30)
-    
+
     ### Stan notes
     ## T-4 has a heavier tail than the half normal
 
-    for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
+    for counter,dataset in enumerate(Submit_dict["File_Paths"]["Dataset_name"]):
         
         print("Looping through datasets to create multi-dataset stan file")
+        
+        #breakpoint()
+        # Create MCMC_Calc for multi data set (already dropped rows)
+        if counter == 0:
+            # Copy dataframe
+            Merged_Peaks_multi_DF=Submit_dict[dataset]["Merged_Peaks"]
+            MCMC_Calc_multi_DF=Submit_dict[dataset]["MCMC_Calc"]
+            Flags_multi_DF=Submit_dict[dataset]["Flags"]
+
+            Le_Bail_Data_multi_dict=Submit_dict[dataset]["Le_Bail_Data"]
+            Peak_Fit_Data_multi_dict=Submit_dict[dataset]["Peak_Fit_Data"]
+            Gaussian_Data_multi_dict=Submit_dict[dataset]["Gaussian_Data"]
+            Incident_Angle_multi_dict=Submit_dict[dataset]["Incident_Angle_plot_data"]
+            Z_Depth_multi_dict=Submit_dict[dataset]["Z_Depth_plot_data"]
+
+            
+            
+        else:
+            #breakpoint()
+            # concatenate dataframe
+            Merged_Peaks_multi_DF=pd.concat([Merged_Peaks_multi_DF, Submit_dict[dataset]["Merged_Peaks"]])
+            MCMC_Calc_multi_DF=pd.concat([MCMC_Calc_multi_DF,Submit_dict[dataset]["MCMC_Calc"]])
+            Flags_multi_DF=pd.concat([Flags_multi_DF, Submit_dict[dataset]["Flags"]])
+            
+            #update dictionary
+            Le_Bail_Data_multi_dict.update(Submit_dict[dataset]["Le_Bail_Data"])
+            Peak_Fit_Data_multi_dict.update(Submit_dict[dataset]["Peak_Fit_Data"])
+            Gaussian_Data_multi_dict.update(Submit_dict[dataset]["Gaussian_Data"])
+            Incident_Angle_multi_dict.update(Submit_dict[dataset]["Incident_Angle_plot_data"])
+            Z_Depth_multi_dict.update(Submit_dict[dataset]["Z_Depth_plot_data"])
+            
         
         # Create numeric phase_sample_id
         sample_number=int(Submit_dict[dataset]["MCMC_Calc"]['sample_id'][0])
         
-        Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id']=sample_number*Submit_dict[dataset]["MCMC_Calc"]['phase_id']
+        Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id']=counter*max(Submit_dict[dataset]["MCMC_Calc"]['phase_id'])+Submit_dict[dataset]["MCMC_Calc"]['phase_id']
         
         # recommended to create lists and append, then dataframes
         # https://stackoverflow.com/questions/13784192/creating-an-empty-pandas-dataframe-and-then-filling-it
       
-        breakpoint()
       
-        N_list.extend(Submit_dict[dataset]["MCMC_Calc"].shape[0])
-        N_samples_list.extend(len(Submit_dict["File_Paths"]["Dataset_name"]))
-        N_phases_list.extend(len(np.unique(Submit_dict[dataset]["MCMC_Calc"]["Phase"])))
-        N_phase_samples_list.extend(len(np.unique(Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id'])))
-        Y_list.extend(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])
-        phase_list.extend(Submit_dict[dataset]["MCMC_Calc"]['phase_id'])
-        group_list.extend(Submit_dict[dataset]["MCMC_Calc"]['sample_id'])
-        phase_sample_id_list.extend(Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id'])
-        
-        
-        prior_scale_list.extend(np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"]))
-        prior_sample_scale_list.extend(np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])) #why the same?
-        prior_exp_scale_list.extend(np.mean(Submit_dict[dataset]["MCMC_Calc"].groupby(['sample_id','phase_id'])["n_int_fit"].std()))
-        
-        
-        prior_location_list.extend(np.array(Submit_dict[dataset]["MCMC_Calc"].groupby('phase_id')["n_int_fit"].mean()))
-        u_int_fit_list.extend(Submit_dict[dataset]["MCMC_Calc"]['n_u_int_fit'])
-        u_int_count_list.extend(Submit_dict[dataset]["MCMC_Calc"]['n_u_count_fit'])
-        u_cryst_diff_list.extend(Submit_dict[dataset]["MCMC_Calc"]['n_u_N_Diffracting_95pct'])
+    Y_list=list(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])
+    phase_list=list(Submit_dict[dataset]["MCMC_Calc"]['phase_id'])
+    # recast group as ints instead of strings
+    group_list=list(map(int,Submit_dict[dataset]["MCMC_Calc"]['sample_id']))
+    phase_sample_id_list=list(Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id'])
     
-        
+    u_int_fit_list=list(Submit_dict[dataset]["MCMC_Calc"]['n_u_int_fit'])
+    u_int_count_list=list(Submit_dict[dataset]["MCMC_Calc"]['n_u_count_fit'])
+    u_cryst_diff_list=list(Submit_dict[dataset]["MCMC_Calc"]['n_u_N_Diffracting_95pct'])
+
+    
     
     print("Completed Looping through datasets to create multi-dataset stan file")
-    breakpoint()
+
     
-    stan_data = {
-    "N":N_list,
-    "N_samples":N_samples_list,
-    "N_phases":N_phases_list,
-    "N_phase_samples":N_phase_samples_list,
+
+    #prior_location=(np.array(Submit_dict[dataset]["MCMC_Calc"].groupby('phase_id')["n_int_fit"].mean()))
+    
+    #prior_scale=(np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"]))
+    #prior_sample_scale=(np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])) #why the same?
+    #prior_exp_scale=(np.mean(Submit_dict[dataset]["MCMC_Calc"].groupby(['sample_id','phase_id'])["n_int_fit"].std()))
+    
+    
+    # Need an interm dataframe to use groupby functions
+    multi_data={
     "Y":Y_list,
     "phase":phase_list,
     "group":group_list,
-    "phase_sample_id":phase_sample_id_list, #####
-    "prior_scale":prior_scale_list,
-    "prior_sample_scale":prior_sample_scale_list,
-    "prior_exp_scale":prior_exp_scale_list, #####
-    "prior_location":prior_location_list,
+    "phase_sample_id":phase_sample_id_list,
     "u_int_fit":u_int_fit_list,
     "u_int_count":u_int_count_list,
     "u_cryst_diff":u_cryst_diff_list
     }
     
-    stan_data_DF=pd.DataFrame(stan_data)
-
-        # Sum columns
-        # Can't sum strings...
-        #*# temp_DF = Submit_dict[dataset]['Merged_Peaks'].drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
-        
-        # FIX - set rows/columns to zero if the fit was not successful
-        #https://stackoverflow.com/questions/55321563/drop-pandas-row-by-name-keep-index-intact
-        #*# temp_DF = temp_DF[temp_DF['Peak_Fit_Success2'] ==True ]
-        
-        #*# Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.add(temp_DF, fill_value=0)
-
-
-    #Strings
-    #'Phase_TI','phase_LB','Phase','hkl',
-
-    # Include string columns
-    #*#Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.join(Submit_dict[dataset0]['Merged_Peaks'][['Phase_TI','phase_LB','Phase','hkl']])
-
-
-
+    multi_data_DF=pd.DataFrame(multi_data)
     
-    # For columns were the average is needed
-    # Divide by successful peak fits
-    
-    
-    #Sum
-    #'int_fit','Peak_Fit_Success', 'F_obs_sq_LB', 'F_calc_sq_LB', 'int_LB', 'int_G', 'int_TR',
+    stan_data = {
+    "N":len(Y_list), # Length of various entries
+    "N_samples":int(max(group_list)),
+    "N_phases":int(max(phase_list)),
+    "N_phase_samples":int(max(phase_sample_id_list)),
+    "Y":Y_list,
+    "phase":phase_list,
+    "group":group_list,
+    "phase_sample_id":phase_sample_id_list,
+    "prior_scale":np.std(Y_list), ##### Use aggregate data to find priors
+    "prior_sample_scale":np.std(Y_list),
+    "prior_exp_scale":(np.mean(multi_data_DF.groupby(['group','phase'])["Y"].std())),
+    "prior_location":(np.array(multi_data_DF.groupby('phase')["Y"].mean())),
+    "u_int_fit":u_int_fit_list,
+    "u_int_count":u_int_count_list,
+    "u_cryst_diff":u_cryst_diff_list
+    }
 
+    print(stan_data)
+    # error since the dataframes are of different lengths
+    #stan_data_DF=pd.DataFrame(stan_data)
 
-    #Recalc
-
-    #'u_pos_fit', 'u_int_fit','u_int_count','rel_int_fit','rel_int_count','u_int_LB', 'n_int_fit', 'n_int_LB', 'n_u_int_fit', 'n_u_count_fit', 'n_u_int_LB', 'N_illuminated_50pct', 'N_illuminated_95pct', 'N_Diffracting_50pct', 'N_Diffracting_95pct', 'u_N_Diffracting_50pct', 'u_N_Diffracting_95pct', 'n_u_N_Diffracting_95pct', 'n_u_N_Diffracting_50pct'
-
-
-    # FIX - Adjust 'Peak_Fit_Success' column in calculate
-    #Summed_Merged_Peaks_DF["n_sucessful_fits"]=len(Submit_dict["File_Paths"]["Dataset_name"])
-
-    #Average (Divide)
-    # 'pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction'
-    
-    # FIX - get a divide by zero error
-    #*#Summed_Merged_Peaks_DF['Peak_Fit_Success3']=Summed_Merged_Peaks_DF['Peak_Fit_Success2']+0.001
-    
-    # df[['A', 'B', 'C']] = df[['A', 'B', 'C']].div(df['D'], axis=0)
-    #*#Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']]=Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']].div(Summed_Merged_Peaks_DF['Peak_Fit_Success3'], axis=0)
-
-    # FIX - Redo uncertainty calculations
 
     #print(Summed_Merged_Peaks_DF)
     #breakpoint()
@@ -2282,17 +2274,26 @@ def create_multi_dataset(Submit_dict):
     # Append to records
     Submit_dict["File_Paths"]["Dataset_name"].extend(["Dataset_multi"])
     Submit_dict["Dataset_multi"]={}
-    Submit_dict["Dataset_multi"]['Merged_Peaks']=Summed_Merged_Peaks_DF
+    Submit_dict["Dataset_multi"]["Stan_Data"]=stan_data
+    # FIX - What should be used for Peaks_DF?
+    # Just using a copy for now.  Should be multi_data?
+    # Submit_dict["Dataset_multi"]['Merged_Peaks']=Summed_Merged_Peaks_DF
     
-    # FIX - Need similar data for summed
-    # just copying to test
-    Submit_dict["Dataset_multi"]["Le_Bail_Data"]=Submit_dict[dataset0]["Le_Bail_Data"]
-    Submit_dict["Dataset_multi"]["Peak_Fit_Data"]=Submit_dict[dataset0]["Peak_Fit_Data"]
-    Submit_dict["Dataset_multi"]["Gaussian_Data"]=Submit_dict[dataset0]["Gaussian_Data"]
-    Submit_dict["Dataset_multi"]["Incident_Angle_plot_data"]=Submit_dict[dataset0]["Incident_Angle_plot_data"]
-    Submit_dict["Dataset_multi"]["Z_Depth_plot_data"]=Submit_dict[dataset0]["Z_Depth_plot_data"]
-    Submit_dict["Dataset_multi"]["Flags"]=Submit_dict[dataset0]["Flags"]
+     # FIX - Need similar data for summed
+    # just copying to test   
+    Submit_dict["Dataset_multi"]['Merged_Peaks']=Merged_Peaks_multi_DF
+    Submit_dict["Dataset_multi"]["MCMC_Calc"]=MCMC_Calc_multi_DF
+    Submit_dict["Dataset_multi"]["Flags"]=Flags_multi_DF
     
+    
+    Submit_dict["Dataset_multi"]["Le_Bail_Data"]=Le_Bail_Data_multi_dict
+    Submit_dict["Dataset_multi"]["Peak_Fit_Data"]=Peak_Fit_Data_multi_dict
+    Submit_dict["Dataset_multi"]["Gaussian_Data"]=Gaussian_Data_multi_dict
+    Submit_dict["Dataset_multi"]["Incident_Angle_plot_data"]=Incident_Angle_multi_dict
+    Submit_dict["Dataset_multi"]["Z_Depth_plot_data"]=Z_Depth_multi_dict
+
+    
+    print("Exit create_multi_dataset")
     
     return Submit_dict
 
