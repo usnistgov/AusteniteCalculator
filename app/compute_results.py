@@ -2168,7 +2168,13 @@ def create_multi_dataset(Submit_dict):
     for counter,dataset in enumerate(Submit_dict["File_Paths"]["Dataset_name"]):
         
         print("Looping through datasets to create multi-dataset stan file")
+ 
+        # Create numeric phase_sample_id
+        sample_number=int(Submit_dict[dataset]["MCMC_Calc"]['sample_id'][0])
         
+        Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id']=counter*max(Submit_dict[dataset]["MCMC_Calc"]['phase_id'])+Submit_dict[dataset]["MCMC_Calc"]['phase_id']
+        
+ 
         #breakpoint()
         # Create MCMC_Calc for multi data set (already dropped rows)
         if counter == 0:
@@ -2200,24 +2206,18 @@ def create_multi_dataset(Submit_dict):
             Z_Depth_multi_dict.update(Submit_dict[dataset]["Z_Depth_plot_data"])
             
         
-        # Create numeric phase_sample_id
-        sample_number=int(Submit_dict[dataset]["MCMC_Calc"]['sample_id'][0])
-        
-        Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id']=counter*max(Submit_dict[dataset]["MCMC_Calc"]['phase_id'])+Submit_dict[dataset]["MCMC_Calc"]['phase_id']
-        
-        # recommended to create lists and append, then dataframes
-        # https://stackoverflow.com/questions/13784192/creating-an-empty-pandas-dataframe-and-then-filling-it
-      
-      
-    Y_list=list(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])
-    phase_list=list(Submit_dict[dataset]["MCMC_Calc"]['phase_id'])
+
+    # create lists from columns
+    Y_list=list(MCMC_Calc_multi_DF["n_int_fit"])
+    phase_list=list(MCMC_Calc_multi_DF['phase_id'])
     # recast group as ints instead of strings
-    group_list=list(map(int,Submit_dict[dataset]["MCMC_Calc"]['sample_id']))
-    phase_sample_id_list=list(Submit_dict[dataset]["MCMC_Calc"]['phase_sample_id'])
+    group_list=list(map(int,MCMC_Calc_multi_DF['sample_id']))
+    phase_sample_id_list=list(MCMC_Calc_multi_DF['phase_sample_id'])
     
-    u_int_fit_list=list(Submit_dict[dataset]["MCMC_Calc"]['n_u_int_fit'])
-    u_int_count_list=list(Submit_dict[dataset]["MCMC_Calc"]['n_u_count_fit'])
-    u_cryst_diff_list=list(Submit_dict[dataset]["MCMC_Calc"]['n_u_N_Diffracting_95pct'])
+    #u or n_u here?
+    u_int_fit_list=list(MCMC_Calc_multi_DF['n_u_int_fit'])
+    u_int_count_list=list(MCMC_Calc_multi_DF['n_u_count_fit'])
+    u_cryst_diff_list=list(MCMC_Calc_multi_DF['n_u_N_Diffracting_95pct'])
 
     
     
