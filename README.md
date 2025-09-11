@@ -156,6 +156,14 @@ None currently set.
 
 # Sphnix Documentaiton
 
+See: 
+https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html
+
+and rst documentaiton at:
+https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
+
+Using Google Style convention for docstrings
+
 Every change, will need to make the html files, use:
 `make html`
 in the sphinx_docs folder
