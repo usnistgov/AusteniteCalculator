@@ -64,6 +64,16 @@ Several sources of uncertainty have been considered
 * Composition uncertainty
 
 =========================
+Data Structure
+=========================
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+   
+   DataStructure
+
+=========================
 Usage
 =========================
 (add demo or instructions here?  Or elsewhere?)

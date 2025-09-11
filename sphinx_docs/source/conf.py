@@ -35,6 +35,10 @@ release = '0.1'
 # ones.
 extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc']
 
+# Added so that Google Style comments with mulitple return values behaves
+# https://github.com/sphinx-doc/sphinx/issues/9119
+napoleon_custom_sections = [('Returns', 'params_style')]
+
 autodoc_default_flags = ['members']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,7 +50,7 @@ templates_path = ['_templates']
 
 exclude_patterns = []
 
-autodoc_mock_imports = ["GSASIIscriptable", "plotly", "dash", "pandas", "dash_bootstrap_components", "numpy", "flask", "_tkinter"]
+autodoc_mock_imports = ["GSASIIscriptable","GSASIIpath", "plotly", "pandas", "numpy", "math", "atmdata", "json", "secrets", "tempfile","zipfile", "flask", "_tkinter", "scipy", "cmdstanpy", "xarray" ,"sys", "platform", "os", "io", "base64", "re", "pickle","time", "logging","cProfile","enum","fit","copy","base64","matplotlib" ]
 
 # -- Options for HTML output -------------------------------------------------
 
