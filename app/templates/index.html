@@ -51,6 +51,10 @@
         <button class="nav-link" data-bs-toggle="tab" type="button" href="#error-tab" id="error-tab-button">Error Log</button>
       </li>
 
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" type="button" href="#download-results-tab">Download Results</button>
+      </li>
+
     </ul>
 
     <div class="tab-content">
@@ -347,6 +351,22 @@
         <br>
         <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
       </div>
+
+    <!-- Download Results Tab -->
+    <div class="tab-content">
+      <div class="tab-pane" id="download-results-tab">
+        <br>
+        <p>
+          Click the button below to download the results once the analysis has been completed. The results will then
+          be downloaded as a .zip file in the form several Python pickle files.
+        </p>
+
+        <a href="/download">
+          <button type="button" class="btn btn-primary">Download Results</button>
+        </a>
+
+      </div>
+    </div>
 
       <!-- Error tab -->
       <div class="tab-pane" id="error-tab">
