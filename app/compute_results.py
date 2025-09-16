@@ -159,13 +159,12 @@ def gather_example(example_name):
 #####################################
 def version_summary():
     """
-    Collect various version information to populate the "About" tab in app
+    Collect various version information to populate the "About" tab in app.
+    *The code will not throw an exception if it cannot retreive version information, but the version history will be set to None.*
 
     Returns:
-        version_DF (DataFrame):Pandas DataFrame with summary version information on GSAS and git commits
+        version_DF (DataFrame):DataFrame with summary version information on GSAS and git commits
 
-    Note:
-        The code will not throw an exception if it cannot retreive version information, but the version history will be set to None. 
     """
     import GSASIIpath
     import subprocess
@@ -211,13 +210,13 @@ def compute_cell_density(Submit_dict):
     
     Used to convert the phase fraction between number of unit cells, mass of unit cells, and volume of unit cells
     
-    *Uses the volume as entered in cif file (should we do this after fitting for an improved value?)*
+    **Uses the volume as entered in cif file (should we do this after fitting for an improved value?)**
 
     Parameters:
-        Submit_dict (dictionary): Collected calculation submission
+        Submit_dict (dictionary): Container for calculation
 
     Returns:
-        Submit_dict (dictionary): Collected calculation submission with new keys     *Submit_dict["Phase_Info"]["Atomic_Masses"]* and *Submit_dict["Phase_Info"]["Unit_Cell"]*
+        Submit_dict (dictionary): Container for calculation with new keys *"Atomic_Masses"* and *"Unit_Cell"*
     
      """
 
@@ -406,22 +405,17 @@ def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
 #####################################
 def compute_peak_fitting(G2sc,Submit_dict):
     """
-    Wrapper for compute(), creates various dictionaries for
-    Calls compute()
-    ADD
+    Wrapper for compute() function, creates **???**
+
+    **LOTS OF COMMENTED OUT CODE - CLEAN UP**
 
     Parameters:
-        datadir: directory path
-        ADD
-
+        G2sc (module): GSAS-II Scriptable Module, with system path set.
+        Submit_dict (dictionary): Container for calculation
 
     Returns:
-        : dictionary with the following dictionaries nested inside
-        ADD
-
-    Raises:
-
-
+        Submit_dict (dictionary): Container for calculation with new keys from fit_data, Submit_dict returned from *compute*
+        
     """
 
     datadir=Submit_dict["File_Paths"]["Data_Directory"]
@@ -547,7 +541,7 @@ def compute_peak_fitting(G2sc,Submit_dict):
 #####################################
 def df_to_dict(df):
     """
-    Depricated?
+    **Depricated**
     Function for converting a pandas dataframe to a python dictionary. Need a dictionary for dash data_table
     
     ? Replate with .to_dict?
@@ -569,18 +563,18 @@ def df_to_dict(df):
 #####################################
 def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     """
-
+    **FIX** 
     Main computation function for phase calculations
-    *ADD MORE ON WHAT IT DOES*
-    - Reads in provided data,
-    - Does an initial fit to check for sample displacements via fit.fit_peaks_Rowles()
-    - Calculates theoretical intensities
-    - Fits peaks with fit.fit_peaks_LeBail_assist()
-    - Tries additional fits if the initial fit is unsuccessful
-    - Merges theoretical and fit data into single dataframe
-    - Calculates an inital phase fraction value
+    **ADD MORE ON WHAT IT DOES**
     
-
+    * Reads in provided data,
+    * Does an initial fit to check for sample displacements via fit.fit_peaks_Rowles()
+    * Calculates theoretical intensities
+    * Fits peaks with fit.fit_peaks_LeBail_assist()
+    * Tries additional fits if the initial fit is unsuccessful
+    * Merges theoretical and fit data into single dataframe
+    * Calculates an inital phase fraction value
+    
     Parameters:
         datadir: Location data is stored
         workdir: Working directory for data
@@ -591,13 +585,13 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
         G2sc: GSAS-II Scripting Toolkit location
 
     Returns:
-        | A tuple that contains the following items
-        | **fit_data** a list of lists with the histogram data, fit of the background, and fit of the data;
-        | **DF_merged_fit_theo** a pandas DataFrame with collected fit and theoretical intensities ;
-        | **DF_phase_fraction** a pandas DataFrame with phase fraction ;
-        | **two_theta** a python list (?) with the two_theta data from the GSAS-II histogram ;
-        | **theo_intensity_dict** a pandas DataFrame with the theoretical intensities;
-        | **flags_for_user_DF** a pandas DataFrame with the flags and notes to the user
+        A tuple that contains the following items
+        **fit_data** a list of lists with the histogram data, fit of the background, and fit of the data;
+        **DF_merged_fit_theo** a pandas DataFrame with collected fit and theoretical intensities ;
+        **DF_phase_fraction** a pandas DataFrame with phase fraction ;
+        **two_theta** a python list (?) with the two_theta data from the GSAS-II histogram ;
+        **theo_intensity_dict** a pandas DataFrame with the theoretical intensities;
+        **flags_for_user_DF** a pandas DataFrame with the flags and notes to the user
 
     """
 
@@ -1016,17 +1010,19 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
 #####################################
 def flag_phase_fraction(value, unit, source, flag, suggestion, DF_to_append=None):
     """
+    **CHECK**
     Adds notes and flags to austenite calculation.
 
     Args:
-        value: numeric value (float) of flagged value
-        source: short string text explaining the what step in the data is flagged
-        flag: longer string text describing the alert to user
-        suggestion: string text with suggestions on source or mitigation methods to decrease error
-        DF_to_append: pandas DataFrame to append flags and notes
+        value (Float or String): value  of flagged value
+        unit (String): units for the flagged value. If not applicable 
+        source (String): Text explaining the what step in the data is flagged
+        flag (String): Text describing the alert to user
+        suggestion (String): Text with suggestions on source or mitigation methods to decrease error
+        DF_to_append (DataFrame): DataFrame to append flags and notes
 
     Returns:
-        **flags_DF** Pandas DataFrame that includes flags to the user
+        flags_DF (DataFrame): DataFrame that collects flags to the user
 
     Raises:
     """
@@ -1054,6 +1050,7 @@ def flag_phase_fraction(value, unit, source, flag, suggestion, DF_to_append=None
 #####################################
 def get_theoretical_intensities(G2sc, Submit_dict, dataset_string):
     """
+    **FIX**
     Function to calculate the theoretical intensities.
     Simulated diffraction profile calculated based on the .cif file and instrument parameter file
 

@@ -3,17 +3,13 @@ DataStructure
 
 
 =========================
-Description
+**Description**
 =========================
-The data structures used in the Austenite Calculator are shown below.
+The data structures used in the Austenite Calculator are shown below. This document **SUPERSEEDS README-Developer.txt**.
 
-SUPERSEEDS README-Developer.txt
+Data structures are described as a bulleted list using the structure: **Key Name**	*(Datatype)*	Explanation  **Open Question**.   Indentation implies the data structure is contained as part of the less indented item listed above.
 
-*DataFrame* and *(Series)* are pandas objects. *Array* is a numpy array.  All other datatypes are python objects.
-
-Data structures are described as a bulleted list.  Indentation implies the data structure is contained as part of the less indented item listed above.
-
-**Key Name**	*(Datatype)*	Explanation  **Open Question**
+*DataFrame* and *Series* are pandas objects. *Array* is a numpy array.  All other datatypes are python objects. < > characters indicate a variable that is set by the dataset.
 
 =========================
 **Submission**
@@ -24,7 +20,7 @@ Data structures are described as a bulleted list.  Indentation implies the data 
  
     * **Interaction_Parameters** *(Dictionary)*	Values from Crystallites Illumininated json file.  Keys of:
 
-        * **<phase names>** from the entered CIF file names with a (List) of values of particulate size *(Float)*, number of particles *(Float)*, rocking angle *(Float)*, texture corrections *(List)* (optional)
+        * **<phase names>** from the entered CIF file names with a (List) of values of particulate size *(Float)*, number of crystallites per particulate *(Float)*, rocking angle *(Float)*, texture corrections *(List)* (optional)
         * **beam_shape** *(String)*
         * **beam_size** *(Float)*
         * **raster_x** *(Float)*
@@ -191,13 +187,13 @@ Data structures are described as a bulleted list.  Indentation implies the data 
          * **pos_diff_LB_TI**   *(Float)*  Difference in the 2-theta position value for crystal plane 'hkl' between the Le Bail fit and theoretical intensities.
          * **pos_diff_fit_LB**   *(Float)*  Difference in the 2-theta position value for crystal plane 'hkl' between the Peak Fit fit and Le Bail fit.
          * **hkl** *(String)* Space delimited string of the hkl crystal plane.
-        * **pos_G**  *(Float)* 2-theta position for crystal plane 'hkl' from the Gaussian fit.
-        * **sig_G** *(Float)* Gaussian width from the Gaussian fit. Described in centi-degrees.
-        * **int_G** *(Float)* Integrated intensity value from the Gaussian fit.
-        * **int_G_total** *(Float)* Integrated intensity value from a trapezoidal rule integration over a window of the peak width. Uses the total number of counts.
-        * **int_G_bg** *(Float)* Integrated intensity value from a trapezoidal rule integration over a window of the peak width. Fits only the background over the window.
-        * **int_G_TR** *(Float)* Integrated intensity value from a trapezoidal rule integration over a window of the peak width. This value is the total - background, and should only represent peak height.
-        * **fit_success_G**  *(Boolean)* True if the Gaussian peak fit function was able to complete successfully. If False, all _G columms are set to NaN.  **A 'True' value does not currently imply the values are reasonable**
+         * **pos_G**  *(Float)* 2-theta position for crystal plane 'hkl' from the Gaussian fit.
+         * **sig_G** *(Float)* Gaussian width from the Gaussian fit. Described in centi-degrees.
+         * **int_G** *(Float)* Integrated intensity value from the Gaussian fit.
+         * **int_G_total** *(Float)* Integrated intensity value from a trapezoidal rule integration over a window of the peak width. Uses the total number of counts.
+         * **int_G_bg** *(Float)* Integrated intensity value from a trapezoidal rule integration over a window of the peak width. Fits only the background over the window.
+         * **int_G_TR** *(Float)* Integrated intensity value from a trapezoidal rule integration over a window of the peak width. This value is the total - background, and should only represent peak height.
+         * **fit_success_G**  *(Boolean)* True if the Gaussian peak fit function was able to complete successfully. If False, all _G columms are set to NaN.  **A 'True' value does not currently imply the values are reasonable**
          
          * **Peak_Fit_Success_n_u_int**
          * **n_int_LB/fit**
@@ -327,55 +323,150 @@ Data structures are described as a bulleted list.  Indentation implies the data 
          * **Est_Escaped**
          * **Escaped Index Sum**
    
-   * **Incident_Angle_plot_data**
-   * **Z_Depth_plot_data**
-   * **MCMC_Calc**  *(DataFrame)*  MCMC Uncertainty Inputs, values copied from Merged_Peaks
-   * **MCMC_Data** *(DataFrame)*, columns of sigma_exp[n] and phase_mu[n] for n phases MCMC Distribution Data (8000 normalized intensities)
-   * **MCMC_Result_Number** *(DataFrame)* columns for each phase, with estimated phase fraction by number of unit cells
-   * **MCMC_Result_Mass** *(DataFrame)* columns for each phase, with estimated phase fraction by mass of unit cells
-   * **MCMC_Result_Volume** *(DataFrame)* columns for each phase, with estimated phase fraction by volume of unit cells
+   * **Incident_Angle_plot_data** *(Dictionary)* Container for Incident Angle Plot. Keys that end in "Endpoints" contain a *(List of Lists)* with indicies of [peak][step]. Keys that end in "Bounds" contain a *List* that has the range to use in the plot. Keys of: **Is the description of Interaction_Plots wrong?**
+         * **I_X_Endpoints**
+         * **I_Z_Endpoints**
+         * **P_X_Endpoints**
+         * **P_Z_Endpoints**
+         * **D_X_Endpoints**
+         * **D_Z_Endpoints**
+         * **X_Bounds**
+         * **Z_Bounds**
+   
+   
+   * **Z_Depth_plot_data** *(Dictionary)* Container for Z Depth Plot. Each key contains a *(List of Lists)* with indicies of [peak][step]. Keys of:
+         * **Escaped**
+         * **Z_Depth**
+         * **Count_Bound**
+         * **95pct_Bound**
+         * **68pct_Bound**
+         * **50pct_Bound**
+   
+   
+   * **MCMC_Calc**  *(DataFrame)*  MCMC Uncertainty Inputs, values copied from Merged_Peaks. Rows of peaks.   Columns of: **Check for summed and multiple samples as well**
+         * **int_fit**
+         * **R_TI**
+         * **n_int_fit**
+         * **n_u_int_fit**
+         * **n_u_count_fit**
+         * **n_u_N_Diffracting_95pct**
+         * **Phase**
+         * **pos_fit**
+         * **hkl**
+         * **Peak_Fit_Success2**
+         * **pos_TI**
+         * **n_int_LB**
+         * **sample_id**
+         * **phase_id**
+   
+   * **No entry for what gets sent to stan?**
+   
+   * **MCMC_Data** *(DataFrame)* Container for Stan calculation. Rows of draws from the distribution, set at 8000. Columns of:
+   
+         * **lp__**
+         * **accept_stat__**
+         * **stepsize__**
+         * **treedepth__**
+         * **n_leapfrog__**
+         * **divergent__**
+         * **energy__**
+         * **sigma_exp[<n>]** Estimated uncertainty due to variation in normalized intensity by peak. Columns for each of the n phases
+         * **phase_mu[<n>]** Estimated normalized intensity. Columns for each of the n phases
+   
+   
+   * **MCMC_Result_Number** *(DataFrame)* Columns for phase_mu[<n>], scaled to be the estimated phase fraction by number of unit cells
+   * **MCMC_Result_Mass** *(DataFrame)* Columns for phase_mu[<n>], scaled to be the estimated phase fraction by mass of unit cells
+   * **MCMC_Result_Volume** *(DataFrame)* Columns for phase_mu[<n>], scaled to be the estimated phase fraction by volume of unit cells
+   
    * **Uncert_Source_Summary** *(DataFrame)* rows for each phase, with aggregate uncertainties
-   * **Phase_Fraction_Result_Number** *(DataFrame)* rows for each phase
-   * **Phase_Fraction_Result_Mass** *(DataFrame)* rows for each phase
-   * **Phase_Fraction_Result_Volume** *(DataFrame)* rows for each phase
+         * **Phase**  *(String)* Phase name (not CIF file name)
+         * **Mean_n_int_fit**  *(Float)* Mean value of the normalized intensities **from the MCMC calculation?**
+         * **Mean_sigma_exp**   *(Float)* Mean value of the estimated uncertainty due to variation in normalized intensity by peak. **from the MCMC calculation?**
+         * **Median_n_u_count_fit**  *(Float)* Median value of the estimated uncertainty due to counting statistics. **from the MCMC calculation?**
+         * **Median_n_u_int_fit**   *(Float)* Median value of the estimated uncertainty due to fitting uncertainty. **from the MCMC calculation?**
+         * **Median_n_u_N_Diffracting_95pct**   *(Float)* Median value of the estimated uncertainty due to number of diffracting crystallites. **from the MCMC calculation?**
+      
+   * **Phase_Fraction_Result_Number** *(DataFrame)* Container for phase fraction result by number of unit cells. Rows for each phase.  Columns for:
+         * **Phase** *(String)* Phase name (not CIF file name)
+         * **Neg_2sigma** *(Float)* -2 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Neg_1sigma** *(Float)* -1 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Mean** *(Float)* Mean value of the phase fraction from the MCMC calculation.
+         * **Pos_1sigma** *(Float)* +1 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Pos_2sigma** *(Float)* +2 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Median** *(Float)* Median value of the phase fraction from the MCMC calculation.
+   * **Phase_Fraction_Result_Mass** *(DataFrame)* Container for phase fraction result by mass of unit cells. Rows for each phase.  Columns for:
+         * **Phase** *(String)* Phase name (not CIF file name)
+         * **Neg_2sigma** *(Float)* -2 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Neg_1sigma** *(Float)* -1 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Mean** *(Float)* Mean value of the phase fraction from the MCMC calculation.
+         * **Pos_1sigma** *(Float)* +1 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Pos_2sigma** *(Float)* +2 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Median** *(Float)* Median value of the phase fraction from the MCMC calculation.
+   * **Phase_Fraction_Result_Volume** *(DataFrame)* Container for phase fraction result by volume of unit cells. Rows for each phase.  Columns for:
+         * **Phase** *(String)* Phase name (not CIF file name)
+         * **Neg_2sigma** *(Float)* -2 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Neg_1sigma** *(Float)* -1 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Mean** *(Float)* Mean value of the phase fraction from the MCMC calculation.
+         * **Pos_1sigma** *(Float)* +1 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Pos_2sigma** *(Float)* +2 sigma bound value of the phase fraction from the MCMC calculation.
+         * **Median** *(Float)* Median value of the phase fraction from the MCMC calculation.
 
-
-   * Peak (row)
-
-    * **Le_Bail_Peaks**	*(DataFrame)*	(LeBail Fit values, uncertainties[where?])
-    * **Theoretical_Intensities** *(DataFrame)*
-    * t_peaks *Dataframe* 		(hist peak (List) from peak fit algorithm)
-    * **Merged_Peaks** *(DataFrame)*	(merge of hist peak (List), theoretical intensities, Le Bail peaks)
-    * Peak Fit (values, uncertainties)
-    * Gaussian Fit (values, uncertainties)
-    * hkl, multiplicity
-    * Phase
-    * **Interaction_Calc**  *(DataFrame)* interaction data by peak
-       ( to assemble interaction volume plots)
-    * **Interaction_Plots**
-
-
-Didn't find:
-   * Phase Fraction Data (8000 n_ints run through phase frac calc)
-
-   * Histogram Data (raw data)
-
- * Diffractometer Info (beam Shape, detector position)
- * MCMC parameters
 
 =========================
 **all_results**
 =========================
 
-Extracts the key results that are plotted.  All data structures stored in this dictionary are JSON-ifiable.
+Many of the values are stored as HTML formatted strings, using the 'to_html' function of pandas dataframes.
 
-all_results.keys()
-dict_keys(['version_html', 'unique_phases', 'fit_types', 'n_datasets', 'n_phases', 'dataset_names', 'n_peaks', 'Dataset_1', 'errors', 'error_dict', 'logs'])
+**all_results**	*(Dictionary)*	Container key results that are plotted.  All data structures stored in this dictionary are JSON-ifiable.
+   * **version_html** *(String - HTML)* Version information.
+   * **unique_phases** *(List)* Phase names (not CIF file names)
+   * **fit_types** *(List)* List of fit types included in analysis
+   * **n_datasets** *(Int)* Number of datasets
+   * **n_phases** *(Int)* Number of phases
+   * **dataset_names**  *(List)* List dataset names
+   * **n_peaks** *(Int)* Number of peaks **How does this work on multiple samples?**
+   * **Dataset_<n>** *(Dictionary)* Keys of:
+         * **two_thetas**
+         * **raw_intensity_data**
+         * **Le_Bail_fit**
+         * **Peak_fit**
+         * **Gaussian_fit_two_thetas**
+         * **Gaussian_fit**
+         * **flags_html**
+         * **n_int_plot_data**
+         * **pos_diff_plot_data**
+         * **Fit_n_int_html**
+         * **Theo_n_int_html**
+         * **phase_fraction_number_plot_data**
+         * **phase_fraction_mass_plot_data**
+         * **phase_fraction_volume_plot_data**
+         * **phase_fraction_number_html**
+         * **phase_fraction_mass_html**
+         * **phase_fraction_volume_html**
+         * **uncertainty_summary_html**
+         * **Uncertainties_n_int_html**
+         * **Interaction_Volume_html**
+         * **Peak_index_list**
+         * **Incident_Angle_plot_data**
+         * **Z_Depth_plot_data**
+         * **Z_Depth_plot_min**
+   * **errors** *(Boolean)* Reports if errors or execeptions were found during analysis.
+   * **error_dict** *(Dictionary)* Container for locations where errors can be found during analysis. Values for each key are *(Boolean)* values.  Keys of:
+         * **file_upload**
+         * **interaction_param_data**
+         * **Version**
+         * **cell_density**
+         * **peak_fitting**
+         * **peak_dict**
+         * **phase_info**
+         * **crystallites_illuminated**
+         * **conversions**
+         * **mcmc**
+   
+   * **logs** *(String)* Console log of analysis **Does not look complete**
 
 
-=========================
-Expected Output
-=========================
 
 
 =========================
