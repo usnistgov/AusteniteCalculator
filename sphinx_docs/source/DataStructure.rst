@@ -343,7 +343,7 @@ Data structures are described as a bulleted list using the structure: **Key Name
          * **50pct_Bound**
    
    
-   * **MCMC_Calc**  *(DataFrame)*  MCMC Uncertainty Inputs, values copied from Merged_Peaks. Rows of peaks.   Columns of: ** Check for summed and multiple samples as well**
+   * **MCMC_Calc**  *(DataFrame)*  MCMC Uncertainty Inputs, values copied from Merged_Peaks. Rows of peaks.   Columns of: **Check for summed and multiple samples as well**
          * **int_fit**
          * **R_TI**
          * **n_int_fit**
@@ -451,14 +451,22 @@ Many of the values are stored as HTML formatted strings, using the 'to_html' fun
          * **Incident_Angle_plot_data**
          * **Z_Depth_plot_data**
          * **Z_Depth_plot_min**
-   * **errors**
-   * **error_dict**
-   * **logs**
+   * **errors** *(Boolean)* Reports if errors or execeptions were found during analysis.
+   * **error_dict** *(Dictionary)* Container for locations where errors can be found during analysis. Values for each key are *(Boolean)* values.  Keys of:
+         * **file_upload**
+         * **interaction_param_data**
+         * **Version**
+         * **cell_density**
+         * **peak_fitting**
+         * **peak_dict**
+         * **phase_info**
+         * **crystallites_illuminated**
+         * **conversions**
+         * **mcmc**
+   
+   * **logs** *(String)* Console log of analysis **Does not look complete**
 
 
-=========================
-Expected Output
-=========================
 
 
 =========================
