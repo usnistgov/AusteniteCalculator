@@ -73,7 +73,7 @@ https://discourse.mc-stan.org/t/struggling-to-get-cmdstan-working-on-mac-os-big-
 
 **Make sure you're in the conda environment for the Austenite Calculator**
 ```
-cd <cmdstan directory inside conda environment>   (/Users/creuzige/gsas2full/envs/stan-test/bin/cmdstan)
+cd <cmdstan directory inside conda environment>   (/Users/creuzige/gsas2full/envs/gsas-AustCalc/bin/cmdstan)
 make clean-all
 CXX=$(xcrun -f clang++) make build
 ```
@@ -88,6 +88,12 @@ CXX=$(xcrun -f clang++) make /Users/creuzige/Documents/NIST_Research/GitHub/Aust
 After MacOS update to Ventura, running `make build`, `make ... /one_sample`,
  `make ... /multiple_samples` completed successfully without `CXX` definitions.
 
+#### 17 Sept 2025
+Still needed to set `CXX` designation for make build for stan, and add `<>` characters after `write_array` on lines 199 and 137 of file `model_base_crtp.hpp` in `/Users/creuzige/gsas2full/envs/gsas-AustCalc/bin/cmdstan/stan/src/stan/model`.  Using CmdStan v2.29.0
+
+Needed to delete .hpp files, got errors of
+`error: stack protector mode differs in PCH file vs. current file` and
+`error: PCH file was compiled for the target CPU 'core2' but the current translation unit is being compiled for target 'penryn'`
 
 ### From a Docker Container
 
