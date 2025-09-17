@@ -63,6 +63,9 @@ Several sources of uncertainty have been considered
 * Number of diffracting grains (interaction volume)
 * Composition uncertainty
 
+**Assumptions**
+* Absorbtion is similar between the phases
+
 =========================
 Data Structure
 =========================
