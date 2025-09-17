@@ -302,7 +302,6 @@ def submit():
     with open('Results'+timestamp+'.pickle', 'wb') as f:
         pickle.dump(all_results, f, protocol=4)
 
-
         # quick and dirty way to export all
         #with open("export-all.json", "w") as outfile:
         #    json.dump(all_results, outfile)

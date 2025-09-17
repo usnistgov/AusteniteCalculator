@@ -36,7 +36,7 @@ model {
     // latent effects
     for (ii in 1:N_samples) {
         for (jj in 1:N_phases) {
-            sample_effect[ii,jj] ~ normal(phase[jj],sigma_sample);
+            sample_effect[ii,jj] ~ normal(0,sigma_sample);
         }
     }
     
