@@ -65,6 +65,8 @@ Several sources of uncertainty have been considered
 
 **Assumptions**
 * Absorbtion is similar between the phases
+* Spherical grain shapes
+* Reflection mode diffraction (not transmission)
 
 =========================
 Data Structure

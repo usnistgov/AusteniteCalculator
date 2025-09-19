@@ -1254,49 +1254,47 @@ def calculate_aggregate_data(Submit_dict,dataset):
 #####################################
 def compute_crystallites_illuminated(Submit_dict):
     """
+    Calculates the approximate number of crystallites illuminated and diffracting, based on information provided in the Crystallites Illuminated JSON file. *Separate from compute loop as the aggregated values and preliminary phase fraction are needed for this calculation.* Sections describe various steps (and use the same text as comment headers).
     
-    *Should be separate from compute loop as the aggregated values are needed*
+    * Initialize "Interaction_Calc" DataFrame
+    * Add data for each phase
+    * Create the graph data via *create_cry_ill_graph_data*
+    * Convert grain size to grain area terms
+    * Determine the number of grain layers and crystallites illuminated
+    * Determine the number of crystallites diffracting
+    * Merge "Interaction_Calc" back into "Merged_Peaks"
     
-    #REVISE:
-    # Convert preliminary phase fraction to units of volume
-    # Move interaction_vol code?
-    # For each phase:
-    #   Pull out the interaction parameters by phase
-    #   Read in peaks diffracting parameters
-    #   Check the number of layers
-    #   Area illuminated
-    #   Diffracting condition coverage (by peak)
-    #   Number diffracting (by peak)
-    #   Calculate uncertainty based on number diffracting (sqrt number)
-    #   Normalize value to scale with n_int (relative error?)
-    
+
     Args:
         Submit_dict (Dictionary): Container for calculation
     
     Returns:
-        Submit_dict (Dictionary): Container for calculation. Inside *"Phase_Info"* dictionary, new key of *"Phase_list"* is added. Inside each *"Dataset_<n>"* dictionary, new key of *"Prelim_Phase_Fraction"* is added.
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, new key of *"Interaction_Calc"* is added.
     
     """
 
     print("Calculating the number of crystallites illuminated")
 
-
-    # for each dataset
+    ##############################################
+    # Initialize "Interaction_Calc" DataFrame
+    ##############################################
+    
+    # loop over each dataset
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
         print("Dataset: ", dataset)
         # IF statement for XRD_SUM?
         
-        # Pull phase, two theta, multiplicity, hkl (string)
-        # Copying these should mean the indexing is the same
+        # Pull phase, two theta, multiplicity, hkl (as string) into new DataFrame
+        # Indexing should be the same
         # CHECK - why not just do everything in Merged_Peaks?
         
         Submit_dict[dataset]["Interaction_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['pos_TI', 'mul_TI', 'Phase_TI','F_calc_sq_TI', 'hkl' ]]
         
-        # Create Theta column
+        # Create Theta column from theoretical intensities
         Submit_dict[dataset]["Interaction_Calc"]["Theta"]=Submit_dict[dataset]["Interaction_Calc"]['pos_TI']/2.0
 
         # Interaction area calculations
-        # CHECK - Not currently using beam shape
+        # ADD - Not currently using beam shape.  For raster size > beam size, only effects corners
         raster_area_mm2=(Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_x']+\
         Submit_dict["Phase_Info"]["Interaction_Parameters"]['beam_size'])*\
         (Submit_dict["Phase_Info"]["Interaction_Parameters"]['raster_y']+\
@@ -1335,6 +1333,9 @@ def compute_crystallites_illuminated(Submit_dict):
         Submit_dict[dataset]["Interaction_Calc"]["Crystals_Per_Particle"]=np.nan
         Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_deg"]=np.nan
 
+        ##############################################
+        # Add data for each phase
+        ##############################################
 
         #for each phase
         for cif_fname in Submit_dict["File_Paths"]["Cif_Filenames"]:
@@ -1364,7 +1365,7 @@ def compute_crystallites_illuminated(Submit_dict):
             # CHECK It's not clear to me how this should properly be calculated.
             # f_prime can occasionally take positive values at higher energies.
             # That seems to imply a flourescing photon can cause additional scattering?
-            # should I leave it as squared?
+            # should I leave all terms as squared?
             
             # CHECK - should I use the phase fraction and/or phase values for the intensity?
 
@@ -1394,15 +1395,18 @@ def compute_crystallites_illuminated(Submit_dict):
 
 
         #<- outside of phase calculation
-
+        
+        #####################################
         # Create the graph data
+        #####################################
+        
         Submit_dict=create_cry_ill_graph_data(Submit_dict,dataset)
 
-        #print(Submit_dict[dataset]["Interaction_Calc"])
-        #print(Submit_dict[dataset]["Interaction_Calc"].keys())
-        #print(Submit_dict[dataset]["Interaction_Calc"]['Phase_Fraction_fit_mass'])
+        #####################################
+        # Convert grain size to grain area terms
+        #####################################
 
-        # Convert to area terms, follows nomenclature of ASTM E112
+        # Follows nomenclature of ASTM E112
         # Currently assumes spherical grains
 
         # D_bar: mean spatial (volumetric) grain diameter
@@ -1410,6 +1414,7 @@ def compute_crystallites_illuminated(Submit_dict):
         # A_bar: mean grain cross sectional area
         # N_bar_A: number of grains per mm2 at 1X. (derived from A_bar)
         
+        # Formulas
         #D_bar = powder_size/1000 # convert from micrometers to millimeters
         #l_bar= D_bar/1.5 #Inverse of ASTM E112 A2.9; mean lineal intercept length
         #A_bar = ((l_bar)**2)*(4/np.pi) # Inverse of ASTM E112 A2.8; average grain cross sectional area
@@ -1426,12 +1431,14 @@ def compute_crystallites_illuminated(Submit_dict):
         Submit_dict[dataset]["Interaction_Calc"]["N_bar_mm2"]=1/(Submit_dict[dataset]["Interaction_Calc"]["A_bar_mm2"])
 
         # convert the rocking angle to radians
-        #delta_theta_half=(d_t_half)
-            # print(d_t_half, delta_theta_half)
         Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_rad"]=Submit_dict[dataset]["Interaction_Calc"]["Rocking_Angle_deg"]*(np.pi/180)
         
         # use powder size and 95pct, 50 pct, centroid for number of layers
         # np.ceil for rounding
+
+        #####################################
+        # Determine the number of grain layers and crystallites illuminated
+        #####################################
 
         # Number of layers
         Submit_dict[dataset]["Interaction_Calc"]["N_Layers_50pct"]=np.ceil(Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"]/Submit_dict[dataset]["Interaction_Calc"]["l_bar_um"])
@@ -1443,8 +1450,15 @@ def compute_crystallites_illuminated(Submit_dict):
         
         Submit_dict[dataset]["Interaction_Calc"]["N_illuminated_95pct"]=(raster_area_mm2*Submit_dict[dataset]["Interaction_Calc"]["N_bar_mm2"]*Submit_dict[dataset]["Interaction_Calc"]["Phase_Fraction_fit_volume"]*Submit_dict[dataset]["Interaction_Calc"]["Crystals_Per_Particle"]*Submit_dict[dataset]["Interaction_Calc"]["N_Layers_95pct"])
         
-        #(N_bar_A**phase_fraction*crystalites_per_particle*N_layers)
+        #####################################
+        # Determine the number of crystallites diffracting
+        #####################################
 
+
+        # Formulas:
+        #
+        #(N_bar_A**phase_fraction*crystalites_per_particle*N_layers)
+        #
         #    diffracting_fraction=((multiplicity/4*np.pi)*
         #                          (crystal_data['W_F']/crystal_data['L']+
         #                           delta_theta_half)*
@@ -1471,10 +1485,10 @@ def compute_crystallites_illuminated(Submit_dict):
 
         Submit_dict[dataset]["Interaction_Calc"]["u_N_Diffracting_95pct"]=np.sqrt(Submit_dict[dataset]["Interaction_Calc"]["N_Diffracting_95pct"])
 
-        #print(Submit_dict[dataset]["Interaction_Calc"])
-        #print(Submit_dict[dataset]["Interaction_Calc"].keys())
-        #print(Submit_dict[dataset]["Interaction_Calc"][['l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2']])
-        #breakpoint()
+
+        #####################################
+        # Merge "Interaction_Calc" back into "Merged_Peaks"
+        #####################################
 
         # Merge the Interaction_Calc and Merged_Peaks
         Submit_dict[dataset]["Merged_Peaks"]=Submit_dict[dataset]["Merged_Peaks"].merge(Submit_dict[dataset]["Interaction_Calc"], on=['pos_TI', 'mul_TI', 'Phase_TI','F_calc_sq_TI', 'hkl' ])
@@ -1490,31 +1504,12 @@ def compute_crystallites_illuminated(Submit_dict):
         Submit_dict[dataset]["Merged_Peaks"]["n_u_N_Diffracting_50pct"]=\
             (Submit_dict[dataset]["Merged_Peaks"]["u_N_Diffracting_50pct"]/Submit_dict[dataset]["Merged_Peaks"]["N_Diffracting_50pct"])*Submit_dict[dataset]["Merged_Peaks"]["n_int_fit"]
 
-        
         print("Merged Peaks with Interaction Merged in")
         print(Submit_dict[dataset]["Merged_Peaks"].columns)
         print(Submit_dict[dataset]["Interaction_Calc"].columns)
         
-        #breakpoint()
-
-            # add in uncertainties due to number crystallites diffracted
-#            cd_uncert = np.sqrt(crystallites_dict[cif_name][x][3]) # uncertainty value
-#            row_bool = (results_table['Dataset_1'].Phase == cif_name) & (np.abs(results_table['Dataset_1']['pos_fit'] - peak_data[x][2]*2) < .01) # find correct row using cif name and peak_data[x][2], which is pos_fit/2
-#
-#            #append number of crystals to the database
-#            results_table['Dataset_1'].num_cryst_diff.loc[row_bool] = crystallites_dict[cif_name][x][3]
-#            #append sqrt of crystals to the database
-#            results_table['Dataset_1'].sqrt_cryst_diff.loc[row_bool] = cd_uncert
-#            # append n_int*sqrt/number to the database
-#            # Maybe should be phase fraciton by volume rather than phase fraction by number of unit cells?
-#            results_table['Dataset_1'].u_cryst_diff.loc[row_bool] = (results_table['Dataset_1'].n_int.loc[row_bool]*cd_uncert)/crystallites_dict[cif_name][x][3]
-
-    #return crystallites_dict, results_table
-    
-    
     
     return Submit_dict
-
 
 
 #####################################
@@ -1524,62 +1519,58 @@ def compute_crystallites_illuminated(Submit_dict):
 #####################################
 def create_cry_ill_graph_data(Submit_dict,dataset):
     '''
-    Create dataframes and centroid values used to plot the interaction volume
+    Create data structures and values used to plot the interaction volume. Sections describe various steps (and use the same text as comment headers).
+    
+    * Set assumed parameters for plots
+    * Set values at endpoints of each step
+    * Find midpoint values of each step
+    * Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or aborbed (f'')
+    * Calculate how many ares scattered, but not absorbed on return to the surface (escaped)
+    * Find Centroid, 50%, 68%, and 95% depths
+    * Return values as a dictinoary and list for json export
+    
     FIX - needs aggregate data for absorption, not just one phase.
     CHECK - SRM example should have similar centriods for first peaks
     
     Args:
-       peak_data: Data for the current peak that is being graphed
-       summarized_data: A bit of a cheat, but data about the overall phase that the peak needs to know
+        Submit_dict (Dictionary): Container for calculation
+        dataset_string (String): Name for the dataset
 
     Returns:
-        df_endpoints: endpoints of graph data created
-        df_mid: midpoints of graph data created
-        Centroid_x: centroid of depth data in x
-        Centroid_y: centroid of depth data in y
+        Submit_dict (Dictionary): Container for calculation.  Inside each *"Dataset_<n>"* dictionary, new keys of *"Interaction_Plots"*, *"Incident_Angle_plot_data"*, and *"Z_Depth_plot_data"* are added.
 
 
-    Raises:
-    
-        
     '''
-    # referenced in compute_summarized_phase_info(scatter   ing_dict, elem_fractions, peaks_dict)
-    # element fractions
     
-    ## Summarized data from compute_peaks_dict
-    ## peak_data referenced:
-    # peak_data[0] = F_calc_sq
-    # peak_data[1] = multiplicity
-    # peak_data[2] = theta (not two theta)
-    # peak_data[3] = FF (form factor)
-    
-    ## Summarized data from scattering_dict (element, element fraction?)
-    # This consolidated the scattering by element to match element fraction in phase
-    # summarized_data[0] = f'
-    # summarized_data[1] = f''
-    # summarized_data[2] = mu (cm-1 units)?
-    
-    # Set a maximum distance to calculate based on drop in intensity (counts)
+    ###########################################
+    # * Set assumed parameters for plots
+    ###########################################
+    # These are arbitrary, but seem like reasonable bounding values
     Max_intensity_drop=1/1000
-    # Based on mu,
-    #t_max_cm=(1/-summarized_data[2])*np.log(Max_intensity_drop) # change to mu_um?
-    #t_max_um=t_max_cm*10000 # this would go away
-    #print(t_max_um)
     I0=1000000
     steps=25
-    Submit_dict[dataset]["Interaction_Plots"]={}
-    Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']
     
+    Submit_dict[dataset]["Interaction_Plots"]={}
+    # Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']
+    
+    # Note unit change to micrometers from centimeters
     t_max_um=(10000/-Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm'])*np.log(Max_intensity_drop)
 
-    #t_max_um*np.sin(np.radians(Submit_dict[dataset]["Interaction_Calc"]["Theta"]
+    #print(Submit_dict[dataset]["Interaction_Calc"])
 
-    print(Submit_dict[dataset]["Interaction_Calc"])
+    ###########################################
+    # * Set values at endpoints of each step
+    ###########################################
 
-    # Create separate arrays for each row.
-    # X is parallel the to incident beam
-    # Z is parallel to the sample surface and perpendicular to X
+    # Create separate arrays for each peak (rows).
+    
+    # Assume reflection geometry
     # FIX for transmission geometries
+    
+    # Beam is incident to the surface at angle theta, and diffracted from the surface at angle theta (2-theta when combined)
+    # X direction is parallel the surface
+    # Z direction is perpendicular to the sample surface and perpendicular to X
+
     Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"]=np.linspace(0,t_max_um*np.cos(np.radians(Submit_dict[dataset]["Interaction_Calc"]["Theta"])),num=steps).transpose()
     
     Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"]=np.linspace(0,t_max_um*np.sin(np.radians(Submit_dict[dataset]["Interaction_Calc"]["Theta"])),num=steps).transpose()
@@ -1588,21 +1579,10 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     
     Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"]=I0 * np.exp(-(Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']/10000)*Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
 
-
-    #print("Interaction calculation DataFrame")
-    #print(Submit_dict[dataset]["Interaction_Calc"])
-    #print("Interaction Plot X Array")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"])
-    #print("Interaction Plot Y Array")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Z_Endpoints"])
-    #print("Interaction Plot Path Length")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Endpoints"])
-    #print("Interaction Plot Intensity")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"])
     
-
-    # Find midpoints
-   
+    ###########################################
+    # * Find midpoint values of each step
+    ###########################################
     
     Submit_dict[dataset]["Interaction_Plots"] ["X_Midpoints"]=(Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"][:,1:] + Submit_dict[dataset]["Interaction_Plots"]["X_Endpoints"][:,:-1]) / 2
  
@@ -1613,92 +1593,44 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     # subtraction ordered to result in positive values
     Submit_dict[dataset]["Interaction_Plots"] ["Delta_I_Midpoints"]=( Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"][:,:-1] - Submit_dict[dataset]["Interaction_Plots"]["I_Endpoints"][:,1:] )
 
-    #print("Interaction Plot X Array Midpoints")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["X_Midpoints"])
-    #print("Interaction Plot Y Array Midpoints")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"])
-    #print("Interaction Plot Path Length")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"])
-    #print("Interaction Plot Change in Intensity") # was 'travel_dist'
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"])
-
-
     
-    #df_mid = pd.DataFrame(data={'x_mid': x_mid, 'y_mid': y_mid, 'delta_I':delta_I})
-    
+    #########################################
     # Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or aborbed (f'')
+    #########################################
     
     # CHECK It's not clear to me how this should properly be calculated.
     # f_prime can occasionally take positive values at higher energies.
     # That seems to imply a flourescing photon can cause additional scattering?
 
-    # For now I am using rule of mixtures with absolute values
-    #df_mid['travel_dist']=np.sqrt(df_mid['x_mid']**2+df_mid['y_mid']**2)
+    # The order expected from pandas and numpy cause issues.  Transposes help mitigate this.
 
-    # The order expected from pandas and numpy cause issues.  Transposes help
     Submit_dict[dataset]["Interaction_Plots"]["Est_Absorbed"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Absorb_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
     
     Submit_dict[dataset]["Interaction_Plots"]["Est_Anomalous"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Anomalous_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
     
     Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"]=np.multiply(Submit_dict[dataset]["Interaction_Calc"]["Scatter_Fraction"].to_numpy(),Submit_dict[dataset]["Interaction_Plots"]["Delta_I_Midpoints"].T).T
  
- 
-    #print("Interaction Plot Absorbed")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Absorbed"])
-    #print("Interaction Plot Anomalous")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Anomalous"])
-    #print("Interaction Plot Scattered")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"])
- 
-    #scattered, but not absorbed on return to the surface
-    #df_mid['Escaped']=df_mid['scattered'] *  np.exp(-(summarized_data[2]/10000) * df_mid['travel_dist'])
-    
+    ############################################
+    # Calculate how many ares scattered, but not absorbed on return to the surface (escaped)
+    ############################################
+     
     Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"]=Submit_dict[dataset]["Interaction_Plots"]["Est_Scattered"] * np.exp(-(Submit_dict[dataset]["Prelim_Aggregate_Data"]['agg_mu_cm']/10000)*Submit_dict[dataset]["Interaction_Plots"]["Path_Length_Midpoints"])
     
     # cumulative number of x-rays escaped to the surface
-    # CHECK axis
     Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"]=np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1)
     
-    #df_mid['RelativeEscaped']=df_mid['Escaped']/I0
 
-    #print("Interaction Plot Escaped")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"])
+    ###########################################
+    # Find Centroid, 50%, 68%, and 95% depths
+    ###########################################
 
-    #print("Interaction Plot Index summation")
-    #print(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"])
-    #print(np.shape(Submit_dict[dataset]["Interaction_Plots"]["Escaped Index Sum"]))
-
-    
-    # Tried calculating a centroid, but that doesn't seem correct...
-    
-    #Centroid_y=np.sum(df_mid['Escaped']*df_mid['y_mid'])/np.sum(df_mid['Escaped'])
-    #Centroid_x=np.sum(df_mid['Escaped']*df_mid['x_mid'])/np.sum(df_mid['Escaped'])
-
-    # Z centroid (works)
+    # Z centroid location of the escaped x-rays
 
     Submit_dict[dataset]["Interaction_Calc"]["Z_Centroid_Depth_um"]=np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"]*Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"],axis=1)/np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"],axis=1)
-
-    #print("df_mid")
-    #print(df_mid)
-    #print("50%: ",np.quantile(df_mid['Escaped'],.50))
-    #print("end of df_mid")
-
-    # Not working right.  50% percentile should be centroid
-    # maybe have to sum to get the value?
-
-    #print("100% counts sum: ",np.sum(df_mid['Escaped']))
-    #print("90% counts sum: ",np.sum(df_mid['Escaped'])*.9)
-    #print("50% counts sum: ",np.sum(df_mid['Escaped'])*.5)
-    #print("10% counts sum: ",np.sum(df_mid['Escaped'])*.1)
-    #print("5% counts sum: ",np.sum(df_mid['Escaped'])*.05)
-
-    # Use 5% instead of 95% since the values are negative?
-    # np.interp doesn't work on non-increasing functions, need to flip
-    
-    # I think what's needed is a rolling sum along the Escaped fraction
+  
+    # What's needed is a rolling sum along the Escaped fraction
     # Then interpolate for a specific value along the Z axis
     
-
     Submit_dict[dataset]["Interaction_Calc"]["50pct_Escaped_Depth_um"]=np.nan
     Submit_dict[dataset]["Interaction_Calc"]["68pct_Escaped_Depth_um"]=np.nan
     Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"]=np.nan
@@ -1715,10 +1647,8 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
         # ~2 sigma, 0.05 for depth at which 95% penetration
         Submit_dict[dataset]["Interaction_Calc"]["95pct_Escaped_Depth_um"].iloc[i]= np.interp((np.sum(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])*.05), np.cumsum(np.flip(Submit_dict[dataset]["Interaction_Plots"]["Est_Escaped"][i])), np.flip(Submit_dict[dataset]["Interaction_Plots"]["Z_Midpoints"][i]))
  
-    #  percentile90_y=np.interp(np.sum(df_mid['Escaped'])*.9, df_mid['Escaped Index Sum'], df_mid['y_mid'])
-
     ########################
-    ##### Return values as a list for json export
+    # Return values as a dictinoary and list for json export
     ########################
 
     ## Incident x-ray plot
@@ -1760,194 +1690,52 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     #breakpoint()
     return Submit_dict
 
-
-#####################################
-def format_json_data(json_data,cif_name):
-    """
-    Depricated?
-    Reformats the crystal data objects from json to expected types.
-
-    Args:
-        json_data: json_data object loaded from json file
-        cif_name: the cif name
-
-    Returns:
-        **json_data** correctly formatted json_data object
-
-    """
-
-    # convert eg, '[1,2,3]' to [1,2,3]
-    if type(json_data[cif_name]) is not list:
-        json_data[cif_name] = json_data[cif_name][1:(len(json_data[cif_name])-1)].split(",")
-        json_data[cif_name] = [float(x) for x in json_data[cif_name]]
-
-    for name in ['beam_size','raster_x','raster_y','L','W_F','H_F','H_R']:
-
-        if name in json_data.keys():
-            json_data[name] = float(json_data[name])
-
-    return json_data
-
-
-
-#####################################
-def get_conversions(phase_frac,cell_masses_dict,cell_volumes_dict):
-    """
-    Depricated?
-    in app.py
-    ??? Maybe merge with Computing Cell Density step?
-    ADD
-
-    imports functions from interaction_vol
-
-    Parameters:
-        scattering_dict: ?
-        ADD
-
-
-    Returns:
-        pd.DataFrame: columns 'Phase', 'mass_conversion', and 'volume_conversion'
-
-    Raises:
-
-    """
-    phase_names = phase_frac['Dataset_1'].Phase
-    n_phases = phase_names.shape[0]
-
-    cell_mass_vec = np.zeros(n_phases)
-    cell_volume_vec = np.zeros(n_phases)
-
-    for ii in range(n_phases):
-        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
-        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
-
-    outdf = pd.DataFrame({
-        'Phase':phase_names,
-        'mass_conversion':cell_mass_vec,
-        'volume_conversion':cell_volume_vec
-    })
-
-    return outdf
-
-
-#####################################
-def prep_mcmc():
-    """
-    Pull aggregate data from the peak fits to populate the mcmc modelling 
-    """
-
-    # Pick which peak data to include in aggregation
-    
-    # Which fits were successful
-        #Check 2 theta, sig, gam, n_int values for consistency
-    
-    # Normalize based on R, or R*Texture?
-        # likely R*Texture for consistency ot match n_int
-    
-    # median values? or mean?
-        # This was just in the representation in the table of the uncertainty estimates
-    
-    # average over fitting type? - depends on if we think there are more or this is fairly comprehensive
-    # CHECK - David, how to do this right
-    # will need to edit stan code, could get a phase fraction for each method
-    # linear pooling, assumes each are equally reliable
-
-    # Stan should have the phase based u_ values?
-        # no, it's calculated by each peak
-    
-    # Stan limits to positive values for n_int?
-        # Yes, this is the lower=0 statements
-
-    # Create a sum Dataset? https://stackoverflow.com/questions/25057835/get-the-mean-across-multiple-pandas-dataframes
-
-#####################################
-def run_mcmc(results_table,number_mcmc_runs,conversions):
-
-    """
-    *ADD*
-
-    Parameters:
-        results_table: from crystallites illuminated
-        number_mcmc_runs: number of mcmc posterior samples
-        conversions: dict containing conversion factors for each phase, for mass and volume
-
-    imports from compute_uncertainties
-
-    Returns:
-        dictionary: contains a dataframe and parameter table
-        |
-
-    Raises:
-
-
-    """
-
-    results_table_df = pd.concat(results_table,axis=0).reset_index()
-    mcmc_df = compute_uncertainties.run_stan(results_table,int(number_mcmc_runs))
-    mcmc_df_dict = compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000)
-    unique_phases = np.unique(results_table_df.Phase)
-    param_table = compute_uncertainties.generate_param_table(mcmc_df,unique_phases,results_table_df)
-
-    # mcmc_df_dict.drop(inplace=True,columns=mcmc_df.columns[mcmc_df.columns.str.contains('sigma')])
-    print("{} mcmc samples obtained.".format(mcmc_df.shape[0]))
-    print(mcmc_df.info(memory_usage=True))
-
-    pf_table = compute_uncertainties.generate_pf_table(mcmc_df_dict,np.unique(results_table_df.Phase))
-
-    return mcmc_df_dict, param_table, pf_table
-
 #####################################
 def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
 
     """
-    *ADD*
+    If-else statements that choose the mcmc run, either "Single", "Multi", or "Summed"
+    
+    * "Single" -> run *compute_uncertainties.run_stan2()*
+    * "Summed" -> create a summed dataset, then run *compute_uncertainties.run_stan2()* for each, 
+    * "Multi" -> for each run *compute_uncertainties.run_stan2()*,  *create_multi_dataset()*, then run as *compute_uncertainties.run_stan2_multi()*
+
+    **RENAME**
 
     Parameters:
-        results_table: from crystallites illuminated
-        number_mcmc_runs: number of mcmc posterior samples
-        conversions: dict containing conversion factors for each phase, for mass and volume
+        Submit_dict (Dictionary): Container for calculation
+        sum_checkbox (Boolean): True if the datasets are to be summed together
+        number_mcmc_runs (String): number of mcmc posterior samples during warmup of the mcmc chains
 
-    imports from compute_uncertainties
 
     Returns:
-        dictionary: contains a dataframe and parameter table
-        |
-
-    Raises:
+        Submit_dict (Dictionary): Container for calculation
 
 
     """
 
-    # use this to split what gets run - single, multi, sum
-       
-
-    # 3 different cases:
-    # single file -> run as one_sample
-    # multiple files with sum button -> run as one_sample for each
-    # multiple files without sum button -> run as multiple_samples
-
     # multiple files with sum button -> run as one_sample for each    
     if sum_checkbox==True:
+        Submit_dict["Phase_Info"]["Calculation_Type"]="Summed"
         print("Sum Checkbox")
         # Create summed data
         Submit_dict=create_summed_dataset(Submit_dict)
-        #breakpoint()
+
         Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
  
     # single file -> run as one_sample
     elif len(Submit_dict["File_Paths"]["Dataset_name"])==1 and sum_checkbox==False:
+        Submit_dict["Phase_Info"]["Calculation_Type"]="Single"
         Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
     
     # multiple files without sum button -> run as multiple_samples
-    
-    # create a separate dataset for uncertainties from multiple samples?
     elif len(Submit_dict["File_Paths"]["Dataset_name"])>1 and sum_checkbox==False:
-    
+        Submit_dict["Phase_Info"]["Calculation_Type"]="Multi"
         # run individually to create MCMC input data
         Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
         
         # Create input file for multiple samples
-        create_multi_dataset(Submit_dict)
+        Submit_dict=create_multi_dataset(Submit_dict)
         
         # Then create data for the multiple data from each
         Submit_dict = compute_uncertainties.run_stan2_multi(Submit_dict,sum_checkbox,int(number_mcmc_runs))
@@ -1958,28 +1746,32 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
 
     return Submit_dict
 
+#####################################
 def create_summed_dataset(Submit_dict):
     """
-    Create a summed dataset
+    Use individual fits to create a summed dataset. Useful when diffraction data is recorded at several sample orientations to mitigate the effect of texture. *CHECK - how will fit respond if the fit success is different for some peaks between datasets.*
     
-    Need "Merged_Peaks"
-    CHECK - how will fit respond if the fit success is different by peak
+    Parameters:
+        Submit_dict (Dictionary): Container for calculation
+
+    Returns:
+        Submit_dict (Dictionary): Container for calculation with new key *"Dataset_sum"*.  
+            
     """
     print(Submit_dict["File_Paths"]["Dataset_name"])
 
     dataset0=Submit_dict["File_Paths"]["Dataset_name"][0]
 
     # Create a new empty dataframe
-    # use nan or 0?
+    # CHECK - using 0, should I use nan?
     Summed_Merged_Peaks_DF = pd.DataFrame(0, index=Submit_dict[dataset0]['Merged_Peaks'].index, columns=Submit_dict[dataset0]['Merged_Peaks'].columns)
     
-    # Drop string columns
+    # Drop string columns as they are not needed for averaging and cause issues
+    # CHECK - do I still need to do this?
     Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
  
-    # somehow all data types are coming back as int
-    #print(list(Summed_Merged_Peaks_DF.dtypes))
-    #print(Summed_Merged_Peaks_DF.dtypes[Summed_Merged_Peaks_DF.dtypes != 'int64'])
-    #breakpoint()
+    # Add values for each dataset to the Merged_Peaks dataframe
+    # Set values to zero if 'Peak_Fit_Success2'] == False
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
         # Sum columns
         # Can't sum strings...
@@ -1991,42 +1783,17 @@ def create_summed_dataset(Submit_dict):
         
         Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.add(temp_DF, fill_value=0)
 
-
-    #Strings
-    #'Phase_TI','phase_LB','Phase','hkl',
-
     # Include string columns
     Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.join(Submit_dict[dataset0]['Merged_Peaks'][['Phase_TI','phase_LB','Phase','hkl']])
 
-
-
-    
-    # For columns were the average is needed
-    # Divide by successful peak fits
-    
-    
-    #Sum
-    #'int_fit','Peak_Fit_Success', 'F_obs_sq_LB', 'F_calc_sq_LB', 'int_LB', 'int_G', 'int_TR',
-
-
-    #Recalc
-
-    #'u_pos_fit', 'u_int_fit','u_int_count','rel_int_fit','rel_int_count','u_int_LB', 'n_int_fit', 'n_int_LB', 'n_u_int_fit', 'n_u_count_fit', 'n_u_int_LB', 'N_illuminated_50pct', 'N_illuminated_95pct', 'N_Diffracting_50pct', 'N_Diffracting_95pct', 'u_N_Diffracting_50pct', 'u_N_Diffracting_95pct', 'n_u_N_Diffracting_95pct', 'n_u_N_Diffracting_50pct'
-
-
-    # FIX - Adjust 'Peak_Fit_Success' column in calculate
-    #Summed_Merged_Peaks_DF["n_sucessful_fits"]=len(Submit_dict["File_Paths"]["Dataset_name"])
-
-    #Average (Divide)
-    # 'pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction'
-    
+   
     # FIX - get a divide by zero error
     Summed_Merged_Peaks_DF['Peak_Fit_Success3']=Summed_Merged_Peaks_DF['Peak_Fit_Success2']+0.001
     
     # df[['A', 'B', 'C']] = df[['A', 'B', 'C']].div(df['D'], axis=0)
     Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']]=Summed_Merged_Peaks_DF[['pos_fit', 'sig_fit', 'gam_fit', 'back_int_bound',  'signal_to_noise','h_TI', 'k_TI', 'l_TI', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB', 'pos_LB', 'sig_LB', 'gam_LB', 'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB', 'pos_G', 'sig_G','Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell', 'f_0_Peak', 'f_Total_Peak','Phase_Fraction_fit_mass', 'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle', 'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction', 'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um', '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm', 'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad', 'N_Layers_50pct', 'N_Layers_95pct','Diffracting_Fraction']].div(Summed_Merged_Peaks_DF['Peak_Fit_Success3'], axis=0)
 
-    # FIX - Redo uncertainty calculations
+    # FIX - Redo uncertainty calculations for number illuminated
 
     #print(Summed_Merged_Peaks_DF)
     #breakpoint()
@@ -2036,8 +1803,8 @@ def create_summed_dataset(Submit_dict):
     Submit_dict["Dataset_sum"]={}
     Submit_dict["Dataset_sum"]['Merged_Peaks']=Summed_Merged_Peaks_DF
     
-    # FIX - Need similar data for summed
-    # just copying to test
+    # FIX - Need similar data for summed dataset to not throw errors
+    # copying as a placeholder
     Submit_dict["Dataset_sum"]["Le_Bail_Data"]=Submit_dict[dataset0]["Le_Bail_Data"]
     Submit_dict["Dataset_sum"]["Peak_Fit_Data"]=Submit_dict[dataset0]["Peak_Fit_Data"]
     Submit_dict["Dataset_sum"]["Gaussian_Data"]=Submit_dict[dataset0]["Gaussian_Data"]
@@ -2048,13 +1815,16 @@ def create_summed_dataset(Submit_dict):
     
     return Submit_dict
 
-
+#######################################################
 def create_multi_dataset(Submit_dict):
     """
-    Create a multi dataset
-        Copy from create_summed_dataset
-        
-        Mostly interested in MCMC data
+    Use individual fits to create a multi dataset. *CHECK - how will fit respond if the fit success is different for some peaks between datasets.*
+    
+    Parameters:
+        Submit_dict (Dictionary): Container for calculation
+
+    Returns:
+        Submit_dict (Dictionary): Container for calculation with new key *"Dataset_multi"*.  
     """
     print(Submit_dict["File_Paths"]["Dataset_name"])
 
@@ -2065,8 +1835,11 @@ def create_multi_dataset(Submit_dict):
     
     #breakpoint()
 
-    ###### Values, not needed as a list
+    # Data needed for multiple_samples.stan
     # Data and description with examples
+
+    ###### Integer values
+
     # N # number of peaks in the all of the datasets (#=30 if 10 peaks per 3 samples)
     # N_samples # number of samples (i.e. datasets) (#=3 for 3 datasets)
     # N_phases # number of phases analyzed  (#=2 for 2 phases)
@@ -2088,6 +1861,7 @@ def create_multi_dataset(Submit_dict):
     ### Stan notes
     ## T-4 has a heavier tail than the half normal
 
+    # Loop through the single data sets
     for counter,dataset in enumerate(Submit_dict["File_Paths"]["Dataset_name"]):
         
         print("Looping through datasets to create multi-dataset stan file")
@@ -2113,7 +1887,6 @@ def create_multi_dataset(Submit_dict):
             Z_Depth_multi_dict=Submit_dict[dataset]["Z_Depth_plot_data"]
 
             
-            
         else:
             #breakpoint()
             # concatenate dataframe
@@ -2138,9 +1911,9 @@ def create_multi_dataset(Submit_dict):
     phase_sample_id_list=list(MCMC_Calc_multi_DF['phase_sample_id'])
     
     #u or n_u here?
-    u_int_fit_list=list(MCMC_Calc_multi_DF['n_u_int_fit'])
-    u_int_count_list=list(MCMC_Calc_multi_DF['n_u_count_fit'])
-    u_cryst_diff_list=list(MCMC_Calc_multi_DF['n_u_N_Diffracting_95pct'])
+    n_u_int_fit_list=list(MCMC_Calc_multi_DF['n_u_int_fit'])
+    n_u_int_count_list=list(MCMC_Calc_multi_DF['n_u_count_fit'])
+    n_u_cryst_diff_list=list(MCMC_Calc_multi_DF['n_u_N_Diffracting_95pct'])
 
     
     
@@ -2155,15 +1928,17 @@ def create_multi_dataset(Submit_dict):
     #prior_exp_scale=(np.mean(Submit_dict[dataset]["MCMC_Calc"].groupby(['sample_id','phase_id'])["n_int_fit"].std()))
     
     
+    # FIX - some terminology confusion with n_u_ or u_ in stan file.  Fix in stan file.
+    
     # Need an interm dataframe to use groupby functions
     multi_data={
     "Y":Y_list,
     "phase":phase_list,
     "group":group_list,
     "phase_sample_id":phase_sample_id_list,
-    "u_int_fit":u_int_fit_list,
-    "u_int_count":u_int_count_list,
-    "u_cryst_diff":u_cryst_diff_list
+    "u_int_fit":n_u_int_fit_list,
+    "u_int_count":n_u_int_count_list,
+    "u_cryst_diff":n_u_cryst_diff_list
     }
     
     multi_data_DF=pd.DataFrame(multi_data)
@@ -2181,15 +1956,13 @@ def create_multi_dataset(Submit_dict):
     "prior_sample_scale":np.std(Y_list),
     "prior_exp_scale":(np.mean(multi_data_DF.groupby(['group','phase'])["Y"].std())),
     "prior_location":(np.array(multi_data_DF.groupby('phase')["Y"].mean())),
-    "u_int_fit":u_int_fit_list,
-    "u_int_count":u_int_count_list,
-    "u_cryst_diff":u_cryst_diff_list
+    "u_int_fit":n_u_int_fit_list,
+    "u_int_count":n_u_int_count_list,
+    "u_cryst_diff":n_u_cryst_diff_list
     }
 
+    print("Data sent to stan for multiple_samples")
     print(stan_data)
-    # error since the dataframes are of different lengths
-    #stan_data_DF=pd.DataFrame(stan_data)
-
 
     #print(Summed_Merged_Peaks_DF)
     #breakpoint()
@@ -2198,11 +1971,9 @@ def create_multi_dataset(Submit_dict):
     Submit_dict["File_Paths"]["Dataset_name"].extend(["Dataset_multi"])
     Submit_dict["Dataset_multi"]={}
     Submit_dict["Dataset_multi"]["Stan_Data"]=stan_data
-    # FIX - What should be used for Peaks_DF?
-    # Just using a copy for now.  Should be multi_data?
-    # Submit_dict["Dataset_multi"]['Merged_Peaks']=Summed_Merged_Peaks_DF
+
     
-     # FIX - Need similar data for summed
+    # FIX - Need similar data for summed
     # just copying to test   
     Submit_dict["Dataset_multi"]['Merged_Peaks']=Merged_Peaks_multi_DF
     Submit_dict["Dataset_multi"]["MCMC_Calc"]=MCMC_Calc_multi_DF
@@ -2220,295 +1991,16 @@ def create_multi_dataset(Submit_dict):
     
     return Submit_dict
 
-#####################################
-#### run_mcmc() Utility Fuctions ####
-#####################################
-
-#####################################
-def compute_conversion_mcmc_dfs(mcmc_df,conversions,n_keep=1000):
-
-    """
-    Depricated?
-    Takes in results from compute_uncertainties.run_stan() and computes conversions for mass frac and volume frac
-    """
-    
-    inds_to_keep = np.random.choice(np.arange(mcmc_df.shape[0]),size=n_keep,replace=False)
-
-    number_cell_samples = mcmc_df.loc[inds_to_keep,mcmc_df.columns.str.contains("phase_mu")]
-
-    
-    mass_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['mass_conversion'])/np.sum(x*np.array(conversions['mass_conversion'])),
-                                                  axis=1,
-                                                  raw=True)
-    
-    vol_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['volume_conversion'])/np.sum(x*np.array(conversions['volume_conversion'])),
-                                                 axis=1,
-                                                 raw=True)
-    
-    #number_cell_samples['conversion_type'] = 'Number Cells'
-    #mass_frac_df['conversion_type'] = 'Mass Fraction'
-    #vol_frac_df['conversion_type'] = 'Volume Fraction'
-
-    return({
-        'number_cells_dict':number_cell_samples.to_dict(orient='list'),
-        'mass_frac_dict':mass_frac_df.to_dict(orient='list'),
-        'vol_frac_dict':vol_frac_df.to_dict(orient='list')
-    })
-
-#####################################
-def compute_conversion_mcmc_dfs2(mcmc_df):
-
-    """
-    Depricated?
-    Takes in results from compute_uncertainties.run_stan() and computes conversions for mass frac and volume frac
-    """
-    
-    inds_to_keep = np.random.choice(np.arange(mcmc_df.shape[0]),size=n_keep,replace=False)
-
-    number_cell_samples = mcmc_df.loc[inds_to_keep,mcmc_df.columns.str.contains("phase_mu")]
-
-    
-    mass_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['mass_conversion'])/np.sum(x*np.array(conversions['mass_conversion'])),
-                                                  axis=1,
-                                                  raw=True)
-    
-    vol_frac_df = number_cell_samples.apply(lambda x: x*np.array(conversions['volume_conversion'])/np.sum(x*np.array(conversions['volume_conversion'])),
-                                                 axis=1,
-                                                 raw=True)
-    
-    #number_cell_samples['conversion_type'] = 'Number Cells'
-    #mass_frac_df['conversion_type'] = 'Mass Fraction'
-    #vol_frac_df['conversion_type'] = 'Volume Fraction'
-
-    return mcmc_df
-
-
-
-
-#####################################
-######### Not clear if these are still used #########
-#####################################
-
-#####################################
-def df_to_dict(df):
-    """
-    **Depricated**
-    Function for converting a pandas dataframe to a python dictionary. Need a dictionary for dash data_table
-    
-    ? Replate with .to_dict?
-
-    Args:
-        df: pandas Dataframe
-
-    Returns:
-        | Two dictionaries
-        | **out_dict** a dictionary of the pandas dataframe;
-        | **out_columns** a dictonary with the column name and position
-    """
-    out_dict = df.to_dict('records')
-    out_columns = [{"name": i, "id": i} for i in df.columns]
-
-    return out_dict, out_columns
-    
-#####################################
-def process_uploaded_data(xrdml_contents,
-                          xrdml_fnames,
-                          instprm_contents,
-                          instprm_fname,
-                          cif_contents,
-                          cif_fnames,
-                          csv_contents,
-                          json_fname):
-
-    """
-    Not clear if this is used or how?
-    ADD
-
-    imports functions from interaction_vol
-
-    Parameters:
-        scattering_dict: ?
-        ADD
-
-
-    Returns:
-        ?:?
-        ADD
-
-    Raises:
-
-    """
-    ### WHAT DOES THIS DO?  ARE THE CONTENTS USED, OR JUST THE FILE NAMES?
-
-    datadir = '../server_datadir'
-    workdir = '../server_workdir'
-
-    # For each uploaded file, save (on the server)
-    # ensuring that the format matches what GSAS expects.
-
-    # first, read instrument parameter file
-
-    instprm_type, instprm_string = instprm_contents.split(',')
-
-    decoded = base64.b64decode(instprm_string)
-    f = open(datadir + '/' + instprm_fname,'w')
-    to_write = decoded.decode('utf-8')
-    if re.search('(instprm$)',instprm_fname) is not None:
-        to_write = re.sub('\\r','',to_write)
-    f.write(to_write)
-    f.close()
-
-
-    ####FIX
-    # Is this for the export data as csv, or illuminated json file?
-    # AC 7 June 2023 - I think this is for the json file but what?
-    csv_type, csv_string = csv_contents.split(',')
-
-    decoded = base64.b64decode(csv_string)
-    f = open(datadir + '/' + json_fname,'w')
-    to_write = decoded.decode('utf-8')
-    csv_string = to_write
-    if re.search('(csv$)',json_fname) is not None:
-        to_write = re.sub('\\r','',to_write)
-    f.write(to_write)
-    f.close()
-
-    # next, read the cif files
-    for i in range(len(cif_contents)):
-        contents = cif_contents[i]
-        fname = cif_fnames[i]
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        f = open(datadir + '/' + fname,'w')
-        to_write = decoded.decode('utf-8')
-        to_write = re.sub('\\r','',to_write)
-        f.write(to_write)
-        f.close()
-
-    for i in range(len(xrdml_contents)):
-        contents = xrdml_contents[i]
-        fname = xrdml_fnames[i]
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        f = open(datadir + '/' + fname,'w')
-        to_write = decoded.decode('utf-8')
-        to_write = re.sub('\\r','',to_write)
-        f.write(to_write)
-        f.close()
-
-    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
-
-def process_data_input(use_default_files,
-                       use_example05_files,
-                       use_example06_files,
-                       use_example08A_files,
-                       xrdml_contents,
-                       xrdml_fnames,
-                       instprm_contents,
-                       instprm_fname,
-                       cif_contents,
-                       cif_fnames,
-                       csv_contents,
-                       json_fname):
-
-    """
-    Not clear if this is used or how
-    Collect user entered files or example selection from the app interface
-
-    Parameters:
-        use_default_files: checkbox for default files (True if checked)
-        use_example05_files: checkbox for Example05 files (True if checked)
-        use_example06_files: checkbox for Example06 files (True if checked)
-        use_example08A_files: checkbox for Example08A files (True if checked)
-        xrdml_contents: ???
-        xrdml_fnames: File names for the xray data files
-        instprm_contents: ???
-        instprm_fname: File name for the instrument parameter file
-        cif_contents: ???
-        cif_fnames: File names for the crystalographic information file
-        csv_contents: ???
-        json_fname: File name of the json crystallite file
-
-
-    Returns:
-        datadir: directory where the data files are stored
-        cif_fnames: File names for the crystalographic information file
-        workdir: directory where files generated by the analysis will be stored
-        xrdml_fnames: File names for the xray data files
-        instprm_fname: File name for the instrument parameter file
-        json_data: data extracted from the json crystallite file
-
-    Raises:
-
-
-    """
-
-     ### Gather inputs, either one of the example files, or user upload
-
-    if use_default_files not in [None, []] and use_default_files[0] == 1:
-        using_example_file = True
-        example_name = "Example01"
-    # Use Example05 data
-    #? Need to fix the austenite cif file names.  compute_results assumes a name.  Should use uploaded names?
-    #? Maybe pass like the xrdml_fnames?
-    elif use_example05_files not in [None, []] and use_example05_files[0] == 1:
-        using_example_file = True
-        example_name = "Example05"
-
-    elif use_example06_files not in [None, []] and use_example06_files[0] == 1:
-        using_example_file = True
-        example_name = "Example06"
-
-    elif use_example08A_files not in [None, []] and use_example08A_files[0] == 1:
-        using_example_file = True
-        example_name = "Example08A"
-
-    elif use_example99_files not in [None, []] and use_example99_files[0] == 1:
-        using_example_file = True
-        example_name = "Example99"
-
-    # User uploaded data
-    else:
-        using_example_file = False
-
-    if using_example_file:
-        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = gather_example(example_name)
-    else:
-        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = process_uploaded_data(xrdml_contents,
-                                  xrdml_fnames,instprm_contents,
-                                  instprm_fname,
-                                  cif_contents,
-                                  cif_fnames,
-                                  csv_contents,
-                                  json_fname)
-
-    ### Read in JSON File
-    # Needed earlier for some of the theoretical intensity data
-    # AC 2023 June 07 - why here?
-        #json_data = json.loads(json_string)
-
-    #need to convert strings to numbers in json dict
-
-    # May need to adjust for multi array
-    #AC - Why use strings? Try without
-#        for key in json_data.keys():
-#            if(key != 'beam_shape'):
-#                if(json_data[key][0] == '['):
-#                    json_data[key] = json_data[key].strip('][').split(',')
-#                    for x in range(len(json_data[key])):
-#                        json_data[key][x] = float(json_data[key][x])
-#                else:
-#                    json_data[key] = float(json_data[key])
-
-    with open(os.path.join(datadir, json_fname), 'r') as f:
-        json_data = json.loads(f.read())
-
-    return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_data
-
+#################################
 def package_for_export(Submit_dict):
     """
-    Repackage selected data for json export
-    Data structures need to be either html tables or dictionaries
+    Repackage selected data for json export to javascript. Data structures need to be either html tables or dictionaries without NumPy arrays or Pandas DataFrames.
+    
+    Parameters:
+        Submit_dict (Dictionary): Container for calculation
+
+    Returns:
+        all_results (Dictionary): Container for result files. with new key *"Dataset_sum"*.  
     """
     
     # Initialize dictionary
@@ -2531,23 +2023,24 @@ def package_for_export(Submit_dict):
     
     # Need length of arrays for javascript
     all_results['n_datasets']=len(Submit_dict['File_Paths']['Dataset_name'])
-    
     all_results['n_phases']=len(all_results['unique_phases'])
  
     # Dataset name list
     all_results['dataset_names']=list(Submit_dict["File_Paths"]["Dataset_name"])
 
- 
+    # Choose an initial dataset for plot initialization
     # CHECK - kind of kludgy
     first_dataset_name=Submit_dict['File_Paths']['Dataset_name'][0]
     all_results['n_peaks']=len(Submit_dict[first_dataset_name]["Merged_Peaks"])
 
 
- 
+    # Loop over all datasets
     for dataset_name in Submit_dict['File_Paths']['Dataset_name']:
         all_results[dataset_name]={}
         
+        #####################################
         ####  Intensity plot Tab
+        #####################################
         #-> "Le_Bail_Data"
         #-> "Peak_Fit_Data"
         # ADD Gaussian
@@ -2572,7 +2065,9 @@ def package_for_export(Submit_dict):
         # Flags for the user
         all_results[dataset_name]["flags_html"]=Submit_dict[dataset_name]["Flags"].to_html(justify='left', index=False)
 
+        #####################################
         ###### Normailzed Intensities Tab
+        #####################################
         
         ### Plots
         
@@ -2601,32 +2096,9 @@ def package_for_export(Submit_dict):
         # Table for Theoretical Intnesities
         all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction','fit_success_G','Peak_Fit_Success','Peak_Fit_Success2']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
- 
-        # Pull from:
-        #Submit_dict["Dataset_1"]["Merged_Peaks"].columns
-        #Index(['pos_fit', 'int_fit', 'sig_fit', 'gam_fit', 'Peak_Fit_Success',
-#       'u_pos_fit', 'u_int_fit', 'back_int_bound', 'signal_to_noise',
-#       'u_int_count', 'rel_int_fit', 'rel_int_count', 'h_TI', 'k_TI', 'l_TI',
-#       'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI', 'Phase_TI',
-#       'Texture Correction', 'h_LB', 'k_LB', 'l_LB', 'mul_LB', 'd_LB',
-#       'pos_LB', 'sig_LB', 'gam_LB', 'F_obs_sq_LB', 'F_calc_sq_LB', 'phase_LB',
-#       'I_corr_LB', 'Prfo_LB', 'Trans_LB', 'ExtP_LB', 'Phase', 'int_LB',
-#       'u_int_LB', 'n_int_fit', 'n_int_LB', 'n_u_int_fit', 'n_u_count_fit',
-#       'n_u_int_LB', 'pos_diff_fit_TI', 'pos_diff_LB_TI', 'pos_diff_fit_LB',
-#       'hkl', 'Theta', 'Agg_f_prime', 'Agg_f_doubleprime', 'Atoms_Per_Cell',
-#       'f_0_Peak', 'f_Total_Peak', 'Phase_Fraction_fit_mass',
-#       'Phase_Fraction_fit_volume', 'Powder_Size_um', 'Crystals_Per_Particle',
-#       'Rocking_Angle_deg', 'Scatter_Fraction', 'Anomalous_Fraction',
-#       'Absorb_Fraction', 'Z_Centroid_Depth_um', '50pct_Escaped_Depth_um',
-#       '68pct_Escaped_Depth_um', '95pct_Escaped_Depth_um', 'D_bar_mm',
-#       'l_bar_mm', 'l_bar_um', 'A_bar_mm2', 'N_bar_mm2', 'Rocking_Angle_rad',
-#       'N_Layers_50pct', 'N_Layers_95pct', 'N_illuminated_50pct',
-#       'N_illuminated_95pct', 'Diffracting_Fraction', 'N_Diffracting_50pct',
-#       'N_Diffracting_95pct', 'u_N_Diffracting_50pct', 'u_N_Diffracting_95pct',
-#       'n_u_N_Diffracting_95pct', 'n_u_N_Diffracting_50pct'],        
-        
-        
+        #####################################
         ###### Phase Fraction Tab
+        #####################################
         #-> Add Dataset drop down for data set
         # Pick unit
          
@@ -2662,8 +2134,9 @@ def package_for_export(Submit_dict):
         
 
         
-
-        ###### Inveraction Volume
+        #####################################
+        ###### Interaction Volume Tab
+        #####################################
         # Select Dataset, Phase, Peak (hkl)
         
         ## Incident x-ray plot
@@ -2688,14 +2161,82 @@ def package_for_export(Submit_dict):
         
         # Row from "Interaction_Plots"
 
-
-    # So access will be all_results[Dataset].variable
-
     return all_results
+
+
+
+
+########################################
+########################################
+#####    Depricated Functions     ######
+########################################
+########################################
+
+
+#####################################
+def prep_mcmc():
+    """
+    **EMPTY** looks like it has notes on creation, but nothing coded
+    
+    Pull aggregate data from the peak fits to populate the mcmc modelling 
+    """
+
+    # Pick which peak data to include in aggregation
+    
+    # Which fits were successful
+        #Check 2 theta, sig, gam, n_int values for consistency
+    
+    # Normalize based on R, or R*Texture?
+        # likely R*Texture for consistency ot match n_int
+    
+    # median values? or mean?
+        # This was just in the representation in the table of the uncertainty estimates
+    
+    # average over fitting type? - depends on if we think there are more or this is fairly comprehensive
+    # CHECK - David, how to do this right
+    # will need to edit stan code, could get a phase fraction for each method
+    # linear pooling, assumes each are equally reliable
+
+    # Stan should have the phase based u_ values?
+        # no, it's calculated by each peak
+    
+    # Stan limits to positive values for n_int?
+        # Yes, this is the lower=0 statements
+
+    # Create a sum Dataset? https://stackoverflow.com/questions/25057835/get-the-mean-across-multiple-pandas-dataframes
+
+
+#####################################
+def format_json_data(json_data,cif_name):
+    """
+    **DEPRICATED BUT KEEP** May still be needed when creating a file from html form?
+    Reformats the crystal data objects from json to expected types.
+
+    Args:
+        json_data: json_data object loaded from json file
+        cif_name: the cif name
+
+    Returns:
+        **json_data** correctly formatted json_data object
+
+    """
+
+    # convert eg, '[1,2,3]' to [1,2,3]
+    if type(json_data[cif_name]) is not list:
+        json_data[cif_name] = json_data[cif_name][1:(len(json_data[cif_name])-1)].split(",")
+        json_data[cif_name] = [float(x) for x in json_data[cif_name]]
+
+    for name in ['beam_size','raster_x','raster_y','L','W_F','H_F','H_R']:
+
+        if name in json_data.keys():
+            json_data[name] = float(json_data[name])
+
+    return json_data
+
 
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
-    *DEPRICATED? or just not currently supported*
+    **DEPRICATED BUT KEEP**
 
     Create an instrument parameter file if none exists.  Copy of the fitting framework.  Instrument parameter file is available for saving by the user.
 
@@ -2871,428 +2412,3 @@ def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2s
 
     fit.fit_instprm_file(hist, peaks_list)
     hist.SaveProfile("created_instprm")
-
-
-
-
-
-
-
-########################################
-########################################
-#####    Depricated Functions     ######
-########################################
-########################################
-
-
-
-
-#####################################
-def compute_peaks_dict(cif_fnames,results_table,scattering_dict,elem_fractions_dict):
-    """
-    DEPRICATED
-    in app.py
-    ??? Is it just collecting summary information?
-    for what purpose ???
-    ADD
-
-    Parameters:
-        cif_fnames: cif file names
-        ADD
-
-
-    Returns:
-        ?:?
-        ADD
-
-    Raises:
-
-    """
-
-    
-    
-    peaks_dict = {}
-    for phase_name in cif_fnames:
-        peaks_dict[phase_name] = []
-
-    # Peak dictionary includes F value, multiplicity, theta position, F_squared value
-    # doesn't seem like the values are quite right... AC 3 Mar 2023
-    for row in results_table['Dataset_1'].iterrows():
-        current_peak = []
-        current_peak.append(math.sqrt(row[1]['F_calc_sq'])/scattering_dict[row[1]['Phase']][0][4])
-        current_peak.append(row[1]['mul'])
-        current_peak.append(row[1]['pos_fit']/2)
-        final_FF = 0.0
-        for elem in scattering_dict[row[1]['Phase']]:
-            count = 0
-            FF=(elem[4]*(current_peak[0]+elem[1]))**2+(elem[4]*elem[2])**2
-            final_FF += FF * elem_fractions_dict[row[1]['Phase']][count]
-            count += 1
-        current_peak.append(final_FF)
-        peaks_dict[row[1]['Phase']].append(current_peak)
-
-    return peaks_dict
-    
-#####################################
-def compute_summarized_phase_info(scattering_dict,elem_fractions_dict,peaks_dict):
-    """
-    DEPRICATED
-    
-    in app.py
-    ??? Is it just collecting summary information?
-    What's returned is used as 'graph_data_dict', what for?
-    ADD
-
-    Parameters:
-        scattering_dict: ?
-        ADD
-
-
-    Returns:
-        ?:?
-        ADD
-
-    Raises:
-
-    """
-    
-    # MOVE this to the Submit_dict["Phase_Info"]["Unit_Cell"]
-
-    summarized_phase_info = {}
-    for key, value in scattering_dict.items():
-        summarized_phase_info[key] = [0.0,0.0, 0.0]
-        current_fracs = elem_fractions_dict[key]
-        for i in range(len(value)):
-            summarized_phase_info[key][0] += (value[i][1] * current_fracs[i])
-            summarized_phase_info[key][1] += (value[i][2] * current_fracs[i])
-            summarized_phase_info[key][2] += (value[i][3] * current_fracs[i])
-    
-            #Submit_dict['Phase_Info']['Unit_Cell']['scattering_dict']
-
-    graph_data_dict = {}
-    for key, value in peaks_dict.items():
-        current_summarized_data = summarized_phase_info[key]
-        graph_data_dict[key] = []
-        for peak in value:
-            data_list = create_graph_data(peak, current_summarized_data)
-            graph_data_dict[key].append(data_list)
-        #create a dict with keys as phases, nested list with each inner list being that peaks f_elem, mul, and theta
-
-    return graph_data_dict
-
-
-
-#####################################
-def get_figures(hist):
-    """
-    *DEPRICATED*
-    
-    Plot the intensity vs. two_theta data from a GSAS-II diffraction histogram
-
-    Args:
-        hist: GSAS-II powder histogram
-
-    Returns:
-        **fig** Plotly Express Figure
-    """
-    df = pd.DataFrame({
-        "two_theta":hist.data['data'][1][0],
-        "intensity":hist.data['data'][1][1]
-    })
-
-    fig = px.line(df,x='two_theta',y='intensity',title='Peak Fitting Plot')
-    return fig
-
-def get_pf_uncertainty_fig(pf_uncertainties):
-    """
-    *DEPRICATED*
-    
-    *NEEDS DOCSTRING*
-
-    Args:
-        pf_uncertainties: ???
-
-    Returns:
-        **pf_uncertainty_fig** ???
-    """
-
-    pf_uncertainty_fig = px.histogram(pf_uncertainties['mu_df'],x='value',color='which_phase',opacity=.7,barmode='overlay',histnorm='probability density')
-
-    unique_phases = pf_uncertainties['unique_phase_names']
-    for ii in range(len(unique_phases)):
-        t_vals = pf_uncertainties['mu_df'].loc[ pf_uncertainties['mu_df'].which_phase == unique_phases[ii]  ,'value']
-        pf_uncertainty_fig.add_vline(np.quantile(t_vals,.5))
-        pf_uncertainty_fig.add_vline(np.quantile(t_vals,.025),line_dash='dot')
-        pf_uncertainty_fig.add_vline(np.quantile(t_vals,.975),line_dash='dot')
-
-    return pf_uncertainty_fig
-
-#####################################
-######### Plotting Fuctions #########
-#####################################
-
-
-#####################################
-def two_theta_compare_figure(Merged_DF):
-    """
-    *DEPRICATED*
-
-    Plot the difference between fitted vs. theoretical two_theta data
-    Nominally this difference should be near zero, outlier values may indicate poor fit.  Trends may indicatate errors in theoretical values
-
-    Args:
-        Merged_DF: Dataframe after merging with fitted and theoretical intensities
-
-    Returns:
-        **fig** Plotly Express Figure
-    """
-
-    fig = px.scatter(Merged_DF, x="two_theta", y="pos_diff", color="Phase",
-                    labels = {
-                        'pos_fit':'Diffference between fit and theoretical 2-theta',
-                        'two_theta':'two theta value'
-                        }
-                    )
-
-    return fig
-
-
-
-#####################################
-########## Helper Fuctions ##########
-#####################################
-
-
-#####################################
-def find_sin_thetas(phase_lattice_parameter, hkl_list, wavelength):
-    """
-    *DEPRICATED*
-    
-    Calculate the position in two theta for a list of hkls.  Used to mark locations for fitting
-    *!!! Have only tested cubic crystal symmetry with widely spaced peaks !!!*
-
-    Args:
-        phase_lattice_parameter: lattice parameter
-        hkl_list: list of lattice planes (hkl)
-        wavelength: dominant wavelength in the diffraction data
-
-    Returns:
-        **SinTheta** python list of floating point values with the position of each hkl in 2-theta
-        *Is this in radians or degrees? Returning theta or two_theta?*
-
-    """
-    D=[phase_lattice_parameter/ math.sqrt(hkl[0]*hkl[0]+hkl[1]*hkl[1]+hkl[2]*hkl[2]) for hkl in hkl_list]
-    SinTheta=[1*wavelength/(2*d) for d in D]
-    return SinTheta
-
-#####################################
-def find_two_theta_in_range(sin_theta, hist):
-    """
-    *DEPRICATED*
-
-    Truncate the list of possible peak positions (theoretical calculation?) to the range of data.
-    Mark values outside this range with np.nan
-
-    Args:
-        SinTheta: List of peaks in terms of sin(theta)
-        hist: GSAS-II histogram
-
-    Returns:
-        **TwoThetaInRange** python list of peak locations in the two theta range.
-    """
-    two_theta=[np.nan]*len(sin_theta)
-    for i,value in enumerate(sin_theta):
-        try:
-            two_theta[i]=(2*math.degrees(math.asin(value)))
-        except:
-            two_theta[i]=(np.nan)
-
-    two_theta_in_range=[np.nan if i > max(hist.data['data'][1][0]) else i for i in two_theta]
-    two_theta_in_range=[np.nan if i < min(hist.data['data'][1][0]) else i for i in two_theta_in_range]
-    return two_theta_in_range
-
-#####################################
-######### Analysis Fuctions #########
-#####################################
-
-
-#####################################
-
-def create_norm_intensity_graph(DF_merged_fit_theo, theo_intensity_dict, DF_phase_fraction, two_theta, dataset):
-    """
-    *DEPRICATED*
-
-    Creates plot of variation in normalized intensities.  The visualization can offer the user feedback on the sources of variation.
-
-    Args:
-        DF_merged_fit_theo: dataframe of fit values(Dataframe)
-        theo_intensity_dict: Dataframe of theoretical intensities (Dataframe)
-        DF_phase_fraction: Dataframe of phase fraction values (Dataframe)
-        two_theta: List of two thetas(List)
-
-    Returns:
-        **fig_norm_intensity** plotly express figure showing the variation in normalized intensity for each phase
-
-    Raises:
-
-    """
-    if DF_merged_fit_theo.shape[0] == theo_intensity_dict.shape[0]:
-        fig_norm_intensity = go.Figure()
-        phase_list = DF_merged_fit_theo['Phase'].unique().tolist()
-        for i in range(len(phase_list)):
-
-            temp_df = DF_merged_fit_theo.loc[DF_merged_fit_theo.Phase == phase_list[i],:]
-            uncert_y = np.array(np.sqrt(temp_df['u_pos_fit']**2 + temp_df['u_int_fit']**2 + temp_df['u_cryst_diff']**2)/temp_df['R_calc'])
-
-            for j in range(len(uncert_y)):
-                uncert_y[j] = np.min( (uncert_y[j],temp_df['n_int'].iloc[j]*3) )  # to prevent absurd uncertainties from the fitting, eg. mean = 32, uncert = 10^6
-
-            fig_norm_intensity.add_trace(go.Scatter(x=temp_df['pos_fit'],
-                                                    y=temp_df['n_int'],
-                                                    mode='markers',
-                                                    error_y=dict(type='data',array=uncert_y,visible=True),
-                                                    name=phase_list[i] + '(' + str(dataset) + ')'))
-
-        # I'd like to have the color be the same, but haven't figured out how.
-        for i,value in enumerate(DF_phase_fraction["Mean_nint"]):
-
-            fig_norm_intensity.add_trace(
-                        go.Scatter(
-                            x=two_theta,
-                            y=[value]*len(two_theta),
-                            mode='lines',
-                            line=dict(color='dimgray',width=1),
-                            name="Mean "+DF_phase_fraction["Phase"][i] + '(' + str(dataset) + ')')
-                        )
-
-            upr = value + DF_phase_fraction['StDev_nint'].iloc[i]
-            lwr = value - DF_phase_fraction['StDev_nint'].iloc[i]
-            fig_norm_intensity.add_trace(
-                        go.Scatter(
-                            x=two_theta,
-                            y=[upr]*len(two_theta),
-                            mode='lines',
-                            showlegend=False,
-                            line=dict(dash='dash',color='dimgray',width=1))
-                        )
-
-            fig_norm_intensity.add_trace(
-                        go.Scatter(
-                            x=two_theta,
-                            y=[lwr]*len(two_theta),
-                            mode='lines',
-                            showlegend=False,
-                            line=dict(dash='dash',color='dimgray',width=1))
-                        )
-
-        ## Add crosses to indicate values that didn't work
-        fig_norm_intensity.add_trace(
-                        go.Scatter(
-                            x=DF_merged_fit_theo["pos_fit"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
-                            y=DF_merged_fit_theo["n_int"].loc[(DF_merged_fit_theo["Peak_Fit_Success"]==False)],
-                            mode="markers",
-                            name="Excluded from Analysis",
-                            marker_symbol='x',
-                            marker_color='red',
-                            marker_size = 8
-                            )
-                        )
-    else:
-        print("Warning: I and R values different lengths. Returning empty figure.")
-        print(DF_merged_fit_theo)
-        fig_norm_intensity = go.Figure()
-
-    return fig_norm_intensity
-
-def create_fit_fig(two_thetas, intensity_list, dataset):
-    """
-    *DEPRICATED*
-
-    Creates plot of fit intensity vs two_theta data
-
-    Args:
-        two_thetas: list of two_theta values
-        intensity_list: list of various fitted intensity data(raw, fit, background)
-        dataset: current dataset graph being created
-
-    Returns:
-        **fig_fit_hist** plotly figure of fit intensity vs two_theta data
-
-    Raises:
-
-    """
-    fig_fit_hist = go.Figure()
-
-    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[0],mode='markers',name='data: ' + str(dataset)))
-    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[1],mode='markers',name='background: ' + str(dataset)))
-    fig_fit_hist.add_trace(go.Scatter(x=two_thetas,y=intensity_list[2],mode='lines',name='fit: ' + str(dataset)))
-
-    fig_fit_hist.update_layout(
-        title="",
-        xaxis_title="2theta",
-        yaxis_title="Intensity"
-    )
-
-    return fig_fit_hist
-
-
-
-def get_conversions_old(phase_frac,cell_masses_dict,cell_volumes_dict):
-
-    """
-    *DEPRICATED*
-
-    
-    *ADD*
-
-    Parameters:
-        phase_frac: dictionary entry from compute_peak_fitting()
-        cell_masses_dict: dictionary entry returned from compute_interaction_volume()
-        cell_volumes_dict: dictionary entry returned from from compute_interaction_volume()
-
-
-    Returns:
-        | dict with the following key-value pairs:
-        |   mass_conversion: dictionary that contains the normalized constant for each phase to convert from number of cells to mass
-        |   volume_conversion: dictionary that contains normalized constant for each phase to convert from number of cells to volume
-
-    Raises:
-
-
-    """
-
-    # deepcopy to prevent aliasing
-    mass_conversion = deepcopy(phase_frac)
-    volume_conversion = deepcopy(phase_frac)
-
-    #find denominator first(normalize at the same time)
-    n_phases = phase_frac["Dataset_1"].shape[0]
-
-    cell_mass_vec = np.zeros(n_phases)
-    cell_volume_vec = np.zeros(n_phases)
-    cell_number_vec = np.zeros(n_phases)
-
-    for ii in range(n_phases):
-        cell_mass_vec[ii] = cell_masses_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
-        cell_volume_vec[ii] = cell_volumes_dict[phase_frac['Dataset_1'].Phase.iloc[ii]]
-        cell_number_vec[ii] = phase_frac['Dataset_1'].Phase_Fraction.iloc[ii]
-
-    for dataset in phase_frac:
-
-        for ii in range(n_phases):
-            mass_conversion[dataset].Phase_Fraction.iloc[ii] = cell_number_vec[ii]*cell_mass_vec[ii]/np.sum(cell_number_vec*cell_mass_vec)
-            volume_conversion[dataset].Phase_Fraction.iloc[ii] = cell_number_vec[ii]*cell_volume_vec[ii]/np.sum(cell_number_vec*cell_volume_vec)
-
-    return {'mass_conversion':mass_conversion, 'volume_conversion':volume_conversion, 'cell_mass_vec':cell_mass_vec, 'cell_volume_vec':cell_volume_vec}
-
-
-
-
-
-
-
-
-
-
-
-

@@ -10,6 +10,11 @@ Welcome to the documentation for the AusteniteCalculator!
 In Development
 *****************************************
 
+Current limitations
+
+* 2D detector gamma is not completely implimented
+
+
 ==========================================
 Release History
 ==========================================

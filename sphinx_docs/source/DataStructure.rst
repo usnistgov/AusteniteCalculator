@@ -42,6 +42,7 @@ Data structures are described as a bulleted list using the structure: **Key Name
         * **unit_cell_mass_CIF** *(Float)* Weighted summation of atomic mass for all elements in the phase based on atomic fraction.
 
     * **Phase_list**  *(Array)* Array of phases, without the .cif file extension **From CIF filename or CIF file header?**
+    * **Calculation_Type** *(String)* Description of the type of calculation: "Single" for a single data set, "Summed" for a series of data sets and the summation of all the data sets (treated as a separate single data set), "Multi" for a series of data sets and uncertainty metrics for the variation between data sets.
 
  * **File_Paths**	*(Dictionary)* Container for folder paths and file names. Keys of:
 
