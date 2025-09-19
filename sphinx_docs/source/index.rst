@@ -35,7 +35,7 @@ See User Guide
    app
    compute_results
    compute_uncertainties
-
+   fit
 
 
 Indices and tables

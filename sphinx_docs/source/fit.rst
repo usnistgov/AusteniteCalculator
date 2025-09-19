@@ -1,17 +1,17 @@
-app
+fit
 ===============
 
 *****************************************
-Documentation for app.py
+Documentation for fit.py
 *****************************************
-This is the main file for initiating the phase fraction calculation.
+Collected module for some of the fitting algorithms.
 
 
 *****************************************
 Functions and docstrings
 *****************************************
 
-.. automodule:: app
+.. automodule:: fit
     :members:
 
 

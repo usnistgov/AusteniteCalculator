@@ -50,7 +50,7 @@ templates_path = ['_templates']
 
 exclude_patterns = []
 
-autodoc_mock_imports = ["GSASIIscriptable","GSASIIpath", "plotly", "pandas", "numpy", "math", "atmdata", "json", "secrets", "tempfile","zipfile", "flask", "_tkinter", "scipy", "cmdstanpy", "xarray" ,"sys", "platform", "os", "io", "base64", "re", "pickle","time", "logging","cProfile","enum","fit","copy","base64","matplotlib" ]
+autodoc_mock_imports = ["GSASIIscriptable","GSASIIpath", "plotly", "pandas", "numpy", "math", "atmdata", "json", "secrets", "tempfile","zipfile", "flask", "_tkinter", "scipy", "cmdstanpy", "xarray" ,"sys", "platform", "os", "io", "base64", "re", "pickle","time", "logging","cProfile","enum","copy","base64","matplotlib" ]
 
 # -- Options for HTML output -------------------------------------------------
 

@@ -9,16 +9,13 @@ import os
 import compute_results
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
-    """Subroutine to fit data using individual peak fitting
+    """
+    Subroutine to fit data using individual peak fitting
 
-    Args:
+    Parameters:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
-    Returns:
-
-    Raises:
 
     """
     print("Fitting peaks\n")
@@ -70,16 +67,13 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
 
 
 def fit_peaks_LeBail_assist(hist, LeBail_peaks_DF, Chebyschev_coeffiecients=5):
-    """Subroutine to fit data using peaks found from LeBail fitting
+    """
+    Subroutine to fit data using peaks found from LeBail fitting
 
     Args:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
-    Returns:
-
-    Raises:
 
     """
     
@@ -160,16 +154,13 @@ def fit_peaks_LeBail_assist(hist, LeBail_peaks_DF, Chebyschev_coeffiecients=5):
 
 
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using individual fitting, shifting peaks to the left (lower 2-theta)
+    """
+    Subroutine to fit data using individual fitting, shifting peaks to the left (lower 2-theta)
 
     Args:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
-    Returns:
-
-    Raises:
 
     """
     for i in range(len(peak_verify)):
@@ -209,16 +200,14 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     hist.refine_peaks(mode = 'hold')
 
 def fit_moved_right_peaks(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using individual peak fitting, shifting peaks to the right (higher 2-theta)
+    """
+    Subroutine to fit data using individual peak fitting, shifting peaks to the right (higher 2-theta)
 
     Args:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
-    Returns:
 
-    Raises:
 
     """
     for i in range(len(peak_verify)):
@@ -257,16 +246,13 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     hist.refine_peaks(mode = 'hold')   
 
 def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
-    """Subroutine to fit data using individual peak fitting, but hold the sigma value
+    """
+    Subroutine to fit data using individual peak fitting, but hold the sigma value
 
     Args:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
-    Returns:
-
-    Raises:
 
     """
     print("Fitting peaks\n")
@@ -304,16 +290,13 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     hist.refine_peaks(mode = 'hold')
 
 def fit_peaks_holdgam(hist, peaks_list, peak_verify):
-    """Subroutine to fit data using individual peak fitting, holding gamma value
+    """
+    Subroutine to fit data using individual peak fitting, holding gamma value
 
     Args:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        
-    Returns:
-
-    Raises:
 
     """
     print("Fitting peaks\n")
@@ -350,17 +333,14 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     hist.refine_peaks(mode = 'hold')
 
 def fit_instprm_file(hist, peaks_list, Chebyschev_coeffiecients=5):
-    """Subroutine to fit data using individual peak fitting
+    """
+    Subroutine to fit data using individual peak fitting to determine the instrument parameter file.
 
     Args:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
         
-    Returns:
-
-    Raises:
-
     """
     print("Fitting peaks\n")
     # Set up background refinement
@@ -397,16 +377,14 @@ def fit_instprm_file(hist, peaks_list, Chebyschev_coeffiecients=5):
 
 
 def fit_background(DF, hist, peaks_list, sig_width=3):
-    """Subroutine to fit background data
+    """
+    Subroutine to fit background data
 
     Args:
         DF: Merged datafile to append to
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         sig_width: number of standard deviations (width) of gaussian fit to use to extract background values. Default is 3 (99.73%)
-    Returns:
-
-    Raises:
 
     """
     back_counts_list=[]
@@ -454,6 +432,8 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
 
 def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     """
+    **ADD**
+    Still used?
     CHECK - best structure?
     """
     verify_list = np.empty(t_pos.shape[0])
@@ -511,6 +491,7 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
 
 def check_fit_success(Merged_Peaks_DF):
     """
+    **ADD**
     May be duplicative of create_verify_list, but need to fix fitting loops
     
     """
@@ -550,41 +531,28 @@ def check_fit_success(Merged_Peaks_DF):
 
 
 def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_coeffiecients=5):
+    """
+    Subroutine to fit data using LeBail fitting, uses full pattern fitting for lattice parameters and sample displacement. Suggested order from Matthew Rowles (model 3), arXiv:2008.11046v4
 
-#datadir,workdir,xrdml_fname,instprm_fname,cif_fnames, flags_for_user_DF, Chebyschev_coeffiecients=5
-
-
-    """Subroutine to fit data using LeBail fitting
-    Uses suggested order from Matthew Rowles (model 3), arXiv:2008.11046v4
-    Also uses full pattern fitting for lattice parameters
-
-    Model 3 Fit order
-    0) Set max cycles = 10
-    1) bkg sc - background parameters and histogram scale factor
-    2) cell - unit cell parameters
-    3) ZE SD - Zero error and specimen displacement (correlated?)
-    -> Add phase fraction here (with restraint?)
-    4) csL - Lorentzian crystal size (can't do these separately in GSAS-II)
-    5) PD - packing density (n/a in GSAS-II)
-    6) strG - Gaussian microstrain  (Microstrain might be better to fit first)
-    7) csG strL - Gaussian crystal size and Lorentzian microstrain
-    8) B - Atomic displacement parameter (Uiso in GSAS-II, likely can't change all atoms at once)
-    9) All - Fit all simultaneously
-
-    ??? Should I add a parameter for texture to improve fit quality?
+    * **Model 3 Fit order**
+    * 0) Set max cycles = 10
+    * 1) bkg sc - background parameters and histogram scale factor
+    * 2) cell - unit cell parameters
+    * 3) ZE SD - Zero error and specimen displacement (correlated?)
+    * -> Add phase fraction here (with restraint?)
+    * 4) csL - Lorentzian crystal size (can't do these separately in GSAS-II)
+    * 5) PD - packing density (n/a in GSAS-II)
+    * 6) strG - Gaussian microstrain  (Microstrain might be better to fit first)
+    * 7) csG strL - Gaussian crystal size and Lorentzian microstrain
+    * 8) B - Atomic displacement parameter (Uiso in GSAS-II, likely can't change all atoms at once)
+    * 9) All - Fit all simultaneously
     
-    ??? Where should phase fraction be refined?
-    
-
-    Args:
-        GSAS_projfile: GSAS-II project file with histogram
-        peaks_list: list of 2theta locations to(numpy array)
+    Parameters:
+        G2sc (Module): GSAS-II Scriptable Module, with system path set.
+        Submit_dict (Dictionary): Container for calculation
+        dataset_string (String): Name for the dataset
+        dataset_index (Int): Counter for the dataset
         Chebyschev_coeffiecients: Number of background parameters (integer)
-        DF_flags: notes to the users
-    Returns:
-
-    Raises:
-
     """
     
     datadir=Submit_dict["File_Paths"]["Data_Directory"]
@@ -799,7 +767,11 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     Use a simple gaussian and linear fit to approximate the curves
     Also use the edges of the gaussian to sum the counts with no peak structure assumed
     
-
+    **IN DEVELOPMENT**
+    Parameters:
+        Submit_dict (Dictionary): Container for calculation
+        dataset_string (String): Name for the dataset
+        dataset_index (Int): Counter for the dataset
 
     '''
 
@@ -1060,27 +1032,27 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
 ## Helper functions
 def background(x,  m, b):
     '''
-    Linear fit of XRD background data.  
-    Using a small range, so a more advanced function is not needed
+    Linear fit of XRD background data.  Using a small range, so a more advanced function is not needed.
     
-    x: x axis of data
-    m: slope of line
-    b: constant value of line
+    Parameters:   
+        x: x axis of data
+        m: slope of line
+        b: constant value of line
     '''
     return m*x + b
 
 def gauss(x, A,mu, sigma, m, b):
     '''
-    Combined Gaussian and linear fit of XRD background data.  
-    Using a small range, so a more advanced function is not needed
-    Does not capture the Lorentzian tails well
+    Combined Gaussian and linear fit of XRD background data.  Using a small range, so a more advanced function is not needed.
+    *Does not capture the Lorentzian tails well*
     
-    x: x axis of data
-    A: Scale factor
-    mu: Center of distribution
-    sigma: width of distribution
-    m: slope of line
-    b: constant value of line
+    Parameters:       
+        x: x axis of data
+        A: Scale factor
+        mu: Center of distribution
+        sigma: width of distribution
+        m: slope of line
+        b: constant value of line
     '''
     return (A/(sigma*np.sqrt(2.0*np.pi)))*np.exp((-(x-mu)**2)/(2.0*sigma**2)) + m*x + b
 
