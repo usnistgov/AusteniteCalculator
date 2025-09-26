@@ -76,7 +76,7 @@ def submit():
         all_results (Dictionary): JSON-ified dictionary with all results
     
     """
-    print("Initializing Submission")
+    print("####  Initializing Submission")
     Submission={}
 
     req = request.get_json()
@@ -84,7 +84,7 @@ def submit():
     logger.info(req)
 
     #### Create dictionary to hold error logs
-    print("Create dictionary to hold error logs")
+    print("####  Create dictionary to hold error logs")
     logger.info("Create dictionary to hold error logs")
     
     error_dict = {'file_upload':False,
@@ -99,7 +99,7 @@ def submit():
                     'mcmc':False}
 
     #### Choose datafiles to run and set paths
-    print("Choose datafiles to run and set paths")
+    print("####  Choose datafiles to run and set paths")
     logger.info("Choose datafiles to run and set paths")   
     
     # upload user files if indicated to do so
@@ -156,7 +156,7 @@ def submit():
 
 
     #### Collect version information
-    print("Collecting Version information")
+    print("####  Collecting Version information")
     logger.info("Collecting Version information")
     
     try:
@@ -165,7 +165,7 @@ def submit():
         error_dict['Version'] = type(e).__name__ + ': ' + str(e)
 
     #### Compute Cell Density
-    print("Compute Cell Density")
+    print("####  Compute Cell Density")
     logger.info("Compute Cell Density")
     # probably need to merge dataframes later
     # Should I update this later?
@@ -175,7 +175,7 @@ def submit():
         error_dict['cell_density'] = type(e).__name__ + ': ' + str(e)
 
     #### Run Peak Fitting
-    print("Run Peak Fitting")
+    print("####  Run Peak Fitting")
     logger.info("Run Peak Fitting")
     try:
         Submission = compute_results.compute_peak_fitting(G2sc, Submission)
@@ -185,7 +185,7 @@ def submit():
     print("\n****************************************\n",Submission.keys())
  
     #### Compute crystallites illuminated
-    print("Compute crystallites illuminated")
+    print("####  Compute crystallites illuminated")
     logger.info("Compute crystallites illuminated")
 
     try:
@@ -195,7 +195,7 @@ def submit():
 
 
     #### Run MCMC
-    print("Run MCMC")
+    print("####  Run MCMC")
     logger.info("Run MCMC")
     try:
         Submission = compute_results.run_mcmc2(Submission,req['sumFiles'],number_mcmc_runs=1000)
@@ -206,7 +206,7 @@ def submit():
     
     
     #### Collect data to display
-    print("Collect data to display")
+    print("####  Collect data to display")
     logger.info("Collect data to display")
     
     # Escape application if there are error messages
@@ -244,7 +244,7 @@ def submit():
     # the json file where the output must be stored
 
     # Save submission and all_results
-    print("Save submission and all_results")
+    print("####  Save submission and all_results")
     logger.info("Save submission and all_results")
 
     timestamp=time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())

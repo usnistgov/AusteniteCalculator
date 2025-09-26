@@ -360,7 +360,28 @@ Data structures are described as a bulleted list using the structure: **Key Name
          * **sample_id**
          * **phase_id**
    
-   * **No entry for what gets sent to stan?**
+   * **Stan_Data** *(Dictionary)* Container for values sent to stan calculation.
+   
+        For one_sample, keys of:
+        
+         * **N** *(Int)* one_sample: number of peaks in the datasets; multiple_samples: number of peaks in all the datasets
+         * **N_phases** *(Int)* number of phases analyzed
+         * **Y**  *(List of length N)* Normalized Intensity of each peak
+         * **phase** *(List of length N)* Numeric phase ID for each peak
+         * **prior_scale** *(Float)* Bayesian prior estimate of **WHAT**.  In Stan *real* lower bound equal to 0.
+         * **prior_exp_scale** *(Float)* Bayesian prior estimate of normalized intensity variation by peak ('experiment' variation).  In Stan *real* lower bound equal to 0.
+         * **prior_location** *(Float)* Bayesian prior estimate of normalized intensity.  In Stan *real* lower bound equal to 0.
+         * **u_int_fit** *(List of length N)* Uncertainty based on the fit uncertainty for each peak, scaled to normalized intensity **NOTE: variable name mismatch, but is normalized**
+         * **u_int_count** *(List of length N)* Uncertainty based on the counting statistics for each peak, scaled to normalized intensity **NOTE: variable name mismatch, but is normalized**
+         * **u_cryst_diff** *(List of length N)* Uncertainty based on the number of crystallites illuminated for each peak, scaled to normalized intensity **NOTE: variable name mismatch, but is normalized**
+            
+        For multiple_samples, the following keys are also included:
+        
+         * **N_samples** *(Int)* number of datasets (XRD files) analyzed
+         * **N_phase_samples** *(Int)* number of concatenated of phase and sample IDs
+         * **group**  *(List of length N)* Numeric dataset ID for each peak
+         * **phase_sample_id** *(List of length N)* Numeric concatenated of phase and sample ID for each peak
+         * **prior_sample_scale** *(Float)* Bayesian prior estimate of normalized intensity variation by dataset .  In Stan *real* lower bound equal to 0.
    
    * **MCMC_Data** *(DataFrame)* Container for Stan calculation. Rows of draws from the distribution, set at 8000. Columns of:
    

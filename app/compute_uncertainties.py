@@ -9,6 +9,7 @@ import compute_results
 def get_unique_phases(results_table):
 
     """
+    **DEPRICATED?**  Not called in other codes
     *ADD*
 
     Parameters:
@@ -34,6 +35,7 @@ def get_unique_phases(results_table):
 def concat_results_tables(results_table,from_records=False):
 
     """
+    **DEPRICATED?**  Not called in other codes
     Combine tables if there are multiple xrd records
 
     Parameters:
@@ -66,6 +68,7 @@ def concat_results_tables(results_table,from_records=False):
 
 def run_stan(results_table,number_mcmc_runs,fit_variational=False):
     """
+    **DEPRICATED** New copy made  
     Runs an external script using Stan (https://mc-stan.org/) to return estimates
     of the phase fractions. Largely uses normalized intensity data. Uses Bayesian
     priors and data to estimate uncertainties express draws via a posterior distrubtion
@@ -261,37 +264,43 @@ def run_stan(results_table,number_mcmc_runs,fit_variational=False):
 
 def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
     """
-    Runs an external script using Stan (https://mc-stan.org/) to return estimates
-    of the phase fractions. Largely uses normalized intensity data. Uses Bayesian
-    priors and data to estimate uncertainties express draws via a posterior distrubtion
+    **RENAME**
+    Runs an external script using Stan (https://mc-stan.org/) to return estimates of the phase fractions assuming a single uncorrelated data set *(one_sample.stan)*. Calculated based on normalized intensity values. Uses Bayesian priors and data to estimate uncertainties expressed as draws via a posterior distrubtion. "Samples" in this case implies xrd files/scans. Sections describe various steps (and use the same text as comment headers).
 
-    Samples in this case implies xrd files/scans
+    * Loop over each dataset
+    * Create MCMC_Calc DataFrame from Merged_Peaks
+    * Drop any rows where the fit was not successful
+    * Add additional columns to MCMC_Calc DataFrame
+    * Compute Bayesian prior distributions
+    * Run one_sample.stan
+    * Add data to submission
+    * Convert results to mass and volume phase fractions
+    * Generate output tables
 
     Parameters:
-        results_table: Dictionary of 'pd.DataFrame's, e.g., results_table['Dataset_1']
-        number_mcmc_runs: Number of MCMC warmup runs. 2000 runs are kept total, but these are used as a 'warm-up' for the sampler.
+        Submit_dict (Dictionary): Container for calculation
+        sum_checkbox (Boolean): True if the datasets are to be summed together
+        number_mcmc_runs (Int): Number of MCMC warmup runs. 
+        fit_variational (Boolean):  **Depricated?**
 
 
     Returns:
-        | *ADD*
-        |
-
-    Raises:
-
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, new keys of *"MCMC_Calc"*, *"Stan_Data"*, *"MCMC_Data"*, *"MCMC_Result_Number"*, *"MCMC_Result_Mass"*, *"MCMC_Result_Volume"* are added.
 
     """
 
-
-    # for each dataset
+    #### Loop over each dataset
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
         dataset_number=dataset.split("_")[1]
         #indata = concat_results_tables(results_table)
+        
+        #### Create MCMC_Calc DataFrame from Merged_Peaks
         
         #n_u_ is the uncertainty normalized by the I/R (normalized intensity)
         # FIX - add peak fit success
         Submit_dict[dataset]["MCMC_Calc"]=Submit_dict[dataset]["Merged_Peaks"][['int_fit', 'R_TI', 'n_int_fit', 'n_u_int_fit', 'n_u_count_fit','n_u_N_Diffracting_95pct','Phase','pos_fit', 'hkl','Peak_Fit_Success2','pos_TI','n_int_LB'  ]]
 
-        # Drop any rows where the fit was not successful
+        #### Drop any rows where the fit was not successful
         #breakpoint()
         rows_to_drop = Submit_dict[dataset]["MCMC_Calc"][Submit_dict[dataset]["MCMC_Calc"]['Peak_Fit_Success2'] == False]
         # drop in place
@@ -306,6 +315,7 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
                 "Check fit and signal to noise",\
                 DF_to_append=Submit_dict[dataset]["Flags"])
 
+        #### Add additional columns to MCMC_Calc DataFrame
 
         Submit_dict[dataset]["MCMC_Calc"]['sample_id']=dataset_number
         # create numeric phase id's
@@ -314,7 +324,6 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         # CHECK - any way the order gets changed in the phases?
         # Can we just use the row as the MCMC id, or do we need the name?
         # also check Submit_dict["Phase_Info"]["Unit_Cell"]['unit_cell_mass_CIF']
-        
         
         #unique_phases = np.unique(Submit_dict[dataset]["MCMC_Calc"]["Phase"])
 
@@ -332,7 +341,7 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
 
         Submit_dict["Phase_Info"]["Unit_Cell"].index
 
-        # compute Bayesian prior distributions
+        #### Compute Bayesian prior distributions
         # prior_sample_scale for variation between multiple xrd scans
         prior_sample_scale = np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])
 
@@ -349,7 +358,7 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         print("Prior scale: {}".format(np.std(Submit_dict[dataset]["MCMC_Calc"]["n_int_fit"])))
 
 
-        # stan for one sample
+        #### Run one_sample.stan
 
         #check OS to determine which stan executable to use
         # CHECK - Should this be a try/except block?   https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
@@ -401,7 +410,9 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         print(fit)
         #breakpoint()
 
-        #Add to submission
+        #### Add data to submission
+        
+        Submit_dict[dataset]["Stan_Data"]=stan_data
         Submit_dict[dataset]["MCMC_Data"] = fit.draws_pd()
         print("Raw MCMC fit Data")
         print(Submit_dict[dataset]["MCMC_Data"])
@@ -419,6 +430,8 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         # FIX - move these to a function?
         # Results as number of unit cells
         phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
+        
+        #### Convert results to mass and volume phase fractions
         
         # phase_mu is in terms of the normalized intensities
         # to convert to a phase fraction, need to sum the normalized intensities
@@ -467,6 +480,8 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         #breakpoint()
         # FIX - ADD Phase parameter table here?
         
+        #### Generate output tables
+        
         Submit_dict = generate_param_table2(Submit_dict,dataset,unique_phases)
         Submit_dict = generate_pf_table2(Submit_dict,dataset,unique_phases)
 
@@ -478,27 +493,31 @@ def run_stan2(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
 
 def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
     """
-    Runs an external script using Stan (https://mc-stan.org/) to return estimates
-    of the phase fractions. Largely uses normalized intensity data. Uses Bayesian
-    priors and data to estimate uncertainties express draws via a posterior distrubtion
+    **RENAME**
+    Runs an external script using Stan (https://mc-stan.org/) to return estimates of the phase fractions assuming a series of correlated data sets *(multiple_samples.stan)*. Datasets have already been collected in *create_multi_dataset*. Calculated based on normalized intensity values. Uses Bayesian priors and data to estimate uncertainties expressed as draws via a posterior distrubtion. "Samples" in this case implies xrd files/scans. Sections describe various steps (and use the same text as comment headers).
 
-    Samples in this case implies xrd files/scans
+    * Create list of unique_phases
+    * Run multiple_samples.stan
+    * Add data to submission
+    * Convert results to mass and volume phase fractions
+    * Generate output tables
 
     Parameters:
-        results_table: Dictionary of 'pd.DataFrame's, e.g., results_table['Dataset_1']
-        number_mcmc_runs: Number of MCMC warmup runs. 2000 runs are kept total, but these are used as a 'warm-up' for the sampler.
+        Submit_dict (Dictionary): Container for calculation
+        sum_checkbox (Boolean): True if the datasets are to be summed together
+        number_mcmc_runs (Int): Number of MCMC warmup runs. 
+        fit_variational (Boolean):  **Depricated?**
 
 
     Returns:
-        | *ADD*
-        |
-
-    Raises:
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, new keys of  *"Stan_Data"*, *"MCMC_Data"*, *"MCMC_Result_Number"*, *"MCMC_Result_Mass"*, *"MCMC_Result_Volume"* are added.
 
 
     """
     
     dataset="Dataset_multi"
+    
+    #### Create list of unique_phases
     
     unique_phases=[]
     # Read from unit cell list for order
@@ -509,16 +528,7 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
         #print(cif_name, index+1)
         unique_phases.append(cif_name)
     
-    
-    ####################################
-    ### Prior Code for the multiple sample case
-    ####################################
-    ### FIX, with restructuing of code, this is non-trivial
-    ### Use for reference, fix using the one sample code above
-    ####################################
-    #elif len(results_table) > 1:
-
-
+    #### Run multiple_samples.stan
 
     # check OS to determine which stan executable to use
     # Should this be a try/except block?    https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block
@@ -539,13 +549,14 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
     model = CmdStanModel(stan_file = '../stan_files/multiple_samples.stan')
     #model = CmdStanModel(exe_file=exe_file)
 
-
-
     fit = model.sample(data=Submit_dict[dataset]["Stan_Data"],
                        chains=4,
                        iter_warmup=number_mcmc_runs,
                        iter_sampling=2000)
 
+    #### Add data to submission
+        
+    Submit_dict[dataset]["Stan_Data"]=stan_data
     Submit_dict[dataset]["MCMC_Data"] = fit.draws_pd()
     print("Raw MCMC fit Data")
     print(Submit_dict[dataset]["MCMC_Data"])
@@ -569,7 +580,9 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
     #breakpoint()
     phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
-    
+
+    #### Convert results to mass and volume phase fractions
+
     ni_sum = np.sum(phase_cols,axis=1)
     for i in range(phase_cols.shape[1]):
         phase_cols.iloc[:,i] = phase_cols.iloc[:,i]/ni_sum
@@ -613,6 +626,8 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
     #breakpoint()
     # FIX - ADD Phase parameter table here?
 
+    #### Generate output tables
+
     Submit_dict = generate_param_table2(Submit_dict,dataset,unique_phases)
     Submit_dict = generate_pf_table2(Submit_dict,dataset,unique_phases)
 
@@ -621,7 +636,7 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
 def generate_pf_table(mcmc_df_dict,unique_phase_names):
     """
-    *ADD*
+    *DEPRICATED*
 
     Parameters:
         mu_samps: *ADD*
@@ -672,26 +687,20 @@ def generate_pf_table(mcmc_df_dict,unique_phase_names):
 
 def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
     """
-    *ADD*
+    **RENAME** Create three *DataFrames* with the mean, median, 1 sigma and 2 sigma phase fraction values in terms of the number of unit cells, mass of unit cells, and volume of unit cells.
 
     Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
+        Submit_dict (Dictionary): Container for calculation
+        dataset (String): Name for the dataset
+        unique_phase_names (List): list of unique CIF file names
 
     Returns:
-        | *ADD*
-        |
-
-    Raises:
-
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, new keys of *"Phase_Fraction_Result_Number"*, *"Phase_Fraction_Result_Mass"*, *"Phase_Fraction_Result_Volume"* are added.
 
     """
-    #full_dict = {}
 
     # Number of unit cells
-
-
+    
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]=pd.DataFrame({"Phase":unique_phase_names,"Neg_2sigma":np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.02275,axis=0)})
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Neg_1sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],0.1587,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Number"]["Mean"]=np.nanmean(Submit_dict[dataset]["MCMC_Result_Number"],axis=0)
@@ -719,52 +728,20 @@ def generate_pf_table2(Submit_dict,dataset,unique_phase_names):
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Pos_2sigma"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],0.97725,axis=0)
     Submit_dict[dataset]["Phase_Fraction_Result_Volume"]["Median"]=np.quantile(Submit_dict[dataset]["MCMC_Result_Volume"],.5,axis=0)
     
-    #print(np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.50,axis=0))
-    #print(np.quantile(Submit_dict[dataset]["MCMC_Result_Number"],.05,axis=0))
-
-
 
     #Submit_dict[dataset]["MCMC_Result_Number"]
     print(Submit_dict[dataset]["Phase_Fraction_Result_Number"])
     print(Submit_dict[dataset]["Phase_Fraction_Result_Mass"])
     print(Submit_dict[dataset]["Phase_Fraction_Result_Volume"])
     #breakpoint()
-#
-#    for conversion_name in mcmc_df_dict.keys():
-#
-#        #mcmc_df = pd.DataFrame(mcmc_df_dict[conversion_name])
-#
-#        mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])
-#        n_phase = mu_res.shape[1]
-#        quantiles = np.zeros((n_phase,2))
-#
-#        # table to store phase fraction estimates and 95% credible intervals
-#        pf_table = pd.DataFrame({
-#            'Phase':unique_phase_names,
-#            'Phase Fraction Estimate':0.0,
-#            'Phase Fraction (Lower 95%)':0.0,
-#            'Phase Fraction (Upper 95%)':0.0
-#        })
-#
-#        for j,ph in enumerate(unique_phase_names):
-#
-#            quantiles[j,:] = np.quantile(mu_res[:,j],(.025,.975))
-#
-#            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction Estimate'] = np.mean(mu_res[:,j])
-#            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Lower 95%)'] = np.quantile(mu_res[:,j],.025)
-#            pf_table.loc[pf_table['Phase'] == ph,'Phase Fraction (Upper 95%)'] = np.quantile(mu_res[:,j],.975)
-#
-#        full_dict[conversion_name] = pf_table
-#        pf_table['Conversion Type'] = conversion_name
-#
-#    pf_table = pd.concat(full_dict,ignore_index=True)
+
 
     return Submit_dict
 
 
 def generate_param_table(mcmc_df,unique_phase_names,results_table):
     """
-
+    **DEPRICATED**
     CHECK - Is this still a useful table?  It doesn't seem to have the MCMC data.
 
     *ADD*
@@ -834,21 +811,16 @@ def generate_param_table(mcmc_df,unique_phase_names,results_table):
 
 def generate_param_table2(Submit_dict,dataset,unique_phase_names):
     """
-
-    CHECK - Is this still a useful table?  It doesn't seem to have the MCMC data.
-
-    *ADD*
+    **RENAME** Create a *DataFrame* summarizing the sources of uncertainty. **ADD LOGIC FOR MULTI DATASETS**.
+    **FIX - median or mean, add mu_samples**
 
     Parameters:
-        mu_samps: *ADD*
-        conversion_vec: *ADD*
-
+        Submit_dict (Dictionary): Container for calculation
+        dataset (String): Name for the dataset
+        unique_phase_names (List): list of unique CIF file names
 
     Returns:
-        | A pandas DataFrame with rows for each phase.
-        | Columns for each source of variability
-
-    Raises:
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, a new key of *"Uncert_Source_Summary"* is added.
 
     """
     #mu_res = np.array(mcmc_df.loc[:,mcmc_df.columns.str.contains('phase_mu')])

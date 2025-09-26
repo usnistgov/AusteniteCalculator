@@ -5,17 +5,21 @@ import numpy as np
 import math
 import json
 import os
+
+import scipy.optimize as opt
+import scipy.integrate as sciint
+
 #from compute_results import flag_phase_fraction
 import compute_results
 
 def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
     """
-    Subroutine to fit data using individual peak fitting
+    Subroutine to fit data using individual peak fitting.  Treats each peak (and fitting values) as an indpendent variable.
 
     Parameters:
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
-        Chebyschev_coeffiecients: Number of background parameters (integer)
+        hist (Object): GSAS-II powder diffraciton histogram
+        peaks_list (Array): list of 2theta locations to fit
+        Chebyschev_coeffiecients (Int): Number of background parameters 
 
     """
     print("Fitting peaks\n")
@@ -68,12 +72,12 @@ def fit_peaks(hist, peaks_list, Chebyschev_coeffiecients=5):
 
 def fit_peaks_LeBail_assist(hist, LeBail_peaks_DF, Chebyschev_coeffiecients=5):
     """
-    Subroutine to fit data using peaks found from LeBail fitting
+    Subroutine to fit data using individual peak fitting using peaks found from Rietveld fitting using LeBail extraction as intial parameters. Deals with sample displacement and peak location more gracefully than *fit_peaks*. Treats each peak (and fitting values) as an indpendent variable.
 
-    Args:
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
-        Chebyschev_coeffiecients: Number of background parameters (integer)
+    Parameters:
+        hist (Object): GSAS-II powder diffraciton histogram
+        LeBail_peaks_DF (DataFrame): list of 2theta locations to fit
+        Chebyschev_coeffiecients (Int): Number of background parameters 
 
     """
     
@@ -155,12 +159,13 @@ def fit_peaks_LeBail_assist(hist, LeBail_peaks_DF, Chebyschev_coeffiecients=5):
 
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     """
-    Subroutine to fit data using individual fitting, shifting peaks to the left (lower 2-theta)
+    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    Subroutine to fit data using individual fitting, shifting peaks to the left (lower 2-theta) by 0.25 degrees.
 
-    Args:
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
-        Chebyschev_coeffiecients: Number of background parameters (integer)
+    Parameters:
+        hist (Object): GSAS-II powder diffraciton histogram
+        peaks_list (Array): list of 2theta locations to fit
+        peak_verify (List): **Set as an empty set?**
 
     """
     for i in range(len(peak_verify)):
@@ -201,13 +206,13 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
 
 def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     """
-    Subroutine to fit data using individual peak fitting, shifting peaks to the right (higher 2-theta)
+    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    Subroutine to fit data using individual fitting, shifting peaks to the right (higher 2-theta) by 0.25 degrees.
 
-    Args:
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
-        Chebyschev_coeffiecients: Number of background parameters (integer)
-
+    Parameters:
+        hist (Object): GSAS-II powder diffraciton histogram
+        peaks_list (Array): list of 2theta locations to fit
+        peak_verify (List): **Set as an empty set?**
 
     """
     for i in range(len(peak_verify)):
@@ -247,12 +252,14 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
 
 def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     """
-    Subroutine to fit data using individual peak fitting, but hold the sigma value
+    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    Subroutine to fit data using individual peak fitting, but hold the sigma (Gaussian) value fixed instead of trying to fit it.  
 
-    Args:
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
-        Chebyschev_coeffiecients: Number of background parameters (integer)
+    Parameters:
+        hist (Object): GSAS-II powder diffraciton histogram
+        peaks_list (Array): list of 2theta locations to fit
+        Chebyschev_coeffiecients (Int): Number of background parameters 
+        peak_verify (List): **Set as an empty set?**
 
     """
     print("Fitting peaks\n")
@@ -291,12 +298,13 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
 
 def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     """
-    Subroutine to fit data using individual peak fitting, holding gamma value
+    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    Subroutine to fit data using individual peak fitting, but hold the gamma (Lorentzian) value fixed instead of trying to fit it.  
 
-    Args:
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
-        Chebyschev_coeffiecients: Number of background parameters (integer)
+    Parameters:
+        hist (Object): GSAS-II powder diffraciton histogram
+        peaks_list (Array): list of 2theta locations to fit
+        peak_verify (List): **Set as an empty set?**
 
     """
     print("Fitting peaks\n")
@@ -334,9 +342,10 @@ def fit_peaks_holdgam(hist, peaks_list, peak_verify):
 
 def fit_instprm_file(hist, peaks_list, Chebyschev_coeffiecients=5):
     """
+    **KEEP** Need to re-integrate into front end
     Subroutine to fit data using individual peak fitting to determine the instrument parameter file.
-
-    Args:
+    
+    Parameters:
         hist: GSAS-II powder diffraciton histogram
         peaks_list: list of 2theta locations to(numpy array)
         Chebyschev_coeffiecients: Number of background parameters (integer)
@@ -378,13 +387,16 @@ def fit_instprm_file(hist, peaks_list, Chebyschev_coeffiecients=5):
 
 def fit_background(DF, hist, peaks_list, sig_width=3):
     """
-    Subroutine to fit background data
+    Subroutine to fit background data and extract counts.  Used to determine the signal to noise and uncertainty in the peak fit.
 
-    Args:
-        DF: Merged datafile to append to
-        hist: GSAS-II powder diffraciton histogram
-        peaks_list: list of 2theta locations to(numpy array)
+    Parameters:
+        DF (DataFrame): Container for merged theoretical fit data
+        hist (Object): GSAS-II powder diffraciton histogram
+        peaks_list (Array): list of 2theta locations
         sig_width: number of standard deviations (width) of gaussian fit to use to extract background values. Default is 3 (99.73%)
+
+    Returns:
+        DF (DataFrame): Container for merged theoretical fit data with new columns: *"back_int_bound"* and *"signal_to_noise"*
 
     """
     back_counts_list=[]
@@ -432,9 +444,16 @@ def fit_background(DF, hist, peaks_list, sig_width=3):
 
 def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
     """
-    **ADD**
-    Still used?
-    CHECK - best structure?
+    **UPDATE**  Peak verification function.  Currently only checks if the intensity values are positive.  Some commented out checks for sigma, gamma, and position data. Still called in *compute*.
+
+    Parameters:    
+        t_pos (List): List of extracted 2-theta positions for the peak fit.
+        t_int (List): List of extracted intensities for the peak fit.
+        t_sigma (List): List of extracted sigma (Gaussian) widths for the peak fit.
+        t_gamma (List): List of extracted gamma (Lorentzian) widths for the peak fit.
+        
+    Returns
+        verify_list (List): Boolean values indicating the data is valid (True) or invalid (False)
     """
     verify_list = np.empty(t_pos.shape[0])
 
@@ -491,9 +510,13 @@ def create_verify_list(t_pos, t_int, t_sigma, t_gamma):
 
 def check_fit_success(Merged_Peaks_DF):
     """
-    **ADD**
-    May be duplicative of create_verify_list, but need to fix fitting loops
+    Checks several peak values to assign a Boolean if the fit was successful.  Marking peaks where the Le Bail and Peak fit values are different by a factor of 10x. 
     
+    Parameters:
+        Merged_Peaks_DF (DataFrame): Container for the peak data.
+ 
+    Returns:
+        Merged_Peaks_DF (DataFrame):  Container for the peak data.  New columns of *"Peak_Fit_Success_n_u_int"*, *"Peak_Fit_Success_n_int"*, *"Peak_Fit_Success_sig"*, *"Peak_Fit_Success_gam"*, *"Peak_Fit_Success_int"*, "Peak_Fit_Success_gam"
     """
     #breakpoint()
     
@@ -532,7 +555,7 @@ def check_fit_success(Merged_Peaks_DF):
 
 def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_coeffiecients=5):
     """
-    Subroutine to fit data using LeBail fitting, uses full pattern fitting for lattice parameters and sample displacement. Suggested order from Matthew Rowles (model 3), arXiv:2008.11046v4
+    Subroutine to fit data using LeBail fitting, uses full pattern fitting for lattice parameters and sample displacement. Treats each phase as an indpendent variable, so the peak widths are constrained together. The intensity of each peak is allowed to vary independently.  Suggested fitting order from Matthew Rowles (model 3), arXiv:2008.11046v4
 
     * **Model 3 Fit order**
     * 0) Set max cycles = 10
@@ -553,6 +576,9 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
         dataset_string (String): Name for the dataset
         dataset_index (Int): Counter for the dataset
         Chebyschev_coeffiecients: Number of background parameters (integer)
+    
+    Returns:
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, new keys *"Le_Bail_Peaks"*, *"Le_Bail_Data"*, *"Le_Bail_Scale"*
     """
     
     datadir=Submit_dict["File_Paths"]["Data_Directory"]
@@ -564,15 +590,10 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     json_data=Submit_dict["Phase_Info"]["Interaction_Parameters"]
     
     
-    #data_path_wrap = lambda fil: datadir + '/' + fil
-    #save_wrap = lambda fil: workdir + '/' + fil
-    
     print("Fitting entire pattern\n")
     
     # Create a new project to avoid collision
     gpx = G2sc.G2Project(newgpx=os.path.join(workdir,'LeBail_fit.gpx'))
-    
-
     
     # Read in phases
     for phase_file in cif_fnames:
@@ -583,17 +604,6 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
                                     os.path.join(datadir,instprm_fname),
                                     phases=gpx.phases(),databank=1, instbank=1)
 
-#    print("Histograms List: ")
-#    for i in gpx.histograms():
-#        print("Histogram Name: ", i.name)
-
-    ## NEED TO ADD PHASES TO GPX, better to do then add histogram
-    # otherwise:
-    #print("Link phases")
-    #for histogram in gpx.histograms():
-    #    for phase in gpx.phases():
-    #        gpx.link_histogram_phase(histogram, phase)
-    
 
     # Read sample displacement from data
     # Also could consider setting the number of background coefficients this way
@@ -704,24 +714,6 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     print("Sample Displacement Found")
     Submit_dict[dataset_string]["Flags"]=compute_results.flag_phase_fraction("{:.4f}".format(hist.data["Sample Parameters"]['Shift'][0]),"micrometers", "Le Bail Fit", "A sample displacement (shift) value was fit", "Check goniometer alignment if this value is large", DF_to_append=Submit_dict[dataset_string]["Flags"])
     
-    #flags_for_user_DF=compute_results.flag_phase_fraction(np.nan,
-    #"Sample Displacement","A sample displacement (shift) value of: "+"{:.4f}".format(hist.data["Sample Parameters"]['Shift'][0])+" um was fit",
-    #"Check goniometer alignment if this value is large",
-    # DF_to_append=flags_for_user_DF)
-
-    # Note the microstrain?
-    # Reflist has things in terms of sig and gam!
-    
-    ## Save new peak_list
-#                    for n, phase in enumerate(Rowles_proj.phases()):
-#                    #print("\n\nReflection List data: ", histogram.data["Reflection Lists"][phase.name]["RefList"])
-#                    #print(n)
-#                    t_peaks[phase.name] = pd.DataFrame(histogram.data["Reflection Lists"][phase.name]["RefList"])
-#                    
-#                    
-    # Just like in Theoretical Intensities, use Fcsq*Icorr for R
-
-
 
     # TO ADD
     # Save new lattice spacing?
@@ -741,16 +733,6 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
     # Also gpx.data() ?
     # In gpx.data(), the WgtFrac is given, parameter 'depSigDict'
     
-    
-    # Additional parameters to pull out
-    # mass, volume
-    # messages from the fitting
-    # weight fraction, convert?
-    # unit cell uncertinty (where?) - > values for A0 are reciprical metric tensors
-    #  But calculation doesn't work out as expected...
-    
-    # Seems like there's also a scaling factor somewhere?
-    
     # Save the cif files for reuse?
     
     return(Submit_dict)
@@ -760,19 +742,18 @@ def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_co
 
 ### Added for phase fraction calculations
 
-import scipy.optimize as opt
-import scipy.integrate as sciint
 def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     '''
-    Use a simple gaussian and linear fit to approximate the curves
+    **IN DEVELOPMENT** Use a simple gaussian and linear fit to approximate the curves
     Also use the edges of the gaussian to sum the counts with no peak structure assumed
     
-    **IN DEVELOPMENT**
     Parameters:
         Submit_dict (Dictionary): Container for calculation
         dataset_string (String): Name for the dataset
         dataset_index (Int): Counter for the dataset
 
+    Returns:
+        Submit_dict (Dictionary): Container for calculation. Inside each *"Dataset_<n>"* dictionary, new keys *"Gaussian_Data"*, *"Gaussian_Peaks"*
     '''
 
     TwoTheta_plot=[]
@@ -906,145 +887,33 @@ def fit_peaks_Gaussian(Submit_dict,dataset_string,dataset_index):
     print("Test Export")
     print(TwoTheta_plot)
     print(Gaussian_plot)
-#    breakpoint()
-#
-#    #psi30-phi0
-#    peak_list=[["A200",300,[1e7,50.5, .2, -3e4, 5e6],  5, int(10/0.02)  ],
-#               ["F200",1000,[1e8,65,  .2, -3e4, 5e6],   5, int(10/0.02)  ],
-#               ["A220",1450,[1e7,74.5,.2, -3e4, 5e6], 5, int(10/0.02)  ],
-#               ["F211",1900,[1e8,82.5,.2, -3e4, 5e6], 5, int(10/0.02)  ],
-#               ["A311",2300,[1e7,90.5,.2, -3e4, 5e6],  5, int(6/0.02)  ],
-#               ["A222",2650,[1e7,95.3,.4, -3e4, 5e6],   5, int(3/0.02)  ],
-#               ["F220",2700,[2e7,99,  .2, -3e4, 5e6], 5, int(10/0.02)  ],
-#               ["F310",3600,[5e8,116, .4, -3e4, 5e6], 5, int(12/0.02)  ]                     ]
-#
-#
-#
-#
-#    summary_DF=pd.DataFrame(columns=['Peak Name','Position','Fit Int','Data Int','Sigma','Background Int'])
-#
-#    for i in range(len(peak_list)):
-#
-#        peak_name=save_name_base+"_"+peak_list[i][0]
-#        print("Peak: ", peak_list[i][0])
-#        start_x=peak_list[i][1]
-#        initial_guess=peak_list[i][2]
-#        sigma_stop=peak_list[i][3]
-#        window_size=int(peak_list[i][4]*0.02)
-#        window=peak_list[i][4]
-#
-#
-#
-#    #########
-#
-#        # restrict data to an angular window (degrees 2 theta)
-#        data1D_DF_Deg_Window=data1D_DF.iloc[start_x:(start_x+window)]
-#
-#        baf.save_1D_plot_scatter(save_dir,(peak_name+"Deg_Win"),data1D_DF_Deg_Window,
-#                                title='{} Raw Data, {:d} deg range'.format(peak_name,window_size))
-#
-#        (popt_Deg_Window, pcov_Deg_Window)=baf.fit_gauss(data1D_DF_Deg_Window, initial_guess)
-#
-#        baf.save_1D_plot_fit(save_dir,(peak_name+"Deg_Win"),data1D_DF_Deg_Window, popt_Deg_Window,
-#                                title='{}Gaussian fit, {:d} deg range'.format(peak_name,window_size))
-#
-#        #breakpoint()
-#
-#        # restrict data further to a window bounded by Gaussian width
-#
-#        Sig_Window=np.where(np.logical_and(data1D_DF["Two Theta"]>=popt_Deg_Window[1]-sigma_stop*popt_Deg_Window[2],data1D_DF["Two Theta"]<=popt_Deg_Window[1]+sigma_stop*popt_Deg_Window[2]))
-#
-#        data1D_DF_Sig_Window=data1D_DF.iloc[Sig_Window]
-#
-#        baf.save_1D_plot_scatter(save_dir,(peak_name+"Sig_Win"),data1D_DF_Sig_Window,
-#                                title='{} Raw Data, {:d} sig range'.format(peak_name,sigma_stop))
-#
-#        #print("Sigma Window: \n", Sig_Window)
-#
-#        (popt_Sig_Window, pcov_Sig_Window)=baf.fit_gauss(data1D_DF_Sig_Window, popt_Deg_Window)
-#
-#        baf.save_1D_plot_fit(save_dir,(peak_name+"Sig_Win"),data1D_DF_Sig_Window, popt_Sig_Window,
-#                                title='{} Gaussian fit, {:d} sig range'.format(peak_name,sigma_stop))
-#
-#        # Only pick the left and right bounds
-#
-#        Sig_Left_Window=np.where(np.logical_and(data1D_DF["Two Theta"]>=popt_Deg_Window[1]-(sigma_stop)*popt_Deg_Window[2],data1D_DF["Two Theta"]<=popt_Deg_Window[1]-(sigma_stop-1)*popt_Deg_Window[2]))
-#
-#        Sig_Right_Window=np.where(np.logical_and(data1D_DF["Two Theta"]>=popt_Deg_Window[1]+(sigma_stop-1)*popt_Deg_Window[2],data1D_DF["Two Theta"]<=popt_Deg_Window[1]+(sigma_stop)*popt_Deg_Window[2]))
-#
-#        #print(Sig_Left_Window, Sig_Right_Window)
-#
-#        #print("Edge Window: \n", np.concatenate((Sig_Left_Window, Sig_Right_Window), axis=None))
-#
-#        data1D_DF_BG_Window=data1D_DF.iloc[np.concatenate(([Sig_Left_Window,Sig_Right_Window]), axis=None)]
-#
-#        baf.save_1D_plot_scatter(save_dir,(peak_name+"BG"),data1D_DF_BG_Window,
-#                                title='{} Raw Data, {:d} sig range'.format(peak_name,sigma_stop))
-#
-#        (popt_BG_Window, pcov_BG_Window)=baf.fit_background(data1D_DF_BG_Window, [popt_Deg_Window[3],popt_Deg_Window[4]] )
-#
-#
-#        baf.save_1D_plot_fit2(save_dir,(peak_name+"Sig_Win_BG"),data1D_DF_Sig_Window, popt_Sig_Window,popt_BG_Window,
-#                                title='{} Gaussian fit, {:d} sig range'.format(peak_name,sigma_stop))
-#            
-#
-#    #    baf.save_1D_plot_fit(save_dir,'test5',data1D_DF_Sig_Window,
-#    #                         [popt_Sig_Window[0],popt_Sig_Window[1],popt_Sig_Window[2],
-#    #                         popt_BG_Window[0],popt_BG_Window[1]],
-#    #                            title='Gaussian fit, {:d} sig range'.format(sigma_stop))
-#
-#
-#        summary_row=baf.fit_summary(data1D_DF_Sig_Window, popt_Sig_Window, popt_BG_Window)
-#        #print(summary_row)
-#        
-#        #breakpoint()
-#        
-#        summary_DF.loc[len(summary_DF)]=[peak_list[i][0]]+summary_row
-#
-#        #X=hist.data['data'][1][0][start_x:(start_x+window)]
-#        #Y=hist.data['data'][1][1][start_x:(start_x+window)]
-#        #
-#        #
-#        #plt.figure(figsize=[10,8])
-#        #plt.title('Raw Data, 10 deg range')
-#        #plt.scatter(X, Y,color='k',label='Data')
-#        ##plt.xlim(78,86)
-#        #plt.legend()
-#        #plt.show()
-#
-#
-#        #baf.background
-#
-#    print(summary_DF)
-#    
-    
+
     
     return(Submit_dict)
 
 
 
-# Irritatingly, there's no clean way to just fit a normal distribution without defining it...
 
-# See https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
-# https://stackoverflow.com/questions/76137714/trying-to-fit-a-gaussian-with-scipy
 
 
 ## Helper functions
 def background(x,  m, b):
     '''
-    Linear fit of XRD background data.  Using a small range, so a more advanced function is not needed.
+    Linear fit of XRD background data.  Using a small range, so a a function more advanced than linear is not needed.
     
     Parameters:   
         x: x axis of data
         m: slope of line
         b: constant value of line
+    
+    Returns:
+        Value of m*x + b
     '''
     return m*x + b
 
 def gauss(x, A,mu, sigma, m, b):
     '''
-    Combined Gaussian and linear fit of XRD background data.  Using a small range, so a more advanced function is not needed.
-    *Does not capture the Lorentzian tails well*
+    Combined Gaussian and linear fit of XRD background data.  Using a small range, so a more advanced function is not needed. **Does not capture the Lorentzian tails well** 
     
     Parameters:       
         x: x axis of data
@@ -1053,7 +922,16 @@ def gauss(x, A,mu, sigma, m, b):
         sigma: width of distribution
         m: slope of line
         b: constant value of line
+    
+    Returns:
+        Value of (A/(sigma*np.sqrt(2.0*np.pi)))*np.exp((-(x-mu)**2)/(2.0*sigma**2)) + m*x + b
     '''
+    
+    # Irritatingly, there's no clean way to just fit a normal distribution without defining it...
+
+    # See https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
+    # https://stackoverflow.com/questions/76137714/trying-to-fit-a-gaussian-with-scipy
+    
     return (A/(sigma*np.sqrt(2.0*np.pi)))*np.exp((-(x-mu)**2)/(2.0*sigma**2)) + m*x + b
 
 ###

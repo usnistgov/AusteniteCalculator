@@ -506,7 +506,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     json_data=Submit_dict["Phase_Info"]["Interaction_Parameters"]
 
     #############################
-    # Initialize a GSAS-II project
+    # Initialize a GSAS-II project via *G2sc.G2Project()*
     #############################
     gpx = G2sc.G2Project(newgpx=os.path.join(workdir,'pkfit.gpx'))
 
