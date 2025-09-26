@@ -878,7 +878,10 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     print(DF_merged_fit_theo)
     print(DF_merged_fit_theo.columns)
     Submit_dict[dataset_string]["Merged_Peaks"]=DF_merged_fit_theo
-    
+
+    # Add pipe symbol to break up html tables
+    Submit_dict[dataset_string]["Merged_Peaks"]['|']="|"
+
     # Checking fit success outside of fitting loop
     # FIX
     Submit_dict[dataset_string]["Merged_Peaks"] = fit.check_fit_success(Submit_dict[dataset_string]["Merged_Peaks"])
@@ -1768,14 +1771,14 @@ def create_summed_dataset(Submit_dict):
     
     # Drop string columns as they are not needed for averaging and cause issues
     # CHECK - do I still need to do this?
-    Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
+    Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.drop(columns=['Phase_TI','phase_LB','Phase','hkl','|'])
  
     # Add values for each dataset to the Merged_Peaks dataframe
     # Set values to zero if 'Peak_Fit_Success2'] == False
     for dataset in Submit_dict["File_Paths"]["Dataset_name"]:
         # Sum columns
         # Can't sum strings...
-        temp_DF = Submit_dict[dataset]['Merged_Peaks'].drop(columns=['Phase_TI','phase_LB','Phase','hkl'])
+        temp_DF = Submit_dict[dataset]['Merged_Peaks'].drop(columns=['Phase_TI','phase_LB','Phase','hkl','|'])
         
         # FIX - set rows/columns to zero if the fit was not successful
         #https://stackoverflow.com/questions/55321563/drop-pandas-row-by-name-keep-index-intact
@@ -1784,7 +1787,7 @@ def create_summed_dataset(Submit_dict):
         Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.add(temp_DF, fill_value=0)
 
     # Include string columns
-    Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.join(Submit_dict[dataset0]['Merged_Peaks'][['Phase_TI','phase_LB','Phase','hkl']])
+    Summed_Merged_Peaks_DF = Summed_Merged_Peaks_DF.join(Submit_dict[dataset0]['Merged_Peaks'][['Phase_TI','phase_LB','Phase','hkl','|']])
 
    
     # FIX - get a divide by zero error
@@ -1989,6 +1992,8 @@ def create_multi_dataset(Submit_dict):
     
     print("Exit create_multi_dataset")
     
+
+    
     return Submit_dict
 
 #################################
@@ -2122,11 +2127,12 @@ def package_for_export(Submit_dict):
         all_results[dataset_name]["phase_fraction_volume_html"]=Submit_dict[dataset_name]["Phase_Fraction_Result_Volume"].to_html(justify='left', index=False)
         
         # Summary of uncertainties, all normalized
-        all_results[dataset_name]["uncertainty_summary_html"]=Submit_dict[dataset_name]["Uncert_Source_Summary"].to_html(justify='left', index=False)
+        all_results[dataset_name]["uncertainty_summary_html"]=Submit_dict[dataset_name]["Uncert_Source_Summary"].to_html(justify='left', index=False, float_format=lambda x: '%.4f' % x)
  
+
         # Table for Uncertainty Metrics
         # FIX - figure out which ones and add more
-        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit','n_u_count_fit', 'u_int_fit','n_u_int_fit','u_int_LB','n_u_int_LB' ]].to_html(justify='left', index=False, float_format=lambda x: '%.4e' % x)
+        all_results[dataset_name]['Uncertainties_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl', 'u_pos_fit','u_int_fit','u_int_LB','|', 'n_u_count_fit', 'n_u_int_fit','n_u_int_LB','n_u_N_Diffracting_95pct']].to_html(justify='left', index=False, float_format=lambda x: '%.5f' % x)
         
         # Put uncertainties for each peak on this tab?
         # Or does that belong with the normalizied intensities?

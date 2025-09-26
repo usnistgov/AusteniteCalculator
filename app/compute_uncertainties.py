@@ -556,7 +556,7 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
     #### Add data to submission
         
-    Submit_dict[dataset]["Stan_Data"]=stan_data
+    #Submit_dict[dataset]["Stan_Data"]=stan_data
     Submit_dict[dataset]["MCMC_Data"] = fit.draws_pd()
     print("Raw MCMC fit Data")
     print(Submit_dict[dataset]["MCMC_Data"])
@@ -578,7 +578,7 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
     #mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
-    #breakpoint()
+    breakpoint()
     phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
 
     #### Convert results to mass and volume phase fractions
@@ -838,14 +838,18 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
     Submit_dict[dataset]["Uncert_Source_Summary"] = pd.DataFrame({
         'Phase':unique_phase_names,
         'Mean_n_int_fit':np.zeros(n_phase),
-        'Mean_sigma_exp':np.zeros(n_phase),
+        #'Mean_phase_mu':np.zeros(n_phase),  # values are similar, maybe confusing
+        'Median_phase_mu':np.zeros(n_phase),
+        #'Mean_sigma_exp':np.zeros(n_phase),  # values are similar, maybe confusing
+        'Median_sigma_exp':np.zeros(n_phase),
         'Median_n_u_count_fit':np.zeros(n_phase),
         'Median_n_u_int_fit':np.zeros(n_phase),
         'Median_n_u_N_Diffracting_95pct':np.zeros(n_phase)
     })
 
-    print(Submit_dict[dataset]["Uncert_Source_Summary"])
 
+
+    print(Submit_dict[dataset]["Uncert_Source_Summary"])
 
     # FIX for multiple samples
     #if multiple_samples:
@@ -874,6 +878,10 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
         
         # Should we add median phase_mu?
         
+        #Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_phase_mu'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['phase_mu[' + str(ii+1) + ']'].mean())
+
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_phase_mu'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['phase_mu[' + str(ii+1) + ']'].median())
+        
         # sigma_exp
         # ADD!
         
@@ -887,7 +895,10 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
         
         #Try as median since it will be less of an outlier
         #RENAME if we keep this
-        Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].median())
+        #Submit_dict[dataset]["Uncert_Source_Summary"]['Mean_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].mean())
+
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_sigma_exp'][ii]=float(Submit_dict[dataset]["MCMC_Data"]['sigma_exp[' + str(ii+1) + ']'].median())
+
 
 
         # median values
