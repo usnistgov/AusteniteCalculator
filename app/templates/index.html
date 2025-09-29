@@ -349,7 +349,69 @@
       <!-- Combined file creation tab -->
       <div class="tab-pane" id="file-creation-instrpm-json-tab">
         <br>
-        <button type="button" class="btn btn-primary" id="button-instprm-json">Download File</button>
+        <div class="container">
+          <div class="row mb-3">
+            <div class="col-4">
+              <label for="json-austenite">Austenite Values</label>
+              <input class="form-control" type="text" id="json-austenite" value="10,20,50">
+            </div>
+            <div class="col-4">
+              <label for="json-ferrite">Ferrite Values</label>
+              <input class="form-control" type="text" id="json-ferrite" value="10,20,50">
+            </div>
+            <div class="col-4">
+              <label for="json-beam-shape">Beam Shape</label>
+              <input class="form-control" type="text" id="json-beam-shape" value="circle">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-4">
+              <label for="json-beam-size">Beam Size</label>
+              <input class="form-control" type="text" id="json-beam-size" value="1">
+            </div>
+            <div class="col-4">
+              <label for="json-raster-x">Raster X</label>
+              <input class="form-control" type="text" id="json-raster-x" value="4">
+            </div>
+            <div class="col-4">
+              <label for="json-raster-y">Raster Y</label>
+              <input class="form-control" type="text" id="json-raster-y" value="4">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-4">
+              <label for="json-sample-displacement">Sample Displacement</label>
+              <input class="form-control" type="text" id="json-sample-displacement" value="0">
+            </div>
+            <div class="col-4">
+              <label for="json-l">L</label>
+              <input class="form-control" type="text" id="json-l" value="265">
+            </div>
+            <div class="col-4">
+              <label for="json-wf">WF</label>
+              <input class="form-control" type="text" id="json-wf" value="1">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-4">
+              <label for="json-hf">HF</label>
+              <input class="form-control" type="text" id="json-hf" value="1">
+            </div>
+            <div class="col-4">
+              <label for="json-hr">HR</label>
+              <input class="form-control" type="text" id="json-hr" value="70">
+            </div>
+          </div>
+
+        <br>
+        <button type="button" class="btn btn-primary" id="button-download-json">Download File</button>
+        </div>
+
+        
+        
       </div>
 
     <!-- Download Results Tab -->

@@ -39,15 +39,15 @@ function create_phase_fraction_value_table(all_results,div_id,conversion_type,da
     //const phase_fraction_value = all_results[dataset_name]["phase_fraction_number_html"];
     
     switch(conversion_type) {
-        case "number":
+        case "Number of Unit Cells":
             phase_fraction_value_html = all_results[dataset_name]["phase_fraction_number_html"];
             break;
         
-        case "mass":
+        case "Mass Fraction":
             phase_fraction_value_html = all_results[dataset_name]["phase_fraction_mass_html"];
             break;
 
-        case "volume":
+        case "Volume Fraction":
             phase_fraction_value_html = all_results[dataset_name]["phase_fraction_volume_html"];
             break;
     }

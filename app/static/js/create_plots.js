@@ -245,13 +245,13 @@ function createPhaseFractionPlot(all_results,div_id,which_conversion,dataset_nam
 
     let mcmc_res = null;
 
-    if(which_conversion == 'number') {
+    if(which_conversion == 'Number of Unit Cells') {
         mcmc_res = all_results[dataset_name]["phase_fraction_number_plot_data"];
     
-    } else if(which_conversion == 'mass') {
+    } else if(which_conversion == 'Mass Fraction') {
         mcmc_res = all_results[dataset_name]["phase_fraction_mass_plot_data"];
 
-    } else if(which_conversion == 'volume') {
+    } else if(which_conversion == 'Volume Fraction') {
         mcmc_res = all_results[dataset_name]["phase_fraction_volume_plot_data"];
     } else {
         return(null)
