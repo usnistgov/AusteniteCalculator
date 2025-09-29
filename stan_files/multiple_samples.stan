@@ -36,13 +36,13 @@ model {
     // latent effects
     for (ii in 1:N_samples) {
         for (jj in 1:N_phases) {
-            sample_effect[ii,jj] ~ normal(0,sigma_sample);
+            sample_effect[ii,jj] ~ normal(phase_mu[phase[jj]],sigma_sample);
         }
     }
     
     // observed values
     for (ii in 1:N) {
-        Y[ii] ~ normal(phase_mu[phase[ii]] + sample_effect[group[ii],phase[ii]],
+        Y[ii] ~ normal(sample_effect[group[ii],phase[ii]],
                        sqrt(sigma_exp[phase[ii]]^2 + u_int_fit[ii]^2 + u_int_count[ii]^2 + u_cryst_diff[ii]^2 ));
     }
 
