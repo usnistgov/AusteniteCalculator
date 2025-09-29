@@ -1,7 +1,7 @@
 
 let instprm_download_btn = document.getElementById("button-instprm-json");
 
-instprm_download_btn.addEventListener('click',getInstprmJsonFile);
+//instprm_download_btn.addEventListener('click',getInstprmJsonFile);
 
 async function getCrystFile() {
     // gather info to send to server for request
@@ -88,3 +88,37 @@ function downloadCSVFile(csv_data,file_name) {
 
     document.body.removeChild(temp_link); // remove the link
 }
+
+
+document.getElementById('button-download-json').addEventListener('click', () => {
+    // Collect values from inputs
+    const get = id => document.getElementById(id).value.trim();
+
+    const data = {
+        austenite_values: get('json-austenite'),
+        ferrite_values:   get('json-ferrite'),
+        beam_shape:       get('json-beam-shape'),
+        beam_size:        get('json-beam-size'),
+        raster_x:         get('json-raster-x'),
+        raster_y:         get('json-raster-y'),
+        sample_displacement: get('json-sample-displacement'),
+        L:                get('json-l'),
+        WF:               get('json-wf'),
+        HF:               get('json-hf'),
+        HR:               get('json-hr')
+    };
+
+    data.austenite_values = get('json-austenite').split(',').map(s => s.trim());
+    data.ferrite_values   = get('json-ferrite').split(',').map(s => s.trim());
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'params.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+});

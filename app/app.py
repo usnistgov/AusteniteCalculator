@@ -292,7 +292,7 @@ def download():
     if not temp_dir or not os.path.exists(temp_dir):
         return "No file to download", 404
     
-    zip_path = tempfile.mktemp(suffix=".zip", dir="/tmp")
+    zip_path = tempfile.mkstemp(suffix=".zip", dir="/tmp")
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(temp_dir):
