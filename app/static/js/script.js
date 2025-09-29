@@ -194,8 +194,8 @@ async function fetchData() {
         //let dsetName_PhaseFracTab = 'Dataset_'.concat(phase_fraction_dataset_plot_select.selectedIndex+1)
         let dsetName_PhaseFracTab = all_results.dataset_names[phase_fraction_dataset_plot_select.selectedIndex].toString();
 
-        createPhaseFractionPlot(all_results,'phase-fraction-plot','number',dsetName_PhaseFracTab);
-        create_phase_fraction_value_table(all_results,'pf-table','number',dsetName_PhaseFracTab);
+        createPhaseFractionPlot(all_results,'phase-fraction-plot','Number of Unit Cells',dsetName_PhaseFracTab);
+        create_phase_fraction_value_table(all_results,'pf-table','Number of Unit Cells',dsetName_PhaseFracTab);
         create_uncert_source_summary_table(all_results,'uncert-table',dsetName_PhaseFracTab);
         create_uncert_source_peak_table(all_results,'uncert-table',dsetName_PhaseFracTab);
 

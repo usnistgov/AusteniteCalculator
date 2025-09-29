@@ -578,7 +578,7 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
 
     #mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
-    breakpoint()
+    #breakpoint()
     phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
 
     #### Convert results to mass and volume phase fractions

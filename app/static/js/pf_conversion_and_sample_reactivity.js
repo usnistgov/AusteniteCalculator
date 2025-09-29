@@ -57,12 +57,15 @@ let conversion_select = document.getElementById("conversion-select");
 
 // below this needs to be changed ?
 phase_fraction_plots_dataset_select.addEventListener("change", function() {
-    dataset_name=all_results.dataset_names[this.selectedIndex].toString()
+    let dataset_name = all_results.dataset_names[this.selectedIndex].toString();
     
     let cs = document.getElementById('conversion-select');
     let conversion_option = cs.options[cs.options.selectedIndex].innerText;
-    //    let dsetName = 'Dataset_'.concat(this.selectedIndex+1)
     
+    console.log('dataset_name: ' + dataset_name);
+    console.log('cs: ' + cs);
+    console.log('conversion_option: ' + conversion_option);
+
     create_phase_fraction_value_table(all_results,'pf-table',conversion_option,dataset_name);
     createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
     create_uncert_source_summary_table(all_results,'uncert-table',dataset_name);
@@ -77,19 +80,7 @@ conversion_select.addEventListener("change", function() {
     
     //let dataset_name = 'Dataset_'.concat(phase_fraction_plots_dataset_select.selectedIndex+1)
     let dataset_name = all_results.dataset_names[phase_fraction_plots_dataset_select.selectedIndex].toString()
-    switch(conversion_option) {
-        case "Number of Unit Cells":
-            conversion_option = 'number';
-            break;
-        
-        case "Mass Fraction":
-            conversion_option = 'mass';
-            break;
 
-        case "Volume Fraction":
-            conversion_option = 'volume';
-            break;
-    }
     create_phase_fraction_value_table(all_results,'pf-table',conversion_option,dataset_name);
     createPhaseFractionPlot(all_results,'phase-fraction-plot',conversion_option,dataset_name);
     create_uncert_source_summary_table(all_results,'uncert-table',dataset_name);
