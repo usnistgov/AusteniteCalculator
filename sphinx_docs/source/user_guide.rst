@@ -53,6 +53,7 @@ Several sources of uncertainty have been considered, but not all are currently i
 **Planned**
 
 * Composition uncertainty
+* Type of fitting
 
 =========================
 Usage

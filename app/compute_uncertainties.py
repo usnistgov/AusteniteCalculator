@@ -847,7 +847,10 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
         'Median_n_u_N_Diffracting_95pct':np.zeros(n_phase)
     })
 
+    if Submit_dict["Phase_Info"]["Calculation_Type"]=="Multi":
+        Submit_dict[dataset]["Uncert_Source_Summary"]["sample_effect"]=np.zeros(n_phase)
 
+        # HOW to average the sample effect values, since it's a [sample, phase] array
 
     print(Submit_dict[dataset]["Uncert_Source_Summary"])
 
