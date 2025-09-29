@@ -579,6 +579,11 @@ def run_stan2_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fa
     #mcmc_df.drop(inplace=True,columns = mcmc_df.columns[mcmc_df.columns.str.contains("(__)|(effect)",regex=True)])
 
     #breakpoint()
+    
+    ## ADD TABLE WITH sample_effects, will need a blank table for single & summed
+    
+    # Display sample_effect per phase
+    
     phase_cols = Submit_dict[dataset]["MCMC_Data"].loc[:,Submit_dict[dataset]["MCMC_Data"].columns.str.contains("phase_mu")]
 
     #### Convert results to mass and volume phase fractions
@@ -847,7 +852,10 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
         'Median_n_u_N_Diffracting_95pct':np.zeros(n_phase)
     })
 
+    if Submit_dict["Phase_Info"]["Calculation_Type"]=="Multi":
+        Submit_dict[dataset]["Uncert_Source_Summary"]["sample_effect"]=np.zeros(n_phase)
 
+        # HOW to average the sample effect values, since it's a [sample, phase] array
 
     print(Submit_dict[dataset]["Uncert_Source_Summary"])
 
