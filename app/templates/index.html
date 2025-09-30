@@ -8,14 +8,23 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js" integrity="sha512-Aw/O5tGIneAFOqDUyrKBgoMFuUnM8AN+JIYAeG0anjDbCRCeyTY6S41Kvnp07K1pz7HSUNYe/a+a/Ub9raDHXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.0.3/math.js" integrity="sha512-lAVGwhTndbBUjJlN0Lq4BNuOP0lpuGA9OUCA9bxRZrsehpmkiv8BcYdp91ON3XqJHWmVURGTw1d1W3LCr1k/1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>  
+mark {
+  background-color: magenta;
+  color: black;
+}
+</style>
 </head>
 
 
 <body>
 
+
+
   <div class="container-fluid">
     <br>
     <h1>Austenite Calculator</h1>
+    <h5><mark>Alpha release: feature-incomplete and may contain errors.  Use with caution and/or external validation.</h5></mark>
     <br>
     <ul class="nav nav-tabs">
 
@@ -61,8 +70,7 @@
       <!-- About Tab -->
       <div class="tab-pane" id="about-tab">
         <br>
-        The Austenite Calculator is a super cool app.
-        It helps you estimate and quantify uncertainty of the various phases in your material.
+        The Austenite Calculator is a web based application to quantify phase fractions and associated uncertainties.
         <br>
         <h4>Version Summary (Only populated after running analysis)</h4>
         <div class="row">
@@ -367,44 +375,74 @@
 
           <div class="row mb-3">
             <div class="col-4">
-              <label for="json-beam-size">Beam Size</label>
+              <label for="json-beam-size">Beam Size (mm)</label>
               <input class="form-control" type="text" id="json-beam-size" value="1">
             </div>
             <div class="col-4">
-              <label for="json-raster-x">Raster X</label>
+              <label for="json-raster-x">Raster X (mm)</label>
               <input class="form-control" type="text" id="json-raster-x" value="4">
             </div>
             <div class="col-4">
-              <label for="json-raster-y">Raster Y</label>
+              <label for="json-raster-y">Raster Y (mm)</label>
               <input class="form-control" type="text" id="json-raster-y" value="4">
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-4">
-              <label for="json-sample-displacement">Sample Displacement</label>
+              <label for="json-sample-displacement">Sample Displacement (um)</label>
               <input class="form-control" type="text" id="json-sample-displacement" value="0">
             </div>
             <div class="col-4">
-              <label for="json-l">L</label>
+              <label for="json-l">L (mm)</label>
               <input class="form-control" type="text" id="json-l" value="265">
             </div>
             <div class="col-4">
-              <label for="json-wf">WF</label>
+              <label for="json-wf">W_F (mm)</label>
               <input class="form-control" type="text" id="json-wf" value="1">
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-4">
-              <label for="json-hf">HF</label>
+              <label for="json-hf">H_F (mm)</label>
               <input class="form-control" type="text" id="json-hf" value="1">
             </div>
             <div class="col-4">
-              <label for="json-hr">HR</label>
+              <label for="json-hr">H_R (mm)</label>
               <input class="form-control" type="text" id="json-hr" value="70">
             </div>
           </div>
+
+        <p>Variables:</p>
+
+        <ul>
+            <li>Austenite Values (comma separated):
+                <ul>
+                <li> The powder size in micrometers (um).
+                <li> The number of crystallites per particle.
+                <li> Rocking angle of a crystal (degrees).
+                <li> Optional: List of texture correction values (MRD). <b> Not currently supported, add after downloading</b>
+                </ul>
+            </li>
+            <li>Ferrite Values (comma separated):
+                <ul>
+                <li> The powder size in micrometers (um).
+                <li> The number of crystallites per particle.
+                <li> Rocking angle of a crystal (degrees).
+                <li> Optional: List of texture correction values (MRD).<b> Not currently supported, add after downloading</b>
+                </ul>
+            </li>
+            <li> beam_shape: Shape of the aperature of the incident x-ray. Options are "square" and "circle"</li><br>
+            <li> beam_size: Size of the aperature (mm). Diameter for circular beams, edge length for square beams. Currently does not account for beam divergence.</li>
+            <li> raster_x: Oscillation length in the diffractometer x direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.</li>
+            <li> raster_y: Oscillation length in the diffractometer y direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.</li><br>
+            <li> sample_displacement: distance (um) the sample surface is displaced from the focus center of the x-ray system.</li>
+            <li> L: Sample to x-ray source distance (mm).  Currently assumes that the sample to detector distance is equivalent.</li>
+            <li> W_F: Apparent width of the x-ray tube focus (mm). As these are often described as the slit width, they should be the same or similar to the the beam_size dimension.</li><br>
+            <li> H_F: Height of the x-ray tube focus (mm). As these are often described as the slit height, they should be the same or similar to the the beam_size dimension.</li>
+            <li> H_R: The smallest of either the height of the receiving slit or detector window (mm). For 2D detectors, H_R can often be calculated from the gamma term via the equation H_R=gamma*L.</li>
+        </ul>
 
         <br>
         <button type="button" class="btn btn-primary" id="button-download-json">Download File</button>

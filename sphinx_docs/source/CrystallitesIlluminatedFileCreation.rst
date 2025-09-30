@@ -26,6 +26,7 @@ Eight pieces of information are needed for the xray diffractometer geometry:
  - beam_size: Size of the aperature (mm). Diameter for circular beams, edge length for square beams. Currently does not account for beam divergence.
  - raster_x: Oscillation length in the diffractometer x direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.
  - raster_y: Oscillation length in the diffractometer y direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.
+ - sample_displacement: distance (um) the sample surface is displaced from the focus center of the x-ray system.
  - L: Sample to x-ray source distance (mm).  Currently assumes that the sample to detector distance is equivalent.
  - W_F: Apparent width of the x-ray tube focus (mm). As these are often described as the slit width, they should be the same or similar to the the beam_size dimension.
  - H_F: Height of the x-ray tube focus (mm). As these are often described as the slit height, they should be the same or similar to the the beam_size dimension.

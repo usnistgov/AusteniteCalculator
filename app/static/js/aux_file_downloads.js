@@ -92,24 +92,25 @@ function downloadCSVFile(csv_data,file_name) {
 
 document.getElementById('button-download-json').addEventListener('click', () => {
     // Collect values from inputs
+    // ADD cif file name to the form
     const get = id => document.getElementById(id).value.trim();
 
     const data = {
         austenite_values: get('json-austenite'),
         ferrite_values:   get('json-ferrite'),
         beam_shape:       get('json-beam-shape'),
-        beam_size:        get('json-beam-size'),
-        raster_x:         get('json-raster-x'),
-        raster_y:         get('json-raster-y'),
-        sample_displacement: get('json-sample-displacement'),
-        L:                get('json-l'),
-        WF:               get('json-wf'),
-        HF:               get('json-hf'),
-        HR:               get('json-hr')
+        beam_size:        Number(get('json-beam-size')),
+        raster_x:         Number(get('json-raster-x')),
+        raster_y:         Number(get('json-raster-y')),
+        sample_displacement: Number(get('json-sample-displacement')),
+        L:                Number(get('json-l')),
+        W_F:               Number(get('json-wf')),
+        H_F:               Number(get('json-hf')),
+        H_R:               Number(get('json-hr'))
     };
 
-    data.austenite_values = get('json-austenite').split(',').map(s => s.trim());
-    data.ferrite_values   = get('json-ferrite').split(',').map(s => s.trim());
+    data.austenite_values = get('json-austenite').split(',').map(s => s.trim()).map(Number);
+    data.ferrite_values   = get('json-ferrite').split(',').map(s => s.trim()).map(Number);
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
