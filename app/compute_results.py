@@ -1694,14 +1694,14 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     return Submit_dict
 
 #####################################
-def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
+def run_mcmc(Submit_dict,sum_checkbox,number_mcmc_runs):
 
     """
     If-else statements that choose the mcmc run, either "Single", "Multi", or "Summed"
     
-    * "Single" -> run *compute_uncertainties.run_stan2()*
-    * "Summed" -> create a summed dataset, then run *compute_uncertainties.run_stan2()* for each, 
-    * "Multi" -> for each run *compute_uncertainties.run_stan2()*,  *create_multi_dataset()*, then run as *compute_uncertainties.run_stan2_multi()*
+    * "Single" -> run *compute_uncertainties.run_stan()*
+    * "Summed" -> create a summed dataset, then run *compute_uncertainties.run_stan()* for each, 
+    * "Multi" -> for each run *compute_uncertainties.run_stan()*,  *create_multi_dataset()*, then run as *compute_uncertainties.run_stan_multi()*
 
     **RENAME**
 
@@ -1724,24 +1724,24 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
         # Create summed data
         Submit_dict=create_summed_dataset(Submit_dict)
 
-        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan(Submit_dict,sum_checkbox,int(number_mcmc_runs))
  
     # single file -> run as one_sample
     elif len(Submit_dict["File_Paths"]["Dataset_name"])==1 and sum_checkbox==False:
         Submit_dict["Phase_Info"]["Calculation_Type"]="Single"
-        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan(Submit_dict,sum_checkbox,int(number_mcmc_runs))
     
     # multiple files without sum button -> run as multiple_samples
     elif len(Submit_dict["File_Paths"]["Dataset_name"])>1 and sum_checkbox==False:
         Submit_dict["Phase_Info"]["Calculation_Type"]="Multi"
         # run individually to create MCMC input data
-        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan(Submit_dict,sum_checkbox,int(number_mcmc_runs))
         
         # Create input file for multiple samples
         Submit_dict=create_multi_dataset(Submit_dict)
         
         # Then create data for the multiple data from each
-        Submit_dict = compute_uncertainties.run_stan2_multi(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan_multi(Submit_dict,sum_checkbox,int(number_mcmc_runs))
 
     # likely need some type of additional error message here
     else:
@@ -1834,7 +1834,7 @@ def create_multi_dataset(Submit_dict):
     dataset0=Submit_dict["File_Paths"]["Dataset_name"][0]
 
     # Don't need merged peaks, but will need MCMC_Calc and which rows are dropped
-    # See run_stan2
+    # See run_stan
     
     #breakpoint()
 

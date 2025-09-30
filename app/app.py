@@ -203,7 +203,7 @@ def submit():
     print("####  Run MCMC")
     logger.info("Run MCMC")
     try:
-        Submission = compute_results.run_mcmc2(Submission,req['sumFiles'],number_mcmc_runs=1000)
+        Submission = compute_results.run_mcmc(Submission,req['sumFiles'],number_mcmc_runs=1000)
     except Exception as e:
         error_dict['mcmc'] = type(e).__name__ + ': ' + str(e)
 
