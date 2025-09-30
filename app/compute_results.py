@@ -56,23 +56,25 @@ def gather_example(example_name):
         json_data (String): Variable setting the json crystallite file and other xray interaction parameters.
     """
 
+    # Source files may have gone missing during GitHub stash and restoration
+    # need to change if to elif should this be restored
+#    if example_name == 'Example01':
+#        datadir = '../ExampleData/Example01'
+#        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+#        workdir = '../server_workdir'
+#        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
+#        instprm_fname = 'TestCalibration.instprm'
+#        json_fname = 'Example01.json'
+
     if example_name == 'Example01':
         datadir = '../ExampleData/Example01'
-        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
-        workdir = '../server_workdir'
-        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
-        instprm_fname = 'TestCalibration.instprm'
-        json_fname = 'Example01.json'
-
-    elif example_name == 'Example05':
-        datadir = '../ExampleData/Example05'
         #cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
         cif_fnames = ['ferrite-SRM487.cif','austenite-SRM487.cif']
         workdir = '../server_workdir'
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
-        #json_fname = 'Example05.json'
-        json_fname = 'Example05-switch.json'
+        json_fname = 'Example01.json'
+        #json_fname = 'Example05-switch.json'
 
     elif example_name == "Example06":
         datadir = '../ExampleData/Example06'

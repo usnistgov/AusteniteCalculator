@@ -33,7 +33,7 @@ Current limitations and assumptions
 
 * Absorbtion is similar between the phases
 * Spherical grain shapes
-* Reflection mode diffraction (not transmission)
+* Reflection mode diffraction **(transmission not currently supported)**
 * 2D detector gamma is not completely implemented
 
 --------------------------------
@@ -44,8 +44,8 @@ Several sources of uncertainty have been considered, but not all are currently i
 
 **Implimented**
 
-* Variation in normalized intensity
 * Variation between repeated measurements (samples)
+* Variation in normalized intensity
 * Uncertainty reported during fitting
 * Uncertianty from counting statistics
 * Uncertainty from the number of diffracting grains
