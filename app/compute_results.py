@@ -86,6 +86,15 @@ def gather_example(example_name):
         instprm_fname = 'E231208-AAC-660.instprm'
         json_fname = 'Example02-Neutron.json'
 
+    
+    elif example_name == "Example03-single":
+        datadir = '../ExampleData/Example03-single'
+        cif_fnames = ['austenite-QP.cif','ferrite-QP.cif']
+        workdir = '../server_workdir'
+        all_files = pd.Series(os.listdir(datadir))
+        xrdml_fnames = ['E241106-AAC-013-QP-psi0-phi0_norm_mask_1D_sum.csv']
+        instprm_fname = 'E240828-MRC-000.instprm'
+        json_fname = 'QP_A-EBSD.json'
 
     elif example_name == "Example06":
         datadir = '../ExampleData/Example06'
