@@ -852,8 +852,11 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
         'Median_n_u_N_Diffracting_95pct':np.zeros(n_phase)
     })
 
-    if Submit_dict["Phase_Info"]["Calculation_Type"]=="Multi":
-        Submit_dict[dataset]["Uncert_Source_Summary"]["sample_effect"]=np.zeros(n_phase)
+    if Submit_dict["Phase_Info"]["Calculation_Type"]=="Multi" and dataset=='Dataset_multi':
+        Submit_dict[dataset]["Uncert_Source_Summary"]['Median_sigma_sample']=np.zeros(n_phase)
+        
+        # Resort order
+        Submit_dict[dataset]["Uncert_Source_Summary"] = Submit_dict[dataset]["Uncert_Source_Summary"][['Phase', 'Mean_n_int_fit', 'Median_phase_mu', 'Median_sigma_sample', 'Median_sigma_exp', 'Median_n_u_count_fit', 'Median_n_u_int_fit', 'Median_n_u_N_Diffracting_95pct']]
 
         # HOW to average the sample effect values, since it's a [sample, phase] array
 
@@ -936,6 +939,9 @@ def generate_param_table2(Submit_dict,dataset,unique_phase_names):
     # FIX for multiple samples
     #if multiple_samples:
     #    param_table.loc[:,'Sample Variability'] = np.mean(mcmc_df['sigma_sample'])
+        if Submit_dict["Phase_Info"]["Calculation_Type"]=="Multi" and dataset=='Dataset_multi':
+            Submit_dict[dataset]["Uncert_Source_Summary"]['Median_sigma_sample'][ii]=Submit_dict[dataset]["MCMC_Data"]['sigma_sample'].median()
+    
 
     print("Uncertainty Source Summary")
     print(Submit_dict[dataset]["Uncert_Source_Summary"])
