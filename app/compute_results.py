@@ -157,7 +157,7 @@ def gather_example(example_name):
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
 #####################################
-def version_summary():
+def version_summary(release_name, version_number):
     """
     Collect various version information to populate the "About" tab in app.
     *The code will not throw an exception if it cannot retreive version information, but the version history will be set to None.*
@@ -188,8 +188,8 @@ def version_summary():
         # GSAS version
         GSAS_version=GSASIIpath.GetVersionNumber()
         
-        d = {'Version_Data': ["Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
-        'Values': [git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
+        d = {'Version_Data': ["Release Name", "Version Number", "Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
+        'Values': [release_name, version_number, git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
         
         version_DF = pd.DataFrame(data=d)
 

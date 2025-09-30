@@ -35,6 +35,11 @@ elif re.search('creuzige',os.getcwd()):
 import GSASIIscriptable as G2sc
 import GSASIIpath
 
+# Create an explicit version name and number
+# may need to sync with GitHub
+release_name='Alpha'
+version_number='0.1.0'
+
 # Use a specific version of GSAS-II for consistency
 ## Commenting out for now, GSAS svn server sometimes down
 
@@ -160,7 +165,7 @@ def submit():
     logger.info("Collecting Version information")
     
     try:
-        Submission["Version"] = compute_results.version_summary()
+        Submission["Version"] = compute_results.version_summary(release_name, version_number)
     except Exception as e:
         error_dict['Version'] = type(e).__name__ + ': ' + str(e)
 
