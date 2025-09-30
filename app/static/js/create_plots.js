@@ -479,7 +479,7 @@ function createIncidentAnglePlot(all_results,div_id,dataset_name,peak_index) {
     var data = [trace1,trace2,trace3,trace4 ];
 
     var layout = {
-        title: 'Incident X-ray and ',
+        title: 'Incident, Penetrating and Diffracting X-ray Paths',
         xaxis: {title: 'X [um]'},
         yaxis: {title: 'Z [um]'},
         aspectmode: "cube",

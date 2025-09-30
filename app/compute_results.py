@@ -76,6 +76,17 @@ def gather_example(example_name):
         json_fname = 'Example01.json'
         #json_fname = 'Example05-switch.json'
 
+    elif example_name == "Example02":
+        datadir = '../ExampleData/Example02'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+        workdir = '../server_workdir'
+        all_files = pd.Series(os.listdir(datadir))
+        xrdml_fnames = all_files.loc[all_files.str.contains('csv$')]
+        xrdml_fnames = xrdml_fnames.to_list()
+        instprm_fname = 'E231208-AAC-660.instprm'
+        json_fname = 'Example02-Neutron.json'
+
+
     elif example_name == "Example06":
         datadir = '../ExampleData/Example06'
         cif_fnames = ['alpha-prime-martensite-SRI.cif','epsilon-martensite-SRI.cif','austenite-SRI.cif']
