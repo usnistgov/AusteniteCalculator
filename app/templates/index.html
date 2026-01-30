@@ -8,14 +8,23 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js" integrity="sha512-Aw/O5tGIneAFOqDUyrKBgoMFuUnM8AN+JIYAeG0anjDbCRCeyTY6S41Kvnp07K1pz7HSUNYe/a+a/Ub9raDHXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.0.3/math.js" integrity="sha512-lAVGwhTndbBUjJlN0Lq4BNuOP0lpuGA9OUCA9bxRZrsehpmkiv8BcYdp91ON3XqJHWmVURGTw1d1W3LCr1k/1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>  
+mark {
+  background-color: magenta;
+  color: black;
+}
+</style>
 </head>
 
 
 <body>
 
+
+
   <div class="container-fluid">
     <br>
     <h1>Austenite Calculator</h1>
+    <h5><mark>Alpha release: feature-incomplete and may contain errors.  Use with caution and/or external validation.</h5></mark>
     <br>
     <ul class="nav nav-tabs">
 
@@ -61,14 +70,14 @@
       <!-- About Tab -->
       <div class="tab-pane" id="about-tab">
         <br>
-        The Austenite Calculator is a super cool app.
-        It helps you estimate and quantify uncertainty of the various phases in your material.
+        The Austenite Calculator is a web based application to quantify phase fractions and associated uncertainties.
         <br>
         <h4>Version Summary (Only populated after running analysis)</h4>
         <div class="row">
           <table id="version-table" class="table" style="white-space:nowrap"></table>
         </div>
-
+        <h4>Manual and User Guide </h4>
+        Follow the link to the <a href="/sphinx_docs/build/html/index.html"> manual and user guide </a>.
       </div>
 
 
@@ -80,10 +89,10 @@
 
           <span class="border-start">
           <h4>Step 1: Data Selection</h4>
-          <p>Use the buttons below to upload your .xrdml and .instprm files. Alternatively, click the "Use Default Files" button below to use a sample set of files.</p>
+          <p>Use the buttons below to upload your .xrdml and .instprm files. Alternatively, select one of the "Use Example Files" options below to see the results from an example set of files.</p>
 
           <div class="col-6">
-            <h6>Option 1: Upload Custom Files</h6>
+            <h5>Option 1: Upload Custom Files</h5>
 
             <div class="mb-3">
               <label for="xrdml-files" class="form-label">X-Ray Diffraction File (.csv, .xrdml, etc.)</label>
@@ -110,7 +119,7 @@
               <label class="form-check-label" for="sum_checkbox">Sum Individual Files?</label>
             </div>
 
-            <h6>Option 2: Use Example Files</h6>
+            <h5>Option 2: Use Example Files</h5>
 
             <div class="form-check">
               <input type="radio" class="form-check-input" id="radio1" name="default-file-radio" value="uploaded_files" checked>
@@ -118,19 +127,25 @@
             </div>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio2" name="default-file-radio" value="Example05">
-              <label class="form-check-label" for="radio2">Example 5 (Single Sample)</label>
+              <input type="radio" class="form-check-input" id="radio2" name="default-file-radio" value="Example01">
+              <label class="form-check-label" for="radio2">Example 01 (Single Sample)</label>
             </div>
 
             <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example09A_subset">
-              <label class="form-check-label" for="radio3">Example 09A (Multiple Samples)</label>
+              <input type="radio" class="form-check-input" id="radio3" name="default-file-radio" value="Example02">
+              <label class="form-check-label" for="radio3">Example 02 (Multiple Samples)</label>
             </div>
 
-            <div class="form-check">
-              <input type="radio" class="form-check-input" id="radio4" name="default-file-radio" value="Example99">
-              <label class="form-check-label" for="radio4">Example 99 (Testing)</label>
-            </div>
+<!-- Commented out for now-->
+<!--            <div class="form-check">-->
+<!--              <input type="radio" class="form-check-input" id="radio4" name="default-file-radio" value="Example03-single">-->
+<!--              <label class="form-check-label" for="radio3">Example 03 (Single XRD)</label>-->
+<!--            </div>-->
+
+<!--            <div class="form-check">-->
+<!--              <input type="radio" class="form-check-input" id="radio5" name="default-file-radio" value="Example99">-->
+<!--              <label class="form-check-label" for="radio4">Example 99 (Testing)</label>-->
+<!--            </div>-->
 
             <br>
           </div>
@@ -138,7 +153,8 @@
         </div>
 
         <br>
-
+        
+        <!-- CHECK where do these values get passed? -->
         <div class="row">
           <span class="border-start">
           <h4>Step 2: Statistical Inference Options</h4>
@@ -349,6 +365,7 @@
       <!-- Combined file creation tab -->
       <div class="tab-pane" id="file-creation-instrpm-json-tab">
         <br>
+        <h5> Crystallites Illuminated JSON File Creation </h5>
         <div class="container">
           <div class="row mb-3">
             <div class="col-4">
@@ -367,49 +384,81 @@
 
           <div class="row mb-3">
             <div class="col-4">
-              <label for="json-beam-size">Beam Size</label>
+              <label for="json-beam-size">Beam Size (mm)</label>
               <input class="form-control" type="text" id="json-beam-size" value="1">
             </div>
             <div class="col-4">
-              <label for="json-raster-x">Raster X</label>
+              <label for="json-raster-x">Raster X (mm)</label>
               <input class="form-control" type="text" id="json-raster-x" value="4">
             </div>
             <div class="col-4">
-              <label for="json-raster-y">Raster Y</label>
+              <label for="json-raster-y">Raster Y (mm)</label>
               <input class="form-control" type="text" id="json-raster-y" value="4">
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-4">
-              <label for="json-sample-displacement">Sample Displacement</label>
+              <label for="json-sample-displacement">Sample Displacement (um)</label>
               <input class="form-control" type="text" id="json-sample-displacement" value="0">
             </div>
             <div class="col-4">
-              <label for="json-l">L</label>
+              <label for="json-l">L (mm)</label>
               <input class="form-control" type="text" id="json-l" value="265">
             </div>
             <div class="col-4">
-              <label for="json-wf">WF</label>
+              <label for="json-wf">W_F (mm)</label>
               <input class="form-control" type="text" id="json-wf" value="1">
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-4">
-              <label for="json-hf">HF</label>
+              <label for="json-hf">H_F (mm)</label>
               <input class="form-control" type="text" id="json-hf" value="1">
             </div>
             <div class="col-4">
-              <label for="json-hr">HR</label>
+              <label for="json-hr">H_R (mm)</label>
               <input class="form-control" type="text" id="json-hr" value="70">
             </div>
           </div>
 
+        <p>Variables:</p>
+
+        <ul>
+            <li>Austenite Values (comma separated):
+                <ul>
+                <li> The powder size in micrometers (um).
+                <li> The number of crystallites per particle.
+                <li> Rocking angle of a crystal (degrees).
+                <li> Optional: List of texture correction values (MRD). <b> Not currently supported, add after downloading</b>
+                </ul>
+            </li>
+            <li>Ferrite Values (comma separated):
+                <ul>
+                <li> The powder size in micrometers (um).
+                <li> The number of crystallites per particle.
+                <li> Rocking angle of a crystal (degrees).
+                <li> Optional: List of texture correction values (MRD).<b> Not currently supported, add after downloading</b>
+                </ul>
+            </li>
+            <li> beam_shape: Shape of the aperature of the incident x-ray. Options are "square" and "circle"</li><br>
+            <li> beam_size: Size of the aperature (mm). Diameter for circular beams, edge length for square beams. Currently does not account for beam divergence.</li>
+            <li> raster_x: Oscillation length in the diffractometer x direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.</li>
+            <li> raster_y: Oscillation length in the diffractometer y direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.</li><br>
+            <li> sample_displacement: distance (um) the sample surface is displaced from the focus center of the x-ray system.</li>
+            <li> L: Sample to x-ray source distance (mm).  Currently assumes that the sample to detector distance is equivalent.</li>
+            <li> W_F: Apparent width of the x-ray tube focus (mm). As these are often described as the slit width, they should be the same or similar to the the beam_size dimension.</li><br>
+            <li> H_F: Height of the x-ray tube focus (mm). As these are often described as the slit height, they should be the same or similar to the the beam_size dimension.</li>
+            <li> H_R: The smallest of either the height of the receiving slit or detector window (mm). For 2D detectors, H_R can often be calculated from the gamma term via the equation H_R=gamma*L.</li>
+        </ul>
+
         <br>
         <button type="button" class="btn btn-primary" id="button-download-json">Download File</button>
         </div>
-
+        
+        <h5> Instrument Parameter File Creation </h5>
+        <b> Instrument file creation not currently supported </b> 
         
         
       </div>

@@ -56,23 +56,45 @@ def gather_example(example_name):
         json_data (String): Variable setting the json crystallite file and other xray interaction parameters.
     """
 
+    # Source files may have gone missing during GitHub stash and restoration
+    # need to change if to elif should this be restored
+#    if example_name == 'Example01':
+#        datadir = '../ExampleData/Example01'
+#        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+#        workdir = '../server_workdir'
+#        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
+#        instprm_fname = 'TestCalibration.instprm'
+#        json_fname = 'Example01.json'
+
     if example_name == 'Example01':
         datadir = '../ExampleData/Example01'
-        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
-        workdir = '../server_workdir'
-        xrdml_fnames = ['Gonio_BB-HD-Cu_Gallipix3d[30-120]_New_Control_proper_power.xrdml']
-        instprm_fname = 'TestCalibration.instprm'
-        json_fname = 'Example01.json'
-
-    elif example_name == 'Example05':
-        datadir = '../ExampleData/Example05'
         #cif_fnames = ['austenite-SRM487.cif','ferrite-SRM487.cif']
         cif_fnames = ['ferrite-SRM487.cif','austenite-SRM487.cif']
         workdir = '../server_workdir'
         xrdml_fnames = ['E211110-AAC-001_019-000_exported.csv']
         instprm_fname = 'BrukerD8_E211110.instprm'
-        #json_fname = 'Example05.json'
-        json_fname = 'Example05-switch.json'
+        json_fname = 'Example01.json'
+        #json_fname = 'Example05-switch.json'
+
+    elif example_name == "Example02":
+        datadir = '../ExampleData/Example02'
+        cif_fnames = ['austenite-Duplex.cif','ferrite-Duplex.cif']
+        workdir = '../server_workdir'
+        all_files = pd.Series(os.listdir(datadir))
+        xrdml_fnames = all_files.loc[all_files.str.contains('csv$')]
+        xrdml_fnames = xrdml_fnames.to_list()
+        instprm_fname = 'E231208-AAC-660.instprm'
+        json_fname = 'Example02-Neutron.json'
+
+    
+    elif example_name == "Example03-single":
+        datadir = '../ExampleData/Example03-single'
+        cif_fnames = ['austenite-QP.cif','ferrite-QP.cif']
+        workdir = '../server_workdir'
+        all_files = pd.Series(os.listdir(datadir))
+        xrdml_fnames = ['E241106-AAC-013-QP-psi0-phi0_norm_mask_1D_sum.csv']
+        instprm_fname = 'E240828-MRC-000.instprm'
+        json_fname = 'QP_A-EBSD.json'
 
     elif example_name == "Example06":
         datadir = '../ExampleData/Example06'
@@ -157,7 +179,7 @@ def gather_example(example_name):
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
 #####################################
-def version_summary():
+def version_summary(release_name, version_number):
     """
     Collect various version information to populate the "About" tab in app.
     *The code will not throw an exception if it cannot retreive version information, but the version history will be set to None.*
@@ -188,8 +210,8 @@ def version_summary():
         # GSAS version
         GSAS_version=GSASIIpath.GetVersionNumber()
         
-        d = {'Version_Data': ["Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
-        'Values': [git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
+        d = {'Version_Data': ["Release Name", "Version Number", "Git URL", "Git Branch", "Git Commit Hash", "Git Commit Oneline", "GSAS_version"],
+        'Values': [release_name, version_number, git_url, git_branch,git_commit_hash, git_commit_oneline, GSAS_version ]}
         
         version_DF = pd.DataFrame(data=d)
 
@@ -1694,14 +1716,14 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     return Submit_dict
 
 #####################################
-def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
+def run_mcmc(Submit_dict,sum_checkbox,number_mcmc_runs):
 
     """
     If-else statements that choose the mcmc run, either "Single", "Multi", or "Summed"
     
-    * "Single" -> run *compute_uncertainties.run_stan2()*
-    * "Summed" -> create a summed dataset, then run *compute_uncertainties.run_stan2()* for each, 
-    * "Multi" -> for each run *compute_uncertainties.run_stan2()*,  *create_multi_dataset()*, then run as *compute_uncertainties.run_stan2_multi()*
+    * "Single" -> run *compute_uncertainties.run_stan()*
+    * "Summed" -> create a summed dataset, then run *compute_uncertainties.run_stan()* for each, 
+    * "Multi" -> for each run *compute_uncertainties.run_stan()*,  *create_multi_dataset()*, then run as *compute_uncertainties.run_stan_multi()*
 
     **RENAME**
 
@@ -1724,24 +1746,24 @@ def run_mcmc2(Submit_dict,sum_checkbox,number_mcmc_runs):
         # Create summed data
         Submit_dict=create_summed_dataset(Submit_dict)
 
-        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan(Submit_dict,sum_checkbox,int(number_mcmc_runs))
  
     # single file -> run as one_sample
     elif len(Submit_dict["File_Paths"]["Dataset_name"])==1 and sum_checkbox==False:
         Submit_dict["Phase_Info"]["Calculation_Type"]="Single"
-        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan(Submit_dict,sum_checkbox,int(number_mcmc_runs))
     
     # multiple files without sum button -> run as multiple_samples
     elif len(Submit_dict["File_Paths"]["Dataset_name"])>1 and sum_checkbox==False:
         Submit_dict["Phase_Info"]["Calculation_Type"]="Multi"
         # run individually to create MCMC input data
-        Submit_dict = compute_uncertainties.run_stan2(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan(Submit_dict,sum_checkbox,int(number_mcmc_runs))
         
         # Create input file for multiple samples
         Submit_dict=create_multi_dataset(Submit_dict)
         
         # Then create data for the multiple data from each
-        Submit_dict = compute_uncertainties.run_stan2_multi(Submit_dict,sum_checkbox,int(number_mcmc_runs))
+        Submit_dict = compute_uncertainties.run_stan_multi(Submit_dict,sum_checkbox,int(number_mcmc_runs))
 
     # likely need some type of additional error message here
     else:
@@ -1834,7 +1856,7 @@ def create_multi_dataset(Submit_dict):
     dataset0=Submit_dict["File_Paths"]["Dataset_name"][0]
 
     # Don't need merged peaks, but will need MCMC_Calc and which rows are dropped
-    # See run_stan2
+    # See run_stan
     
     #breakpoint()
 

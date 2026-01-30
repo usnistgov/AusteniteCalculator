@@ -395,6 +395,10 @@ Data structures are described as a bulleted list using the structure: **Key Name
          * **sigma_exp[<n>]** Estimated uncertainty due to variation in normalized intensity by peak. Columns for each of the n phases
          * **phase_mu[<n>]** Estimated normalized intensity. Columns for each of the n phases
    
+         **For multiple_samples, the following keys are also included:**
+         
+         * **sigma_sample** Estimated uncertainty due to variation between datasets.  This value is shared for all phases.
+         * **sample_effect[<d>,<n>]** Variation noted between dataset <d> and phase <n>. 
    
    * **MCMC_Result_Number** *(DataFrame)* Columns for phase_mu[<n>], scaled to be the estimated phase fraction by number of unit cells
    * **MCMC_Result_Mass** *(DataFrame)* Columns for phase_mu[<n>], scaled to be the estimated phase fraction by mass of unit cells

@@ -89,16 +89,17 @@ function createFittedIntensityPlot(all_results,div_id,dataset_name) {
 
     // Gaussian fit
     // need different positions due to only fitting over windows
-    data.push({
-            x: all_results[dataset_name].Gaussian_fit_two_thetas,
-            y: all_results[dataset_name].Gaussian_fit,
-            //x: all_results[dataset_name].two_thetas,
-            //y: all_results[dataset_name].Gaussian_fit,
-            mode: 'lines+markers',
-            type: 'scatter',
-            name: 'Single Gaussian Fit',
-            color: customColorScale[2]
-        });
+    // Commented out for now to avoid confusion
+//    data.push({
+//            x: all_results[dataset_name].Gaussian_fit_two_thetas,
+//            y: all_results[dataset_name].Gaussian_fit,
+//            //x: all_results[dataset_name].two_thetas,
+//            //y: all_results[dataset_name].Gaussian_fit,
+//            mode: 'lines+markers',
+//            type: 'scatter',
+//            name: 'Single Gaussian Fit',
+//            color: customColorScale[2]
+//        });
 
 
     var layout = {
@@ -478,7 +479,7 @@ function createIncidentAnglePlot(all_results,div_id,dataset_name,peak_index) {
     var data = [trace1,trace2,trace3,trace4 ];
 
     var layout = {
-        title: 'Incident X-ray and ',
+        title: 'Incident, Penetrating and Diffracting X-ray Paths',
         xaxis: {title: 'X [um]'},
         yaxis: {title: 'Z [um]'},
         aspectmode: "cube",
