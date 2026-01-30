@@ -1,5 +1,6 @@
 
 let instprm_download_btn = document.getElementById("button-instprm-json");
+let json_download_btn = document.getElementById('button-download-json');
 
 //instprm_download_btn.addEventListener('click',getInstprmJsonFile);
 
@@ -90,7 +91,7 @@ function downloadCSVFile(csv_data,file_name) {
 }
 
 
-document.getElementById('button-download-json').addEventListener('click', () => {
+json_download_btn.addEventListener('click', () => {
     // Collect values from inputs
     const get = id => document.getElementById(id).value.trim();
 

@@ -95,7 +95,7 @@ async function fetchData() {
 
     console.log(radioValue.value);
 
-    const response = await fetch('/submit', {
+    const response = await fetch(document.getElementById('submit').dataset.url, {
         method:'POST',
         headers: {
             'Content-Type': 'application/json'

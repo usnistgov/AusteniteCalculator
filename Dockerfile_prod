@@ -27,11 +27,6 @@ WORKDIR /root/AustCalc/app/
 RUN mkdir /root/AustCalc/server_datadir
 RUN mkdir /root/AustCalc/server_workdir
 
-RUN sed -i 's/\/static/\/austenite-calculator\/static/g' ./templates/index.html
-# RUN sed -i "s/app\.route(\"\//app\.route(\"\/austenite-calculator\//g" ./app.py
-# RUN sed -i "s/app\.route(\"\/austenite-calculator\/\"/app\.route(\"\/\"/g" ./app.py
-RUN sed -i "s/\/submit/\/austenite-calculator\/submit/1" ./static/js/script.js
-
 EXPOSE 8050
 
 # flask (for dev)
