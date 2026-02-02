@@ -24,6 +24,9 @@ COPY ./ /root/AustCalc/
 
 WORKDIR /root/AustCalc/app/
 
+RUN rm -r /root/AustCalc/server_datadir
+RUN rm -r /root/AustCalc/server_workdir
+
 RUN mkdir /root/AustCalc/server_datadir
 RUN mkdir /root/AustCalc/server_workdir
 
