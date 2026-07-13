@@ -3,6 +3,8 @@
 *.lst
 */.DS_Store
 *.pickle
+*.tar.gz
+*.tar
 app/GenerateJson.py
 app/sample.json
 app/sample2.json
