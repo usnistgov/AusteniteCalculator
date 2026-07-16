@@ -8,6 +8,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 # curl, c++ toolchain, gsas
 RUN apt-get install curl -y
 RUN apt-get install build-essential -y
+RUN apt-get install libtbb-dev -y
 RUN apt-get install libglu1-mesa-dev -y 
 RUN apt-get install freeglut3-dev -y 
 RUN apt-get install mesa-common-dev -y

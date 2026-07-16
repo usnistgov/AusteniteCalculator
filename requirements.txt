@@ -1,12 +1,21 @@
-cmdstanpy
-flask
-gunicorn
-matplotlib
-numpy
-numpydoc
-pandas
-pandocfilters
-plotly
-pytest
-scipy
-sphinx
+# --- Base Utilities & Frameworks ---
+flask~=2.0.0
+werkzeug<3.0.0      # Force a compatible version of Flask's helper library
+gunicorn==20.1.0
+
+# --- Data Science & Math ---
+numpy~=1.23.2
+pandas~=1.5.0
+scipy~=1.9.0
+
+# --- Visualization & Plotting ---
+matplotlib~=3.6.0
+plotly~=5.9.0
+
+# --- Documentation & Formatting ---
+sphinx~=5.0.0
+pandocfilters~=1.5.0
+
+# --- Testing & CLI ---
+pytest~=7.1.0
+cmdstanpy~=1.0.0

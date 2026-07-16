@@ -1,0 +1,91 @@
+Docker (or really podman in this case, but I'll just say Docker) allows us to build isolated environments for our applications to run inside of.
+
+The workflow is 
+
+1. write a Dockerfile, which is the "blueprint" that governs what OS to use, what software to install, how to run the software, etc.
+2. build the Docker image, which involves actually installing software identified in the Dockerfile onto your system (managed by Docker)
+3. run a container, which starts a process running the software installed into the given image
+
+
+How to actually do this:
+
+
+1. Building the image from a Dockerfile:
+
+Navigate to the directory where your dockerfile is (root directory of the project). Then run,
+
+podman build -t aust_calc .
+
+This instructs podman to build an image named "aust_calc" using the dockerfile named "Dockerfile" in the directory "." (current working directory).
+
+(This will take a minute, as it needs to install gsas, python packages, stan, etc..)
+
+If you run
+
+podman images
+
+You should now see your image listed in your podman image repo.
+
+
+
+2. To run the container, run:
+
+podman run -p 8050:8050 --name my_container aust_calc
+
+This tells podman to run a container on port 8050 of your machine named "my_container" using the "aust_calc" image. If you navigate to localhost:8050, you should see the application running as expected.
+
+Of course, this only runs the container, and isn't helpful for debugging purposese. To do that, you can run:
+
+podman run -it -p 8050:8050 --name my_container aust_calc /bin/bash
+
+This should create a container (application not running yet though), and give you a terminal inside the container. You can then run the app with
+
+~/g2full/bin/python app.py
+
+to start the actual application. The advantage here is that you can navigate the python debugger, for instance. 
+
+Another thing that helps working with docker is to use "bind mounts" or "volumes", which lets the container read files *directly off of the host system* without having to rebuild the image each time you make edits. Unfortunately I've had issues with this on windows, but it may be an option if you're working directly on mac or linux. 
+
+You can see your current containers by running
+
+podman ps -a
+
+To remove a container, run 
+
+podman rm <container_name>
+
+Or 
+
+podman rm -f <container_name>
+
+If the container is actively running.
+
+
+
+3. Iteration and clean-up
+
+If you need to make a change to the Dockerfile (e.g., app needs newer version of pandas), you'll need to rebuild the image. You can do this by doing the same command as before, once you've saved your changes to the Dockerfile: podman build -t aust_calc .
+
+Now you'll have your new image, but also some sort of system space for your older image. To get rid of this, run
+
+podman image prune
+
+and you'll be prompted to clear up the space.
+
+If your old container is still running, you'll need to run
+
+podman ps -a
+
+to list out the containers, and then
+
+podman rm my_container
+
+Above, "my_container" was what I named the container in a previous step, so you may need to adjust that to your containers name. If your container is actively running, you'll need to do 
+
+podman rm -f my_container
+
+The -f flag "forces" the running container to be deleted.
+
+
+
+
