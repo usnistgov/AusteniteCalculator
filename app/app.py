@@ -18,6 +18,7 @@ import re
 import pickle
 import time
 import logging
+import traceback
 
 # user created
 import plot_utils
@@ -185,6 +186,7 @@ def submit():
     try:
         Submission = compute_results.compute_peak_fitting(G2sc, Submission)
     except Exception as e:
+        traceback.print_exc()
         error_dict['peak_fitting'] = type(e).__name__ + ': ' + str(e)
 
     print("\n****************************************\n",Submission.keys())

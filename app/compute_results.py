@@ -1210,6 +1210,7 @@ def calculate_aggregate_data(Submit_dict,dataset):
     agg_phase_fraction_cell=0
     agg_phase_fraction_vol=0
     agg_phase_fraction_mass=0
+    
     agg_composition=np.zeros(len(Submit_dict["Phase_Info"]["Unit_Cell"]['elem_fractions_dict'][0])) #use the first row
 
     print(Submit_dict[dataset]["Prelim_Phase_Fraction"].columns)
@@ -1712,7 +1713,7 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     #print("90% counts pos: ",percentile90_y)
     print("Interaction Graph Data")
     print(Submit_dict[dataset]["Interaction_Calc"])
-    #breakpoint()
+  
     return Submit_dict
 
 #####################################
@@ -1821,7 +1822,6 @@ def create_summed_dataset(Submit_dict):
     # FIX - Redo uncertainty calculations for number illuminated
 
     #print(Summed_Merged_Peaks_DF)
-    #breakpoint()
     
     # Append to records
     Submit_dict["File_Paths"]["Dataset_name"].extend(["Dataset_sum"])
