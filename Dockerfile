@@ -6,6 +6,7 @@ RUN apt-get update -y
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 # curl, c++ toolchain, gsas
+RUN apt-get install nano -y
 RUN apt-get install curl -y
 RUN apt-get install build-essential -y
 RUN apt-get install libtbb-dev -y
@@ -22,6 +23,13 @@ COPY ./requirements.txt /root/AustCalc/requirements.txt
 RUN /root/g2full/bin/pip install -r /root/AustCalc/requirements.txt
 RUN ~/g2full/bin/python3 -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 COPY ./ /root/AustCalc/
+
+# compile stan (in case of a different operating system)
+# DOES NOT CURRENTLY WORK
+# Fragile to version number
+RUN cd /root/.cmdstan/cmdstan-2.39.0/
+RUN make ~/AustCalc/stan_files/one_sample
+RUN make ~/AustCalc/stan_files/multiple_samples
 
 WORKDIR /root/AustCalc/app/
 

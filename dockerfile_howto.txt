@@ -1,6 +1,6 @@
 Docker (or really podman in this case, but I'll just say Docker) allows us to build isolated environments for our applications to run inside of.
 
-The workflow is 
+The workflow is:
 
 1. write a Dockerfile, which is the "blueprint" that governs what OS to use, what software to install, how to run the software, etc.
 2. build the Docker image, which involves actually installing software identified in the Dockerfile onto your system (managed by Docker)
@@ -9,54 +9,76 @@ The workflow is
 
 How to actually do this:
 
+0. Install Podman.
+
+Possible issues:
+If you use podman desktop, there may be a separate install for podman (command line)
+
+Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+Error: unable to connect to Podman socket: Get "http://d/v5.8.3/libpod/_ping": dial unix /var/folders/v9/ngxtw14j51df87wb0kzts7kc001758/T/storage-run-40104/podman/podman.sock: connect: no such file or directory
+
+> podman machine init
+> podman machine set --cpus 2 --memory 4096
+> podman machine start
+
 
 1. Building the image from a Dockerfile:
 
-Navigate to the directory where your dockerfile is (root directory of the project). Then run,
+Navigate to the directory where your dockerfile (file is named Dockerfile) is (root directory of the project).
 
-podman build -t aust_calc .
+Then run:
+
+> podman build -t aust_calc .
+
+Directory location for the docker image is set internally and hard to find.
 
 This instructs podman to build an image named "aust_calc" using the dockerfile named "Dockerfile" in the directory "." (current working directory).
 
-(This will take a minute, as it needs to install gsas, python packages, stan, etc..)
+(This will take a few minutes, as it needs to install gsas, python packages, stan, etc..)
 
-If you run
+If you run:
 
-podman images
+> podman images
 
-You should now see your image listed in your podman image repo.
+You should now see your image listed in your podman image repo. These should also appear in Podman Desktop as well.
 
 
 
 2. To run the container, run:
 
-podman run -p 8050:8050 --name my_container aust_calc
+> podman run -p 8050:8050 --name my_container aust_calc
 
 This tells podman to run a container on port 8050 of your machine named "my_container" using the "aust_calc" image. If you navigate to localhost:8050, you should see the application running as expected.
 
-Of course, this only runs the container, and isn't helpful for debugging purposese. To do that, you can run:
+Of course, this only runs the container, and isn't helpful for debugging purposese (like use of breakpoints). To do that, you can run:
 
-podman run -it -p 8050:8050 --name my_container aust_calc /bin/bash
+> podman run -it -p 8050:8050 --name my_container aust_calc /bin/bash
 
-This should create a container (application not running yet though), and give you a terminal inside the container. You can then run the app with
+This should create a container (application not running yet though), and give you a terminal inside the container. You can then run the app form inside the container with
 
-~/g2full/bin/python app.py
+> ~/g2full/bin/python app.py
 
-to start the actual application. The advantage here is that you can navigate the python debugger, for instance. 
+to start the actual application. The advantage here is that you can navigate the python debugger and navigate inside the container via command line, for instance.  You can't give the full path and be in a different directory...
 
-Another thing that helps working with docker is to use "bind mounts" or "volumes", which lets the container read files *directly off of the host system* without having to rebuild the image each time you make edits. Unfortunately I've had issues with this on windows, but it may be an option if you're working directly on mac or linux. 
+For the Stan files, if you build the images from a mac computer you will run into issue where the binaries do not work right on the linux image.  See the README.md file for instructions on how to compile.  Note that cmdstan is in a different location ( /root/.cmdstan/<version> ), so the paths will need to be adjusted accordingly.
+
+> cd /root/.cmdstan/cmdstan-2.39.0/
+> make ~/AustCalc/stan_files/one_sample
+> make ~/AustCalc/stan_files/multiple_samples
+
+Another thing that helps working with docker is to use "bind mounts" or "volumes", which lets the container read files *directly off of the host system* without having to rebuild the image each time you make edits. Unfortunately I've had issues with this on windows, but it may be an option if you're working directly on mac or linux.
 
 You can see your current containers by running
 
-podman ps -a
+> podman ps -a
 
-To remove a container, run 
+To remove a container, run
 
-podman rm <container_name>
+> podman rm <container_name>
 
-Or 
+Or
 
-podman rm -f <container_name>
+> podman rm -f <container_name>
 
 If the container is actively running.
 
@@ -64,28 +86,26 @@ If the container is actively running.
 
 3. Iteration and clean-up
 
-If you need to make a change to the Dockerfile (e.g., app needs newer version of pandas), you'll need to rebuild the image. You can do this by doing the same command as before, once you've saved your changes to the Dockerfile: podman build -t aust_calc .
+If you need to make a change to any of the files the Dockerfile uses (e.g., changed the code, app needs newer version of pandas), you'll need to rebuild the image. You can do this by doing the same command as before, once you've saved your changes to the Dockerfile:
+
+> podman build -t aust_calc .
 
 Now you'll have your new image, but also some sort of system space for your older image. To get rid of this, run
 
-podman image prune
+> podman image prune
 
 and you'll be prompted to clear up the space.
 
 If your old container is still running, you'll need to run
 
-podman ps -a
+> podman ps -a
 
 to list out the containers, and then
 
-podman rm my_container
+> podman rm my_container
 
-Above, "my_container" was what I named the container in a previous step, so you may need to adjust that to your containers name. If your container is actively running, you'll need to do 
+Above, "my_container" was what I named the container in a previous step, so you may need to adjust that to your containers name. If your container is actively running, you'll need to do
 
-podman rm -f my_container
+> podman rm -f my_container
 
 The -f flag "forces" the running container to be deleted.
-
-
-
-
