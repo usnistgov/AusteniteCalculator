@@ -28,6 +28,8 @@ Navigate to the directory where your dockerfile (file is named Dockerfile) is (r
 
 Then run:
 
+## Tag command seems broken.  > podman tag <image ID> aust_calc worked...
+
 > podman build -t aust_calc .
 
 Directory location for the docker image is set internally and hard to find.
