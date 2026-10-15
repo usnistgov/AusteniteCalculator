@@ -5,6 +5,7 @@
 *.pickle
 *.tar.gz
 *.tar
+*.DS_Store
 app/GenerateJson.py
 app/sample.json
 app/sample2.json
