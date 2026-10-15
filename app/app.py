@@ -56,7 +56,7 @@ logging.basicConfig(stream=log_buffer, level=logging.INFO)
 
 # set up app
 app = Flask(__name__)
-app.secret_key = "super_secret_key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
 @app.route("/",methods=['GET'])
 def index():
@@ -299,7 +299,8 @@ def download():
     if not temp_dir or not os.path.exists(temp_dir):
         return "No file to download", 404
     
-    zip_path = tempfile.mkstemp(suffix=".zip", dir="/tmp")
+    fd, zip_path = tempfile.mkstemp(suffix=".zip", dir="/tmp")
+    os.close(fd)  # mkstemp returns (fd, path); close the fd so ZipFile can open the path
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(temp_dir):
@@ -308,7 +309,7 @@ def download():
                 rel_path = os.path.relpath(abs_path, temp_dir)
                 zipf.write(abs_path, rel_path)
 
-    return send_file(zip_path, as_attachment=True, download_name="files.zip")
+    return send_file(zip_path, as_attachment=True, download_name="austenite_results.zip")
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0',port=8050,debug=True)
