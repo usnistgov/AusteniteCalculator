@@ -28,9 +28,11 @@ Navigate to the directory where your dockerfile (file is named Dockerfile) is (r
 
 Then run:
 
-## Tag command seems broken.  > podman tag <image ID> aust_calc worked...
+> podman build --platform=linux/amd64 --tag aust_calc .
 
-> podman build -t aust_calc .
+## Need to add platform type --platform=linux/amd64
+## -t Tag command seems broken. use --tag
+## > podman tag <image ID> aust_calc    will also work
 
 Directory location for the docker image is set internally and hard to find.
 
@@ -43,8 +45,6 @@ If you run:
 > podman images
 
 You should now see your image listed in your podman image repo. These should also appear in Podman Desktop as well.
-
-
 
 2. To run the container, run:
 

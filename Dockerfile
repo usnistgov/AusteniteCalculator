@@ -16,6 +16,7 @@ RUN apt-get install --no-install-recommends -y \
     freeglut3-dev \
     mesa-common-dev \
     libgtk2.0-0 \
+    python3-sphinx \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -L https://github.com/AdvancedPhotonSource/GSAS-II-buildtools/releases/download/v1.0.1/old_gsas2full-5786-Linux-x86_64.sh > /tmp/g2full.sh && \
@@ -36,6 +37,11 @@ RUN CMDSTAN_DIR=$(ls -d /root/.cmdstan/cmdstan-*/ | head -1) && \
     make /root/AustCalc/stan_files/one_sample && \
     make /root/AustCalc/stan_files/multiple_samples
 
+# create the help pages
+WORKDIR /root/AustCalc/sphinx_docs
+RUN make html
+
+# set up folders for data and results, clearing other files
 WORKDIR /root/AustCalc/app/
 
 RUN rm -rf /root/AustCalc/server_datadir /root/AustCalc/server_workdir && \

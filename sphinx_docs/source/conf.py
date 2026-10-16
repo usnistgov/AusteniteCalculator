@@ -15,7 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../app'))
+sys.path.insert(0, os.path.abspath('root/AustCalc/app'))
 
 
 # -- Project information -----------------------------------------------------
