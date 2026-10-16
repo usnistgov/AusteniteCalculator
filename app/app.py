@@ -19,6 +19,7 @@ import pickle
 import time
 import logging
 import traceback
+import shutil
 
 # user created
 import plot_utils
@@ -56,6 +57,13 @@ logging.basicConfig(stream=log_buffer, level=logging.INFO)
 
 # set up app
 app = Flask(__name__)
+# FLASK_SECRET_KEY MUST be set in the environment for any multi-worker deployment
+# (e.g. gunicorn with -w >1). The session cookie signs session["download_id"], and
+# each worker process must share the same key or a cookie written by one worker
+# cannot be read by another, which breaks /download. The random fallback below is
+# per-process, so it is only safe for single-process local/dev use. Do NOT hardcode
+# a secret here: it is supplied at deploy time via the container environment and is
+# intentionally not baked into the Dockerfile image.
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
 @app.route("/",methods=['GET'])
@@ -107,14 +115,22 @@ def submit():
     #### Choose datafiles to run and set paths
     print("####  Choose datafiles to run and set paths")
     logger.info("Choose datafiles to run and set paths")   
-    
+
+    # Create a unique per-request working/input area so concurrent requests (e.g.
+    # multiple gunicorn workers) cannot cross-contaminate each other's files.
+    # Mirrors the download-dir mkdtemp pattern below. Uploaded input files and the
+    # GSAS-II .gpx outputs share this one per-request dir; filenames do not collide
+    # within a single request. The dir is removed at the end of submit().
+    req_id = secrets.token_hex(6)
+    req_dir = tempfile.mkdtemp(prefix='req_' + req_id, dir="/tmp")
+
     # upload user files if indicated to do so
     if req['radioValue'] == 'uploaded_files':
 
         try:
-            datadir = '../server_datadir'
+            datadir = req_dir
             cif_fnames = list(req['fileUploads']['cif-file'].keys())
-            workdir = '../server_workdir'
+            workdir = req_dir
             xrdml_fnames = list(req['fileUploads']['xrdml-files'].keys())
             instprm_fname = list(req['fileUploads']['instprm-file'].keys())[0]
             json_fname = list(req['fileUploads']['cryst-illum-file'].keys())[0]
@@ -134,7 +150,7 @@ def submit():
 
     # otherwise, prepare an example file for analysis
     else:
-        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'])
+        datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname = compute_results.gather_example(req['radioValue'], req_workdir=req_dir)
 
 
     # Need to figure out how to merge crystal_data with phase info
@@ -256,9 +272,13 @@ def submit():
 
     timestamp=time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
 
-    with open('Submission'+timestamp+'.pickle', 'wb') as f:
+    # Write the compute-side pickles into the per-request dir with the unique
+    # per-request id in the name. The old code wrote 'Submission'+timestamp and
+    # 'Results'+timestamp into the process CWD, so two users in the same second
+    # collided and polluted the app directory. These are cleaned up with req_dir.
+    with open(os.path.join(req_dir, 'Submission_'+req_id+'.pickle'), 'wb') as f:
         pickle.dump(Submission, f, protocol=4)
-    with open('Results'+timestamp+'.pickle', 'wb') as f:
+    with open(os.path.join(req_dir, 'Results_'+req_id+'.pickle'), 'wb') as f:
         pickle.dump(all_results, f, protocol=4)
 
         # quick and dirty way to export all
@@ -278,6 +298,13 @@ def submit():
         pickle.dump(all_results, f, protocol=4)
 
     #breakpoint()
+
+    # Clean up the per-request working/input dir now that results are packaged and
+    # the download copies have been written to their own session_* dir (temp_dir).
+    # The /download route reads only from session["download_id"] (temp_dir), so
+    # removing req_dir does not affect downloads. ignore_errors keeps cleanup from
+    # turning a successful computation into a 500.
+    shutil.rmtree(req_dir, ignore_errors=True)
 
     return jsonify(all_results)
 
