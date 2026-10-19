@@ -1,5 +1,5 @@
-Example 05 - Withdrawn NIST SRM
-================================
+Example 01 - Withdrawn NIST 487 SRM
+==========================================
 
 =========================
 Background

@@ -1,12 +1,13 @@
 user_guide
 
+******************************
 User Guide
-=========================
+******************************
 
 
-=========================
+==============================
 Background
-=========================
+==============================
 
 In steel materials, several crystal structures or phases can be present.  These are referred to as 'ferrite' - a body centered cubic (BCC) structure, 'austenite' - a face centered cubic (FCC) structure, and 'martensite' - a body centered tetragonal (BCT) structure (but the degree of tetragonality can be small, and this structure is sometimes approximated as BCC).  The amount of each phase, and particularly the proportion of the austenite phase is often important for material properties such as tensile strength, elongation, and fatigue life.
 
@@ -16,17 +17,16 @@ There are several existing guides to phase fraction calculations, but each have 
 
 A round robin performed in 2009 by Jacques *et.* *al.* [Jacques-etal-2009]_ shows current challenges in measureing phase fractions in steels. The paper discusses results from 6 different technqiues.  Even restricting to the x-ray diffraction (XRD) results, large variations between measurements are observed.  When provided in the paper, the uncertainty estimates are much smaller than the range of values.  Examining the summary of experimental procedures, there was also signficant variation in the x-ray wavelength, number of diffraction peaks measured, sample preparation, and analysis methods.
 
-The 'Austenite Calculator' application was developed to offer a more expansive characterization of the uncertainty in phase fraction measurements.  While the application was primarily developed to address the austenite phase fraction in steels, other phase fractions should be possible. This work was inspired by similar efforts of at NIST in developing the web applications 'NIST Consensus Builder' [NIST-ConsensusBuilder-webpage]_ and 'NIST Uncertainty Machine' [NIST-UncertaintyMachine-webpage]_, [Lafarge-Possolo-2015]_.
+The 'Austenite Calculator' application was developed to offer a more expansive characterization of the uncertainty in phase fraction measurements.  While the application was primarily developed to address the austenite phase fraction in steels, other phase fractions should be possible. This work was inspired by similar efforts of at NIST in developing the web applications such as the 'NIST Consensus Builder' [NIST-ConsensusBuilder-webpage]_ and 'NIST Uncertainty Machine' [NIST-UncertaintyMachine-webpage]_, [Lafarge-Possolo-2015]_.
 
  
-
-===========================
-Details of Implementation
-===========================
-
 .. note::
     There are several ways to express phase fractions.  The default in GSAS-II is to describe the phase fraction as a fraction of unit cells.  In metallurgy, phase fraction is often described as a mass fraction (wt %), where the mass of each unit cell is used to determine a phase fraction.  Alternatively, phase fraction can be also expressed as a volume fraction, where the volume of each unit cell is used to determine a phase fraction.
 
+
+==============================
+Details of Implementation
+==============================
 -------------------------------------
 Current limitations and assumptions
 -------------------------------------
@@ -55,36 +55,34 @@ Several sources of uncertainty have been considered, but not all are currently i
 * Composition uncertainty
 * Type of fitting
 
-=========================
+==============================
 Usage
-=========================
+==============================
+
 
 
 ----------------------
 Fitting details
 ----------------------
-Le Bail fitting of individual peaks
+Le Bail fitting (common sig/gam)whole pattern and Individual Peak fits (fit sig/gam)
 Peak selection
 Which parameters are fit
 Order of parameters fit
 
 
-=========================
+==============================
 Examples
-=========================
+==============================
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
    Example01
-   Example01A
-   Example05
-   
 
-=========================
+==============================
 References
-=========================
+==============================
 .. Using Zotero Quick Copy and Chicago Manual of Style 17th edition (author-date)
     Remove all spaces and replace with hyphens
     Place in alphabetical order

@@ -3,25 +3,28 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+##########################################################
 Welcome to the documentation for the AusteniteCalculator!
 ##########################################################
 
 The Austenite Calculator is designed to provide an estimate of the phase fraction in steel materials and the uncertainty in that estimate. While the initial implimentation and testing has focused on steels, this application should accept any phase information.
 
+##########################################################
+User guide and additional documentation
+##########################################################
 
-==========================================
-Release History
-==========================================
-* In development, not yet officially released.
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   user_guide
+   overview
 
 
-==========================================
-Change Log
-==========================================
 
-==========================================
+##########################################################
 Software and functions used
-==========================================
+##########################################################
 
 The code for the Austenite Calculator is available on GitHub: [Austenite-Calculator-github]_.  This software builds on the GSAS-II diffraction analysis package [Toby-2013]_ [GSAS-II-github]_, using the *GSASIIscriptable* module. JavaScript is used to render the plots, and Docker is used as a container.
 
@@ -48,30 +51,32 @@ The code for the Austenite Calculator is available on GitHub: [Austenite-Calcula
    InstrumentFileCreation
 
 ==========================================
-User guide and additional documentation
-==========================================
-
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
- 
-   user_guide
-   DataStructure
-   app
-   compute_results
-   compute_uncertainties
-   fit
-
-
 Indices and tables
-==================
+==========================================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
 
+
+##########################################################
+History & License
+##########################################################
+
+==========================================
+Release History
+==========================================
+* 0.0.0 Alpha release
+
+
+==========================================
+Change Log
+==========================================
+
+
+==========================================
 License
-==================
+==========================================
 
 
 
