@@ -47,4 +47,9 @@ EXPOSE 8050
 # CMD ["/root/g2full/bin/python3","app.py"]
 
 # gunicorn (for prod)
-CMD ["/root/g2full/bin/gunicorn","-w","1","-b","0.0.0.0:8050","app:app"]
+# -w 4: the app is now concurrency-safe (each request isolates its input/work/output
+# files in a per-request temp dir), so multiple workers no longer cross-contaminate
+# user data. Each worker runs a heavy GSAS-II peak fit + Stan MCMC, so this is CPU/
+# memory intensive — size worker count to the host, and ensure FLASK_SECRET_KEY is
+# set in the environment so session cookies (used by /download) work across workers.
+CMD ["/root/g2full/bin/gunicorn","-w","4","-b","0.0.0.0:8050","app:app"]
