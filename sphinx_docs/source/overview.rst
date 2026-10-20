@@ -10,7 +10,7 @@ The application loads as a single webpage with 9 separate tabs.  The default tab
 About
 ==============================
 
-The 'About' tab provides a table with the 'Version Summary' for the application, and a link to the Manual and User Guide.  The version data contains information about the Austenite Calculator release and git history, as well as the GSAS version
+The 'About' tab provides a table with the 'Version Summary' for the application, and a link to the 'Manual and User Guide'.  The 'Version Summary' contains information about the Austenite Calculator release and git history, as well as the GSAS version. This is mainly provided for diagnostics and consistency check.  
 
 ==============================
 Data Upload
@@ -63,32 +63,56 @@ The table 'Phase Fraction Values (select units)' and plot 'Phase Fraction Histog
 
 
 Two additional tables 'Sources of Uncertainty (scaled by normalized intensity)' and 'Sources of Uncertainty (per peak, Exponential Notation)' are shown below the plot. Table 'Sources of Uncertainty (scaled by normalized intensity)' has columns:
+
 * 'Mean_n_int_fit' - the mean value for the normalized intensity as shown in the 'Normalized Intensity' tab
 * 'Median_phase_mu' - median value for the normalized intensity from the MCMC calculation.  This should be close to the 'Mean_n_int_fit' value.
-* 'Median_sigma_exp' - median value of the      Median_n_u_count_fit     Median_n_u_int_fit     Median_n_u_N_Diffracting_95pct
+* 'Median_sigma_sample' (multiple samples only) - median value of the uncertainty between samples when multiple samples were analyzed
+* 'Median_sigma_exp' - median value of the uncertainty in normalized intensity between peaks
+* 'Median_n_u_count_fit' - median value of the uncertainty in counts based on the number of intensity counts reported the individual peak fit
+* 'Median_n_u_int_fit' - median value of the uncertainty in intensity fit reported during the individual peak fit
+* 'Median_n_u_N_Diffracting_95pct' - median value of the uncertainty based on the number of crystallites diffracting
 
-scales the sources of uncertainty to the median phase
+.. note::
+    The largest values bewteen the 4 (or 5 for multiple samples) columns of uncertainty metrics are the sources of uncertainty that are dominating the phase fraction uncertainty.
 
 
+The table 'Sources of Uncertainty (per peak, Exponential Notation)' shows the uncertainties calculated for each peak (when available).  The left side of the table shows uncertainties in position and intensity for the individual peak fit (_fit) and Le Bail (_LB) fits. The right side of the table shows the uncertainty based on the counts (_count_), the fitting of the intensity value (_int_), and number of crystallites diffracting at the 95% depth. (_N_Diffracting_95pct_).
 
-
+.. note::
+    Each of the values in this table are different for each peak, but only the median value for each phase is used for the phase fraction uncertainty. If there are significant outliers in the values for a particular peak, the uncertainty may be underestimated.
 
 
 ==============================
 Crystallites Illuminated
 ==============================
 
+On the 'Crystallites Illuminated' tab, there is one table and two plots. Use 'Which Dataset' pulldown menu to select each dataset. Below the 'Interaction Volume Table' there's a second pulldown menu 'Select Peak Index' to select a particular peak for the two plots: 'Z Depth Histogram Plot' and 'Incident Angle Plot'.  The majority of this data is calculated based on the provided 'Crystallites Illuminated JSON (.json)' file.
+
+The 'Interaction Volume Table' lists the peaks in the analysis range in increasing order of two theta by phase and hkl.  The peak index used in 'Select Peak Index' is shown on the left and right of the table.
+
+Working from right to left, the column '95pct_Escaped_Depth_um' lists the estimated maximum distance into the material where 95% of the x-rays that have diffracted and escaped the reach the sample surface (not absorbed after diffracting).  The 95% depth is likely an upper bound for the maximum depth.  The 'Z Depth Histogram Plot' shows a histogram of the escaped x-rays and provides lines for the 68% and 50% depths.  Column 'l_bar_um' is the 'mean lineal intercept length' in micrometers per ASTM E112 through a spherical particle, and 'Powder_Size_um' is the diameter of a sphere either representing a mean grain size or powder size.
+
+Returning to the right side of the table, comparison of the 'l_bar_um' and '95pct_Escaped_Depth_um' determines the number of layers 'N_Layers_95pct' that are illuminated.  Details included in the 'Crystallites Illuminated JSON (.json)' file set the area that is illuminated, and based on these values, the 'N_Layers_95pct', 'Powder_Size_um', and preliminary values for the phase fraction determine the number of crystallites illuminated 'N_illuminated_95pct'.  Further information in the 'Crystallites Illuminated JSON (.json)' file determine the fraction of grains that are likely to be in the diffraction condition 'Diffracting_Fraction', which then sets the number of grains diffracting 'N_Diffracting_95pct'.  Uncertainties used in 'n_u_N_Diffracting_95pct' are based on the Poisson's count uncertainty of 'N_Diffracting_95pct' and scaled by the normalized intensity value.
+
+In addition to the 'Z Depth Histogram Plot', a schematic 'Incident Angle Plot' is shown to illustrate the directions of the incident, diffracting, and penetrating x-rays.  As the peak is varied, the geometry changes based on the two theta, to show why some of the values of the 'Interaction Volume Table' will vary as a function of hkl.
 
 ==============================
 File Creation
 ==============================
+
+This tab has sections 'Crystallites Illuminated JSON File Creation' and 'Instrument Parameter File Creation'  In 'Crystallites Illuminated JSON File Creation', there's 11 boxes of data to enter with the relevant parameters from the particular sample and diffraction system used. A description of the values needed for each box is listed on this tab for reference.
+
+It may not be possible to know exact values for each of these.  **GUIDANCE**
 
 
 ==============================
 Error Log
 ==============================
 
+This tab has sections 'Error log' and 'Server Log'.  If the code executes properly, 'Error log' should be blank.  If not, the error log may have useful hints on what went wrong.  If you are unable to solve the issue, contact the developers for assistance.  Copies of the log and files are most helpful to reproduce the issue.  Similarly, the 'Server Log' is mainly included for diagnostics.
 
 ==============================
 Download Results
 ==============================
+
+This tab has a button 'Download Results' to save the complete analysis results.  The file is .zip file that contains several python 'pickle' files as a storage container.
