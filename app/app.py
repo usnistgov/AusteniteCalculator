@@ -29,8 +29,11 @@ if platform.system() == 'Linux':
     sys.path.insert(0,'/root/g2full/GSAS-II/GSASII/')
     inside_docker = True
 
+#elif re.search('creuzige',os.getcwd()):
+#    sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
+
 elif re.search('creuzige',os.getcwd()):
-    sys.path.insert(0, '/Users/creuzige/gsas2full/envs/gsas-AustCalc/GSASII/')
+    sys.path.insert(0, '/Users/creuzige/g2full-5786/GSAS-II/GSASII')
 
 
 import GSASIIscriptable as G2sc
