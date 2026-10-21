@@ -182,7 +182,7 @@ def gather_example(example_name):
 def version_summary(release_name, version_number):
     """
     Collect various version information to populate the "About" tab in app.
-    *The code will not throw an exception if it cannot retreive version information, but the version history will be set to None.*
+    *The code will not throw an exception if it cannot retrieve version information, but the version history will be set to None.*
 
     Returns:
         version_DF (DataFrame):DataFrame with summary version information on GSAS and git commits
@@ -228,7 +228,7 @@ def version_summary(release_name, version_number):
 def compute_cell_density(Submit_dict):
 
     """
-    Calculates the mass, density, scattering, and absorbtion of each unit cell based on the element information and volume of the cell based on each of the CIF files provided.  
+    Calculates the mass, density, scattering, and absorption of each unit cell based on the element information and volume of the cell based on each of the CIF files provided.  
     
     Used to convert the phase fraction between number of unit cells, mass of unit cells, and volume of unit cells
     
@@ -380,7 +380,7 @@ def compute_cell_density(Submit_dict):
 #####################################
 def findMu(singular_elem_details, wavelengths, pack_fraction, cell_volume):
     '''
-    Find the absorbtion coefficient (mu) for each phase.  From GSAS-II functions.
+    Find the absorption coefficient (mu) for each phase.  From GSAS-II functions.
     
     Called from *compute_cell_density*
     
@@ -477,7 +477,7 @@ def compute_peak_fitting(G2sc,Submit_dict):
     return Submit_dict
 
 #####################################
-#### compute_peak_fitting() Utility Fuctions #####
+#### compute_peak_fitting() Utility Functions #####
 #####################################
 
 
@@ -566,7 +566,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
    
 
     ########################################
-    # Caculate the theoretical intensities via get_theoretical_intensities()
+    # Calculate the theoretical intensities via get_theoretical_intensities()
     ########################################
     print("\n\n Calculate Theoretical Intensities\n")
 
@@ -929,7 +929,7 @@ def compute(G2sc, Submit_dict, dataset_string, dataset_index):
     return Submit_dict
 
 #####################################
-#### compute() Utility Fuctions #####
+#### compute() Utility Functions #####
 #####################################
 
 #####################################
@@ -1101,7 +1101,7 @@ def get_phase(cif_wrap, phase_fname, project):
 #####################################
 def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
     """
-    Use conventional mean and standard deviation caculations to provide a preliminary estimate of the phase fraction. Values are used in the crystallites illuminated calculation before doing mcmc uncertainty analysis. Values are rounded for display.  
+    Use conventional mean and standard deviation calculations to provide a preliminary estimate of the phase fraction. Values are used in the crystallites illuminated calculation before doing mcmc uncertainty analysis. Values are rounded for display.  
 
     Args:
         Submit_dict (Dictionary): Container for calculation
@@ -1193,7 +1193,7 @@ def calculate_prelim_phase_fraction(Submit_dict, dataset_string):
 #####################################
 def calculate_aggregate_data(Submit_dict,dataset):
     """
-    Based on of the preliminary phase fractions, caculate aggregate values for the phase fraction (should equal 1), anomolous scattering (f_prime), absorbtion (f_doubleprime), and linear attenuation (mu_cm) in units of cm^-1   
+    Based on of the preliminary phase fractions, calculate aggregate values for the phase fraction (should equal 1), anomalous scattering (f_prime), absorption (f_doubleprime), and linear attenuation (mu_cm) in units of cm^-1   
     
     Args:
         Submit_dict (Dictionary): Container for calculation
@@ -1550,13 +1550,13 @@ def create_cry_ill_graph_data(Submit_dict,dataset):
     * Set assumed parameters for plots
     * Set values at endpoints of each step
     * Find midpoint values of each step
-    * Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or aborbed (f'')
+    * Calculate how many photons get scattered (f_0_Peak), anomalous scattering (f'), or absorbed (f'')
     * Calculate how many ares scattered, but not absorbed on return to the surface (escaped)
     * Find Centroid, 50%, 68%, and 95% depths
-    * Return values as a dictinoary and list for json export
+    * Return values as a dictionary and list for json export
     
     FIX - needs aggregate data for absorption, not just one phase.
-    CHECK - SRM example should have similar centriods for first peaks
+    CHECK - SRM example should have similar centroids for first peaks
     
     Args:
         Submit_dict (Dictionary): Container for calculation
@@ -2206,7 +2206,7 @@ def prep_mcmc():
     """
     **EMPTY** looks like it has notes on creation, but nothing coded
     
-    Pull aggregate data from the peak fits to populate the mcmc modelling 
+    Pull aggregate data from the peak fits to populate the mcmc modeling 
     """
 
     # Pick which peak data to include in aggregation
@@ -2264,7 +2264,7 @@ def format_json_data(json_data,cif_name):
 
 def create_instprm_file(datadir,workdir,xrdml_fname,instprm_fname,cif_fnames,G2sc):
     """
-    **DEPRICATED BUT KEEP**
+    **DEPRECATED BUT KEEP**
 
     Create an instrument parameter file if none exists.  Copy of the fitting framework.  Instrument parameter file is available for saving by the user.
 

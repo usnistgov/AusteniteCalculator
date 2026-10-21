@@ -159,7 +159,7 @@ def fit_peaks_LeBail_assist(hist, LeBail_peaks_DF, Chebyschev_coeffiecients=5):
 
 def fit_moved_left_peaks(hist, peaks_list, peak_verify):
     """
-    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    **DEPRECATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
     Subroutine to fit data using individual fitting, shifting peaks to the left (lower 2-theta) by 0.25 degrees.
 
     Parameters:
@@ -206,7 +206,7 @@ def fit_moved_left_peaks(hist, peaks_list, peak_verify):
 
 def fit_moved_right_peaks(hist, peaks_list, peak_verify):
     """
-    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    **DEPRECATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
     Subroutine to fit data using individual fitting, shifting peaks to the right (higher 2-theta) by 0.25 degrees.
 
     Parameters:
@@ -252,7 +252,7 @@ def fit_moved_right_peaks(hist, peaks_list, peak_verify):
 
 def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
     """
-    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    **DEPRECATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
     Subroutine to fit data using individual peak fitting, but hold the sigma (Gaussian) value fixed instead of trying to fit it.  
 
     Parameters:
@@ -298,7 +298,7 @@ def fit_peaks_holdsig(hist, peaks_list, Chebyschev_coeffiecients, peak_verify):
 
 def fit_peaks_holdgam(hist, peaks_list, peak_verify):
     """
-    **DEPRICATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
+    **DEPRECATED?**  Still in *compute* if statement, but should be fixed using *fit_peaks_LeBail_assist*
     Subroutine to fit data using individual peak fitting, but hold the gamma (Lorentzian) value fixed instead of trying to fit it.  
 
     Parameters:
@@ -555,7 +555,7 @@ def check_fit_success(Merged_Peaks_DF):
 
 def fit_peaks_Rowles(G2sc,Submit_dict,dataset_string,dataset_index,Chebyschev_coeffiecients=5):
     """
-    Subroutine to fit data using LeBail fitting, uses full pattern fitting for lattice parameters and sample displacement. Treats each phase as an indpendent variable, so the peak widths are constrained together. The intensity of each peak is allowed to vary independently.  Suggested fitting order from Matthew Rowles (model 3), arXiv:2008.11046v4
+    Subroutine to fit data using LeBail fitting, uses full pattern fitting for lattice parameters and sample displacement. Treats each phase as an indpendent variable, so the peak widths are constrained together. The intensity of each peak is allowed to vary independently.  Suggested fitting order from Rowles, Matthew R. 2021. "The effect of data quality and model parameters on the quantitative phase analysis of X-ray diffraction data by the Rietveld method" Journal of Applied Crystallography. 54 (3): 878-894. https://doi.org/10.1107/S160057672100371X
 
     * **Model 3 Fit order**
     * 0) Set max cycles = 10

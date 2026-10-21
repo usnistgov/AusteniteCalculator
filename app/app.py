@@ -70,6 +70,7 @@ def submit():
     """
     Initiate phase fraction calculations when user presses the 'Submit' button on the app. Sections describe various steps (and use the same text as comment headers).
     
+    * Initializing Submission
     * Create dictionary to hold error logs
     * Choose datafiles to run and set paths
     * Collect version information

@@ -5,14 +5,20 @@ InstrumentFileCreation
 =========================
 Background
 =========================
-In addition to the X-Ray Diffraction File(s) and the Crystallographic Information Files (.cif), two additional files are needed to analyze the XRD data: an Instrument Parameter File (.instprm) and a Crystallites Illuminated JSON File (.json).
 
+**Under development - Not currently supported**
+In the meantime one can use GSAS-II directly [GSAS-II-github]_ and some of the tutorials [GSAS-II-FindProfParamCW]_ to generate a file.
 
 =========================
 File Description
 =========================
 
-The Instrument Parameter File uses the conventions [GSAS-2004]_. Depending on the type of setup, there may be differences in the file.  The [GSAS-2004]_ guide gives some examples of the profile functions on pages 143 to 165.
+The Instrument Parameter File uses the conventions [GSAS-2004]_. Depending on the type of diffraction setup, there may be differences in the file. The most pronounced differences are in The [GSAS-2004]_ guide gives some examples of the profile functions on pages 143 to 165.
+
+The Instrument Parameter File is readable with a text editor and contains the following items:
+
+Header:
+#GSAS-II instrument parameter file; do not add/delete items!
 
 Parameters (constant wavelength, type 3):
 
@@ -32,51 +38,19 @@ Parameters (constant wavelength, type 3):
 - SH/L: "H" and "S" correspond to the sample and detector hights, and "L" is the diffractometer radius
 - Source:
 
-Parameters (constant wavelength):
-'Type',
-'fltPath',
-'2-theta',
-'difC',
-'difA',
-'difB',
-'Zero',
-'alpha',
-'beta-0',
-'beta-1',
-'beta-q',
-'sig-0',
-'sig-1',
-'sig-2',
-'sig-q',
-'X',
-'Y',
-'Z',
-'Azimuth',
-
-
-
 =========================
 Usage
 =========================
-The approach following the tutorial at [GSAS-II-FindProfParamCW]_ was implimented as a script. Users should collect diffraction data file with a well characterized powder that per the tutorial guidance: "Ideally, one should use a material or mixture of materials that has peaks over the entire range where you collect data and use a material(s) that have negligible sample broadening (from crystallite size or microstrain). The NIST LaB6 standards (SRM 660, 660a and 660b) are good choices for this, as they have very little sample broadening and a relatively small number of peaks but over a wide angular range, although it would be good to have peaks starting somewhat lower in 2theta."  
+
+**Under development**
+
+The approach following the tutorial at [GSAS-II-FindProfParamCW]_ will be implemented as a script to generate the Instrument Parameter File. Users should collect diffraction data file with a well characterized powder that per the tutorial guidance: "Ideally, one should use a material or mixture of materials that has peaks over the entire range where you collect data and use a material(s) that have negligible sample broadening (from crystallite size or microstrain). The NIST LaB6 standards (SRM 660, 660a and 660b) are good choices for this, as they have very little sample broadening and a relatively small number of peaks but over a wide angular range, although it would be good to have peaks starting somewhat lower in 2theta."
 
 
 =========================
 Expected Output
 =========================
 
-
-=========================
-References
-=========================
-.. Using Zotero Quick Copy and Chicago Manual of Style 17th edition (author-date)
-    Remove all spaces and replace with hyphens
-    Place in alphabetical order
-
-.. [GSAS-2004] Larson, Allen C, and Robert B Von Dreele. 2004. “GSAS - General Structure Analysis System.” LAUR 86-748. Los Alamos National Laboratory.
-
-.. [GSAS-II-FindProfParamCW] Example https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm
+**Under development**
 
 
-.. automodule:: user_guide
-    :members:

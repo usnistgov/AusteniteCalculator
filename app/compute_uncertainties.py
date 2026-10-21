@@ -9,8 +9,7 @@ import compute_results
 def get_unique_phases(results_table):
 
     """
-    **DEPRICATED?**  Not called in other codes
-    *ADD*
+    **DEPRECATED?**  Not called in other codes
 
     Parameters:
         mu_samps: *ADD*
@@ -35,7 +34,7 @@ def get_unique_phases(results_table):
 def concat_results_tables(results_table,from_records=False):
 
     """
-    **DEPRICATED?**  Not called in other codes
+    **DEPRECATED?**  Not called in other codes
     Combine tables if there are multiple xrd records
 
     Parameters:
@@ -69,7 +68,6 @@ def concat_results_tables(results_table,from_records=False):
 
 def run_stan(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
     """
-    **RENAME**
     Runs an external script using Stan (https://mc-stan.org/) to return estimates of the phase fractions assuming a single uncorrelated data set *(one_sample.stan)*. Calculated based on normalized intensity values. Uses Bayesian priors and data to estimate uncertainties expressed as draws via a posterior distrubtion. "Samples" in this case implies xrd files/scans. Sections describe various steps (and use the same text as comment headers).
 
     * Loop over each dataset
@@ -86,7 +84,7 @@ def run_stan(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
         Submit_dict (Dictionary): Container for calculation
         sum_checkbox (Boolean): True if the datasets are to be summed together
         number_mcmc_runs (Int): Number of MCMC warmup runs. 
-        fit_variational (Boolean):  **Depricated?**
+        fit_variational (Boolean):  **Deprecated?**
 
 
     Returns:
@@ -298,7 +296,6 @@ def run_stan(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
 
 def run_stan_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=False):
     """
-    **RENAME**
     Runs an external script using Stan (https://mc-stan.org/) to return estimates of the phase fractions assuming a series of correlated data sets *(multiple_samples.stan)*. Datasets have already been collected in *create_multi_dataset*. Calculated based on normalized intensity values. Uses Bayesian priors and data to estimate uncertainties expressed as draws via a posterior distrubtion. "Samples" in this case implies xrd files/scans. Sections describe various steps (and use the same text as comment headers).
 
     * Create list of unique_phases
@@ -311,7 +308,7 @@ def run_stan_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fal
         Submit_dict (Dictionary): Container for calculation
         sum_checkbox (Boolean): True if the datasets are to be summed together
         number_mcmc_runs (Int): Number of MCMC warmup runs. 
-        fit_variational (Boolean):  **Depricated?**
+        fit_variational (Boolean):  **Deprecated?**
 
 
     Returns:
@@ -448,7 +445,7 @@ def run_stan_multi(Submit_dict,sum_checkbox,number_mcmc_runs,fit_variational=Fal
 
 def generate_pf_table(Submit_dict,dataset,unique_phase_names):
     """
-    **RENAME** Create three *DataFrames* with the mean, median, 1 sigma and 2 sigma phase fraction values in terms of the number of unit cells, mass of unit cells, and volume of unit cells.
+    Create three *DataFrames* with the mean, median, 1 sigma and 2 sigma phase fraction values in terms of the number of unit cells, mass of unit cells, and volume of unit cells.
 
     Parameters:
         Submit_dict (Dictionary): Container for calculation
@@ -503,7 +500,7 @@ def generate_pf_table(Submit_dict,dataset,unique_phase_names):
 
 def generate_param_table(Submit_dict,dataset,unique_phase_names):
     """
-    **RENAME** Create a *DataFrame* summarizing the sources of uncertainty. **ADD LOGIC FOR MULTI DATASETS**.
+    Create a *DataFrame* summarizing the sources of uncertainty. **ADD LOGIC FOR MULTI DATASETS**.
 
     Parameters:
         Submit_dict (Dictionary): Container for calculation

@@ -5,7 +5,7 @@ CrystallitesIlluminatedFileCreation
 =========================
 Background
 =========================
-In addition to the X-Ray Diffraction File(s) and the Crystallographic Information Files (.cif), two additional files are needed to analyze the XRD data: an Instrument Parameter File (.instprm) and a Crystallites Illuminated JSON File (.json).
+In addition to the X-Ray Diffraction File(s) and the Crystallographic Information Files (.cif), two additional files are needed to analyze the XRD data: an Instrument Parameter File (.instprm) and a Crystallites Illuminated JSON File (.json).  
 
 
 =========================
@@ -106,15 +106,4 @@ Expected Output
 =========================
 
 
-=========================
-References
-=========================
-.. Using Zotero Quick Copy and Chicago Manual of Style 17th edition (author-date)
-    Remove all spaces and replace with hyphens
-    Place in alphabetical order
 
-.. [Alexander-1948] Alexander, Leroy, Harold P. Klug, and Elizabeth Kummer. 1948. “Statistical Factors Affecting the Intensity of X‐Rays Diffracted by Crystalline Powders.” Journal of Applied Physics 19 (8): 742–53. https://doi.org/10.1063/1.1698200.
-
-
-.. automodule:: user_guide
-    :members:
