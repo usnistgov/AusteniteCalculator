@@ -26,6 +26,22 @@ RUN curl -L https://github.com/AdvancedPhotonSource/GSAS-II-buildtools/releases/
 RUN mkdir /root/AustCalc
 COPY ./requirements.txt /root/AustCalc/requirements.txt
 RUN /root/g2full/bin/pip install -r /root/AustCalc/requirements.txt
+
+# --- Security: patch vulnerable packages shipped inside the GSAS-II (g2full)
+# environment. These are NOT installed via requirements.txt; the g2full
+# installer bundles its own Python env with outdated packages that Trivy flags
+# (HIGH/CRITICAL). Pin to the minimum fixed versions. Keep this list in sync
+# with the Trivy scan — revisit when the GSAS-II bundle is updated.
+RUN /root/g2full/bin/pip install --upgrade \
+    "GitPython>=3.1.59" \
+    "pillow>=13.0.0" \
+    "certifi>=2026.10.19" \
+    "Brotli>=1.2.0" \
+    "urllib3>=2.6.0" \
+    "setuptools>=70.0.0" \
+    "tornado>=6.4.2" \
+    "wheel>=0.46.2"
+
 RUN ~/g2full/bin/python3 -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 COPY ./ /root/AustCalc/
 
