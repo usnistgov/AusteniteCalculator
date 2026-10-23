@@ -59,7 +59,10 @@ Table 'Calculated Theoretical Intensities per Peak' provides data for the theore
 Phase Fraction
 ==============================
 
-On the 'Phase Fraction' tab, there are three tables and a histogram.  As noted in the :doc:`user_guide`, there are several ways to express phase fractions. Select from 'Number of Unit Cells', 'Mass Fraction', and 'Volume Fraction' to update the histogram and value table. Use 'Which Dataset' pulldown menu to select each dataset.
+On the 'Phase Fraction' tab, there are three tables and a histogram.  As noted in the :doc:`user_guide`, there are several ways to express phase fractions. Use the 'Choose Units to Display Phase Fraction' pulldown menu to select from 'Number of Unit Cells', 'Mass Fraction', and 'Volume Fraction' to update the histogram and value table. Use 'Which Dataset' pulldown menu to select each dataset.
+
+.. note::
+    If you reload the webpage and run an additional analysis, the values for the phase fraction may not be consistent with the choice selected in 'Choose Units to Display Phase Fraction'.  Toggle between options to update.
 
 The table 'Phase Fraction Values (select units)' and plot 'Phase Fraction Histogram (select units)' summarize the phase fraction values. The histogram plot shows the phase fraction values from the 8000 MCMC runs.  Mean and median values for each phase are shown, as are approximations of the 1 sigma and 2 sigma bounds on either side ('Neg' - closer to 0 or 'Pos' - closer to 1) of the distribution, taken from quantiles 0.1587 and 0.8413 for 1 sigma and 0.02275 and 0.97725 for 2 sigma.
 

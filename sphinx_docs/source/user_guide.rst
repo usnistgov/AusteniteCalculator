@@ -61,15 +61,7 @@ Several sources of uncertainty have been considered, but not all are currently i
 As of the 0.1.0 release, individual peak fit (_fit) and Le Bail (_LB) fits are performed.  The individual peak fit values are used in the phase fraction calculation, but the Le Bail fit is used to provide initial values and a consistency check.  There are additional references to a ‘G’ is for Gaussian only fit, and ‘TR’ for trapezoidal rule integration of the peak which are partially implemented, but are not used in the phase fraction.
 
 
-==============================
-Examples
-==============================
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-
-   Example01
 
 ==============================
 References
@@ -98,11 +90,13 @@ References
 
 .. [Jatczak-Larson-Shin-1980] Jatczak, Chester F., John A. Larson, and Steve W. Shin. 1980. Retained Austenite and Its Measurements by X-Ray Diffraction: An Information Manual. Warrendale, PA: Society of Automotive Engineers.
 
-.. [Lafarge-Possolo-2015] LaFarge, Thomas, and Antonio Possolo. n.d. “NIST Uncertainty Machine.” NIST Uncertainty Machine. https://uncertainty.nist.gov/.
+.. [Lafarge-Possolo-2015] LaFarge, Thomas, and Antonio Possolo. 2015. “NIST Uncertainty Machine.” NIST Uncertainty Machine. https://uncertainty.nist.gov/.
 
-.. [NBS SRM-487] Hicho, G. E. and E. E. Eaton. 1982. "A Standard Reference Material Containing Nominally Thirty Percent Austenite (SRM 487)" NBS Special Publication 260-78 https://doi.org/10.6028/NBS.SP.260-78
+.. [NBS-SRM-487] Hicho, G. E. and E. E. Eaton. 1982. "A Standard Reference Material Containing Nominally Thirty Percent Austenite (SRM 487)" NBS Special Publication 260-78 https://doi.org/10.6028/NBS.SP.260-78
 
-.. [NIST-ConsensusBuilder-webpage] Koepke, Amanda, Thomas LaFarge, Antonio Possolo, and Blaza Toman. n.d. “NIST Consensus Builder.” https://consensus.nist.gov/app/nicob.
+.. [NCAL] "NCAL: NIST Center for Automotive Lightweighting". 2025. https://www.nist.gov/programs-projects/ncal-nist-center-automotive-lightweighting
+
+.. [NIST-ConsensusBuilder-webpage] Koepke, Amanda, Thomas LaFarge, Antonio Possolo, and Blaza Toman. 2020. “NIST Consensus Builder.” https://consensus.nist.gov/app/nicob.
 
 .. [NIST-UncertaintyMachine-webpage] Lafarge, Thomas, and Antonio Possolo. 2015. “The NIST Uncertainty Machine.” NCSLI Measure 10 (3): 20–27. https://doi.org/10.1080/19315775.2015.11721732.
 

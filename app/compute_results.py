@@ -1523,6 +1523,7 @@ def compute_crystallites_illuminated(Submit_dict):
         # Add a column for the uncertainty in number diffracting
         # normalized by the normalized intensities
         # CHECK - use just the fit n_int, or average?
+        # To Do - currently uses the individual n_int_fit, probably should use the mean value
         
         Submit_dict[dataset]["Merged_Peaks"]["n_u_N_Diffracting_95pct"]=\
             (Submit_dict[dataset]["Merged_Peaks"]["u_N_Diffracting_95pct"]/Submit_dict[dataset]["Merged_Peaks"]["N_Diffracting_95pct"])*Submit_dict[dataset]["Merged_Peaks"]["n_int_fit"]
@@ -2120,7 +2121,7 @@ def package_for_export(Submit_dict):
         # Table for Fit values  
         all_results[dataset_name]['Fit_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','hkl','pos_TI', 'pos_LB','pos_fit','pos_G', 'int_LB','int_fit','int_G','int_TR',"int_G_bg","int_G_total", 'sig_LB','sig_fit','sig_G','gam_LB', 'gam_fit',  'n_int_LB','n_int_fit' ]].to_html(justify='left', index=False, float_format=lambda x: '%10.3f' % x)
 
-        # Table for Theoretical Intnesities
+        # Table for Theoretical Intensities
         all_results[dataset_name]['Theo_n_int_html']=Submit_dict[dataset_name]["Merged_Peaks"][['Phase','Phase_TI','hkl', 'mul_TI', 'pos_TI', 'F_calc_sq_TI', 'I_corr_TI', 'R_TI','Texture Correction','fit_success_G','Peak_Fit_Success','Peak_Fit_Success2']].to_html(justify='left', index=False, float_format=lambda x: '%10.2f' % x)
   
         #####################################

@@ -26,6 +26,16 @@ The Austenite Calculator is implemented as a web-based application that can be i
    overview
 
 ##########################################################
+Examples
+##########################################################
+
+.. toctree::
+   :maxdepth: 1
+   
+   Example01
+   Example02
+   
+##########################################################
 Software and functions used
 ##########################################################
 
