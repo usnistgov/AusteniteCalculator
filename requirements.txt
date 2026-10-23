@@ -1,7 +1,9 @@
 # --- Base Utilities & Frameworks ---
-flask~=2.0.0
-werkzeug<3.0.0      # Force a compatible version of Flask's helper library
-gunicorn==20.1.0
+# Flask/Werkzeug bumped together to the patched 2.3.x line (CVE-2023-30861,
+# CVE-2024-34069). They move as a pair, so pin both.
+flask>=2.3.2,<3.0.0
+werkzeug>=3.0.3,<3.1.0
+gunicorn>=23.0.0     # CVE-2024-1135, CVE-2024-6827 (request smuggling) fixed in 22.0.0+
 
 # --- Data Science & Math ---
 numpy~=1.23.2

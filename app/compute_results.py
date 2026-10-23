@@ -37,7 +37,7 @@ import interaction_vol as IV
 #####################################
 
 #####################################
-def gather_example(example_name):
+def gather_example(example_name, req_workdir=None):
 
     """
     Collect files from example data directory to use in analysis.
@@ -46,6 +46,11 @@ def gather_example(example_name):
 
     Parameters:
         example_name (String) : Variable with example file to use.  Set in *index.html* and passed via *app.py*.
+        req_workdir (String, optional) : Per-request working directory for analysis
+            outputs. When provided (e.g. a per-request temp dir from app.py), it
+            overrides the shared '../server_workdir' default so concurrent requests
+            do not write GSAS-II output files to the same shared location. The
+            returned datadir stays the read-only '../ExampleData/...' source.
 
     Returns:
         datadir (String): Variable setting the directory where the data files are stored.
@@ -175,6 +180,14 @@ def gather_example(example_name):
         #xrdml_fnames = ['Fe-Gaussian-only-HighBG-2col.csv']
         #instprm_fname = 'Fe-Gaussian-only.instprm' # check if updates are needed
         #json_fname = 'Fe-Gaussian-only.json'
+
+    # Override the shared '../server_workdir' default (set in the branches above)
+    # with the per-request working directory when the caller supplies one, so
+    # concurrent example-mode requests do not collide on shared GSAS-II output
+    # files. When the caller passes nothing the original shared default is
+    # preserved for backwards compatibility.
+    if req_workdir is not None:
+        workdir = req_workdir
 
     return datadir, cif_fnames, workdir, xrdml_fnames, instprm_fname, json_fname
 
