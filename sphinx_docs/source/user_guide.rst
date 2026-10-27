@@ -1,4 +1,5 @@
-user_guide
+User Guide
+=================================
 
 ******************************
 User Guide
@@ -78,6 +79,10 @@ References
 
 .. [Austenite-Calculator-github] Creuziger, Adam., David Newtwon. "Austenite Calculator" https://github.com/usnistgov/AusteniteCalculator
 
+.. [Cox-2023] Cox, M. R., A. Creuziger, and K. O. Findley. 2023. “A Hexagonal Grid-Sampling Scheme for Improving X-Ray Diffraction-Retained Austenite Measurements of Sheet Steels.” Metallurgical and Materials Transactions A 54 (3): 823–37. https://doi.org/10.1007/s11661-022-06931-8.
+
+.. [Cox-2025] Cox, Michael R. 2025. “Measurement Of Retained Austenite Transformation & Work Hardening Rate In Multiaxially Deformed AHSS.” PhD Thesis, Colorado School of Mines.
+
 .. [GSAS-2004] Larson, Allen C, and Robert B Von Dreele. 2004. “GSAS - General Structure Analysis System.” LAUR 86-748. Los Alamos National Laboratory.
 
 .. [GSAS-II-github] Toby, Brian H., and Robert B. Von Dreele. "GSAS-II GitHub" https://github.com/AdvancedPhotonSource/GSAS-II
@@ -85,6 +90,8 @@ References
 .. [GSAS-II-DevDoc] Von Dreele, Robert B. and Brian H. Toby. "GSAS-II Developer’s Documentation" https://gsas-ii.readthedocs.io/en/latest/
 
 .. [GSAS-II-FindProfParamCW] "Create Instrument Parameter File: Determine Starting Profile from a Standard" https://subversion.xray.aps.anl.gov/pyGSAS/Tutorials/CWInstDemo/FindProfParamCW.htm
+
+.. [Gregg-2025] Gregg, Mary E., A. Creuziger, S. Datta, and D. Lorenz. 2025. “Two Tests of Variance Homogeneity for Clustered Data Where Group Size Is Informative.” Journal of Statistical Computation and Simulation 95 (3): 490–506. https://doi.org/10.1080/00949655.2024.2430692.
 
 .. [Jacques-etal-2009] Jacques, P. J., S. Allain, O. Bouaziz, A. De, A.-F. Gourgues, B. M. Hance, Y. Houbaert, et al. 2009. “On Measurement of Retained Austenite in Multiphase TRIP Steels — Results of Blind Round Robin Test Involving Six Different Techniques.” Materials Science and Technology 25 (5): 567–74. https://doi.org/10.1179/174328408X353723.
 

@@ -22,10 +22,10 @@ Four pieces of information are needed for each phase:
  - Rocking angle of a crystal (degrees).
     
 Eight pieces of information are needed for the xray diffractometer geometry:
- - beam_shape: Shape of the aperature of the incident x-ray. Options are "square" and "circle"
- - beam_size: Size of the aperature (mm). Diameter for circular beams, edge length for square beams. Currently does not account for beam divergence.
- - raster_x: Oscillation length in the diffractometer x direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.
- - raster_y: Oscillation length in the diffractometer y direction (mm). If the sample is oscillated at a rate signficantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.
+ - beam_shape: Shape of the aperture of the incident x-ray. Options are "square" and "circle"
+ - beam_size: Size of the aperture (mm). Diameter for circular beams, edge length for square beams. Currently does not account for beam divergence.
+ - raster_x: Oscillation length in the diffractometer x direction (mm). If the sample is oscillated at a rate significantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.
+ - raster_y: Oscillation length in the diffractometer y direction (mm). If the sample is oscillated at a rate significantly greater than the scan increment rate, the raster area defines the illuminated volume instead of the beam_size.
  - sample_displacement: distance (um) the sample surface is displaced from the focus center of the x-ray system.
  - L: Sample to x-ray source distance (mm).  Currently assumes that the sample to detector distance is equivalent.
  - W_F: Apparent width of the x-ray tube focus (mm). As these are often described as the slit width, they should be the same or similar to the the beam_size dimension.
@@ -63,7 +63,7 @@ For a powder, estimates for the number of crystallites per particle range betwee
 
 Estimated values for the rocking angle of a crystal are described [Alexander-1948]_.
  - Ideally perfect crystal  (0.0025 deg = 9 seconds of an arc)
- - Undeformed crystals (0.25 deg = 15 minues of an arc)
+ - Undeformed crystals (0.25 deg = 15 minutes of an arc)
  - Deformed crystals (1 deg to 5 deg, increasing as level of deformation increases)
  
 There will likely be variances for different materials and preparation methods.  Methods to measure the rocking angle include performing a rocking angle measurement, or electron backscatter diffraction (EBSD).
@@ -79,6 +79,7 @@ Examples:
  - "ferrite-Duplex.cif": "[50,10]",
 
 .. LITERAL BLOCKS WON'T RENDER RIGHT FOR ME
+
 Example for a lab based system:
  "beam_shape": "square",
  "beam_size": "1",

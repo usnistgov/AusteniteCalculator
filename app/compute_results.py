@@ -89,8 +89,8 @@ def gather_example(example_name, req_workdir=None):
         xrdml_fnames = all_files.loc[all_files.str.contains('csv$')]
         xrdml_fnames = xrdml_fnames.to_list()
         instprm_fname = 'E231208-AAC-660.instprm'
+        #json_fname = 'Example02-noCorrection.json'
         json_fname = 'Example02-Neutron.json'
-
     
     elif example_name == "Example03-single":
         datadir = '../ExampleData/Example03-single'

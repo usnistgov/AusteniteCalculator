@@ -1,5 +1,5 @@
 Example 01 - Single Sample Withdrawn NIST 487 SRM
-==========================================
+======================================================
 
 =========================
 Background
@@ -25,7 +25,8 @@ The record for SRM 487 [NBS-SRM-487]_ provides the chemical compositions in weig
 =========================
 Results
 =========================
-.. list output with version number
+
+On the 'Data Upload' tab under 'Option 2: Use Example Files', select 'Example 01 (Single Sample)' and press 'Submit'
 
 ---------------------------------------
 'Intensity Plots'
@@ -81,7 +82,7 @@ To compare the phase fraction values to the SRM value, 'Volume Fraction' was sel
 .. image:: images/Example01_phase_fraction_histogram.png
    :width: 800
 
-The mean phase fraction value of 0.300 is close to the nominal 30% intended for SRM 487.  The +/- 0.028 1sigma bounds are symmetric to the positive and negative directions, but the 2sigma bounds show some skew toward negative values with -0.065 neg_2sigma and +0.059 pos_2sigma from the mean, which is also visible in the histogram.
+The mean austenite phase fraction value of 0.300 is close to the nominal 30% intended for SRM 487.  The +/- 0.028 1sigma bounds are symmetric to the positive and negative directions, but the 2sigma bounds show some skew toward negative values with -0.065 neg_2sigma and +0.059 pos_2sigma from the mean, which is also visible in the histogram.
 
 The 'Sources of Uncertainty (scaled by normalized intensity)' table is shown below, broken into two separate tables due to size.
 
