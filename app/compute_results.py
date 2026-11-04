@@ -209,7 +209,8 @@ def version_summary(release_name, version_number):
     
     try:
 
-        git_url= ((subprocess.Popen(['git', 'config', '--get', 'remote.origin.url'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
+        #hardcoded intentially
+        git_url= "https://github.com/usnistgov/AusteniteCalculator.git"
 
         git_branch= ((subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE)).communicate()[0].decode('utf-8').rstrip())
 

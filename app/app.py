@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, send_file
+from flask import Flask, render_template, request, jsonify, session, send_file, send_from_directory, abort
 import pandas as pd
 import numpy as np
 import json
@@ -72,6 +72,23 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 @app.route("/",methods=['GET'])
 def index():
     return render_template("index.html")
+
+# Serve the Sphinx-built manual/user guide. The docs are built into
+# sphinx_docs/build/html/ (see Dockerfile). app.py lives in AustCalc/app/, so the
+# build output is one directory up under sphinx_docs/build/html/. Resolve the path
+# from __file__ so it works regardless of the process working directory.
+DOCS_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "sphinx_docs", "build", "html")
+)
+
+
+@app.route("/docs/", defaults={"filename": "index.html"}, methods=['GET'])
+@app.route("/docs/<path:filename>", methods=['GET'])
+def docs(filename):
+    # send_from_directory guards against path traversal outside DOCS_DIR.
+    if not os.path.isdir(DOCS_DIR):
+        abort(404)
+    return send_from_directory(DOCS_DIR, filename)
 
 @app.route("/submit",methods=['POST'])
 def submit():
