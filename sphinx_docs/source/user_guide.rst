@@ -61,8 +61,27 @@ Several sources of uncertainty have been considered, but not all are currently i
 
 As of the 0.1.0 release, individual peak fit (_fit) and Le Bail (_LB) fits are performed.  The individual peak fit values are used in the phase fraction calculation, but the Le Bail fit is used to provide initial values and a consistency check.  There are additional references to a ‘G’ is for Gaussian only fit, and ‘TR’ for trapezoidal rule integration of the peak which are partially implemented, but are not used in the phase fraction.
 
+==============================
+Acknowledgements
+==============================
 
+The following people are acknowledged for their work and contributions to the Austenite Calculator, using the CRediT framework [NISO-CRediT-2022]_.  The scope of writing is limited to items appearing in the documentation, including documentation strings in the code.
 
+* Adam Creuziger: Conceptualization, Data curation, Formal analysis, Funding acquisition, Investigation, Methodology, Project administration, Resources, Software, Supervision, Validation, Visualization, Writing – original draft, Writing – review & editing
+* David Newton: Formal analysis, Investigation, Methodology, Project administration, Resources, Software, Supervision, Validation, Visualization, Writing – original draft, Writing – review & editing
+* Max Garman: Formal analysis, Investigation, Methodology, Software, Visualization, Writing – original draft
+* JD Wilson: Project administration, Resources, Software
+* Caleb Schenck: Formal analysis, Investigation
+
+----
+
+The support and assistance of the following are also acknowledged:
+
+* Brian Toby and Robert Von Dreele for the development of GSAS and GSAS-II, and their willingness to answer questions about the software packages.
+* James Warren in the NIST Materials Genome Initiative for funding support.
+* Kip Findley and John Speer in the Advanced Steel Processing and Products Research Center (ASPPRC) at the Colorado School of Mines for support, interest, and including this project at Sponsor Review Meetings and local support for students working on this project.
+* Michael Davenport and Eric McCarty at the Auto/Steel Partnership (A/SP) for including a demonstration of this software during the 2023 Technology Day.
+* There has been limited AI usage via Google Gemini and Kiro IDE in support of this project.
 
 ==============================
 References
@@ -106,6 +125,8 @@ References
 .. [NIST-ConsensusBuilder-webpage] Koepke, Amanda, Thomas LaFarge, Antonio Possolo, and Blaza Toman. 2020. “NIST Consensus Builder.” https://consensus.nist.gov/app/nicob.
 
 .. [NIST-UncertaintyMachine-webpage] Lafarge, Thomas, and Antonio Possolo. 2015. “The NIST Uncertainty Machine.” NCSLI Measure 10 (3): 20–27. https://doi.org/10.1080/19315775.2015.11721732.
+
+.. [NISO-CRediT-2022] NISO CRediT Working Group. 2022. ANSI/NISO Z39.104-2022, CRediT, Contributor Roles Taxonomy. NISO. https://doi.org/10.3789/ansi.niso.z39.104-2022.
 
 .. [Rowles-2021] Rowles, Matthew R. 2021. "The effect of data quality and model parameters on the quantitative phase analysis of X-ray diffraction data by the Rietveld method" Journal of Applied Crystallography. 54 (3): 878-894. https://doi.org/10.1107/S160057672100371X
 
